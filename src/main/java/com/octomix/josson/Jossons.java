@@ -71,14 +71,14 @@ public class Jossons {
     }
 
     public String fillInXmlPlaceholder(String content) throws NoValuePresentException {
-        return fillInPlaceholder(content, true);
+        return fillInPlaceholderLoop(content, true);
     }
 
     public String fillInPlaceholder(String content) throws NoValuePresentException {
-        return fillInPlaceholder(content, false);
+        return fillInPlaceholderLoop(content, false);
     }
 
-    private String fillInPlaceholder(String content, boolean isXml) throws NoValuePresentException {
+    private String fillInPlaceholderLoop(String content, boolean isXml) throws NoValuePresentException {
         Set<String> unresolvedDataSources = new HashSet<>();
         Set<String> unresolvedPlaceholders = new HashSet<>();
         StringBuilder sb = new StringBuilder();
@@ -135,7 +135,7 @@ public class Jossons {
         if (!unresolvedDataSources.isEmpty() || !unresolvedPlaceholders.isEmpty()) {
             throw new NoValuePresentException(unresolvedDataSources, unresolvedPlaceholders, content);
         }
-        return fillInPlaceholder(content, isXml);
+        return fillInPlaceholderLoop(content, isXml);
     }
 
     public String fillInXmlPlaceholderWithResolver(String content, Function<String, String> dictionaryFinder,
@@ -172,7 +172,7 @@ public class Jossons {
                 if (!unresolvedDataSourceNames.isEmpty()) {
                     throw new NoValuePresentException(new HashSet<>(unresolvedDataSourceNames), null);
                 }
-                content = fillInPlaceholder(content, isXml);
+                content = fillInPlaceholderLoop(content, isXml);
                 break;
             } catch (NoValuePresentException e) {
                 if (!e.getDataSourceNames().isEmpty()) {
@@ -195,7 +195,7 @@ public class Jossons {
                         return;
                     }
                     try {
-                        findQuery = fillInPlaceholder(findQuery, false);
+                        findQuery = fillInPlaceholderLoop(findQuery, false);
                         Matcher m = IS_DB_QUERY.matcher(findQuery);
                         if (m.find()) {
                             String collectionName = m.group(1).trim();
@@ -209,10 +209,13 @@ public class Jossons {
                             putDataSource(name, dataFinder.apply(collectionName, m.group(3)));
                         } else {
                             namedQueries.put(name, findQuery);
+                            unresolvedDataSourceNames.remove(name);
                         }
                     } catch (NoValuePresentException ex) {
                         if (ex.getPlaceholders().isEmpty()) {
-                            unresolvedDataSourceNames.addAll(ex.getDataSourceNames());
+                            ex.getDataSourceNames().stream()
+                                .filter(s -> !namedQueries.containsKey(s))
+                                .forEach(unresolvedDataSourceNames::add);
                         } else {
                             unresolvedPlaceholders.addAll(ex.getPlaceholders());
                             putDataSource(name, null);
@@ -229,7 +232,8 @@ public class Jossons {
                                 putDataSource(name, null);
                             } else {
                                 putDataSource(name, Josson.create(node));
-                                progress.addStep("Resolved " + name);
+                                unresolvedDataSourceNames.remove(name);
+                                progress.addStep("Resolved " + name + " from " + findQuery);
                             }
                         } catch (UnresolvedDataSourceException ex) {
                             unresolvedDataSourceNames.add(ex.getDataSourceName());
@@ -246,13 +250,16 @@ public class Jossons {
     }
 
     public JsonNode evaluateQueryWithResolver(String query, Function<String, String> dictionaryFinder,
-                                              BiFunction<String, String, Josson> dataFinder) {
-        return evaluateQueryWithResolver(query, dictionaryFinder, dataFinder, new ResolverProgress());
-    }
-
-    public JsonNode evaluateQueryWithResolver(String query, Function<String, String> dictionaryFinder,
                                               BiFunction<String, String, Josson> dataFinder,
                                               ResolverProgress progress) {
+        JsonNode node = evaluateQueryWithResolverLoop(query, dictionaryFinder, dataFinder, progress);
+        progress.markCompleted();
+        return node;
+    }
+
+    private JsonNode evaluateQueryWithResolverLoop(String query, Function<String, String> dictionaryFinder,
+                                                   BiFunction<String, String, Josson> dataFinder,
+                                                   ResolverProgress progress) {
         JsonNode result = null;
         while (true) {
             progress.nextRound();
@@ -282,14 +289,14 @@ public class Jossons {
                         progress.addStep("Resolving " + name + " from DB query " + findQuery);
                         putDataSource(name, dataFinder.apply(collectionName, m.group(3)));
                     } else {
-                        progress.addStep("Resolving " + name + "=" + findQuery);
-                        JsonNode node = evaluateQueryWithResolver(findQuery, dictionaryFinder, dataFinder, progress);
+                        progress.addStep("Resolving " + name + " from " + findQuery);
+                        JsonNode node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
                         if (node == null) {
                             putDataSource(name, null);
                             break;
                         }
                         putDataSource(name, Josson.create(node));
-                        progress.addStep("Resolved " + name);
+                        progress.addStep("Resolved " + name + " from " + findQuery);
                     }
                 } catch (NoValuePresentException ex) {
                     putDataSource(name, null);
@@ -297,7 +304,6 @@ public class Jossons {
                 }
             }
         }
-        progress.markCompleted();
         return result;
     }
 
