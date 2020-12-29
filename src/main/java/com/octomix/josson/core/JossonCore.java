@@ -30,7 +30,7 @@ public class JossonCore {
     private static final Pattern DECOMPOSE_CONDITIONS = Pattern.compile(
             "\\s*([=!<>&]*)((?:[^=!<>&(\\[']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\3)(.*\\)(?!.*\\4).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^(])*(?=\\4$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\5)(.*](?!.*\\6).*))(?=(?>'.*?'|.)*?](?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^\\[])*(?=\\6$)))+)", Pattern.DOTALL);
 
-    enum FILTER_ARRAY_RETURN {
+    enum FilterArrayReturn {
         FIRST_MATCHED,
         ALL_MATCHED
     }
@@ -100,7 +100,7 @@ public class JossonCore {
 
     public static JsonNode getNode(JsonNode node, String path) {
         if (StringUtils.isBlank(path)) {
-            return null;
+            return node;
         }
         List<String> keys = new ArrayList<>();
         Matcher m = DECOMPOSE_PATH.matcher(path);
@@ -153,8 +153,8 @@ public class JossonCore {
             m = IS_ARRAY_NODE_QUERY.matcher(key);
             if (m.find()) {
                 String field = m.group(1).trim();
-                FILTER_ARRAY_RETURN mode = m.group(3) == null
-                        ? FILTER_ARRAY_RETURN.FIRST_MATCHED : FILTER_ARRAY_RETURN.ALL_MATCHED;
+                FilterArrayReturn mode = m.group(3) == null
+                        ? FilterArrayReturn.FIRST_MATCHED : FilterArrayReturn.ALL_MATCHED;
                 node = filterArrayNode(field.isEmpty() ? node : node.get(field), m.group(2), mode);
                 if (node != null && node.isArray()) {
                     keys.remove(0);
@@ -193,23 +193,23 @@ public class JossonCore {
      *                  ALL_MATCHED - return all matched elements in array node
      * @return matched element node or matched elements in array node
      */
-    private static JsonNode filterArrayNode(JsonNode arrayNode, String statement, FILTER_ARRAY_RETURN mode) {
+    private static JsonNode filterArrayNode(JsonNode arrayNode, String statement, FilterArrayReturn mode) {
         if (arrayNode == null || !arrayNode.isArray() || arrayNode.size() == 0) {
             return null;
         }
         statement = statement.trim();
         if (statement.isEmpty()) {
-            if (FILTER_ARRAY_RETURN.FIRST_MATCHED == mode) {
+            if (FilterArrayReturn.FIRST_MATCHED == mode) {
                 return arrayNode.get(0);
             }
             return arrayNode;
         }
         ArrayNode matchedNodes = null;
-        if (FILTER_ARRAY_RETURN.FIRST_MATCHED != mode) {
+        if (FilterArrayReturn.FIRST_MATCHED != mode) {
             matchedNodes = MAPPER.createArrayNode();
         }
         try {
-            if (FILTER_ARRAY_RETURN.FIRST_MATCHED == mode) {
+            if (FilterArrayReturn.FIRST_MATCHED == mode) {
                 return arrayNode.get(Integer.parseInt(statement));
             }
             matchedNodes.add(arrayNode.get(Integer.parseInt(statement)));
@@ -438,13 +438,13 @@ public class JossonCore {
                 }
             }
             if (valueNode != null && valueNode.asBoolean()) {
-                if (FILTER_ARRAY_RETURN.FIRST_MATCHED == mode) {
+                if (FilterArrayReturn.FIRST_MATCHED == mode) {
                     return arrayNode.get(i);
                 }
                 matchedNodes.add(arrayNode.get(i));
             }
         }
-        if (FILTER_ARRAY_RETURN.FIRST_MATCHED == mode) {
+        if (FilterArrayReturn.FIRST_MATCHED == mode) {
             return maxMinIndex >= 0 ? arrayNode.get(maxMinIndex) : null;
         }
         if (maxMinIndex >= 0) {

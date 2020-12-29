@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.octomix.josson.ResolverProgress.ShowResolvedValueMode;
 import static org.apache.commons.text.StringEscapeUtils.unescapeXml;
 
 public class Jossons {
@@ -30,6 +31,7 @@ public class Jossons {
         "\\s*([=!<>&]*)([^=!<>&(\\[']*(?:->)?\\s*(?:[^=!<>&(\\[']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\3)(.*\\)(?!.*\\4).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^(])*(?=\\4$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\5)(.*](?!.*\\6).*))(?=(?>'.*?'|.)*?](?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^\\[])*(?=\\6$)))+)", Pattern.DOTALL);
 
     private final Map<String, Josson> dataSources = new HashMap<>();
+    private ShowResolvedValueMode showResolvedValueMode = ShowResolvedValueMode.VALUE_NODE_ONLY;
 
     public static Jossons create(JsonNode dataSources) {
         if (dataSources != null && dataSources.getNodeType() != JsonNodeType.OBJECT) {
@@ -68,6 +70,29 @@ public class Jossons {
 
     public Map<String, Josson> getDataSources() {
         return dataSources;
+    }
+
+    public ShowResolvedValueMode getProgressShowResolvedValueMode() {
+        return showResolvedValueMode;
+    }
+
+    public void setProgressShowResolvedValueMode(ShowResolvedValueMode mode) {
+        showResolvedValueMode = mode;
+    }
+
+    private String showProgressResolvedValue(JsonNode node) {
+        if (showResolvedValueMode == ShowResolvedValueMode.VALUE_NODE_ONLY) {
+            if (node.isArray()) {
+                return "Array with " + node.size() + " elements";
+            }
+            if (node.isObject()) {
+                return "Object with " + node.size() + " elements";
+            }
+        }
+        if (node.isTextual()) {
+            return '"' + node.asText() + '"';
+        }
+        return node.toString();
     }
 
     public String fillInXmlPlaceholder(String content) throws NoValuePresentException {
@@ -233,7 +258,7 @@ public class Jossons {
                             } else {
                                 putDataSource(name, Josson.create(node));
                                 unresolvedDataSourceNames.remove(name);
-                                progress.addStep("Resolved " + name + " from " + findQuery);
+                                progress.addStep("Resolved " + name + " = " + showProgressResolvedValue(node));
                             }
                         } catch (UnresolvedDataSourceException ex) {
                             unresolvedDataSourceNames.add(ex.getDataSourceName());
@@ -296,7 +321,7 @@ public class Jossons {
                             break;
                         }
                         putDataSource(name, Josson.create(node));
-                        progress.addStep("Resolved " + name + " from " + findQuery);
+                        progress.addStep("Resolved " + name + " = " + showProgressResolvedValue(node));
                     }
                 } catch (NoValuePresentException ex) {
                     putDataSource(name, null);
