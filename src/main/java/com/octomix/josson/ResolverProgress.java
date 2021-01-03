@@ -5,7 +5,7 @@ import java.util.List;
 
 public class ResolverProgress {
 
-    private int round = 0;
+    private int round = 1;
     private final List<String> steps = new ArrayList<>();
 
     public enum ShowResolvedValueMode {

@@ -7,7 +7,7 @@
     <groupId>com.octomix.josson</groupId>
     <artifactId>josson</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <build>
         <plugins>
             <plugin>
@@ -23,7 +23,9 @@
     </build>
 
     <name>${project.groupId}:${project.artifactId}</name>
-    <description>Josson &amp; Jossons. A query language for JSON and act as a placeholder to fill text in document.</description>
+    <description>Josson &amp; Jossons.
+        Josson is a query language for JSON.
+        Jossons manipulate multiple Josson objects and can fill text placeholders in document.</description>
     <url>https://github.com/octomix/josson</url>
 
     <inceptionYear>2020</inceptionYear>

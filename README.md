@@ -1,2 +1,3 @@
 # Josson & Jossons
-A query language for JSON and act as a placeholder to fill text in document.
+Josson is a query language for JSON.
+Jossons manipulate multiple Josson objects and can fill text placeholders in document.

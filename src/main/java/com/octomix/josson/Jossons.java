@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.core.JossonCore;
 import com.octomix.josson.exception.NoValuePresentException;
-import com.octomix.josson.exception.UnresolvedDataSourceException;
+import com.octomix.josson.exception.UnresolvedDatasetException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.octomix.josson.JossonsUtil.*;
 import static com.octomix.josson.ResolverProgress.ShowResolvedValueMode;
 import static org.apache.commons.text.StringEscapeUtils.unescapeXml;
 
@@ -23,6 +24,8 @@ public class Jossons {
         "((?:<[^>]*>)*)([^<]*)");
     private static final Pattern IS_DB_QUERY = Pattern.compile(
         "^([^\\[?]*)(\\[\\s*])?\\s*\\?\\s*(\\{.*})\\s*$", Pattern.DOTALL);
+    private static final Pattern IS_JOIN_OPERATION = Pattern.compile(
+            "(.+)\\{([^}]*)}\\s*$", Pattern.DOTALL);
     private static final Pattern IS_JSON_QUERY = Pattern.compile(
         "^([^-<\\[]*)->(.*)", Pattern.DOTALL);
     private static final Pattern DECOMPOSE_IIF_ELSE = Pattern.compile(
@@ -30,17 +33,17 @@ public class Jossons {
     private static final Pattern DECOMPOSE_CONDITIONS = Pattern.compile(
         "\\s*([=!<>&]*)([^=!<>&(\\[']*(?:->)?\\s*(?:[^=!<>&(\\[']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\3)(.*\\)(?!.*\\4).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^(])*(?=\\4$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\5)(.*](?!.*\\6).*))(?=(?>'.*?'|.)*?](?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^\\[])*(?=\\6$)))+)", Pattern.DOTALL);
 
-    private final Map<String, Josson> dataSources = new HashMap<>();
+    private final Map<String, Josson> datasets = new HashMap<>();
     private ShowResolvedValueMode showResolvedValueMode = ShowResolvedValueMode.VALUE_NODE_ONLY;
 
-    public static Jossons create(JsonNode dataSources) {
-        if (dataSources != null && dataSources.getNodeType() != JsonNodeType.OBJECT) {
+    public static Jossons create(JsonNode datasets) {
+        if (datasets != null && datasets.getNodeType() != JsonNodeType.OBJECT) {
             throw new IllegalArgumentException("Argument is not an object node");
         }
         Jossons jossons = new Jossons();
-        if (dataSources != null) {
-            dataSources.fields().forEachRemaining(entry ->
-                jossons.dataSources.put(entry.getKey(), Josson.create(entry.getValue())));
+        if (datasets != null) {
+            datasets.fields().forEachRemaining(entry ->
+                jossons.datasets.put(entry.getKey(), Josson.create(entry.getValue())));
         }
         return jossons;
     }
@@ -53,23 +56,18 @@ public class Jossons {
         Jossons jossons = new Jossons();
         if (textParams != null) {
             textParams.forEach((key, value) ->
-                jossons.dataSources.put(key, Josson.fromText(value)));
+                jossons.datasets.put(key, Josson.fromText(value)));
         }
         return jossons;
     }
 
-    private static String unquoteString(String quotedString) {
-        return quotedString.substring(1, quotedString.length() - 1)
-            .replaceAll("''", "'");
-    }
-
-    public Jossons putDataSource(String key, Josson value) {
-        dataSources.put(key, value);
+    public Jossons putDataset(String key, Josson value) {
+        datasets.put(key, value);
         return this;
     }
 
-    public Map<String, Josson> getDataSources() {
-        return dataSources;
+    public Map<String, Josson> getDatasets() {
+        return datasets;
     }
 
     public ShowResolvedValueMode getProgressShowResolvedValueMode() {
@@ -95,6 +93,109 @@ public class Jossons {
         return node.toString();
     }
 
+    private boolean buildDataset(String name, String findQuery, Function<String, String> dictionaryFinder,
+                                 BiFunction<String, String, Josson> dataFinder, ResolverProgress progress) {
+        Matcher m = IS_DB_QUERY.matcher(findQuery);
+        if (m.find()) {
+            String collectionName = m.group(1).trim();
+            if (collectionName.isEmpty()) {
+                collectionName = name;
+            }
+            if (m.group(2) != null) {
+                collectionName += "[]";
+            }
+            Josson dataset = dataFinder.apply(collectionName, m.group(3));
+            progress.addStep((dataset == null ? "Unresolved " : "Resolved ") + name + " from DB query " + findQuery);
+            putDataset(name, dataset);
+            return true;
+        }
+        m = DECOMPOSE_CONDITIONS.matcher(findQuery);
+        if (!m.find()) {
+            return false;
+        }
+        Matcher mLeftQuery = IS_JOIN_OPERATION.matcher(m.group(2));
+        if (!mLeftQuery.find() || !m.find()) {
+            return false;
+        }
+        JoinOperator operator;
+        switch (m.group(1)) {
+            case ">=<":
+                operator = JoinOperator.INNER_JOIN_ONE;
+                break;
+            case "<=<":
+                operator = JoinOperator.LEFT_JOIN_ONE;
+                break;
+            case ">=>":
+                operator = JoinOperator.RIGHT_JOIN_ONE;
+                break;
+            case "<=<<":
+                operator = JoinOperator.LEFT_JOIN_MANY;
+                break;
+            case ">>=>":
+                operator = JoinOperator.RIGHT_JOIN_MANY;
+                break;
+            default:
+                return false;
+        }
+        try {
+            Matcher mRightQuery = IS_JOIN_OPERATION.matcher(m.group(2));
+            if (m.find()) {
+                throw new IllegalArgumentException("too many arguments");
+            }
+            String[] leftKeys = mLeftQuery.group(2).split(",");
+            String[] rightKeys = mRightQuery.find() ? mRightQuery.group(2).split(",") : null;
+            if (anyIsBlank(leftKeys) || anyIsBlank(rightKeys)) {
+                throw new IllegalArgumentException("missing join key");
+            }
+            if (leftKeys.length != rightKeys.length) {
+                throw new IllegalArgumentException("mismatch key count");
+            }
+            JsonNode leftNode = evaluateQueryWithResolverLoop(
+                    mLeftQuery.group(1).trim(), dictionaryFinder, dataFinder, progress);
+            if (leftNode == null) {
+                throw new IllegalArgumentException("unresolved left side");
+            }
+            if (!leftNode.isContainerNode()) {
+                throw new IllegalArgumentException("left side is not a container node");
+            }
+            JsonNode rightNode = evaluateQueryWithResolverLoop(
+                    mRightQuery.group(1).trim(), dictionaryFinder, dataFinder, progress);
+            if (rightNode == null) {
+                throw new IllegalArgumentException("unresolved right side");
+            }
+            if (!rightNode.isContainerNode()) {
+                throw new IllegalArgumentException("right side is not a container node");
+            }
+            String leftArrayName = null;
+            String rightArrayName = null;
+            int pos = leftKeys[0].indexOf(':');
+            if (pos >= 0) {
+                leftArrayName = leftKeys[0].substring(0, pos);
+                leftKeys[0] = leftKeys[0].substring(pos + 1);
+            }
+            pos = rightKeys[0].indexOf(':');
+            if (pos >= 0) {
+                rightArrayName = rightKeys[0].substring(0, pos);
+                rightKeys[0] = rightKeys[0].substring(pos + 1);
+            }
+            if ((operator == JoinOperator.LEFT_JOIN_MANY && rightArrayName == null)
+                || (operator == JoinOperator.RIGHT_JOIN_MANY && leftArrayName == null)) {
+                throw new IllegalArgumentException("missing array name for join-many operation");
+            }
+            JsonNode joinedNode = joinNodes(
+                leftNode, leftKeys, leftArrayName, operator, rightNode, rightKeys, rightArrayName);
+            if (joinedNode == null) {
+                throw new IllegalArgumentException("no data matched");
+            }
+            putDataset(name, Josson.create(joinedNode));
+            progress.addStep("Resolved " + name + " by join operation " + findQuery);
+        } catch (IllegalArgumentException e) {
+            putDataset(name, null);
+            progress.addStep("Unresolved " + name + " - " + e.getMessage() + " " + findQuery);
+        }
+        return true;
+    }
+
     public String fillInXmlPlaceholder(String content) throws NoValuePresentException {
         return fillInPlaceholderLoop(content, true);
     }
@@ -104,7 +205,7 @@ public class Jossons {
     }
 
     private String fillInPlaceholderLoop(String content, boolean isXml) throws NoValuePresentException {
-        Set<String> unresolvedDataSources = new HashSet<>();
+        Set<String> unresolvedDatasets = new HashSet<>();
         Set<String> unresolvedPlaceholders = new HashSet<>();
         StringBuilder sb = new StringBuilder();
         int last = content.length() - 1;
@@ -141,11 +242,11 @@ public class Jossons {
                         sb.append(node.toString());
                     } else {
                         unresolvedPlaceholders.add(query);
-                        putDataSource(query, null);
+                        putDataset(query, null);
                         sb.append("**").append(query).append("**");
                     }
-                } catch (UnresolvedDataSourceException e) {
-                    unresolvedDataSources.add(e.getDataSourceName());
+                } catch (UnresolvedDatasetException e) {
+                    unresolvedDatasets.add(e.getDatasetName());
                     sb.append("{{").append(query).append("}}");
                 }
                 placeholderAt = -1;
@@ -157,8 +258,8 @@ public class Jossons {
         }
         sb.append(content, offset, content.length());
         content = sb.toString();
-        if (!unresolvedDataSources.isEmpty() || !unresolvedPlaceholders.isEmpty()) {
-            throw new NoValuePresentException(unresolvedDataSources, unresolvedPlaceholders, content);
+        if (!unresolvedDatasets.isEmpty() || !unresolvedPlaceholders.isEmpty()) {
+            throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, content);
         }
         return fillInPlaceholderLoop(content, isXml);
     }
@@ -190,60 +291,48 @@ public class Jossons {
                                                  ResolverProgress progress)
         throws NoValuePresentException {
         Set<String> unresolvedPlaceholders = new HashSet<>();
-        Set<String> unresolvedDataSourceNames = new HashSet<>();
-        while (true) {
-            progress.nextRound();
+        Set<String> unresolvedDatasetNames = new HashSet<>();
+        for (;;progress.nextRound()) {
             try {
-                if (!unresolvedDataSourceNames.isEmpty()) {
-                    throw new NoValuePresentException(new HashSet<>(unresolvedDataSourceNames), null);
+                if (!unresolvedDatasetNames.isEmpty()) {
+                    throw new NoValuePresentException(new HashSet<>(unresolvedDatasetNames), null);
                 }
                 content = fillInPlaceholderLoop(content, isXml);
                 break;
             } catch (NoValuePresentException e) {
-                if (!e.getDataSourceNames().isEmpty()) {
-                    progress.addStep("Unresolved " + e.getDataSourceNames());
+                if (!e.getDatasetNames().isEmpty()) {
+                    progress.addStep("Unresolved " + e.getDatasetNames());
                 }
                 if (e.getPlaceholders() != null && !e.getPlaceholders().isEmpty()) {
                     progress.addStep("Unresolved placeholders " + e.getPlaceholders());
                 }
                 if (e.getPlaceholders() == null) {
-                    unresolvedDataSourceNames.clear();
+                    unresolvedDatasetNames.clear();
                 } else {
                     unresolvedPlaceholders.addAll(e.getPlaceholders());
                     content = e.getContent();
                 }
                 Map<String, String> namedQueries = new HashMap<>();
-                e.getDataSourceNames().forEach(name -> {
+                e.getDatasetNames().forEach(name -> {
                     String findQuery = dictionaryFinder.apply(name);
                     if (findQuery == null) {
-                        putDataSource(name, null);
+                        putDataset(name, null);
                         return;
                     }
                     try {
                         findQuery = fillInPlaceholderLoop(findQuery, false);
-                        Matcher m = IS_DB_QUERY.matcher(findQuery);
-                        if (m.find()) {
-                            String collectionName = m.group(1).trim();
-                            if (collectionName.isEmpty()) {
-                                collectionName = name;
-                            }
-                            if (m.group(2) != null) {
-                                collectionName += "[]";
-                            }
-                            progress.addStep("Resolving " + name + " from DB query " + findQuery);
-                            putDataSource(name, dataFinder.apply(collectionName, m.group(3)));
-                        } else {
+                        if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
                             namedQueries.put(name, findQuery);
-                            unresolvedDataSourceNames.remove(name);
+                            unresolvedDatasetNames.remove(name);
                         }
                     } catch (NoValuePresentException ex) {
                         if (ex.getPlaceholders().isEmpty()) {
-                            ex.getDataSourceNames().stream()
+                            ex.getDatasetNames().stream()
                                 .filter(s -> !namedQueries.containsKey(s))
-                                .forEach(unresolvedDataSourceNames::add);
+                                .forEach(unresolvedDatasetNames::add);
                         } else {
                             unresolvedPlaceholders.addAll(ex.getPlaceholders());
-                            putDataSource(name, null);
+                            putDataset(name, null);
                         }
                     }
                 });
@@ -254,14 +343,14 @@ public class Jossons {
                             JsonNode node = evaluateQuery(findQuery);
                             if (node == null) {
                                 unresolvedPlaceholders.add(name);
-                                putDataSource(name, null);
+                                putDataset(name, null);
                             } else {
-                                putDataSource(name, Josson.create(node));
-                                unresolvedDataSourceNames.remove(name);
+                                putDataset(name, Josson.create(node));
+                                unresolvedDatasetNames.remove(name);
                                 progress.addStep("Resolved " + name + " = " + showProgressResolvedValue(node));
                             }
-                        } catch (UnresolvedDataSourceException ex) {
-                            unresolvedDataSourceNames.add(ex.getDataSourceName());
+                        } catch (UnresolvedDatasetException ex) {
+                            unresolvedDatasetNames.add(ex.getDatasetName());
                         }
                     });
                 }
@@ -286,45 +375,33 @@ public class Jossons {
                                                    BiFunction<String, String, Josson> dataFinder,
                                                    ResolverProgress progress) {
         JsonNode result = null;
-        while (true) {
-            progress.nextRound();
+        for (;;progress.nextRound()) {
             try {
                 result = evaluateQuery(query);
                 break;
-            } catch (UnresolvedDataSourceException e) {
-                String name = e.getDataSourceName();
+            } catch (UnresolvedDatasetException e) {
+                String name = e.getDatasetName();
                 progress.addStep("Unresolved " + name);
                 String findQuery = dictionaryFinder.apply(name);
                 if (findQuery == null) {
-                    putDataSource(name, null);
+                    putDataset(name, null);
                     break;
                 }
                 try {
                     findQuery = fillInPlaceholderWithResolver(
                         findQuery, dictionaryFinder, dataFinder, false, progress);
-                    Matcher m = IS_DB_QUERY.matcher(findQuery);
-                    if (m.find()) {
-                        String collectionName = m.group(1).trim();
-                        if (collectionName.isEmpty()) {
-                            collectionName = name;
-                        }
-                        if (m.group(2) != null) {
-                            collectionName += "[]";
-                        }
-                        progress.addStep("Resolving " + name + " from DB query " + findQuery);
-                        putDataSource(name, dataFinder.apply(collectionName, m.group(3)));
-                    } else {
+                    if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
                         progress.addStep("Resolving " + name + " from " + findQuery);
                         JsonNode node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
                         if (node == null) {
-                            putDataSource(name, null);
+                            putDataset(name, null);
                             break;
                         }
-                        putDataSource(name, Josson.create(node));
+                        putDataset(name, Josson.create(node));
                         progress.addStep("Resolved " + name + " = " + showProgressResolvedValue(node));
                     }
                 } catch (NoValuePresentException ex) {
-                    putDataSource(name, null);
+                    putDataset(name, null);
                     break;
                 }
             }
@@ -332,7 +409,7 @@ public class Jossons {
         return result;
     }
 
-    public JsonNode evaluateQuery(String query) throws UnresolvedDataSourceException {
+    public JsonNode evaluateQuery(String query) throws UnresolvedDatasetException {
         JsonNode node = null;
         String ifTrueValue = null;
         Matcher m = DECOMPOSE_IIF_ELSE.matcher(query);
@@ -371,7 +448,7 @@ public class Jossons {
         return node;
     }
 
-    public JsonNode evaluateStatement(String statement) throws UnresolvedDataSourceException {
+    public JsonNode evaluateStatement(String statement) throws UnresolvedDatasetException {
         statement = statement.trim();
         if (StringUtils.isEmpty(statement)) {
             return null;
@@ -506,7 +583,7 @@ public class Jossons {
         return node;
     }
 
-    private JsonNode evaluateExpression(String expression) throws UnresolvedDataSourceException {
+    private JsonNode evaluateExpression(String expression) throws UnresolvedDatasetException {
         if (expression.equalsIgnoreCase("true")) {
             return BooleanNode.TRUE;
         }
@@ -527,8 +604,8 @@ public class Jossons {
         } catch (NumberFormatException e) {
             // continue
         }
-        if (dataSources.containsKey(expression)) {
-            Josson josson = dataSources.get(expression);
+        if (datasets.containsKey(expression)) {
+            Josson josson = datasets.get(expression);
             if (josson == null) {
                 return null;
             }
@@ -536,33 +613,33 @@ public class Jossons {
         }
         Matcher m = IS_JSON_QUERY.matcher(expression);
         if (!m.find()) {
-            throw new UnresolvedDataSourceException(expression);
+            throw new UnresolvedDatasetException(expression);
         }
         // Search document from cache
         String key = m.group(1).trim();
-        if (!dataSources.containsKey(key)) {
-            throw new UnresolvedDataSourceException(key);
+        if (!datasets.containsKey(key)) {
+            throw new UnresolvedDatasetException(key);
         }
-        Josson josson = dataSources.get(key);
+        Josson josson = datasets.get(key);
         if (josson == null) {
             return null;
         }
         JsonNode node = josson.getNode(m.group(2));
-        dataSources.put(expression, node == null ? null : Josson.create(node));
+        datasets.put(expression, node == null ? null : Josson.create(node));
         return node;
     }
 
-    public String evaluateExpressionForText(String expression) throws UnresolvedDataSourceException {
+    public String evaluateExpressionForText(String expression) throws UnresolvedDatasetException {
         JsonNode node = evaluateExpression(expression.trim());
         return node == null ? null : node.textValue();
     }
 
-    public Number evaluateExpressionForNumber(String expression) throws UnresolvedDataSourceException {
+    public Number evaluateExpressionForNumber(String expression) throws UnresolvedDatasetException {
         JsonNode node = evaluateExpression(expression.trim());
         return node == null ? null : node.numberValue();
     }
 
-    public Boolean evaluateExpressionForBoolean(String expression) throws UnresolvedDataSourceException {
+    public Boolean evaluateExpressionForBoolean(String expression) throws UnresolvedDatasetException {
         JsonNode node = evaluateExpression(expression.trim());
         return node == null ? null : node.booleanValue();
     }
