@@ -325,17 +325,9 @@ public class JossonCore {
                                 getNode(arrayNode, expression.substring(1)) :
                                 getNode(arrayNode.get(i), expression);
                 if (valueNode == null) {
-                    if (compareToNode != null && compareToNode.isNull()) {
-                        valueNode = BooleanNode.valueOf(operator.equals("="));
-                        continue;
-                    }
                     valueNode = NullNode.getInstance();
                 }
                 if (compareToNode == null) {
-                    if (valueNode != null && valueNode.isNull()) {
-                        valueNode = BooleanNode.valueOf(operator.equals("="));
-                        continue;
-                    }
                     compareToNode = NullNode.getInstance();
                 }
                 if (compareToNode.isTextual()) {
@@ -383,7 +375,7 @@ public class JossonCore {
                             break;
                     }
                 }
-                if (compareToNode.isNumber()) {
+                if (!valueNode.isContainerNode() && compareToNode.isNumber()) {
                     try {
                         double value = valueNode.isNumber() ? valueNode.asDouble() : Double.parseDouble(valueNode.asText());
                         switch (operator) {
@@ -411,7 +403,7 @@ public class JossonCore {
                     } catch (NumberFormatException e) {
                         valueNode = BooleanNode.FALSE;
                     }
-                } else if (compareToNode.isBoolean()) {
+                } else if (!valueNode.isContainerNode() && compareToNode.isBoolean()) {
                     switch (operator) {
                         case "=":
                             valueNode = BooleanNode.valueOf(!valueNode.asBoolean() ^ compareToNode.asBoolean());
@@ -419,22 +411,32 @@ public class JossonCore {
                         case "!=":
                             valueNode = BooleanNode.valueOf(valueNode.asBoolean() ^ compareToNode.asBoolean());
                             break;
-                        default:
-                            return null;
-                    }
-                } else if (compareToNode.isNull()) {
-                    switch (operator) {
-                        case "=":
-                            valueNode = BooleanNode.valueOf(valueNode.isNull());
-                            break;
-                        case "!=":
-                            valueNode = BooleanNode.valueOf(!valueNode.isNull());
+                        case ">":
+                        case ">=":
+                        case "<":
+                        case "<=":
+                            valueNode = BooleanNode.FALSE;
                             break;
                         default:
-                            return null;
+                            throw new IllegalArgumentException(statement);
                     }
                 } else {
-                    return null;
+                    switch (operator) {
+                        case "=":
+                            valueNode = BooleanNode.valueOf(valueNode.isNull() && compareToNode.isNull());
+                            break;
+                        case "!=":
+                            valueNode = BooleanNode.valueOf(valueNode.isNull() ^ compareToNode.isNull());
+                            break;
+                        case ">":
+                        case ">=":
+                        case "<":
+                        case "<=":
+                            valueNode = BooleanNode.FALSE;
+                            break;
+                        default:
+                            throw new IllegalArgumentException(statement);
+                    }
                 }
             }
             if (valueNode != null && valueNode.asBoolean()) {
