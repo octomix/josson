@@ -1,4 +1,4 @@
-package com.octomix.josson.core;
+package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
@@ -11,15 +11,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import static com.octomix.josson.core.GetFuncParam.getParamStartEndStep;
-import static com.octomix.josson.core.JossonCore.*;
-import static com.octomix.josson.core.JossonCore.getNode;
+import static com.octomix.josson.GetFuncParam.*;
+import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.Josson.getNode;
 
-public class FuncArray {
+class FuncArray {
     static JsonNode funcDistinct(JsonNode node, String params) {
-        if (!StringUtils.isBlank(params)) {
-            throw new UnsupportedOperationException("Not accept function argument");
-        }
+        getParamNotAccept(params);
         if (!node.isArray()) {
             return node;
         }
@@ -43,10 +41,56 @@ public class FuncArray {
         return array;
     }
 
-    static JsonNode funcReverse(JsonNode node, String params) {
-        if (!StringUtils.isBlank(params)) {
-            throw new UnsupportedOperationException("Not accept function argument");
+    static JsonNode funcMaxMin(JsonNode node, String params, boolean isMax, int nullPriority) {
+        String path = null;
+        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
+        if (m.find()) {
+            path = m.group(0);
+            getParamNoMore(m);
         }
+        if (!node.isArray()) {
+            return node;
+        }
+        int foundIndex = -1;
+        Double maxDouble = null;
+        String maxMinString = null;
+        for (int i = 0; i < node.size(); i++) {
+            JsonNode value = getNode(node.get(i), path);
+            if (value == null || value.isNull()) {
+                if (nullPriority > 0) {
+                    return value;
+                }
+                if (nullPriority < 0 && foundIndex < 0) {
+                    foundIndex = i;
+                }
+                continue;
+            }
+            if (value.isContainerNode()) {
+                continue;
+            }
+            if (maxDouble != null || value.isNumber()) {
+                if (value.isNumber()) {
+                    double asDouble = value.asDouble();
+                    if (maxDouble == null || asDouble > maxDouble) {
+                        maxDouble = isMax ? asDouble : -asDouble;
+                        foundIndex = i;
+                    }
+                }
+            } else {
+                String asText = value.asText();
+                if (maxMinString == null
+                    || (isMax && asText.compareTo(maxMinString) > 0)
+                    || (!isMax && asText.compareTo(maxMinString) < 0)) {
+                    maxMinString = asText;
+                    foundIndex = i;
+                }
+            }
+        }
+        return foundIndex >= 0 ? node.get(foundIndex) : null;
+    }
+
+    static JsonNode funcReverse(JsonNode node, String params) {
+        getParamNotAccept(params);
         if (node.isTextual()) {
             StringBuilder sb = new StringBuilder(node.asText());
             return TextNode.valueOf(sb.reverse().toString());
@@ -63,12 +107,9 @@ public class FuncArray {
     }
 
     static JsonNode funcSlice(JsonNode node, String params) {
+        ImmutableTriple<Integer, Integer, Integer> startEndStep = getParamStartEndStep(params);
         if (!node.isArray()) {
             return node;
-        }
-        ImmutableTriple<Integer, Integer, Integer> startEndStep = getParamStartEndStep(params);
-        if (startEndStep == null) {
-            throw new UnsupportedOperationException("Missing function argument");
         }
         int start = startEndStep.left >= 0 ? startEndStep.left : node.size() + startEndStep.left;
         int end = startEndStep.middle < node.size() ? startEndStep.middle : node.size();
@@ -87,9 +128,6 @@ public class FuncArray {
     }
 
     static JsonNode funcSort(JsonNode node, String params) {
-        if (!node.isArray()) {
-            return node;
-        }
         Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
         String param = null;
         double ordering = 1;
@@ -103,6 +141,10 @@ public class FuncArray {
                     ordering = Double.parseDouble(m.group(0).trim());
                 }
             }
+            getParamNoMore(m);
+        }
+        if (!node.isArray()) {
+            return node;
         }
         String path = param;
         boolean asc = ordering >= 0;

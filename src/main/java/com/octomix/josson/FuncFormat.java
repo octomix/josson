@@ -1,4 +1,4 @@
-package com.octomix.josson.core;
+package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -8,10 +8,10 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import static com.octomix.josson.core.GetFuncParam.getParamStringLiteral;
-import static com.octomix.josson.core.JossonCore.MAPPER;
+import static com.octomix.josson.GetFuncParam.getParamStringLiteral;
+import static com.octomix.josson.JossonCore.MAPPER;
 
-public class FuncFormat {
+class FuncFormat {
     static JsonNode funcFormatDate(JsonNode node, String params) {
         String pattern = getParamStringLiteral(params);
         if (node.isArray()) {

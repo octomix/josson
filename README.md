@@ -1,3 +1,3 @@
 # Josson & Jossons
-Josson is a query language for JSON.
-Jossons manipulate multiple Josson objects and can fill text placeholders in document.
+- _Josson_ is a query language for JSON.
+- _Jossons_ is a template engine to generate text output.

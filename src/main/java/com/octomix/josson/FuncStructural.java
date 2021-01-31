@@ -1,22 +1,21 @@
-package com.octomix.josson.core;
+package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.octomix.josson.core.GetFuncParam.*;
-import static com.octomix.josson.core.JossonCore.*;
+import static com.octomix.josson.GetFuncParam.*;
+import static com.octomix.josson.Josson.getNode;
+import static com.octomix.josson.Josson.readJsonNode;
+import static com.octomix.josson.JossonCore.*;
 
-public class FuncStructural {
+class FuncStructural {
 
     static IntNode funcLength(JsonNode node, String params) {
-        if (!StringUtils.isBlank(params)) {
-            throw new UnsupportedOperationException("Not accept function argument");
-        }
+        getParamNotAccept(params);
         if (node.isContainerNode()) {
             return new IntNode(node.size());
         }
@@ -27,13 +26,16 @@ public class FuncStructural {
     }
 
     static JsonNode funcMap(JsonNode node, String params) {
-        List<ImmutablePair<String, String>> elements = getParamNamePath(params);
+        List<ImmutablePair<String, String>> args = getParamNamePath(params);
+        if (args.isEmpty()) {
+            getParamThrowMissing();
+        }
         if (!node.isArray()) {
-            return funcMapElement(node, elements, 0);
+            return funcMapElement(node, args, 1);
         }
         ArrayNode array = MAPPER.createArrayNode();
         for (int i  = 0; i < node.size(); i++) {
-            ObjectNode objNode = funcMapElement(node.get(i), elements, array.size() + 1);
+            ObjectNode objNode = funcMapElement(node.get(i), args, array.size() + 1);
             if (!objNode.isEmpty()) {
                 array.add(objNode);
             }
@@ -41,17 +43,17 @@ public class FuncStructural {
         return array;
     }
 
-    private static ObjectNode funcMapElement(JsonNode node, List<ImmutablePair<String, String>> elements, int index) {
+    private static ObjectNode funcMapElement(JsonNode node, List<ImmutablePair<String, String>> args, int index) {
         ObjectNode objNode = MAPPER.createObjectNode();
-        for (ImmutablePair<String, String> element : elements) {
-            String name = element.left;
+        for (ImmutablePair<String, String> arg : args) {
+            String name = arg.left;
             if ("?".equals(name)) {
                 if (node.isObject()) {
                     objNode.setAll((ObjectNode) node);
                 }
                 continue;
             }
-            String path = element.right;
+            String path = arg.right;
             if (path == null) {
                 objNode.putNull(name);
             } else if ("#".equals(path)) {
@@ -66,9 +68,7 @@ public class FuncStructural {
     }
 
     static IntNode funcSize(JsonNode node, String params) {
-        if (!StringUtils.isBlank(params)) {
-            throw new UnsupportedOperationException("Not accept function argument");
-        }
+        getParamNotAccept(params);
         if (node.isContainerNode()) {
             AtomicInteger count = new AtomicInteger(0);
             node.forEach(element -> {

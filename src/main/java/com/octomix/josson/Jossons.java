@@ -3,7 +3,6 @@ package com.octomix.josson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import com.octomix.josson.core.JossonCore;
 import com.octomix.josson.exception.NoValuePresentException;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 import org.apache.commons.lang3.StringUtils;
@@ -14,8 +13,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.octomix.josson.JossonsUtil.*;
-import static com.octomix.josson.ResolverProgress.ShowResolvedValueMode;
+import static com.octomix.josson.JossonCore.*;
+
 import static org.apache.commons.text.StringEscapeUtils.unescapeXml;
 
 public class Jossons {
@@ -25,13 +24,11 @@ public class Jossons {
     private static final Pattern IS_DB_QUERY = Pattern.compile(
         "^([^\\[?]*)(\\[\\s*])?\\s*\\?\\s*(\\{.*})\\s*$", Pattern.DOTALL);
     private static final Pattern IS_JOIN_OPERATION = Pattern.compile(
-            "(.+)\\{([^}]*)}\\s*$", Pattern.DOTALL);
-    private static final Pattern IS_JSON_QUERY = Pattern.compile(
-        "^([^-<\\[]*)->(.*)", Pattern.DOTALL);
+        "(.+)\\{([^}]*)}\\s*$", Pattern.DOTALL);
     private static final Pattern DECOMPOSE_IIF_ELSE = Pattern.compile(
         "(?<=^|:)((?:[^?:(']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\2)(.*\\)(?!.*\\3).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\3)(.*)).)+?.*?(?=\\2)(?>'.*?'|[^(])*(?=\\3$)))+)(?:\\?((?:[^:(']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\5)(.*\\)(?!.*\\6).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^(])*(?=\\6$)))+)?\\s*)?(?=:|$)", Pattern.DOTALL);
     private static final Pattern DECOMPOSE_CONDITIONS = Pattern.compile(
-        "\\s*([=!<>&]*)([^=!<>&(\\[']*(?:->)?\\s*(?:[^=!<>&(\\[']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\3)(.*\\)(?!.*\\4).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^(])*(?=\\4$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\5)(.*](?!.*\\6).*))(?=(?>'.*?'|.)*?](?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^\\[])*(?=\\6$)))+)", Pattern.DOTALL);
+        "([=!<>&|]*)\\s*(\\(|\\)|[^=!<>&|()\\[']*(?:->)?\\s*(?:[^=!<>&|()\\[']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\3)(.*\\)(?!.*\\4).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^(])*(?=\\4$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\5)(.*](?!.*\\6).*))(?=(?>'.*?'|.)*?](?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^\\[])*(?=\\6$)))+)\\s*", Pattern.DOTALL);
 
     private final Map<String, Josson> datasets = new HashMap<>();
     private ShowResolvedValueMode showResolvedValueMode = ShowResolvedValueMode.VALUE_NODE_ONLY;
@@ -49,7 +46,7 @@ public class Jossons {
     }
 
     public static Jossons fromJsonString(String json) throws JsonProcessingException {
-        return create(JossonCore.readJsonNode(json));
+        return create(Josson.readJsonNode(json));
     }
 
     public static Jossons fromMap(Map<String, String> textParams) {
@@ -419,17 +416,7 @@ public class Jossons {
                 return null;
             }
             ifTrueValue = m.group(4);
-            if (StringUtils.isBlank(ifTrueValue)) {
-                if (statement.charAt(0) == '\'') {
-                    return TextNode.valueOf(unquoteString(statement));
-                }
-                try {
-                    return new DoubleNode(Double.parseDouble(statement));
-                } catch (NumberFormatException e) {
-                    // continue
-                }
-            }
-            node = evaluateStatement(statement);
+            node = evaluateStatement(m.group(1));
             if (node != null) {
                 if (StringUtils.isBlank(ifTrueValue)) {
                     if (node.isTextual() && node.textValue().isEmpty()) {
@@ -450,207 +437,38 @@ public class Jossons {
 
     public JsonNode evaluateStatement(String statement) throws UnresolvedDatasetException {
         statement = statement.trim();
-        if (StringUtils.isEmpty(statement)) {
-            return null;
-        }
-        if (statement.charAt(0) == '\'') {
-            return TextNode.valueOf(unquoteString(statement));
-        }
-        JsonNode node = null;
-        Matcher m = DECOMPOSE_CONDITIONS.matcher(statement);
-        while (m.find()) {
-            String expression = m.group(2).trim();
-            if (expression.isEmpty()) {
-                return null;
-            }
-            String operator = m.group(1);
-            switch (operator) {
-                case "&":
-                    if (node != null && !node.asBoolean()) {
-                        return BooleanNode.FALSE;
-                    }
-                    // fallthrough
-                case "":
-                    node = evaluateExpression(expression);
-                    continue;
-            }
-            JsonNode compareToNode = evaluateExpression(expression);
-            if (node == null) {
-                node = NullNode.getInstance();
-            }
-            if (compareToNode == null) {
-                compareToNode = NullNode.getInstance();
-            }
-            if (compareToNode.isTextual()) {
-                if (node.isTextual()) {
-                    int compareResult = node.asText().compareTo(compareToNode.asText());
-                    switch (operator) {
-                        case "=":
-                            node = BooleanNode.valueOf(compareResult == 0);
-                            break;
-                        case "!=":
-                            node = BooleanNode.valueOf(compareResult != 0);
-                            break;
-                        case ">":
-                            node = BooleanNode.valueOf(compareResult > 0);
-                            break;
-                        case ">=":
-                            node = BooleanNode.valueOf(compareResult >= 0);
-                            break;
-                        case "<":
-                            node = BooleanNode.valueOf(compareResult < 0);
-                            break;
-                        case "<=":
-                            node = BooleanNode.valueOf(compareResult <= 0);
-                            break;
-                        default:
-                            return null;
-                    }
-                    continue;
-                }
-                JsonNode swap = node;
-                node = compareToNode;
-                compareToNode = swap;
-                switch (operator) {
-                    case ">":
-                        operator = "<";
-                        break;
-                    case ">=":
-                        operator = "<=";
-                        break;
-                    case "<":
-                        operator = ">";
-                        break;
-                    case "<=":
-                        operator = ">=";
-                        break;
-                }
-            }
-            if (!node.isContainerNode() && compareToNode.isNumber()) {
-                try {
-                    double value = node.isNumber() ? node.asDouble() : Double.parseDouble(node.asText());
-                    switch (operator) {
-                        case "=":
-                            node = BooleanNode.valueOf(value == compareToNode.asDouble());
-                            break;
-                        case "!=":
-                            node = BooleanNode.valueOf(value != compareToNode.asDouble());
-                            break;
-                        case ">":
-                            node = BooleanNode.valueOf(value > compareToNode.asDouble());
-                            break;
-                        case ">=":
-                            node = BooleanNode.valueOf(value >= compareToNode.asDouble());
-                            break;
-                        case "<":
-                            node = BooleanNode.valueOf(value < compareToNode.asDouble());
-                            break;
-                        case "<=":
-                            node = BooleanNode.valueOf(value <= compareToNode.asDouble());
-                            break;
-                        default:
-                            return null;
-                    }
-                } catch (NumberFormatException e) {
-                    node = BooleanNode.FALSE;
-                }
-            } else if (!node.isContainerNode() && compareToNode.isBoolean()) {
-                switch (operator) {
-                    case "=":
-                        node = BooleanNode.valueOf(!node.asBoolean() ^ compareToNode.asBoolean());
-                        break;
-                    case "!=":
-                        node = BooleanNode.valueOf(node.asBoolean() ^ compareToNode.asBoolean());
-                        break;
-                    case ">":
-                    case ">=":
-                    case "<":
-                    case "<=":
-                        node = BooleanNode.FALSE;
-                        break;
-                    default:
-                        return null;
-                }
-            } else {
-                switch (operator) {
-                    case "=":
-                        node = BooleanNode.valueOf(node.isNull() && compareToNode.isNull());
-                        break;
-                    case "!=":
-                        node = BooleanNode.valueOf(node.isNull() ^ compareToNode.isNull());
-                        break;
-                    case ">":
-                    case ">=":
-                    case "<":
-                    case "<=":
-                        node = BooleanNode.FALSE;
-                        break;
-                    default:
-                        return null;
-                }
-            }
-        }
-        return node;
-    }
-
-    private JsonNode evaluateExpression(String expression) throws UnresolvedDatasetException {
-        if (expression.equalsIgnoreCase("true")) {
-            return BooleanNode.TRUE;
-        }
-        if (expression.equalsIgnoreCase("false")) {
-            return BooleanNode.FALSE;
-        }
-        if (expression.equalsIgnoreCase("null")) {
-            return NullNode.instance;
-        }
-        if (expression.charAt(0) == '\'') {
-            if (expression.charAt(expression.length() - 1) == '\'') {
-                return TextNode.valueOf(unquoteString(expression));
-            }
-            return null;
-        }
         try {
-            return new DoubleNode(Double.parseDouble(expression));
+            return toValueNode(statement);
         } catch (NumberFormatException e) {
             // continue
         }
-        if (datasets.containsKey(expression)) {
-            Josson josson = datasets.get(expression);
-            if (josson == null) {
-                return null;
+        LogicalOpStack opStack = new LogicalOpStack(datasets);
+        Matcher m = DECOMPOSE_CONDITIONS.matcher(statement);
+        while (m.find()) {
+            try {
+                opStack.evaluate(m.group(1), m.group(2).trim());
+            } catch (IllegalArgumentException e) {
+                if (e.getMessage() == null) {
+                    throw new IllegalArgumentException(statement);
+                }
+                throw new IllegalArgumentException("\"" + e.getMessage() + "\" in " + statement);
             }
-            return josson.getJsonNode();
         }
-        Matcher m = IS_JSON_QUERY.matcher(expression);
-        if (!m.find()) {
-            throw new UnresolvedDatasetException(expression);
-        }
-        // Search document from cache
-        String key = m.group(1).trim();
-        if (!datasets.containsKey(key)) {
-            throw new UnresolvedDatasetException(key);
-        }
-        Josson josson = datasets.get(key);
-        if (josson == null) {
-            return null;
-        }
-        JsonNode node = josson.getNode(m.group(2));
-        datasets.put(expression, node == null ? null : Josson.create(node));
-        return node;
+        return opStack.finalResult();
     }
 
     public String evaluateExpressionForText(String expression) throws UnresolvedDatasetException {
-        JsonNode node = evaluateExpression(expression.trim());
+        JsonNode node = evaluateExpression(expression.trim(), datasets);
         return node == null ? null : node.textValue();
     }
 
     public Number evaluateExpressionForNumber(String expression) throws UnresolvedDatasetException {
-        JsonNode node = evaluateExpression(expression.trim());
+        JsonNode node = evaluateExpression(expression.trim(), datasets);
         return node == null ? null : node.numberValue();
     }
 
     public Boolean evaluateExpressionForBoolean(String expression) throws UnresolvedDatasetException {
-        JsonNode node = evaluateExpression(expression.trim());
+        JsonNode node = evaluateExpression(expression.trim(), datasets);
         return node == null ? null : node.booleanValue();
     }
 }

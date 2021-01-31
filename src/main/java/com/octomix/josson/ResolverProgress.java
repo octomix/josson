@@ -8,11 +8,6 @@ public class ResolverProgress {
     private int round = 1;
     private final List<String> steps = new ArrayList<>();
 
-    public enum ShowResolvedValueMode {
-        VALUE_NODE_ONLY,
-        ALL_NODES
-    }
-
     public ResolverProgress() {
     }
 

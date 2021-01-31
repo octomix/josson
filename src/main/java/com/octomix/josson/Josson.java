@@ -1,29 +1,37 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import com.octomix.josson.core.JossonCore;
+import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+
+import static com.octomix.josson.JossonCore.*;
 
 public class Josson {
 
-    private JsonNode jsonNode;
+    private JsonNode node;
 
-    private Josson(JsonNode jsonNode) {
-        this.jsonNode = jsonNode;
+    private Josson(JsonNode node) {
+        this.node = node;
     }
 
     public static Josson create() {
-        return new Josson(JossonCore.createObjectNode());
+        return new Josson(createObjectNode());
     }
 
     public static Josson createArray() {
-        return new Josson(JossonCore.createArrayNode());
+        return new Josson(createArrayNode());
     }
 
     public static Josson create(JsonNode node) throws IllegalArgumentException {
@@ -37,14 +45,14 @@ public class Josson {
         if (object == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
-        return new Josson(JossonCore.readJsonNode(object));
+        return new Josson(readJsonNode(object));
     }
 
     public static Josson fromJsonString(String json) throws IllegalArgumentException, JsonProcessingException {
         if (json == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
-        return new Josson(JossonCore.readJsonNode(json));
+        return new Josson(readJsonNode(json));
     }
 
     public static Josson fromText(String v) {
@@ -63,82 +71,86 @@ public class Josson {
         return new Josson(BooleanNode.valueOf(b));
     }
 
-    public JsonNode getJsonNode() {
-        return jsonNode;
-    }
-
-    public void setJsonNode(JsonNode jsonNode) throws IllegalArgumentException {
-        if (jsonNode == null) {
+    public void setNode(JsonNode node) throws IllegalArgumentException {
+        if (node == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
-        this.jsonNode = jsonNode;
+        this.node = node;
     }
 
     public void setJsonString(String json) throws IllegalArgumentException, JsonProcessingException {
         if (json == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
-        jsonNode = JossonCore.readJsonNode(json);
+        node = readJsonNode(json);
     }
 
     public <T> T convertValue() {
-        return JossonCore.convertValue(jsonNode);
+        return convertValue(node);
     }
 
     public <E extends Enum<E>> Josson put(String key, Enum<E> value) {
-        ((ObjectNode) jsonNode).put(key, value == null ? null : value.name());
+        ((ObjectNode) node).put(key, value == null ? null : value.name());
         return this;
     }
 
     public Josson put(String key, String value) {
-        ((ObjectNode) jsonNode).put(key, value);
+        ((ObjectNode) node).put(key, value);
         return this;
     }
 
     public Josson put(String key, Long value) {
-        ((ObjectNode) jsonNode).put(key, value);
+        ((ObjectNode) node).put(key, value);
         return this;
     }
 
     public Josson put(String key, Integer value) {
-        ((ObjectNode) jsonNode).put(key, value);
+        ((ObjectNode) node).put(key, value);
         return this;
     }
 
     public Josson put(String key, Double value) {
-        ((ObjectNode) jsonNode).put(key, value);
+        ((ObjectNode) node).put(key, value);
         return this;
     }
 
     public Josson put(String key, Boolean value) {
-        ((ObjectNode) jsonNode).put(key, value);
+        ((ObjectNode) node).put(key, value);
         return this;
     }
 
     public Josson put(String key, LocalDateTime value) {
-        ((ObjectNode) jsonNode).put(key, value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        ((ObjectNode) node).put(key, value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return this;
     }
 
     public Josson put(String key, JsonNode value) {
-        ((ObjectNode) jsonNode).putPOJO(key, value);
+        ((ObjectNode) node).putPOJO(key, value);
         return this;
     }
 
     public String jsonString() {
-        return jsonNode.toString();
+        return node.toString();
     }
 
     public String jsonPretty() {
-        return jsonNode.toPrettyString();
+        return node.toPrettyString();
+    }
+
+    public JsonNode getNode() {
+        return node;
+    }
+
+    public JsonNode getNode(int index) {
+        return node.isArray() ? node.get(index) : null;
     }
 
     public JsonNode getNode(String path) {
-        return JossonCore.getNode(jsonNode, path);
+        return getNode(node, path);
     }
 
     public JsonNode getNode(int index, String path) {
-        return jsonNode.isArray() ? JossonCore.getNode(jsonNode.get(index), path) : null;
+        return node.isArray() ? getNode(node.get(index), path) : null;
     }
 
     public ArrayNode getArrayNode(String path) {
@@ -147,7 +159,7 @@ public class Josson {
     }
 
     public int getArraySize() {
-        return jsonNode.isArray() ? jsonNode.size() : -1;
+        return node.isArray() ? node.size() : -1;
     }
 
     public int getArraySize(String path) {
@@ -241,5 +253,91 @@ public class Josson {
 
     public OffsetDateTime getRequiredOffsetDateTime(String path) throws Exception {
         return OffsetDateTime.parse(getRequiredValueNode(path).asText());
+    }
+
+    public static ObjectNode createObjectNode() {
+        return MAPPER.createObjectNode();
+    }
+
+    public static ArrayNode createArrayNode() {
+        return MAPPER.createArrayNode();
+    }
+
+    public static JsonNode readJsonNode(Object object) {
+        return MAPPER.valueToTree(object);
+    }
+
+    public static ObjectNode readObjectNode(Object object) {
+        JsonNode node = MAPPER.valueToTree(object);
+        if (node.isObject()) {
+            return (ObjectNode) node;
+        }
+        throw new IllegalArgumentException("The provided object is not an object node");
+    }
+
+    public static ArrayNode readArrayNode(Object object) {
+        JsonNode node = MAPPER.valueToTree(object);
+        if (node.isArray()) {
+            return (ArrayNode) node;
+        }
+        throw new IllegalArgumentException("The provided object is not an array node");
+    }
+
+    public static JsonNode readJsonNode(String json) throws JsonProcessingException {
+        if (json == null) {
+            return null;
+        }
+        return MAPPER.readTree(json);
+    }
+
+    public static <T> T readValue(String json, Class<T> valueType) throws JsonProcessingException {
+        return MAPPER.readValue(json, valueType);
+    }
+
+    public static <T> T readValue(File file, Class<T> valueType) throws IOException {
+        return MAPPER.readValue(file, valueType);
+    }
+
+    public static <T> T convertValue(JsonNode node) {
+        return MAPPER.convertValue(node, new TypeReference<T>(){});
+    }
+
+    public static String toJsonString(Object object) {
+        try {
+            return MAPPER.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            return MAPPER.valueToTree(object).toString();
+        }
+    }
+
+    public static String toJsonPretty(Object object) {
+        try {
+            return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            return MAPPER.valueToTree(object).toPrettyString();
+        }
+    }
+
+    public static JsonNode getNode(JsonNode node, String path) {
+        if (StringUtils.isBlank(path)) {
+            return node;
+        }
+        List<String> keys = new ArrayList<>();
+        Matcher m = DECOMPOSE_PATH.matcher(path);
+        while (m.find()) {
+            if (!StringUtils.isBlank(m.group(0))) {
+                keys.add(m.group(0));
+            }
+        }
+        if (keys.isEmpty()) {
+            return node;
+        }
+        try {
+            node = toValueNode(keys.get(0).trim());
+            keys.remove(0);
+        } catch (NumberFormatException e) {
+            // continue
+        }
+        return getNodeByKeys(node, keys);
     }
 }
