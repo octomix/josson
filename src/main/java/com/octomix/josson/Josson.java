@@ -12,11 +12,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 public class Josson {
 
@@ -322,18 +321,12 @@ public class Josson {
         if (StringUtils.isBlank(path)) {
             return node;
         }
-        List<String> keys = new ArrayList<>();
-        Matcher m = DECOMPOSE_PATH.matcher(path);
-        while (m.find()) {
-            if (!StringUtils.isBlank(m.group(0))) {
-                keys.add(m.group(0));
-            }
-        }
+        List<String> keys = decomposePaths(path);
         if (keys.isEmpty()) {
             return node;
         }
         try {
-            node = toValueNode(keys.get(0).trim());
+            node = toValueNode(keys.get(0));
             keys.remove(0);
         } catch (NumberFormatException e) {
             // continue

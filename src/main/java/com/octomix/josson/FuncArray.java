@@ -9,11 +9,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
 
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Josson.getNode;
+import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncArray {
     static JsonNode funcDistinct(JsonNode node, String params) {
@@ -42,15 +42,11 @@ class FuncArray {
     }
 
     static JsonNode funcMaxMin(JsonNode node, String params, boolean isMax, int nullPriority) {
-        String path = null;
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        if (m.find()) {
-            path = m.group(0);
-            getParamNoMore(m);
-        }
+        List<String> paramList = decomposeFunctionParameters(params, 0, 1);
         if (!node.isArray()) {
             return node;
         }
+        String path = paramList.size() > 0 ? paramList.get(0) : null;
         int foundIndex = -1;
         Double maxDouble = null;
         String maxMinString = null;
@@ -111,16 +107,19 @@ class FuncArray {
         if (!node.isArray()) {
             return node;
         }
-        int start = startEndStep.left >= 0 ? startEndStep.left : node.size() + startEndStep.left;
-        int end = startEndStep.middle < node.size() ? startEndStep.middle : node.size();
-        int step = startEndStep.right;
+        int size = node.size();
+        int start = startEndStep.left >= 0 ? startEndStep.left : size + startEndStep.left;
+        start = start < 0 ? 0 : Math.min(start, size);
+        int end = startEndStep.middle >= 0 ? startEndStep.middle : size + startEndStep.middle;
+        end = end < 0 ? 0 : Math.min(end, size);
+        int step = startEndStep.right == 0 ? 1 : Math.abs(startEndStep.right);
         ArrayNode array = MAPPER.createArrayNode();
-        if (step > 0) {
+        if (start <= end) {
             for (int i = start; i < end; i += step) {
                 array.add(node.get(i));
             }
         } else {
-            for (int i = end - 1; i >= start; i += step) {
+            for (int i = start; i > end; i -= step) {
                 array.add(node.get(i));
             }
         }
@@ -128,23 +127,25 @@ class FuncArray {
     }
 
     static JsonNode funcSort(JsonNode node, String params) {
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
+        List<String> paramList = decomposeFunctionParameters(params, 0, 2);
+        if (!node.isArray()) {
+            return node;
+        }
         String param = null;
         double ordering = 1;
-        if (m.find()) {
-            param = m.group(0).trim();
+        if (paramList.size() > 0) {
+            param = paramList.get(0);
             try {
                 ordering = Double.parseDouble(param);
                 param = null;
+                if (paramList.size() > 1) {
+                    throw new IllegalArgumentException("Too many function arguments: " + params);
+                }
             } catch (NumberFormatException e) {
-                if (m.find() && !StringUtils.isBlank(m.group(0))) {
-                    ordering = Double.parseDouble(m.group(0).trim());
+                if (paramList.size() > 1) {
+                    ordering = Double.parseDouble(paramList.get(1));
                 }
             }
-            getParamNoMore(m);
-        }
-        if (!node.isArray()) {
-            return node;
         }
         String path = param;
         boolean asc = ordering >= 0;

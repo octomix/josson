@@ -8,26 +8,12 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static com.octomix.josson.PatternMatcher.*;
 
 class JossonCore {
 
     static final Mapper MAPPER = new Mapper();
-    static final Pattern IS_JSON_QUERY = Pattern.compile(
-        "^([^-<\\[]*)->(.*)", Pattern.DOTALL);
-    static final Pattern IS_ARRAY_NODE_QUERY = Pattern.compile(
-        "^([^\\[]*)\\[([^]]*)]\\s*(@|\\[\\s*@\\s*])?(.*)$", Pattern.DOTALL);
-    static final Pattern IS_FUNCTION_PATTERN = Pattern.compile(
-        "^([^\\[(]+)\\((.*)\\)\\s*$", Pattern.DOTALL);
-    static final Pattern DECOMPOSE_PATH = Pattern.compile(
-        "(?:[^(\\['.]+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\1)(.*\\)(?!.*\\2).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\2)(.*)).)+?.*?(?=\\1)(?>'.*?'|[^(])*(?=\\2$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\3)(.*](?!.*\\4).*))(?=(?>'.*?'|.)*?](?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^\\[])*(?=\\4$)))+(?=\\.|$)", Pattern.DOTALL);
-    static final Pattern DECOMPOSE_PARAMETERS = Pattern.compile(
-        "(?<=^|,)(?:[^(\\[',]+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\1)(.*\\)(?!.*\\2).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\2)(.*)).)+?.*?(?=\\1)(?>'.*?'|[^(])*(?=\\2$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\3)(.*](?!.*\\4).*))(?=(?>'.*?'|.)*?](?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^\\[])*(?=\\4$)))*(?=,|$)", Pattern.DOTALL);
-    static final Pattern DECOMPOSE_NESTED_RESULT_FUNCTIONS = Pattern.compile(
-        "(([^(]+)\\((?:[^(\\[')]+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\3)(.*\\)(?!.*\\4).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^(])*(?=\\4$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\5)(.*](?!.*\\6).*))(?=(?>'.*?'|.)*?](?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^\\[])*(?=\\6$)))*\\))\\s*(?:@|$)", Pattern.DOTALL);
-    static final Pattern DECOMPOSE_FILTER_CONDITIONS = Pattern.compile(
-        "([=!<>&|]*)\\s*(\\(|\\)|(?:[^=!<>&|()\\[']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\3)(.*\\)(?!.*\\4).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^(])*(?=\\4$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\5)(.*](?!.*\\6).*))(?=(?>'.*?'|.)*?](?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^\\[])*(?=\\6$)))+)\\s*", Pattern.DOTALL);
 
     private enum FilterArrayReturn {
         FIRST_MATCHED,
@@ -67,8 +53,11 @@ class JossonCore {
     }
 
     static String unquoteString(String quotedString) {
-        return quotedString.substring(1, quotedString.length() - 1)
-                .replaceAll("''", "'");
+        int last = quotedString.length() - 1;
+        if (last < 1 || quotedString.charAt(0) != '\'' || quotedString.charAt(last) != '\'') {
+            throw new IllegalArgumentException("Argument is not a valid string literal: " + quotedString);
+        }
+        return quotedString.substring(1, last).replaceAll("''", "'");
     }
 
     static boolean anyIsBlank(String[] strings) {
@@ -97,10 +86,7 @@ class JossonCore {
             return  BooleanNode.FALSE;
         }
         if (literal.charAt(0) == '\'') {
-            if (literal.charAt(literal.length() - 1) == '\'') {
-                return TextNode.valueOf(unquoteString(literal));
-            }
-            throw new IllegalArgumentException(literal);
+            return TextNode.valueOf(unquoteString(literal));
         }
         return new DoubleNode(Double.parseDouble(literal));
     }
@@ -112,22 +98,22 @@ class JossonCore {
         if (node == null || node.isNull()) {
             return null;
         }
-        String key = keys.get(0).trim();
-        Matcher m = IS_FUNCTION_PATTERN.matcher(key);
-        if (m.find()) {
-            node = FuncDispatcher.dispatch(node, m.group(1).trim(), m.group(2));
+        String key = keys.get(0);
+        String[] tokens = matchFunctionAndArgument(key);
+        if (tokens != null) {
+            node = FuncDispatcher.dispatch(node, tokens[0], tokens[1]);
         } else if (node.isValueNode()) {
             return null;
         } else {
-            m = IS_ARRAY_NODE_QUERY.matcher(key);
-            if (m.find()) {
-                String field = m.group(1).trim();
-                FilterArrayReturn mode = m.group(3) == null
+            tokens = matchArrayNodeQuery(key);
+            if (tokens != null) {
+                String field = tokens[0];
+                FilterArrayReturn mode = tokens[2] == null
                         ? FilterArrayReturn.FIRST_MATCHED : FilterArrayReturn.ALL_MATCHED;
-                node = filterArrayNode(field.isEmpty() ? node : node.get(field), m.group(2), mode);
+                node = filterArrayNode(field.isEmpty() ? node : node.get(field), tokens[1], mode);
                 if (node != null && node.isArray()) {
                     keys.remove(0);
-                    return forEachElement(node, keys, m.group(4), "@".equals(m.group(3)));
+                    return forEachElement(node, keys, tokens[3], "@".equals(tokens[2]));
                 }
             } else if (node.isArray()) {
                 return forEachElement(node, keys, "", true);
@@ -156,7 +142,6 @@ class JossonCore {
         if (arrayNode == null || !arrayNode.isArray() || arrayNode.size() == 0) {
             return null;
         }
-        statement = statement.trim();
         if (statement.isEmpty()) {
             if (FilterArrayReturn.FIRST_MATCHED == mode) {
                 return arrayNode.get(0);
@@ -179,10 +164,10 @@ class JossonCore {
         LogicalOpStack opStack = new LogicalOpStack(arrayNode);
         for (int i = 0; i < arrayNode.size(); i++) {
             opStack.clear();
-            Matcher m = DECOMPOSE_FILTER_CONDITIONS.matcher(statement);
-            while (m.find()) {
+            List<String[]> tokens = decomposeConditions(statement);
+            for (String[] token : tokens) {
                 try {
-                    opStack.evaluate(m.group(1), m.group(2).trim(), i);
+                    opStack.evaluate(token[0], token[1], i);
                 } catch (IllegalArgumentException e) {
                     if (e.getMessage() == null) {
                         throw new IllegalArgumentException(statement);
@@ -215,19 +200,18 @@ class JossonCore {
             }
             return josson.getNode();
         }
-        Matcher m = IS_JSON_QUERY.matcher(expression);
-        if (!m.find()) {
+        String[] tokens = matchJsonQuery(expression);
+        if (tokens == null) {
             throw new UnresolvedDatasetException(expression);
         }
-        String key = m.group(1).trim();
-        if (!datasets.containsKey(key)) {
-            throw new UnresolvedDatasetException(key);
+        if (!datasets.containsKey(tokens[0])) {
+            throw new UnresolvedDatasetException(tokens[0]);
         }
-        Josson josson = datasets.get(key);
+        Josson josson = datasets.get(tokens[0]);
         if (josson == null) {
             return null;
         }
-        JsonNode node = josson.getNode(m.group(2));
+        JsonNode node = josson.getNode(tokens[1]);
         datasets.put(expression, node == null ? null : Josson.create(node));
         return node;
     }
@@ -316,11 +300,7 @@ class JossonCore {
     }
 
     static JsonNode forEachElement(JsonNode node, List<String> keys, String funcChain, boolean flattenArray) {
-        List<String> functions = new ArrayList<>();
-        Matcher m = DECOMPOSE_NESTED_RESULT_FUNCTIONS.matcher(funcChain);
-        while (m.find()) {
-            functions.add(m.group(1));
-        }
+        List<String> functions = decomposeNestedResultFunctions(funcChain);
         ArrayNode matchedNodes = MAPPER.createArrayNode();
         for (int i = 0; i < node.size(); i++) {
             JsonNode tryNode = getNodeByKeys(node.get(i), new ArrayList<>(keys));

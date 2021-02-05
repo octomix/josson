@@ -9,11 +9,11 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Josson.getNode;
+import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncString {
     static JsonNode funcAbbreviate(JsonNode node, String params) {
@@ -139,10 +139,9 @@ class FuncString {
     }
 
     static JsonNode funcConcat(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         List<ImmutablePair<Character, String>> args = new ArrayList<>();
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        while (m.find()) {
-            String param = m.group(0).trim();
+        for (String param : paramList) {
             if (param.isEmpty()) {
                 continue;
             }
@@ -155,9 +154,6 @@ class FuncString {
             } else {
                 args.add(new ImmutablePair<>('.', param));
             }
-        }
-        if (args.isEmpty()) {
-            getParamThrowMissing();
         }
         if (!node.isArray()) {
             return TextNode.valueOf(funcConcatElement(node, args, 0));

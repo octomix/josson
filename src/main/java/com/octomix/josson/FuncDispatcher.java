@@ -27,6 +27,8 @@ class FuncDispatcher {
                     return funcCeil(node, params);
                 case "floor":
                     return funcFloor(node, params);
+                case "mod":
+                    return funcMod(node, params);
                 case "round":
                     return funcRound(node, params);
 
@@ -93,10 +95,14 @@ class FuncDispatcher {
                     return funcIn(node, params, false, true);
                 case "notinignorecase":
                     return funcIn(node, params, true, true);
+                case "iseven":
+                    return funcIsEven(node, params);
                 case "isnull":
                     return funcIsNull(node, params, false);
                 case "isnotnull":
                     return funcIsNull(node, params, true);
+                case "isodd":
+                    return funcIsOdd(node, params);
                 case "not":
                     return funcNot(node, params);
                 case "startswith":
@@ -155,12 +161,10 @@ class FuncDispatcher {
                     return funcSize(node, params);
                 case "toarray":
                     return funcToArray(node, params);
-
-                default:
-                    throw new IllegalArgumentException("Unsupported function " + funcId + "()");
             }
-        } catch (UnsupportedOperationException | NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid argument of function call " + funcId + "(" + params + ")", e);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid function call " + funcId + "()\n" + e.getMessage());
         }
+        throw new UnsupportedOperationException("Unsupported function " + funcId + "()");
     }
 }

@@ -1,5 +1,6 @@
 package com.octomix.josson;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.lang3.StringUtils;
@@ -8,58 +9,32 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.PatternMatcher.*;
 
 class GetFuncParam {
-    static void getParamThrowMissing() {
-        throw new UnsupportedOperationException("Missing function argument");
-    }
-
     static void getParamNotAccept(String params) {
         if (!StringUtils.isBlank(params)) {
-            throw new UnsupportedOperationException("Not accept function argument");
-        }
-    }
-
-    static void getParamFindNextRequired(Matcher m) {
-        if (!m.find() || StringUtils.isBlank(m.group(0))) {
-            getParamThrowMissing();
-        }
-    }
-
-    static void getParamNoMore(Matcher m) {
-        if (m.find()) {
-            throw new UnsupportedOperationException("Too many function arguments");
+            throw new IllegalArgumentException("Not accept function argument");
         }
     }
 
     static ImmutablePair<Integer, Integer> getParamStartEnd(String params) {
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        if (!m.find()) {
-            getParamThrowMissing();
-        }
-        int start = StringUtils.isBlank(m.group(0)) ? 0 : Integer.parseInt(m.group(0));
-        int end = m.find() && !StringUtils.isBlank(m.group(0)) ? Integer.parseInt(m.group(0)) : Integer.MAX_VALUE;
-        getParamNoMore(m);
+        List<String> paramList = decomposeFunctionParameters(params, 0, 2);
+        int start = paramList.get(0).isEmpty() ? 0 : Integer.parseInt(paramList.get(0));
+        int end = paramList.size() > 1 ? Integer.parseInt(paramList.get(1)) : Integer.MAX_VALUE;
         return ImmutablePair.of(start, end);
     }
 
     static ImmutableTriple<Integer, Integer, Integer> getParamStartEndStep(String params) {
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        if (!m.find()) {
-            getParamThrowMissing();
-        }
-        int start = StringUtils.isBlank(m.group(0)) ? 0 : Integer.parseInt(m.group(0));
-        int end = m.find() && !StringUtils.isBlank(m.group(0)) ? Integer.parseInt(m.group(0)) : Integer.MAX_VALUE;
-        int step = m.find() && !StringUtils.isBlank(m.group(0)) ? Integer.parseInt(m.group(0)) : 1;
-        getParamNoMore(m);
-        if (step == 0) {
-            step = 1;
-        }
+        List<String> paramList = decomposeFunctionParameters(params, 0, 3);
+        int start = paramList.get(0).isEmpty() ? 0 : Integer.parseInt(paramList.get(0));
+        int end = paramList.size() > 1 && !paramList.get(1).isEmpty() ?
+                Integer.parseInt(paramList.get(1)) : Integer.MAX_VALUE;
+        int step = paramList.size() > 2 ? Integer.parseInt(paramList.get(2)) : 1;
         return ImmutableTriple.of(start, end, step);
     }
 
@@ -68,51 +43,32 @@ class GetFuncParam {
     }
 
     static String getParamStringLiteral(String params, boolean required) {
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        if (!m.find() || StringUtils.isBlank(m.group(0))) {
-            if (required) {
-                getParamThrowMissing();
-            }
-            return null;
-        }
-        String pattern = m.group(0).trim();
-        getParamNoMore(m);
-        if (pattern.length() > 1 && pattern.charAt(0) != '\'') {
-            throw new UnsupportedOperationException("Argument must be string literal");
-        }
-        return unquoteString(pattern);
+        List<String> paramList = decomposeFunctionParameters(params, required ? 1 : 0, 1);
+        return paramList.size() > 0 ? unquoteString(paramList.get(0)) : null;
     }
 
     static ImmutablePair<Integer, String> getParamIntAndString(String params) {
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        getParamFindNextRequired(m);
-        Integer num = Integer.parseInt(m.group(0));
-        String str = getParamStringLiteral(params.substring(m.end() + 1), false);
+        List<String> paramList = decomposeFunctionParameters(params, 1, 2);
+        Integer num = Integer.parseInt(paramList.get(0));
+        String str = paramList.size() > 1 ? unquoteString(paramList.get(1)) : null;
         return ImmutablePair.of(num, str);
     }
 
-    static List<ImmutablePair<String, String>> getParamNamePath(String params) {
+    static List<ImmutablePair<String, String>> getParamNamePath(List<String> paramList) {
         List<ImmutablePair<String, String>> elements = new ArrayList<>();
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        while (m.find()) {
-            String[] values = m.group(0).split(":", 2);
-            if (values.length == 0 || StringUtils.isBlank(values[0])) {
-                continue;
-            }
+        for (String param : paramList) {
+            String[] values = param.split(":", 2);
             String name = values[0].trim();
             String path = null;
             if (!"?".equals(name)) {
                 if (values.length == 1) {
                     path = name;
-                    Matcher m2 = DECOMPOSE_PATH.matcher(path);
-                    while (m2.find()) {
-                        if (!IS_FUNCTION_PATTERN.matcher(m2.group(0)).find()) {
-                            Matcher m3 = IS_ARRAY_NODE_QUERY.matcher(m2.group(0));
-                            if (m3.find()) {
-                                name = m3.group(1).trim();
-                            } else {
-                                name = m2.group(0).trim();
-                            }
+                    List<String> paths = decomposePaths(path);
+                    for (int i = paths.size() - 1; i >= 0 ; i--) {
+                        if (matchFunctionAndArgument(paths.get(i)) == null) {
+                            String[] tokens = matchArrayNodeQuery(paths.get(i));
+                            name = tokens == null ? paths.get(i) : tokens[0];
+                            break;
                         }
                     }
                 } else if (!StringUtils.isBlank(values[1])) {
@@ -125,18 +81,16 @@ class GetFuncParam {
     }
 
     static ArrayNode getParamArray(String params, JsonNode node) {
-        if (StringUtils.isBlank(params)) {
-            getParamThrowMissing();
-        }
+        List<String> paramList = decomposeFunctionParameters(params, 1, 1);
         try {
-            params = params.trim();
-            JsonNode arrayNode = params.startsWith("[") ? readJsonNode(params) : getNode(node, params);
+            JsonNode arrayNode = paramList.get(0).startsWith("[") ?
+                    readJsonNode(paramList.get(0)) : getNode(node, paramList.get(0));
             if (arrayNode != null && arrayNode.isArray()) {
                 return (ArrayNode) arrayNode;
             }
-            throw new Exception("");
-        } catch (Exception e) {
-            throw new UnsupportedOperationException("Argument must be an array");
+            throw new IllegalArgumentException("Argument must be an array: " + params);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Argument must be an array: " + params);
         }
     }
 }

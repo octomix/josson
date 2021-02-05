@@ -1,6 +1,7 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.IntNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
 import java.util.Map;
@@ -36,11 +37,13 @@ class LogicalOpStep {
         For JossonCore.filterArrayNode()
      */
     private static JsonNode getNodeFrom(Josson arrayNode, int arrayIndex, String expression) {
-        return expression.equals("?") ?
-                arrayNode.getNode(arrayIndex) :
-                expression.startsWith("@") ?
-                        arrayNode.getNode(expression.substring(1)) :
-                        arrayNode.getNode(arrayIndex, expression);
+        return expression.equals("#") ?
+                IntNode.valueOf(arrayIndex) :
+                expression.equals("?") ?
+                        arrayNode.getNode(arrayIndex) :
+                        expression.startsWith("@") ?
+                                arrayNode.getNode(expression.substring(1)) :
+                                arrayNode.getNode(arrayIndex, expression);
     }
 
     JsonNode resolveFrom(Josson arrayNode, int arrayIndex) {

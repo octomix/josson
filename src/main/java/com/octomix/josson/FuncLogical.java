@@ -5,17 +5,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.regex.Matcher;
+import java.util.List;
 
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncLogical {
     static BooleanNode funcContains(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        getParamFindNextRequired(m);
-        String value = m.group(0).trim();
-        getParamNoMore(m);
+        List<String> paramList = decomposeFunctionParameters(params, 1, 1);
+        String value = paramList.get(0);
         if (value.length() > 1 && value.charAt(0) == '\'') {
             value = unquoteString(value);
         } else {
@@ -108,9 +107,25 @@ class FuncLogical {
         return BooleanNode.FALSE;
     }
 
+    static BooleanNode funcIsEven(JsonNode node, String params) {
+        getParamNotAccept(params);
+        if (node.isValueNode()) {
+            return BooleanNode.valueOf((node.asInt() & 1) == 0);
+        }
+        return BooleanNode.FALSE;
+    }
+
     static BooleanNode funcIsNull(JsonNode node, String params, boolean not) {
         getParamNotAccept(params);
         return BooleanNode.valueOf(not ^ node.isNull());
+    }
+
+    static BooleanNode funcIsOdd(JsonNode node, String params) {
+        getParamNotAccept(params);
+        if (node.isValueNode()) {
+            return BooleanNode.valueOf((node.asInt() & 1) != 0);
+        }
+        return BooleanNode.FALSE;
     }
 
     static BooleanNode funcNot(JsonNode node, String params) {

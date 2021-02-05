@@ -10,25 +10,13 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.octomix.josson.JossonCore.*;
 
+import static com.octomix.josson.PatternMatcher.*;
 import static org.apache.commons.text.StringEscapeUtils.unescapeXml;
 
 public class Jossons {
-
-    private static final Pattern SEPARATE_XML_TAGS = Pattern.compile(
-        "((?:<[^>]*>)*)([^<]*)");
-    private static final Pattern IS_DB_QUERY = Pattern.compile(
-        "^([^\\[?]*)(\\[\\s*])?\\s*\\?\\s*(\\{.*})\\s*$", Pattern.DOTALL);
-    private static final Pattern IS_JOIN_OPERATION = Pattern.compile(
-        "(.+)\\{([^}]*)}\\s*$", Pattern.DOTALL);
-    private static final Pattern DECOMPOSE_IIF_ELSE = Pattern.compile(
-        "(?<=^|:)((?:[^?:(']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\2)(.*\\)(?!.*\\3).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\3)(.*)).)+?.*?(?=\\2)(?>'.*?'|[^(])*(?=\\3$)))+)(?:\\?((?:[^:(']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\5)(.*\\)(?!.*\\6).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^(])*(?=\\6$)))+)?\\s*)?(?=:|$)", Pattern.DOTALL);
-    private static final Pattern DECOMPOSE_CONDITIONS = Pattern.compile(
-        "([=!<>&|]*)\\s*(\\(|\\)|[^=!<>&|()\\[']*(?:->)?\\s*(?:[^=!<>&|()\\[']+|'(?:'{2}|[^']+)*'|(?:(?=\\()(?:(?=(?>'.*?'|.)*?\\((?!.*?\\3)(.*\\)(?!.*\\4).*))(?=(?>'.*?'|.)*?\\)(?!.*?\\4)(.*)).)+?.*?(?=\\3)(?>'.*?'|[^(])*(?=\\4$))|(?:(?=\\[)(?:(?=(?>'.*?'|.)*?\\[(?!.*?\\5)(.*](?!.*\\6).*))(?=(?>'.*?'|.)*?](?!.*?\\6)(.*)).)+?.*?(?=\\5)(?>'.*?'|[^\\[])*(?=\\6$)))+)\\s*", Pattern.DOTALL);
 
     private final Map<String, Josson> datasets = new HashMap<>();
     private ShowResolvedValueMode showResolvedValueMode = ShowResolvedValueMode.VALUE_NODE_ONLY;
@@ -92,30 +80,27 @@ public class Jossons {
 
     private boolean buildDataset(String name, String findQuery, Function<String, String> dictionaryFinder,
                                  BiFunction<String, String, Josson> dataFinder, ResolverProgress progress) {
-        Matcher m = IS_DB_QUERY.matcher(findQuery);
-        if (m.find()) {
-            String collectionName = m.group(1).trim();
-            if (collectionName.isEmpty()) {
-                collectionName = name;
-            }
-            if (m.group(2) != null) {
-                collectionName += "[]";
-            }
-            Josson dataset = dataFinder.apply(collectionName, m.group(3));
+        String[] tokens = matchDbQuery(findQuery);
+        if (tokens != null) {
+            String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
+            Josson dataset = dataFinder.apply(collectionName, tokens[2]);
             progress.addStep((dataset == null ? "Unresolved " : "Resolved ") + name + " from DB query " + findQuery);
             putDataset(name, dataset);
             return true;
         }
-        m = DECOMPOSE_CONDITIONS.matcher(findQuery);
-        if (!m.find()) {
+        List<String[]> conditions = decomposeConditions(findQuery);
+        if (conditions.size() < 2) {
             return false;
         }
-        Matcher mLeftQuery = IS_JOIN_OPERATION.matcher(m.group(2));
-        if (!mLeftQuery.find() || !m.find()) {
+        String[] leftQuery = matchJoinOperation(conditions.get(0)[1]);
+        if (leftQuery == null) {
             return false;
+        }
+        if (conditions.size() > 2) {
+            throw new IllegalArgumentException("too many arguments: " + findQuery);
         }
         JoinOperator operator;
-        switch (m.group(1)) {
+        switch (conditions.get(1)[0]) {
             case ">=<":
                 operator = JoinOperator.INNER_JOIN_ONE;
                 break;
@@ -135,28 +120,23 @@ public class Jossons {
                 return false;
         }
         try {
-            Matcher mRightQuery = IS_JOIN_OPERATION.matcher(m.group(2));
-            if (m.find()) {
-                throw new IllegalArgumentException("too many arguments");
-            }
-            String[] leftKeys = mLeftQuery.group(2).split(",");
-            String[] rightKeys = mRightQuery.find() ? mRightQuery.group(2).split(",") : null;
+            String[] rightQuery = matchJoinOperation(conditions.get(1)[1]);
+            String[] leftKeys = leftQuery[1].split(",");
+            String[] rightKeys = rightQuery == null ? null : rightQuery[1].split(",");
             if (anyIsBlank(leftKeys) || anyIsBlank(rightKeys)) {
                 throw new IllegalArgumentException("missing join key");
             }
             if (leftKeys.length != rightKeys.length) {
                 throw new IllegalArgumentException("mismatch key count");
             }
-            JsonNode leftNode = evaluateQueryWithResolverLoop(
-                    mLeftQuery.group(1).trim(), dictionaryFinder, dataFinder, progress);
+            JsonNode leftNode = evaluateQueryWithResolverLoop(leftQuery[0], dictionaryFinder, dataFinder, progress);
             if (leftNode == null) {
                 throw new IllegalArgumentException("unresolved left side");
             }
             if (!leftNode.isContainerNode()) {
                 throw new IllegalArgumentException("left side is not a container node");
             }
-            JsonNode rightNode = evaluateQueryWithResolverLoop(
-                    mRightQuery.group(1).trim(), dictionaryFinder, dataFinder, progress);
+            JsonNode rightNode = evaluateQueryWithResolverLoop(rightQuery[0], dictionaryFinder, dataFinder, progress);
             if (rightNode == null) {
                 throw new IllegalArgumentException("unresolved right side");
             }
@@ -176,11 +156,11 @@ public class Jossons {
                 rightKeys[0] = rightKeys[0].substring(pos + 1);
             }
             if ((operator == JoinOperator.LEFT_JOIN_MANY && rightArrayName == null)
-                || (operator == JoinOperator.RIGHT_JOIN_MANY && leftArrayName == null)) {
+                    || (operator == JoinOperator.RIGHT_JOIN_MANY && leftArrayName == null)) {
                 throw new IllegalArgumentException("missing array name for join-many operation");
             }
             JsonNode joinedNode = joinNodes(
-                leftNode, leftKeys, leftArrayName, operator, rightNode, rightKeys, rightArrayName);
+                    leftNode, leftKeys, leftArrayName, operator, rightNode, rightKeys, rightArrayName);
             if (joinedNode == null) {
                 throw new IllegalArgumentException("no data matched");
             }
@@ -222,11 +202,13 @@ public class Jossons {
             } else if (placeholderAt >= 0 && content.charAt(i) == '}' && content.charAt(i + 1) == '}') {
                 String query = content.substring(placeholderAt + 2, i);
                 if (isXml) {
-                    Matcher m = SEPARATE_XML_TAGS.matcher(query);
                     StringBuilder rebuild = new StringBuilder();
-                    while (m.find()) {
-                        sb.append(m.group(1));
-                        rebuild.append(m.group(2));
+                    for (String token : separateXmlTags(query)) {
+                        if (token.charAt(0) == '<') {
+                            sb.append(token);
+                        } else {
+                            rebuild.append(token);
+                        }
                     }
                     query = unescapeXml(rebuild.toString());
                 }
@@ -407,46 +389,41 @@ public class Jossons {
     }
 
     public JsonNode evaluateQuery(String query) throws UnresolvedDatasetException {
-        JsonNode node = null;
         String ifTrueValue = null;
-        Matcher m = DECOMPOSE_IIF_ELSE.matcher(query);
-        while (m.find() && node == null) {
-            String statement = m.group(1).trim();
-            if (statement.isEmpty()) {
-                return null;
+        List<String[]> steps = decomposeTernarySteps(query);
+        for (String[] step : steps) {
+            JsonNode node = evaluateStatement(step[0]);
+            if (step[1] == null) {
+                return node;
             }
-            ifTrueValue = m.group(4);
-            node = evaluateStatement(m.group(1));
+            ifTrueValue = step[1];
             if (node != null) {
-                if (StringUtils.isBlank(ifTrueValue)) {
-                    if (node.isTextual() && node.textValue().isEmpty()) {
-                        node = null;
+                if (ifTrueValue.isEmpty()) {
+                    if (!(node.isTextual() && node.textValue().isEmpty())) {
+                        return node;
                     }
                 } else if (node.asBoolean()) {
                     node = evaluateStatement(ifTrueValue);
-                } else {
-                    node = null;
+                    if (node != null) {
+                        return node;
+                    }
                 }
             }
         }
-        if (node == null && StringUtils.isNotBlank(ifTrueValue)) {
-            return TextNode.valueOf("");
-        }
-        return node;
+        return StringUtils.isEmpty(ifTrueValue) ? null : TextNode.valueOf("");
     }
 
     public JsonNode evaluateStatement(String statement) throws UnresolvedDatasetException {
-        statement = statement.trim();
         try {
             return toValueNode(statement);
         } catch (NumberFormatException e) {
             // continue
         }
         LogicalOpStack opStack = new LogicalOpStack(datasets);
-        Matcher m = DECOMPOSE_CONDITIONS.matcher(statement);
-        while (m.find()) {
+        List<String[]> conditions = decomposeConditions(statement);
+        for (String[] condition : conditions) {
             try {
-                opStack.evaluate(m.group(1), m.group(2).trim());
+                opStack.evaluate(condition[0], condition[1]);
             } catch (IllegalArgumentException e) {
                 if (e.getMessage() == null) {
                     throw new IllegalArgumentException(statement);

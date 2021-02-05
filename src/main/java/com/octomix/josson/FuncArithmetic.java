@@ -2,30 +2,25 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.mariuszgromada.math.mxparser.Argument;
 import org.mariuszgromada.math.mxparser.Expression;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncArithmetic {
     static ValueNode funcAggregate(JsonNode node, String funcId, String params) {
-        String path = null;
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        if (m.find()) {
-            path = m.group(0);
-            getParamNoMore(m);
-        }
+        List<String> paramList = decomposeFunctionParameters(params, 0, 1);
         if (!node.isArray()) {
             return null;
         }
+        String path = paramList.size() > 0 ? paramList.get(0) : null;
         double sum = 0;
         int count = 0;
         for (int i = 0; i < node.size(); i++) {
@@ -68,14 +63,10 @@ class FuncArithmetic {
     }
 
     static JsonNode funcCalc(JsonNode node, String params) {
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        getParamFindNextRequired(m);
-        String expression = m.group(0).trim();
-        if (expression.length() > 1 && expression.charAt(0) != '\'') {
-            throw new UnsupportedOperationException("First argument must be string literal");
-        }
-        expression = unquoteString(expression);
-        List<ImmutablePair<String, String>> args = getParamNamePath(params.substring(m.end() + 1));
+        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+        Expression expression = new Expression(paramList.get(0));
+        paramList.remove(0);
+        List<ImmutablePair<String, String>> args = getParamNamePath(paramList);
         if (!node.isArray()) {
             Double value = funcCalcElement(node, expression, args, 0);
             if (value == null) {
@@ -93,8 +84,9 @@ class FuncArithmetic {
         return array;
     }
 
-    static Double funcCalcElement(JsonNode node, String expression, List<ImmutablePair<String, String>> args, int index) {
-        List<Argument> arguments = new ArrayList<>();
+    static Double funcCalcElement(JsonNode node, Expression expression,
+                                  List<ImmutablePair<String, String>> args, int index) {
+        expression.removeAllArguments();
         for (ImmutablePair<String, String> arg : args) {
             if (arg.right == null) {
                 continue;
@@ -105,6 +97,9 @@ class FuncArithmetic {
             } else if ("#".equals(arg.right)) {
                 value = index + 1;
             } else if ("?".equals(arg.right)) {
+                if (node.isNull() || !node.isValueNode()) {
+                    return null;
+                }
                 value = node.asDouble();
             } else {
                 JsonNode tryNode = getNode(node, arg.right);
@@ -113,10 +108,31 @@ class FuncArithmetic {
                 }
                 value = tryNode.asDouble();
             }
-            arguments.add(new Argument(arg.left, value));
+            expression.addArguments(new Argument(arg.left, value));
         }
-        Argument[] a = new Argument[arguments.size()];
-        return new Expression(expression, arguments.toArray(a)).calculate();
+        if (!expression.checkSyntax()) {
+            for (String missingArg : expression.getMissingUserDefinedArguments()) {
+                JsonNode tryNode = getNode(node, missingArg);
+                if (tryNode == null || tryNode.isNull() || !tryNode.isValueNode()) {
+                    return null;
+                }
+                expression.addArguments(new Argument(missingArg, tryNode.asDouble()));
+            }
+        }
+        if (expression.checkSyntax()) {
+            return expression.calculate();
+        }
+        StringBuilder sb = new StringBuilder("Calc syntax error.");
+        if (expression.getMissingUserDefinedArguments().length > 0) {
+            sb.append(" Missing arguments:").append(Arrays.toString(expression.getMissingUserDefinedArguments()));
+        }
+        if (expression.getMissingUserDefinedFunctions().length > 0) {
+            sb.append(" Missing functions:").append(Arrays.toString(expression.getMissingUserDefinedFunctions()));
+        }
+        if (expression.getMissingUserDefinedUnits().length > 0) {
+            sb.append(" Missing units:").append(Arrays.toString(expression.getMissingUserDefinedUnits()));
+        }
+        throw new IllegalArgumentException(sb.toString());
     }
 
     static JsonNode funcCeil(JsonNode node, String params) {
@@ -153,13 +169,29 @@ class FuncArithmetic {
         return DoubleNode.valueOf(Math.floor(node.asDouble()));
     }
 
-    static JsonNode funcRound(JsonNode node, String params) {
-        Matcher m = DECOMPOSE_PARAMETERS.matcher(params);
-        int precision = 0;
-        if (m.find()) {
-            precision = StringUtils.isBlank(m.group(0)) ? 0 : Integer.parseInt(m.group(0));
-            getParamNoMore(m);
+    static JsonNode funcMod(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, 1);
+        int divisor = Integer.parseInt(paramList.get(0));
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode valueNode = node.get(i);
+                if (valueNode.isNumber() || valueNode.isTextual()) {
+                    int result = valueNode.asInt() % divisor;
+                    array.add(IntNode.valueOf(result < 0 ? result + divisor : result));
+                }
+            }
+            return array;
+        } else if (!node.isNumber() && !node.isTextual()) {
+            return null;
         }
+        int result = node.asInt() % divisor;
+        return IntNode.valueOf(result < 0 ? result + divisor : result);
+    }
+
+    static JsonNode funcRound(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 0, 1);
+        int precision = paramList.size() > 0 ? Integer.parseInt(paramList.get(0)) : 0;
         double magnitude = Math.pow(10, precision);
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();

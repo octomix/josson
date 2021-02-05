@@ -1,5 +1,6 @@
 package com.octomix.josson;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -11,6 +12,7 @@ import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncStructural {
 
@@ -26,10 +28,8 @@ class FuncStructural {
     }
 
     static JsonNode funcMap(JsonNode node, String params) {
-        List<ImmutablePair<String, String>> args = getParamNamePath(params);
-        if (args.isEmpty()) {
-            getParamThrowMissing();
-        }
+        List<ImmutablePair<String, String>> args =
+                getParamNamePath(decomposeFunctionParameters(params, 1, -1));
         if (!node.isArray()) {
             return funcMapElement(node, args, 1);
         }
@@ -95,8 +95,8 @@ class FuncStructural {
                 ArrayNode array = MAPPER.createArrayNode();
                 array.add(newNode);
                 return array;
-            } catch (Exception e) {
-                throw new UnsupportedOperationException(e);
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException(e.getMessage());
             }
         }
         if (node.isArray()) {
