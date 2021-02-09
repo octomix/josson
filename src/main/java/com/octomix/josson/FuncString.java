@@ -2,6 +2,7 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -14,6 +15,7 @@ import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
+import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 class FuncString {
     static JsonNode funcAbbreviate(JsonNode node, String params) {
@@ -35,7 +37,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(StringUtils.abbreviate(node.asText(), offset, maxWidth));
@@ -54,7 +57,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(ignoreCase ?
@@ -77,7 +81,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(new String(Base64.getDecoder().decode(node.asText())));
@@ -98,7 +103,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(Base64.getEncoder().encodeToString(node.asText().getBytes()));
@@ -115,7 +121,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(StringUtils.capitalize(node.asText()));
@@ -132,7 +139,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isValueNode()) {
+        }
+        if (!node.isValueNode()) {
             return null;
         }
         return TextNode.valueOf(StringUtils.center(node.asText(), args.left, args.right));
@@ -146,13 +154,13 @@ class FuncString {
                 continue;
             }
             if (param.charAt(0) == '\'') {
-                args.add(new ImmutablePair<>('\'', unquoteString(param)));
-            } else if ("#".equals(param)) {
-                args.add(new ImmutablePair<>('#', null));
+                args.add(ImmutablePair.of('\'', unquoteString(param)));
             } else if ("?".equals(param)) {
-                args.add(new ImmutablePair<>('?', null));
+                args.add(ImmutablePair.of('?', null));
+            } else if (param.startsWith("#")) {
+                args.add(ImmutablePair.of('#', param));
             } else {
-                args.add(new ImmutablePair<>('.', param));
+                args.add(ImmutablePair.of('.', param));
             }
         }
         if (!node.isArray()) {
@@ -160,7 +168,7 @@ class FuncString {
         }
         ArrayNode array = MAPPER.createArrayNode();
         for (int i  = 0; i < node.size(); i++) {
-            String text = funcConcatElement(node.get(i), args, i);
+            String text = funcConcatElement(node.get(i), args, array.size());
             if (text != null) {
                 array.add(text);
             }
@@ -171,23 +179,34 @@ class FuncString {
     private static String funcConcatElement(JsonNode node, List<ImmutablePair<Character, String>> args, int index) {
         StringBuilder sb = new StringBuilder();
         for (ImmutablePair<Character, String> arg : args) {
+            JsonNode tryNode;
             switch (arg.left) {
                 case '\'':
                     sb.append(arg.right);
-                    break;
-                case '#':
-                    sb.append(index + 1);
-                    break;
+                    continue;
                 case '?':
                     sb.append(node.asText());
+                    continue;
+                case '#':
+                    List<String> keys = decomposePaths(arg.right);
+                    switch (keys.remove(0)) {
+                        case "#":
+                            tryNode = getNodeByKeys(IntNode.valueOf(index), keys);
+                            break;
+                        case "##":
+                            tryNode = getNodeByKeys(IntNode.valueOf(index + 1), keys);
+                            break;
+                        default:
+                            return null;
+                    }
                     break;
                 default:
-                    JsonNode tryNode = getNode(node, arg.right);
-                    if (tryNode == null || tryNode.isNull() || !tryNode.isValueNode()) {
-                        return null;
-                    }
-                    sb.append(tryNode.asText());
+                    tryNode = getNode(node, arg.right);
             }
+            if (tryNode == null || tryNode.isNull() || !tryNode.isValueNode()) {
+                return null;
+            }
+            sb.append(tryNode.asText());
         }
         return sb.toString();
     }
@@ -218,7 +237,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isValueNode()) {
+        }
+        if (!node.isValueNode()) {
             return null;
         }
         return TextNode.valueOf(StringUtils.leftPad(node.asText(), args.left, args.right));
@@ -235,7 +255,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(StringUtils.lowerCase(node.asText()));
@@ -254,7 +275,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(ignoreCase ?
@@ -273,7 +295,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isValueNode()) {
+        }
+        if (!node.isValueNode()) {
             return null;
         }
         return TextNode.valueOf(StringUtils.rightPad(node.asText(), args.left, args.right));
@@ -313,7 +336,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(StringUtils.substring(node.asText(), startEnd.left, startEnd.right));
@@ -330,7 +354,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(StringUtils.trim(node.asText()));
@@ -347,7 +372,8 @@ class FuncString {
                 }
             }
             return array;
-        } else if (!node.isTextual()) {
+        }
+        if (!node.isTextual()) {
             return null;
         }
         return TextNode.valueOf(StringUtils.upperCase(node.asText()));

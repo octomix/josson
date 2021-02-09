@@ -24,7 +24,7 @@ class PatternMatcher {
     }
 
     private static String rightTrimOf(String input, int beg, int end) {
-        for (;end > 0; end--) {
+        for (;end > beg; end--) {
             if (input.charAt(end - 1) != ' ') {
                 break;
             }

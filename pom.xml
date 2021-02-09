@@ -7,7 +7,7 @@
     <groupId>com.octomix.josson</groupId>
     <artifactId>josson</artifactId>
     <packaging>jar</packaging>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <build>
         <plugins>
             <plugin>
@@ -25,7 +25,7 @@
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Josson &amp; Jossons.
         Josson is a query language for JSON.
-        Jossons manipulate multiple Josson objects and can fill text placeholders in document.</description>
+        Jossons is a template engine to generate text output.</description>
     <url>https://github.com/octomix/josson</url>
 
     <inceptionYear>2020</inceptionYear>

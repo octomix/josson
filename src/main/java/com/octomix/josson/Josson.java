@@ -318,7 +318,7 @@ public class Josson {
     }
 
     public static JsonNode getNode(JsonNode node, String path) {
-        if (StringUtils.isBlank(path)) {
+        if (node == null || StringUtils.isBlank(path)) {
             return node;
         }
         List<String> keys = decomposePaths(path);

@@ -7,8 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.Josson.readJsonNode;
@@ -54,8 +55,8 @@ class GetFuncParam {
         return ImmutablePair.of(num, str);
     }
 
-    static List<ImmutablePair<String, String>> getParamNamePath(List<String> paramList) {
-        List<ImmutablePair<String, String>> elements = new ArrayList<>();
+    static Map<String, String> getParamNamePath(List<String> paramList) {
+        Map<String, String> elements = new HashMap<>();
         for (String param : paramList) {
             String[] values = param.split(":", 2);
             String name = values[0].trim();
@@ -75,7 +76,7 @@ class GetFuncParam {
                     path = values[1].trim();
                 }
             }
-            elements.add(ImmutablePair.of(name, path));
+            elements.put(name, path);
         }
         return elements;
     }

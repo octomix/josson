@@ -55,12 +55,18 @@ class FuncDispatcher {
                     return funcSort(node, params);
 
                 // Format
+                case "casevalue":
+                    return funcCaseValue(node, params);
+                case "cyclevalue":
+                    return funcCycleValue(node, params);
                 case "formatdate":
                     return funcFormatDate(node, params);
                 case "formatnum":
                     return funcFormatNumber(node, params);
                 case "formattext":
                     return funcFormatText(node, params);
+                case "indexedvalue":
+                    return funcIndexedValue(node, params);
 
                 // Logical
                 case "contains":

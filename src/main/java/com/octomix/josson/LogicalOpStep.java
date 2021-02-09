@@ -4,9 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.octomix.josson.JossonCore.evaluateExpression;
+import static com.octomix.josson.JossonCore.getNodeByKeys;
+import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 class LogicalOpStep {
 
@@ -37,13 +40,21 @@ class LogicalOpStep {
         For JossonCore.filterArrayNode()
      */
     private static JsonNode getNodeFrom(Josson arrayNode, int arrayIndex, String expression) {
-        return expression.equals("#") ?
-                IntNode.valueOf(arrayIndex) :
-                expression.equals("?") ?
-                        arrayNode.getNode(arrayIndex) :
-                        expression.startsWith("@") ?
-                                arrayNode.getNode(expression.substring(1)) :
-                                arrayNode.getNode(arrayIndex, expression);
+        if (expression.charAt(0) == '#') {
+            List<String> keys = decomposePaths(expression);
+            switch (keys.remove(0)) {
+                case "#":
+                    return getNodeByKeys(IntNode.valueOf(arrayIndex), keys);
+                case "##":
+                    return getNodeByKeys(IntNode.valueOf(arrayIndex + 1), keys);
+            }
+            return null;
+        }
+        return expression.equals("?") ?
+                arrayNode.getNode(arrayIndex) :
+                expression.startsWith("@") ?
+                        arrayNode.getNode(expression.substring(1)) :
+                        arrayNode.getNode(arrayIndex, expression);
     }
 
     JsonNode resolveFrom(Josson arrayNode, int arrayIndex) {

@@ -3,9 +3,9 @@ package com.octomix.josson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.octomix.josson.GetFuncParam.*;
@@ -13,6 +13,7 @@ import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
+import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 class FuncStructural {
 
@@ -28,14 +29,13 @@ class FuncStructural {
     }
 
     static JsonNode funcMap(JsonNode node, String params) {
-        List<ImmutablePair<String, String>> args =
-                getParamNamePath(decomposeFunctionParameters(params, 1, -1));
+        Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
         if (!node.isArray()) {
-            return funcMapElement(node, args, 1);
+            return funcMapElement(node, args, 0);
         }
         ArrayNode array = MAPPER.createArrayNode();
         for (int i  = 0; i < node.size(); i++) {
-            ObjectNode objNode = funcMapElement(node.get(i), args, array.size() + 1);
+            ObjectNode objNode = funcMapElement(node.get(i), args, array.size());
             if (!objNode.isEmpty()) {
                 array.add(objNode);
             }
@@ -43,23 +43,31 @@ class FuncStructural {
         return array;
     }
 
-    private static ObjectNode funcMapElement(JsonNode node, List<ImmutablePair<String, String>> args, int index) {
+    private static ObjectNode funcMapElement(JsonNode node, Map<String, String> args, int index) {
         ObjectNode objNode = MAPPER.createObjectNode();
-        for (ImmutablePair<String, String> arg : args) {
-            String name = arg.left;
+        for (Map.Entry<String, String> arg : args.entrySet()) {
+            String name = arg.getKey();
             if ("?".equals(name)) {
                 if (node.isObject()) {
                     objNode.setAll((ObjectNode) node);
                 }
                 continue;
             }
-            String path = arg.right;
+            String path = arg.getValue();
             if (path == null) {
                 objNode.putNull(name);
-            } else if ("#".equals(path)) {
-                objNode.put(name, index);
             } else if ("?".equals(path)) {
                 objNode.set(name, node);
+            } else if (path.startsWith("#")) {
+                List<String> keys = decomposePaths(path);
+                switch (keys.remove(0)) {
+                    case "#":
+                        objNode.set(name, getNodeByKeys(IntNode.valueOf(index), keys));
+                        break;
+                    case "##":
+                        objNode.set(name, getNodeByKeys(IntNode.valueOf(index + 1), keys));
+                        break;
+                }
             } else if (node.isObject()) {
                 objNode.set(name, getNode(node, path));
             }

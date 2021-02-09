@@ -2,17 +2,18 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.mariuszgromada.math.mxparser.Argument;
 import org.mariuszgromada.math.mxparser.Expression;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
+import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 class FuncArithmetic {
     static ValueNode funcAggregate(JsonNode node, String funcId, String params) {
@@ -56,7 +57,8 @@ class FuncArithmetic {
                 }
             }
             return array;
-        } else if (!node.isNumber() && !node.isTextual()) {
+        }
+        if (!node.isNumber() && !node.isTextual()) {
             return null;
         }
         return DoubleNode.valueOf(Math.abs(node.asDouble()));
@@ -64,9 +66,13 @@ class FuncArithmetic {
 
     static JsonNode funcCalc(JsonNode node, String params) {
         List<String> paramList = decomposeFunctionParameters(params, 1, -1);
-        Expression expression = new Expression(paramList.get(0));
-        paramList.remove(0);
-        List<ImmutablePair<String, String>> args = getParamNamePath(paramList);
+        String calc = paramList.remove(0);
+        Map<String, String> args = getParamNamePath(paramList);
+        if (calc.contains("?")) {
+            calc = calc.replaceAll("\\?", "_THIS_NODE_ ");
+            args.put("_THIS_NODE_", "?");
+        }
+        Expression expression = new Expression(calc);
         if (!node.isArray()) {
             Double value = funcCalcElement(node, expression, args, 0);
             if (value == null) {
@@ -76,7 +82,7 @@ class FuncArithmetic {
         }
         ArrayNode array = MAPPER.createArrayNode();
         for (int i  = 0; i < node.size(); i++) {
-            Double value = funcCalcElement(node.get(i), expression, args, i);
+            Double value = funcCalcElement(node.get(i), expression, args, array.size());
             if (value != null) {
                 array.add(value);
             }
@@ -84,31 +90,39 @@ class FuncArithmetic {
         return array;
     }
 
-    static Double funcCalcElement(JsonNode node, Expression expression,
-                                  List<ImmutablePair<String, String>> args, int index) {
+    private static Double funcCalcElement(JsonNode node, Expression expression, Map<String, String> args, int index) {
         expression.removeAllArguments();
-        for (ImmutablePair<String, String> arg : args) {
-            if (arg.right == null) {
+        for (Map.Entry<String, String> arg : args.entrySet()) {
+            String path = arg.getValue();
+            if (path == null) {
                 continue;
             }
             double value;
-            if (arg.right.charAt(0) == '\'') {
-                value = Double.parseDouble(unquoteString(arg.right));
-            } else if ("#".equals(arg.right)) {
-                value = index + 1;
-            } else if ("?".equals(arg.right)) {
-                if (node.isNull() || !node.isValueNode()) {
-                    return null;
-                }
+            if ("?".equals(path)) {
                 value = node.asDouble();
             } else {
-                JsonNode tryNode = getNode(node, arg.right);
+                JsonNode tryNode;
+                if (path.startsWith("#")) {
+                    List<String> keys = decomposePaths(path);
+                    switch (keys.remove(0)) {
+                        case "#":
+                            tryNode = getNodeByKeys(IntNode.valueOf(index), keys);
+                            break;
+                        case "##":
+                            tryNode = getNodeByKeys(IntNode.valueOf(index + 1), keys);
+                            break;
+                        default:
+                            return null;
+                    }
+                } else {
+                    tryNode = getNode(node, path);
+                }
                 if (tryNode == null || tryNode.isNull() || !tryNode.isValueNode()) {
                     return null;
                 }
                 value = tryNode.asDouble();
             }
-            expression.addArguments(new Argument(arg.left, value));
+            expression.addArguments(new Argument(arg.getKey(), value));
         }
         if (!expression.checkSyntax()) {
             for (String missingArg : expression.getMissingUserDefinedArguments()) {
@@ -146,7 +160,8 @@ class FuncArithmetic {
                 }
             }
             return array;
-        } else if (!node.isNumber() && !node.isTextual()) {
+        }
+        if (!node.isNumber() && !node.isTextual()) {
             return null;
         }
         return DoubleNode.valueOf(Math.ceil(node.asDouble()));
@@ -163,7 +178,8 @@ class FuncArithmetic {
                 }
             }
             return array;
-        } else if (!node.isNumber() && !node.isTextual()) {
+        }
+        if (!node.isNumber() && !node.isTextual()) {
             return null;
         }
         return DoubleNode.valueOf(Math.floor(node.asDouble()));
@@ -182,7 +198,8 @@ class FuncArithmetic {
                 }
             }
             return array;
-        } else if (!node.isNumber() && !node.isTextual()) {
+        }
+        if (!node.isNumber() && !node.isTextual()) {
             return null;
         }
         int result = node.asInt() % divisor;
@@ -202,7 +219,8 @@ class FuncArithmetic {
                 }
             }
             return array;
-        } else if (!node.isNumber() && !node.isTextual()) {
+        }
+        if (!node.isNumber() && !node.isTextual()) {
             return null;
         }
         return DoubleNode.valueOf(Math.round(node.asDouble() * magnitude) / magnitude);
