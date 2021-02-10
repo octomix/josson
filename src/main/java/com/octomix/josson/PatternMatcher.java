@@ -1,5 +1,7 @@
 package com.octomix.josson;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -262,6 +264,7 @@ class PatternMatcher {
     static List<String> decomposePaths(String input) {
         List<String> paths = new ArrayList<>();
         int last = input.length() - 1;
+        String isInt = null;
         for (int pos = 0; pos <= last; pos++) {
             int beg = pos;
             do {
@@ -274,7 +277,26 @@ class PatternMatcher {
             if (path.isEmpty()) {
                 throw new IllegalArgumentException("Invalid '.' at position " + pos + ": " + input);
             }
-            paths.add(path);
+            if (isInt == null) {
+                if (pos > last) {
+                    paths.add(path);
+                } else {
+                    try {
+                        Integer.parseInt(path);
+                        isInt = path;
+                    } catch (NumberFormatException e) {
+                        paths.add(path);
+                    }
+                }
+            } else {
+                if (StringUtils.isNumeric(path)) {
+                    paths.add(isInt + "." + path);
+                } else {
+                    paths.add(isInt);
+                    paths.add(path);
+                }
+                isInt = null;
+            }
         }
         return paths;
     }

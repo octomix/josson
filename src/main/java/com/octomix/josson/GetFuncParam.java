@@ -50,9 +50,17 @@ class GetFuncParam {
 
     static ImmutablePair<Integer, String> getParamIntAndString(String params) {
         List<String> paramList = decomposeFunctionParameters(params, 1, 2);
-        Integer num = Integer.parseInt(paramList.get(0));
-        String str = paramList.size() > 1 ? unquoteString(paramList.get(1)) : null;
-        return ImmutablePair.of(num, str);
+        return ImmutablePair.of(
+                Integer.parseInt(paramList.get(0)),
+                paramList.size() > 1 ? unquoteString(paramList.get(1)) : null);
+    }
+
+    static ImmutableTriple<String, String, Integer> getParam2StringAndInt(String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 2, 3);
+        return ImmutableTriple.of(
+                unquoteString(paramList.get(0)),
+                unquoteString(paramList.get(1)),
+                paramList.size() > 2 ? Integer.parseInt(paramList.get(2)) : null);
     }
 
     static Map<String, String> getParamNamePath(List<String> paramList) {
@@ -82,16 +90,22 @@ class GetFuncParam {
     }
 
     static ArrayNode getParamArray(String params, JsonNode node) {
-        List<String> paramList = decomposeFunctionParameters(params, 1, 1);
-        try {
-            JsonNode arrayNode = paramList.get(0).startsWith("[") ?
-                    readJsonNode(paramList.get(0)) : getNode(node, paramList.get(0));
-            if (arrayNode != null && arrayNode.isArray()) {
-                return (ArrayNode) arrayNode;
+        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+        ArrayNode arrayNode = Josson.createArrayNode();
+        for (String param : paramList) {
+            if (param.startsWith("[")) {
+                try {
+                    arrayNode.addAll((ArrayNode) readJsonNode(param));
+                } catch (JsonProcessingException e) {
+                    throw new IllegalArgumentException("Invalid JSON array: " + param);
+                }
+            } else {
+                JsonNode value = getNode(node, param);
+                if (value != null) {
+                    arrayNode.add(value);
+                }
             }
-            throw new IllegalArgumentException("Argument must be an array: " + params);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Argument must be an array: " + params);
         }
+        return arrayNode;
     }
 }

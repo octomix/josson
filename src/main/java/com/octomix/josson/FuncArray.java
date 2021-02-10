@@ -41,6 +41,100 @@ class FuncArray {
         return array;
     }
 
+    static JsonNode funcFirst(JsonNode node, String params) {
+        getParamNotAccept(params);
+        if (!node.isArray()) {
+            return node;
+        }
+        if (node.size() == 0) {
+            return null;
+        }
+        return node.get(0);
+    }
+
+    static IntNode funcIndexOf(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, 1);
+        if (!node.isArray()) {
+            return null;
+        }
+        JsonNode valueNode = getNode(node, paramList.get(0));
+        if (valueNode != null && valueNode.isValueNode()) {
+            if (valueNode.isNumber()) {
+                double value = valueNode.asDouble();
+                for (int i = 0; i < node.size() - 1; i++) {
+                    JsonNode tryNode = node.get(i);
+                    if (tryNode.isNumber() || tryNode.isTextual()) {
+                        if (tryNode.asDouble() == value) {
+                            return IntNode.valueOf(i);
+                        }
+                    }
+                }
+            } else {
+                String value = valueNode.asText();
+                for (int i = 0; i < node.size() - 1; i++) {
+                    JsonNode tryNode = node.get(i);
+                    if (tryNode.isNumber() || tryNode.isTextual()) {
+                        if (tryNode.asText().equals(value)) {
+                            return IntNode.valueOf(i);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    static JsonNode funcLast(JsonNode node, String params) {
+        getParamNotAccept(params);
+        if (!node.isArray()) {
+            return node;
+        }
+        if (node.size() == 0) {
+            return null;
+        }
+        return node.get(node.size() - 1);
+    }
+
+    static IntNode funcLastIndex(JsonNode node, String params) {
+        getParamNotAccept(params);
+        if (!node.isArray()) {
+            return null;
+        }
+        return IntNode.valueOf(node.size() - 1);
+    }
+
+    static IntNode funcLastIndexOf(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, 1);
+        if (!node.isArray()) {
+            return null;
+        }
+        JsonNode valueNode = getNode(node, paramList.get(0));
+        if (valueNode != null && valueNode.isValueNode()) {
+            if (valueNode.isNumber()) {
+                double value = valueNode.asDouble();
+                for (int i = node.size() - 1; i >= 0; i--) {
+                    JsonNode tryNode = node.get(i);
+                    if (tryNode.isNumber() || tryNode.isTextual()) {
+                        if (tryNode.asDouble() == value) {
+                            return IntNode.valueOf(i);
+                        }
+                    }
+                }
+            } else {
+                String value = valueNode.asText();
+                for (int i = node.size() - 1; i >= 0; i--) {
+                    JsonNode tryNode = node.get(i);
+                    if (tryNode.isNumber() || tryNode.isTextual()) {
+                        if (tryNode.asText().equals(value)) {
+                            return IntNode.valueOf(i);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     static JsonNode funcMaxMin(JsonNode node, String params, boolean isMax, int nullPriority) {
         List<String> paramList = decomposeFunctionParameters(params, 0, 1);
         if (!node.isArray()) {

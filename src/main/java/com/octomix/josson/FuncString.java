@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -226,6 +227,88 @@ class FuncString {
         return TextNode.valueOf(String.join(delimiter == null ? "" : delimiter, texts));
     }
 
+    static JsonNode funcKeepAfter(JsonNode node, String params, boolean ignoreCase, boolean last) {
+        String find = getParamStringLiteral(params);
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    if (find.isEmpty()) {
+                        array.add(textNode);
+                    } else {
+                        String text = textNode.asText();
+                        int pos = last ?
+                                (ignoreCase ?
+                                        StringUtils.lastIndexOfIgnoreCase(text, find) :
+                                        StringUtils.lastIndexOf(text, find)) :
+                                (ignoreCase ?
+                                        StringUtils.indexOfIgnoreCase(text, find) :
+                                        StringUtils.indexOf(text, find));
+                        array.add(pos < 0 ? "" : text.substring(pos + find.length()));
+                    }
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        if (find.isEmpty()) {
+            return node;
+        }
+        String text = node.asText();
+        int pos = last ?
+                (ignoreCase ?
+                        StringUtils.lastIndexOfIgnoreCase(text, find) :
+                        StringUtils.lastIndexOf(text, find)) :
+                (ignoreCase ?
+                        StringUtils.indexOfIgnoreCase(text, find) :
+                        StringUtils.indexOf(text, find));
+        return TextNode.valueOf(pos < 0 ? "" : text.substring(pos + find.length()));
+    }
+
+    static JsonNode funcKeepBefore(JsonNode node, String params, boolean ignoreCase, boolean last) {
+        String find = getParamStringLiteral(params);
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    String text = textNode.asText();
+                    if (find.isEmpty()) {
+                        array.add(text);
+                    } else {
+                        int pos = last ?
+                                (ignoreCase ?
+                                        StringUtils.lastIndexOfIgnoreCase(text, find) :
+                                        StringUtils.lastIndexOf(text, find)) :
+                                (ignoreCase ?
+                                        StringUtils.indexOfIgnoreCase(text, find) :
+                                        StringUtils.indexOf(text, find));
+                        array.add(pos < 0 ? "" : text.substring(0, pos));
+                    }
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        if (find.isEmpty()) {
+            return node;
+        }
+        String text = node.asText();
+        int pos = last ?
+                (ignoreCase ?
+                        StringUtils.lastIndexOfIgnoreCase(text, find) :
+                        StringUtils.lastIndexOf(text, find)) :
+                (ignoreCase ?
+                        StringUtils.indexOfIgnoreCase(text, find) :
+                        StringUtils.indexOf(text, find));
+        return TextNode.valueOf(pos < 0 ? "" : text.substring(0, pos));
+    }
+
     static JsonNode funcLeftPad(JsonNode node, String params) {
         ImmutablePair<Integer, String> args = getParamIntAndString(params);
         if (node.isArray()) {
@@ -282,6 +365,76 @@ class FuncString {
         return TextNode.valueOf(ignoreCase ?
                 StringUtils.prependIfMissingIgnoreCase(node.asText(), prefix) :
                 StringUtils.prependIfMissing(node.asText(), prefix));
+    }
+
+    static JsonNode funcRemoveEnd(JsonNode node, String params, boolean ignoreCase) {
+        String prefix = getParamStringLiteral(params);
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    array.add(TextNode.valueOf(ignoreCase ?
+                            StringUtils.removeEndIgnoreCase(textNode.asText(), prefix) :
+                            StringUtils.removeEnd(textNode.asText(), prefix)));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(ignoreCase ?
+                StringUtils.removeEndIgnoreCase(node.asText(), prefix) :
+                StringUtils.removeEnd(node.asText(), prefix));
+    }
+
+    static JsonNode funcRemoveStart(JsonNode node, String params, boolean ignoreCase) {
+        String suffix = getParamStringLiteral(params);
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    array.add(TextNode.valueOf(ignoreCase ?
+                            StringUtils.removeStartIgnoreCase(textNode.asText(), suffix) :
+                            StringUtils.removeStart(textNode.asText(), suffix)));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(ignoreCase ?
+                StringUtils.removeStartIgnoreCase(node.asText(), suffix) :
+                StringUtils.removeStart(node.asText(), suffix));
+    }
+
+    static JsonNode funcReplace(JsonNode node, String params, boolean ignoreCase) {
+        ImmutableTriple<String, String, Integer> args = getParam2StringAndInt(params);
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    array.add(TextNode.valueOf(ignoreCase ?
+                            StringUtils.replaceIgnoreCase(
+                                    textNode.asText(), args.left, args.middle, args.right == null ? -1 : args.right) :
+                            StringUtils.replace(
+                                    textNode.asText(), args.left, args.middle, args.right == null ? -1 : args.right)));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(ignoreCase ?
+                StringUtils.replaceIgnoreCase(
+                        node.asText(), args.left, args.middle, args.right == null ? -1 : args.right) :
+                StringUtils.replace(
+                        node.asText(), args.left, args.middle, args.right == null ? -1 : args.right));
     }
 
     static JsonNode funcRightPad(JsonNode node, String params) {

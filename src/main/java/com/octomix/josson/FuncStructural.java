@@ -20,12 +20,12 @@ class FuncStructural {
     static IntNode funcLength(JsonNode node, String params) {
         getParamNotAccept(params);
         if (node.isContainerNode()) {
-            return new IntNode(node.size());
+            return IntNode.valueOf(node.size());
         }
         if (node.isTextual()) {
-            return new IntNode(node.asText().length());
+            return IntNode.valueOf(node.asText().length());
         }
-        return new IntNode(0);
+        return IntNode.valueOf(0);
     }
 
     static JsonNode funcMap(JsonNode node, String params) {
@@ -84,12 +84,12 @@ class FuncStructural {
                     count.getAndIncrement();
                 }
             });
-            return new IntNode(count.get());
+            return IntNode.valueOf(count.get());
         }
         if (node.isTextual()) {
-            return new IntNode(node.asText().length());
+            return IntNode.valueOf(node.asText().length());
         }
-        return new IntNode(0);
+        return IntNode.valueOf(0);
     }
 
     static JsonNode funcToArray(JsonNode node, String params) {

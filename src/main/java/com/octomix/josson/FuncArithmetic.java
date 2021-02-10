@@ -33,14 +33,14 @@ class FuncArithmetic {
             }
         }
         if ("count".equals(funcId)) {
-            return new IntNode(count);
+            return IntNode.valueOf(count);
         }
         if (count > 0) {
             switch (funcId) {
                 case "sum":
-                    return new DoubleNode(sum);
+                    return DoubleNode.valueOf(sum);
                 case "avg":
-                    return new DoubleNode(sum / count);
+                    return DoubleNode.valueOf(sum / count);
             }
         }
         return null;
@@ -156,7 +156,7 @@ class FuncArithmetic {
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode valueNode = node.get(i);
                 if (valueNode.isNumber() || valueNode.isTextual()) {
-                    array.add(DoubleNode.valueOf(Math.ceil(valueNode.asDouble())));
+                    array.add(IntNode.valueOf((int) Math.ceil(valueNode.asDouble())));
                 }
             }
             return array;
@@ -164,7 +164,7 @@ class FuncArithmetic {
         if (!node.isNumber() && !node.isTextual()) {
             return null;
         }
-        return DoubleNode.valueOf(Math.ceil(node.asDouble()));
+        return IntNode.valueOf((int) Math.ceil(node.asDouble()));
     }
 
     static JsonNode funcFloor(JsonNode node, String params) {
@@ -174,7 +174,7 @@ class FuncArithmetic {
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode valueNode = node.get(i);
                 if (valueNode.isNumber() || valueNode.isTextual()) {
-                    array.add(DoubleNode.valueOf(Math.floor(valueNode.asDouble())));
+                    array.add(IntNode.valueOf((int) Math.floor(valueNode.asDouble())));
                 }
             }
             return array;
@@ -182,7 +182,7 @@ class FuncArithmetic {
         if (!node.isNumber() && !node.isTextual()) {
             return null;
         }
-        return DoubleNode.valueOf(Math.floor(node.asDouble()));
+        return IntNode.valueOf((int) Math.floor(node.asDouble()));
     }
 
     static JsonNode funcMod(JsonNode node, String params) {
@@ -215,7 +215,12 @@ class FuncArithmetic {
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode valueNode = node.get(i);
                 if (valueNode.isNumber() || valueNode.isTextual()) {
-                    array.add(DoubleNode.valueOf(Math.round(valueNode.asDouble() * magnitude) / magnitude));
+                    double result = Math.round(valueNode.asDouble() * magnitude) / magnitude;
+                    if (precision > 0) {
+                        array.add(DoubleNode.valueOf(result));
+                    } else {
+                        array.add(IntNode.valueOf((int) result));
+                    }
                 }
             }
             return array;
@@ -223,6 +228,10 @@ class FuncArithmetic {
         if (!node.isNumber() && !node.isTextual()) {
             return null;
         }
-        return DoubleNode.valueOf(Math.round(node.asDouble() * magnitude) / magnitude);
+        double result = Math.round(node.asDouble() * magnitude) / magnitude;
+        if (precision > 0) {
+            return DoubleNode.valueOf(result);
+        }
+        return IntNode.valueOf((int) result);
     }
 }

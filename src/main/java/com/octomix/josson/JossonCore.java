@@ -88,7 +88,10 @@ class JossonCore {
         if (literal.charAt(0) == '\'') {
             return TextNode.valueOf(unquoteString(literal));
         }
-        return new DoubleNode(Double.parseDouble(literal));
+        if (literal.indexOf('.') < 0) {
+            return IntNode.valueOf(Integer.parseInt(literal));
+        }
+        return DoubleNode.valueOf(Double.parseDouble(literal));
     }
 
     static JsonNode getNodeByKeys(JsonNode node, List<String> keys) {

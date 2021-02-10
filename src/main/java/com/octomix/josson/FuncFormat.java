@@ -91,7 +91,7 @@ class FuncFormat {
     }
 
     static JsonNode funcCycleValue(JsonNode node, String params) {
-        ArrayNode paramArray = getParamArray(params, null);
+        ArrayNode paramArray = getParamArray(params, node);
         int size = paramArray.size();
         if (size == 0 || node.isNull() || node.isObject()) {
             return null;
@@ -171,7 +171,7 @@ class FuncFormat {
     }
 
     static JsonNode funcIndexedValue(JsonNode node, String params) {
-        ArrayNode paramArray = getParamArray(params, null);
+        ArrayNode paramArray = getParamArray(params, node);
         int size = paramArray.size();
         if (size == 0 || node.isNull() || node.isObject()) {
             return null;

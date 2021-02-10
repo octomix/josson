@@ -35,6 +35,16 @@ class FuncDispatcher {
                 // Array
                 case "distinct":
                     return funcDistinct(node, params);
+                case "first":
+                    return funcFirst(node, params);
+                case "indexof":
+                    return funcIndexOf(node, params);
+                case "last":
+                    return funcLast(node, params);
+                case "lastindex":
+                    return funcLastIndex(node, params);
+                case "lastindexof":
+                    return funcLastIndexOf(node, params);
                 case "max":
                     return funcMaxMin(node, params, true, 0);
                 case "maxnull":
@@ -139,6 +149,22 @@ class FuncDispatcher {
                     return funcConcat(node, params);
                 case "join":
                     return funcJoin(node, params);
+                case "keepafter":
+                    return funcKeepAfter(node, params, false, false);
+                case "keepafterignorecase":
+                    return funcKeepAfter(node, params, true, false);
+                case "keepafterlast":
+                    return funcKeepAfter(node, params, false, true);
+                case "keepafterlastignorecase":
+                    return funcKeepAfter(node, params, true, true);
+                case "keepbefore":
+                    return funcKeepBefore(node, params, false, false);
+                case "keepbeforeignorecase":
+                    return funcKeepBefore(node, params, true, false);
+                case "keepbeforelast":
+                    return funcKeepBefore(node, params, false, true);
+                case "keepbeforelastignorecase":
+                    return funcKeepBefore(node, params, true, true);
                 case "leftpad":
                     return funcLeftPad(node, params);
                 case "lowercase":
@@ -147,6 +173,18 @@ class FuncDispatcher {
                     return funcPrependIfMissing(node, params, false);
                 case "prependifmissingignorecase":
                     return funcPrependIfMissing(node, params, true);
+                case "removeend":
+                    return funcRemoveEnd(node, params, false);
+                case "removeendignorecase":
+                    return funcRemoveEnd(node, params, true);
+                case "removestart":
+                    return funcRemoveStart(node, params, false);
+                case "removestartignorecase":
+                    return funcRemoveStart(node, params, true);
+                case "replace":
+                    return funcReplace(node, params, false);
+                case "replaceignorecase":
+                    return funcReplace(node, params, true);
                 case "rightpad":
                     return funcRightPad(node, params);
                 case "split":
