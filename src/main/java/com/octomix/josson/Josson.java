@@ -33,21 +33,21 @@ public class Josson {
         return new Josson(createArrayNode());
     }
 
-    public static Josson create(JsonNode node) throws IllegalArgumentException {
+    public static Josson create(JsonNode node) {
         if (node == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
         return new Josson(node);
     }
 
-    public static Josson from(Object object) throws IllegalArgumentException {
+    public static Josson from(Object object) {
         if (object == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
         return new Josson(readJsonNode(object));
     }
 
-    public static Josson fromJsonString(String json) throws IllegalArgumentException, JsonProcessingException {
+    public static Josson fromJsonString(String json) throws JsonProcessingException {
         if (json == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
@@ -70,14 +70,14 @@ public class Josson {
         return new Josson(BooleanNode.valueOf(b));
     }
 
-    public void setNode(JsonNode node) throws IllegalArgumentException {
+    public void setNode(JsonNode node) {
         if (node == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
         this.node = node;
     }
 
-    public void setJsonString(String json) throws IllegalArgumentException, JsonProcessingException {
+    public void setJsonString(String json) throws JsonProcessingException {
         if (json == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }

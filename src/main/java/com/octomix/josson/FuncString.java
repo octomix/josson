@@ -2,7 +2,6 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -16,7 +15,6 @@ import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
-import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 class FuncString {
     static JsonNode funcAbbreviate(JsonNode node, String params) {
@@ -135,13 +133,13 @@ class FuncString {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
-                if (textNode.isValueNode()) {
+                if (nodeHasValue(textNode)) {
                     array.add(TextNode.valueOf(StringUtils.center(textNode.asText(), args.left, args.right)));
                 }
             }
             return array;
         }
-        if (!node.isValueNode()) {
+        if (!nodeHasValue(node)) {
             return null;
         }
         return TextNode.valueOf(StringUtils.center(node.asText(), args.left, args.right));
@@ -180,7 +178,6 @@ class FuncString {
     private static String funcConcatElement(JsonNode node, List<ImmutablePair<Character, String>> args, int index) {
         StringBuilder sb = new StringBuilder();
         for (ImmutablePair<Character, String> arg : args) {
-            JsonNode tryNode;
             switch (arg.left) {
                 case '\'':
                     sb.append(arg.right);
@@ -188,23 +185,9 @@ class FuncString {
                 case '?':
                     sb.append(node.asText());
                     continue;
-                case '#':
-                    List<String> keys = decomposePaths(arg.right);
-                    switch (keys.remove(0)) {
-                        case "#":
-                            tryNode = getNodeByKeys(IntNode.valueOf(index), keys);
-                            break;
-                        case "##":
-                            tryNode = getNodeByKeys(IntNode.valueOf(index + 1), keys);
-                            break;
-                        default:
-                            return null;
-                    }
-                    break;
-                default:
-                    tryNode = getNode(node, arg.right);
             }
-            if (tryNode == null || tryNode.isNull() || !tryNode.isValueNode()) {
+            JsonNode tryNode = arg.left == '#' ? getIndexNode(index, arg.right) : getNode(node, arg.right);
+            if (!nodeHasValue(tryNode)) {
                 return null;
             }
             sb.append(tryNode.asText());
@@ -220,7 +203,7 @@ class FuncString {
         List<String> texts = new ArrayList<>();
         for (int i = 0; i < node.size(); i++) {
             JsonNode valueNode = node.get(i);
-            if (valueNode.isValueNode()) {
+            if (nodeHasValue(valueNode)) {
                 texts.add(valueNode.asText());
             }
         }
@@ -315,13 +298,13 @@ class FuncString {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
-                if (textNode.isValueNode()) {
+                if (nodeHasValue(textNode)) {
                     array.add(TextNode.valueOf(StringUtils.leftPad(textNode.asText(), args.left, args.right)));
                 }
             }
             return array;
         }
-        if (!node.isValueNode()) {
+        if (!nodeHasValue(node)) {
             return null;
         }
         return TextNode.valueOf(StringUtils.leftPad(node.asText(), args.left, args.right));
@@ -443,13 +426,13 @@ class FuncString {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
-                if (textNode.isValueNode()) {
+                if (nodeHasValue(textNode)) {
                     array.add(TextNode.valueOf(StringUtils.rightPad(textNode.asText(), args.left, args.right)));
                 }
             }
             return array;
         }
-        if (!node.isValueNode()) {
+        if (!nodeHasValue(node)) {
             return null;
         }
         return TextNode.valueOf(StringUtils.rightPad(node.asText(), args.left, args.right));

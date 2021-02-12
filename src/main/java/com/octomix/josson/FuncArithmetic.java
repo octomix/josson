@@ -13,7 +13,6 @@ import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
-import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 class FuncArithmetic {
     static ValueNode funcAggregate(JsonNode node, String funcId, String params) {
@@ -26,9 +25,8 @@ class FuncArithmetic {
         int count = 0;
         for (int i = 0; i < node.size(); i++) {
             JsonNode tryNode = getNode(node.get(i), path);
-            if (tryNode != null && !tryNode.isNull() && tryNode.isValueNode()) {
-                double value = tryNode.asDouble();
-                sum += value;
+            if (nodeHasValue(tryNode)) {
+                sum += tryNode.asDouble();
                 count++;
             }
         }
@@ -101,23 +99,8 @@ class FuncArithmetic {
             if ("?".equals(path)) {
                 value = node.asDouble();
             } else {
-                JsonNode tryNode;
-                if (path.startsWith("#")) {
-                    List<String> keys = decomposePaths(path);
-                    switch (keys.remove(0)) {
-                        case "#":
-                            tryNode = getNodeByKeys(IntNode.valueOf(index), keys);
-                            break;
-                        case "##":
-                            tryNode = getNodeByKeys(IntNode.valueOf(index + 1), keys);
-                            break;
-                        default:
-                            return null;
-                    }
-                } else {
-                    tryNode = getNode(node, path);
-                }
-                if (tryNode == null || tryNode.isNull() || !tryNode.isValueNode()) {
+                JsonNode tryNode = path.charAt(0) == '#' ? getIndexNode(index, path) : getNode(node, path);
+                if (!nodeHasValue(tryNode)) {
                     return null;
                 }
                 value = tryNode.asDouble();
@@ -127,7 +110,7 @@ class FuncArithmetic {
         if (!expression.checkSyntax()) {
             for (String missingArg : expression.getMissingUserDefinedArguments()) {
                 JsonNode tryNode = getNode(node, missingArg);
-                if (tryNode == null || tryNode.isNull() || !tryNode.isValueNode()) {
+                if (!nodeHasValue(tryNode)) {
                     return null;
                 }
                 expression.addArguments(new Argument(missingArg, tryNode.asDouble()));

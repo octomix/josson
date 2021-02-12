@@ -109,7 +109,7 @@ class FuncLogical {
 
     static BooleanNode funcIsEven(JsonNode node, String params) {
         getParamNotAccept(params);
-        if (node.isValueNode()) {
+        if (nodeHasValue(node)) {
             return BooleanNode.valueOf((node.asInt() & 1) == 0);
         }
         return BooleanNode.FALSE;
@@ -122,7 +122,7 @@ class FuncLogical {
 
     static BooleanNode funcIsOdd(JsonNode node, String params) {
         getParamNotAccept(params);
-        if (node.isValueNode()) {
+        if (nodeHasValue(node)) {
             return BooleanNode.valueOf((node.asInt() & 1) != 0);
         }
         return BooleanNode.FALSE;

@@ -207,7 +207,7 @@ class FuncDispatcher {
                     return funcToArray(node, params);
             }
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid function call " + funcId + "()\n" + e.getMessage());
+            throw new IllegalArgumentException("Invalid function call " + funcId + "() : " + e.getMessage());
         }
         throw new UnsupportedOperationException("Unsupported function " + funcId + "()");
     }

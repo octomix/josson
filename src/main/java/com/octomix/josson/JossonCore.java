@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.PatternMatcher.*;
 
 class JossonCore {
@@ -18,38 +19,6 @@ class JossonCore {
     private enum FilterArrayReturn {
         FIRST_MATCHED,
         ALL_MATCHED
-    }
-
-    private enum RelationalOperator {
-        EQ("="),
-        NE("!="),
-        GT(">"),
-        GTE(">="),
-        LT("<"),
-        LTE("<=");
-
-        final String symbol;
-
-        RelationalOperator(String symbol) {
-            this.symbol = symbol;
-        }
-
-        public static RelationalOperator findRelationalOperatorBySymbol(String symbol) {
-            for (RelationalOperator operator : values()) {
-                if (operator.symbol.equals(symbol)) {
-                    return operator;
-                }
-            }
-            throw new IllegalArgumentException(symbol);
-        }
-    }
-
-    enum JoinOperator {
-        INNER_JOIN_ONE,
-        LEFT_JOIN_ONE,
-        RIGHT_JOIN_ONE,
-        LEFT_JOIN_MANY,
-        RIGHT_JOIN_MANY
     }
 
     static String unquoteString(String quotedString) {
@@ -92,6 +61,69 @@ class JossonCore {
             return IntNode.valueOf(Integer.parseInt(literal));
         }
         return DoubleNode.valueOf(Double.parseDouble(literal));
+    }
+
+    static JsonNode getIndexNode(int index, String functions) {
+        List<String> keys = decomposePaths(functions);
+        String indexType = keys.remove(0);
+        switch (indexType) {
+            case "#":
+                break;
+            case "##":
+                index++;
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid syntax: " + indexType);
+        }
+        return getNodeByKeys(IntNode.valueOf(index), keys);
+    }
+
+    static boolean nodeHasValue(JsonNode node) {
+        return node != null && !node.isNull() && node.isValueNode();
+    }
+
+    static Object valueAsObject(JsonNode node) {
+        if (!nodeHasValue(node)) {
+            return null;
+        }
+        if (node.isIntegralNumber()) {
+            return node.asInt();
+        }
+        if (node.isNumber()) {
+            return node.asDouble();
+        }
+        return node.asText();
+    }
+
+    static Object[] valuesAsObjects(JsonNode node, List<String> paramList, int index) {
+        Object[] objects;
+        int size = paramList.size();
+        if (size == 0) {
+            Object valueObject = valueAsObject(node);
+            if (valueObject == null) {
+                return null;
+            }
+            objects = new Object[1];
+            objects[0] = valueObject;
+        } else {
+            objects = new Object[size];
+            for (int i = 0; i < size; i++) {
+                String param = paramList.get(i);
+                Object valueObject;
+                if ("?".equals(param)) {
+                    valueObject = valueAsObject(node);
+                } else if (param.charAt(0) == '#') {
+                    valueObject = valueAsObject(getIndexNode(index, param));
+                } else {
+                    valueObject = valueAsObject(getNode(node, param));
+                }
+                if (valueObject == null) {
+                    return null;
+                }
+                objects[i] = valueObject;
+            }
+        }
+        return objects;
     }
 
     static JsonNode getNodeByKeys(JsonNode node, List<String> keys) {
@@ -219,89 +251,6 @@ class JossonCore {
         return node;
     }
 
-    static BooleanNode relationalCompare(JsonNode leftNode, String operator, JsonNode rightNode) {
-        RelationalOperator oper = RelationalOperator.findRelationalOperatorBySymbol(operator);
-        if (leftNode == null) {
-            leftNode = NullNode.getInstance();
-        }
-        if (rightNode == null) {
-            rightNode = NullNode.getInstance();
-        }
-        if (rightNode.isTextual()) {
-            if (leftNode.isTextual()) {
-                int compareResult = leftNode.asText().compareTo(rightNode.asText());
-                switch (oper) {
-                    case EQ:
-                        return BooleanNode.valueOf(compareResult == 0);
-                    case NE:
-                        return BooleanNode.valueOf(compareResult != 0);
-                    case GT:
-                        return BooleanNode.valueOf(compareResult > 0);
-                    case GTE:
-                        return BooleanNode.valueOf(compareResult >= 0);
-                    case LT:
-                        return BooleanNode.valueOf(compareResult < 0);
-                    case LTE:
-                        return BooleanNode.valueOf(compareResult <= 0);
-                }
-            }
-            JsonNode swap = leftNode;
-            leftNode = rightNode;
-            rightNode = swap;
-            switch (oper) {
-                case GT:
-                    oper = RelationalOperator.LT;
-                    break;
-                case GTE:
-                    oper = RelationalOperator.LTE;
-                    break;
-                case LT:
-                    oper = RelationalOperator.GT;
-                    break;
-                case LTE:
-                    oper = RelationalOperator.GTE;
-                    break;
-            }
-        }
-        if (!leftNode.isContainerNode() && rightNode.isNumber()) {
-            try {
-                double value = leftNode.isNumber() ? leftNode.asDouble() : Double.parseDouble(leftNode.asText());
-                switch (oper) {
-                    case EQ:
-                        return BooleanNode.valueOf(value == rightNode.asDouble());
-                    case NE:
-                        return BooleanNode.valueOf(value != rightNode.asDouble());
-                    case GT:
-                        return BooleanNode.valueOf(value > rightNode.asDouble());
-                    case GTE:
-                        return BooleanNode.valueOf(value >= rightNode.asDouble());
-                    case LT:
-                        return BooleanNode.valueOf(value < rightNode.asDouble());
-                    case LTE:
-                        return BooleanNode.valueOf(value <= rightNode.asDouble());
-                }
-            } catch (NumberFormatException e) {
-                return BooleanNode.FALSE;
-            }
-        }
-        if (!leftNode.isContainerNode() && rightNode.isBoolean()) {
-            switch (oper) {
-                case EQ:
-                    return BooleanNode.valueOf(!leftNode.asBoolean() ^ rightNode.asBoolean());
-                case NE:
-                    return BooleanNode.valueOf(leftNode.asBoolean() ^ rightNode.asBoolean());
-            }
-        } else {
-            switch (oper) {
-                case EQ:
-                    return BooleanNode.valueOf(leftNode.isNull() && rightNode.isNull());
-                case NE:
-                    return BooleanNode.valueOf(leftNode.isNull() ^ rightNode.isNull());
-            }
-        }
-        return BooleanNode.FALSE;
-    }
-
     static JsonNode forEachElement(JsonNode node, List<String> keys, String funcChain, boolean flattenArray) {
         List<String> functions = decomposeNestedResultFunctions(funcChain);
         ArrayNode matchedNodes = MAPPER.createArrayNode();
@@ -316,83 +265,5 @@ class JossonCore {
             }
         }
         return getNodeByKeys(matchedNodes, functions);
-    }
-
-    static JsonNode joinNodes(JsonNode leftNode, String[] leftKeys, String leftArrayName, JoinOperator operator,
-                              JsonNode rightNode, String[] rightKeys, String rightArrayName) {
-        String arrayName;
-        if (operator == JoinOperator.RIGHT_JOIN_ONE || operator == JoinOperator.RIGHT_JOIN_MANY
-                || (operator == JoinOperator.INNER_JOIN_ONE && !leftNode.isObject() && rightNode.isObject())) {
-            JsonNode swapNode = leftNode;
-            leftNode = rightNode;
-            rightNode = swapNode;
-            String[] swapKeys = leftKeys;
-            leftKeys = rightKeys;
-            rightKeys = swapKeys;
-            if (operator == JoinOperator.RIGHT_JOIN_ONE) {
-                operator = JoinOperator.LEFT_JOIN_ONE;
-            } else if (operator == JoinOperator.RIGHT_JOIN_MANY) {
-                operator = JoinOperator.LEFT_JOIN_MANY;
-            }
-            arrayName = leftArrayName;
-        } else {
-            arrayName = rightArrayName;
-        }
-        ArrayNode rightArray;
-        if (rightNode.isArray()) {
-            rightArray = (ArrayNode) rightNode;
-        } else {
-            rightArray = Josson.createArrayNode();
-            rightArray.add(rightNode);
-        }
-        if (leftNode.isObject()) {
-            return joinToObjectNode((ObjectNode) leftNode, leftKeys, operator, rightArray, rightKeys, arrayName);
-        }
-        ArrayNode joinedArray = Josson.createArrayNode();
-        for (int i = 0; i < leftNode.size(); i++) {
-            if (leftNode.get(i).isObject()) {
-                ObjectNode joinedNode = joinToObjectNode(
-                        (ObjectNode) leftNode.get(i), leftKeys, operator, rightArray, rightKeys, arrayName);
-                if (joinedNode != null) {
-                    joinedArray.add(joinedNode);
-                }
-            }
-        }
-        return joinedArray;
-    }
-
-    static ObjectNode joinToObjectNode(ObjectNode leftObject, String[] leftKeys, JoinOperator operator,
-                                       ArrayNode rightArray, String[] rightKeys, String arrayName) {
-        String[] conditions = new String[leftKeys.length];
-        for (int j = leftKeys.length - 1; j >= 0; j--) {
-            JsonNode leftValue = Josson.getNode(leftObject, leftKeys[j]);
-            if (leftValue == null || !leftValue.isValueNode()) {
-                return null;
-            }
-            conditions[j] = rightKeys[j]
-                    + (leftValue.isTextual() ? "='" : "=") + leftValue.asText().replaceAll("'", "''")
-                    + (leftValue.isTextual() ? "'" : "");
-        }
-        if (operator == JoinOperator.LEFT_JOIN_MANY) {
-            JsonNode rightToJoin = Josson.getNode(
-                    rightArray, "[" + StringUtils.join(conditions, " & ") + "]@");
-            if (rightToJoin != null) {
-                ObjectNode joinedNode = leftObject.deepCopy();
-                joinedNode.set(arrayName, rightToJoin);
-                return joinedNode;
-            }
-        } else {
-            JsonNode rightToJoin = Josson.getNode(
-                    rightArray, "[" + StringUtils.join(conditions, " & ") + "]");
-            if (rightToJoin != null && rightToJoin.isObject()) {
-                ObjectNode joinedNode = leftObject.deepCopy();
-                joinedNode.setAll((ObjectNode) rightToJoin);
-                return joinedNode;
-            }
-            if (operator == JoinOperator.INNER_JOIN_ONE) {
-                return null;
-            }
-        }
-        return leftObject;
     }
 }

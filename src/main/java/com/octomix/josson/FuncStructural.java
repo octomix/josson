@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -13,7 +12,6 @@ import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
-import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 class FuncStructural {
 
@@ -58,16 +56,8 @@ class FuncStructural {
                 objNode.putNull(name);
             } else if ("?".equals(path)) {
                 objNode.set(name, node);
-            } else if (path.startsWith("#")) {
-                List<String> keys = decomposePaths(path);
-                switch (keys.remove(0)) {
-                    case "#":
-                        objNode.set(name, getNodeByKeys(IntNode.valueOf(index), keys));
-                        break;
-                    case "##":
-                        objNode.set(name, getNodeByKeys(IntNode.valueOf(index + 1), keys));
-                        break;
-                }
+            } else if (path.charAt(0) == '#') {
+                objNode.set(name, getIndexNode(index, path));
             } else if (node.isObject()) {
                 objNode.set(name, getNode(node, path));
             }

@@ -13,7 +13,7 @@ import java.util.*;
 import static com.octomix.josson.GetFuncParam.getParamArray;
 import static com.octomix.josson.GetFuncParam.getParamStringLiteral;
 import static com.octomix.josson.Josson.getNode;
-import static com.octomix.josson.JossonCore.MAPPER;
+import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncFormat {
@@ -100,7 +100,7 @@ class FuncFormat {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 JsonNode valueNode = node.get(i);
-                if (valueNode.isValueNode() && !valueNode.isNull()) {
+                if (nodeHasValue(valueNode)) {
                     int index = valueNode.asInt() % size;
                     array.add(paramArray.get(index < 0 ? index + size : index));
                 }
@@ -138,36 +138,36 @@ class FuncFormat {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
-                if (textNode.isValueNode()) {
-                    array.add(TextNode.valueOf(
-                            new DecimalFormat(pattern).format(textNode.asDouble())));
+                if (nodeHasValue(textNode)) {
+                    array.add(TextNode.valueOf(new DecimalFormat(pattern).format(textNode.asDouble())));
                 }
             }
             return array;
         }
-        if (!node.isValueNode()) {
+        if (!nodeHasValue(node)) {
             return null;
         }
         return TextNode.valueOf(new DecimalFormat(pattern).format(node.asDouble()));
     }
 
     static JsonNode funcFormatText(JsonNode node, String params) {
-        String pattern = getParamStringLiteral(params);
+        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+        String pattern = unquoteString(paramList.remove(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode textNode = node.get(i);
-                if (textNode.isValueNode()) {
-                    array.add(TextNode.valueOf(
-                            String.format(pattern, textNode.asText())));
+            for (int i = 0; i < node.size(); i++) {
+                Object[] valueObjects = valuesAsObjects(node.get(i), paramList, i);
+                if (valueObjects != null) {
+                    array.add(TextNode.valueOf(String.format(pattern, valueObjects)));
                 }
             }
             return array;
         }
-        if (!node.isValueNode()) {
+        Object[] valueObjects = valuesAsObjects(node, paramList, 0);
+        if (valueObjects == null) {
             return null;
         }
-        return TextNode.valueOf(String.format(pattern, node.asText()));
+        return TextNode.valueOf(String.format(pattern, valueObjects));
     }
 
     static JsonNode funcIndexedValue(JsonNode node, String params) {
@@ -180,7 +180,7 @@ class FuncFormat {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 JsonNode valueNode = node.get(i);
-                if (valueNode.isValueNode() && !valueNode.isNull()) {
+                if (nodeHasValue(valueNode)) {
                     int index = valueNode.asInt();
                     if (index >= 0 && index < size) {
                         array.add(paramArray.get(index));

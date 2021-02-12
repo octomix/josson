@@ -12,7 +12,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static com.octomix.josson.JossonCore.*;
-
 import static com.octomix.josson.PatternMatcher.*;
 import static org.apache.commons.text.StringEscapeUtils.unescapeXml;
 
@@ -21,6 +20,14 @@ public class Jossons {
     private final Map<String, Josson> datasets = new HashMap<>();
     private ShowResolvedValueMode showResolvedValueMode = ShowResolvedValueMode.VALUE_NODE_ONLY;
 
+    private enum JoinOperator {
+        INNER_JOIN_ONE,
+        LEFT_JOIN_ONE,
+        RIGHT_JOIN_ONE,
+        LEFT_JOIN_MANY,
+        RIGHT_JOIN_MANY
+    }
+
     public static Jossons create(JsonNode datasets) {
         if (datasets != null && datasets.getNodeType() != JsonNodeType.OBJECT) {
             throw new IllegalArgumentException("Argument is not an object node");
@@ -28,7 +35,7 @@ public class Jossons {
         Jossons jossons = new Jossons();
         if (datasets != null) {
             datasets.fields().forEachRemaining(entry ->
-                jossons.datasets.put(entry.getKey(), Josson.create(entry.getValue())));
+                    jossons.datasets.put(entry.getKey(), Josson.create(entry.getValue())));
         }
         return jossons;
     }
@@ -41,7 +48,7 @@ public class Jossons {
         Jossons jossons = new Jossons();
         if (textParams != null) {
             textParams.forEach((key, value) ->
-                jossons.datasets.put(key, Josson.fromText(value)));
+                    jossons.datasets.put(key, Josson.fromText(value)));
         }
         return jossons;
     }
@@ -245,8 +252,7 @@ public class Jossons {
 
     public String fillInXmlPlaceholderWithResolver(String content, Function<String, String> dictionaryFinder,
                                                    BiFunction<String, String, Josson> dataFinder,
-                                                   ResolverProgress progress)
-        throws NoValuePresentException {
+                                                   ResolverProgress progress) throws NoValuePresentException {
         try {
             return fillInPlaceholderWithResolver(content, dictionaryFinder, dataFinder, true, progress);
         } finally {
@@ -256,8 +262,7 @@ public class Jossons {
 
     public String fillInPlaceholderWithResolver(String content, Function<String, String> dictionaryFinder,
                                                 BiFunction<String, String, Josson> dataFinder,
-                                                ResolverProgress progress)
-        throws NoValuePresentException {
+                                                ResolverProgress progress) throws NoValuePresentException {
         try {
             return fillInPlaceholderWithResolver(content, dictionaryFinder, dataFinder, false, progress);
         } finally {
@@ -267,8 +272,7 @@ public class Jossons {
 
     private String fillInPlaceholderWithResolver(String content, Function<String, String> dictionaryFinder,
                                                  BiFunction<String, String, Josson> dataFinder, boolean isXml,
-                                                 ResolverProgress progress)
-        throws NoValuePresentException {
+                                                 ResolverProgress progress) throws NoValuePresentException {
         Set<String> unresolvedPlaceholders = new HashSet<>();
         Set<String> unresolvedDatasetNames = new HashSet<>();
         for (;;progress.nextRound()) {
@@ -307,8 +311,8 @@ public class Jossons {
                     } catch (NoValuePresentException ex) {
                         if (ex.getPlaceholders().isEmpty()) {
                             ex.getDatasetNames().stream()
-                                .filter(s -> !namedQueries.containsKey(s))
-                                .forEach(unresolvedDatasetNames::add);
+                                    .filter(s -> !namedQueries.containsKey(s))
+                                    .forEach(unresolvedDatasetNames::add);
                         } else {
                             unresolvedPlaceholders.addAll(ex.getPlaceholders());
                             putDataset(name, null);
@@ -368,7 +372,7 @@ public class Jossons {
                 }
                 try {
                     findQuery = fillInPlaceholderWithResolver(
-                        findQuery, dictionaryFinder, dataFinder, false, progress);
+                            findQuery, dictionaryFinder, dataFinder, false, progress);
                     if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
                         progress.addStep("Resolving " + name + " from " + findQuery);
                         JsonNode node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
@@ -447,5 +451,83 @@ public class Jossons {
     public Boolean evaluateExpressionForBoolean(String expression) throws UnresolvedDatasetException {
         JsonNode node = evaluateExpression(expression.trim(), datasets);
         return node == null ? null : node.booleanValue();
+    }
+
+    private static JsonNode joinNodes(JsonNode leftNode, String[] leftKeys, String leftArrayName, JoinOperator operator,
+                                      JsonNode rightNode, String[] rightKeys, String rightArrayName) {
+        String arrayName;
+        if (operator == JoinOperator.RIGHT_JOIN_ONE || operator == JoinOperator.RIGHT_JOIN_MANY
+                || (operator == JoinOperator.INNER_JOIN_ONE && !leftNode.isObject() && rightNode.isObject())) {
+            JsonNode swapNode = leftNode;
+            leftNode = rightNode;
+            rightNode = swapNode;
+            String[] swapKeys = leftKeys;
+            leftKeys = rightKeys;
+            rightKeys = swapKeys;
+            if (operator == JoinOperator.RIGHT_JOIN_ONE) {
+                operator = JoinOperator.LEFT_JOIN_ONE;
+            } else if (operator == JoinOperator.RIGHT_JOIN_MANY) {
+                operator = JoinOperator.LEFT_JOIN_MANY;
+            }
+            arrayName = leftArrayName;
+        } else {
+            arrayName = rightArrayName;
+        }
+        ArrayNode rightArray;
+        if (rightNode.isArray()) {
+            rightArray = (ArrayNode) rightNode;
+        } else {
+            rightArray = Josson.createArrayNode();
+            rightArray.add(rightNode);
+        }
+        if (leftNode.isObject()) {
+            return joinToObjectNode((ObjectNode) leftNode, leftKeys, operator, rightArray, rightKeys, arrayName);
+        }
+        ArrayNode joinedArray = Josson.createArrayNode();
+        for (int i = 0; i < leftNode.size(); i++) {
+            if (leftNode.get(i).isObject()) {
+                ObjectNode joinedNode = joinToObjectNode(
+                        (ObjectNode) leftNode.get(i), leftKeys, operator, rightArray, rightKeys, arrayName);
+                if (joinedNode != null) {
+                    joinedArray.add(joinedNode);
+                }
+            }
+        }
+        return joinedArray;
+    }
+
+    private static ObjectNode joinToObjectNode(ObjectNode leftObject, String[] leftKeys, JoinOperator operator,
+                                               ArrayNode rightArray, String[] rightKeys, String arrayName) {
+        String[] conditions = new String[leftKeys.length];
+        for (int j = leftKeys.length - 1; j >= 0; j--) {
+            JsonNode leftValue = Josson.getNode(leftObject, leftKeys[j]);
+            if (leftValue == null || !leftValue.isValueNode()) {
+                return null;
+            }
+            conditions[j] = rightKeys[j]
+                    + (leftValue.isTextual() ? "='" : "=") + leftValue.asText().replaceAll("'", "''")
+                    + (leftValue.isTextual() ? "'" : "");
+        }
+        if (operator == JoinOperator.LEFT_JOIN_MANY) {
+            JsonNode rightToJoin = Josson.getNode(
+                    rightArray, "[" + StringUtils.join(conditions, " & ") + "]@");
+            if (rightToJoin != null) {
+                ObjectNode joinedNode = leftObject.deepCopy();
+                joinedNode.set(arrayName, rightToJoin);
+                return joinedNode;
+            }
+        } else {
+            JsonNode rightToJoin = Josson.getNode(
+                    rightArray, "[" + StringUtils.join(conditions, " & ") + "]");
+            if (rightToJoin != null && rightToJoin.isObject()) {
+                ObjectNode joinedNode = leftObject.deepCopy();
+                joinedNode.setAll((ObjectNode) rightToJoin);
+                return joinedNode;
+            }
+            if (operator == JoinOperator.INNER_JOIN_ONE) {
+                return null;
+            }
+        }
+        return leftObject;
     }
 }
