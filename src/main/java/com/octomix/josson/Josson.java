@@ -351,7 +351,6 @@ public class Josson {
      *
      * @param object the object to convert
      * @return Root node of the resulting JSON tree
-     * @throws IllegalArgumentException
      */
     public static JsonNode readJsonNode(Object object) {
         return MAPPER.valueToTree(object);

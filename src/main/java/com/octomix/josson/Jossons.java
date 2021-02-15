@@ -69,7 +69,7 @@ public class Jossons {
      *
      * @param json the string content for building the JSON tree
      * @return The new Jossons object
-     * @throws IllegalArgumentException if {@code json} cannot deserialize to a valid Jackson ObjectNode
+     * @throws JsonProcessingException if underlying input contains invalid content
      */
     public static Jossons fromJsonString(String json) throws JsonProcessingException {
         return create(Josson.readJsonNode(json));
