@@ -29,7 +29,7 @@ class LogicalOpStep {
             this.symbol = symbol;
         }
 
-        private static RelationalOperator findRelationalOperatorBySymbol(String symbol) {
+        private static RelationalOperator fromSymbol(String symbol) {
             for (RelationalOperator operator : values()) {
                 if (operator.symbol.equals(symbol)) {
                     return operator;
@@ -59,7 +59,7 @@ class LogicalOpStep {
     }
 
     private static BooleanNode relationalCompare(JsonNode leftNode, String operator, JsonNode rightNode) {
-        RelationalOperator oper = RelationalOperator.findRelationalOperatorBySymbol(operator);
+        RelationalOperator oper = RelationalOperator.fromSymbol(operator);
         if (leftNode == null) {
             leftNode = NullNode.getInstance();
         }

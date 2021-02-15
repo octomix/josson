@@ -14,7 +14,7 @@ public class NoValuePresentException extends Exception {
 
     public NoValuePresentException(Set<String> datasetNames, Set<String> placeholders, String content) {
         super((datasetNames == null ? "" : "Unresolved data set " + datasetNames + ". ")
-                + (placeholders == null ? "" : "Unresolved placeholders " + placeholders + ". "));
+                + (placeholders == null ? "" : "Unresolvable placeholders " + placeholders + ". "));
         this.datasetNames = datasetNames;
         this.placeholders = placeholders;
         this.content = content;

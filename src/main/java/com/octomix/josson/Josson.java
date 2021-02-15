@@ -1,7 +1,9 @@
 package com.octomix.josson;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import org.apache.commons.lang3.StringUtils;
@@ -25,14 +27,31 @@ public class Josson {
         this.node = node;
     }
 
+    /**
+     * Create a Josson object that contains an empty Jackson ObjectNode.
+     *
+     * @return The new Josson object
+     */
     public static Josson create() {
         return new Josson(createObjectNode());
     }
 
+    /**
+     * Create a Josson object that contains an empty Jackson ArrayNode.
+     *
+     * @return The new Josson object
+     */
     public static Josson createArray() {
         return new Josson(createArrayNode());
     }
 
+    /**
+     * Create a Josson object with given Jackson JsonNode.
+     *
+     * @param node the Jackson JsonNode to store
+     * @return The new Josson object
+     * @throws IllegalArgumentException if {@code node} is null
+     */
     public static Josson create(JsonNode node) {
         if (node == null) {
             throw new IllegalArgumentException("Argument cannot be null");
@@ -40,6 +59,13 @@ public class Josson {
         return new Josson(node);
     }
 
+    /**
+     * Create a Josson object with given object that converted to an equivalent JSON Tree representation.
+     *
+     * @param object the object to convert
+     * @return The new Josson object
+     * @throws IllegalArgumentException if {@code object} is null
+     */
     public static Josson from(Object object) {
         if (object == null) {
             throw new IllegalArgumentException("Argument cannot be null");
@@ -47,6 +73,13 @@ public class Josson {
         return new Josson(readJsonNode(object));
     }
 
+    /**
+     * Create a Josson object with given JSON content string that deserialized to a Jackson JsonNode.
+     *
+     * @param json the string content for building the JSON tree
+     * @return The new Josson object
+     * @throws JsonProcessingException if {@code json} is null or the underlying input contains invalid content
+     */
     public static Josson fromJsonString(String json) throws JsonProcessingException {
         if (json == null) {
             throw new IllegalArgumentException("Argument cannot be null");
@@ -54,22 +87,12 @@ public class Josson {
         return new Josson(readJsonNode(json));
     }
 
-    public static Josson fromText(String v) {
-        return new Josson(TextNode.valueOf(v));
-    }
-
-    public static Josson fromInt(int i) {
-        return new Josson(IntNode.valueOf(i));
-    }
-
-    public static Josson fromDouble(double v) {
-        return new Josson(DoubleNode.valueOf(v));
-    }
-
-    public static Josson fromBoolean(boolean b) {
-        return new Josson(BooleanNode.valueOf(b));
-    }
-
+    /**
+     * Set the Josson content with given Jackson JsonNode.
+     *
+     * @param node the Jackson JsonNode to store
+     * @throws IllegalArgumentException if {@code node} is null
+     */
     public void setNode(JsonNode node) {
         if (node == null) {
             throw new IllegalArgumentException("Argument cannot be null");
@@ -77,15 +100,17 @@ public class Josson {
         this.node = node;
     }
 
+    /**
+     * Set the Josson content with given JSON content string that deserialized to a Jackson JsonNode.
+     *
+     * @param json the string content for building the JSON tree
+     * @throws JsonProcessingException if {@code json} is null or the underlying input contains invalid content
+     */
     public void setJsonString(String json) throws JsonProcessingException {
         if (json == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
         node = readJsonNode(json);
-    }
-
-    public <T> T convertValue() {
-        return convertValue(node);
     }
 
     public <E extends Enum<E>> Josson put(String key, Enum<E> value) {
@@ -128,144 +153,217 @@ public class Josson {
         return this;
     }
 
-    public String jsonString() {
-        return node.toString();
-    }
-
-    public String jsonPretty() {
-        return node.toPrettyString();
-    }
-
+    /**
+     * Simply returns the content.
+     *
+     * @return The content Jackson JsonNode
+     */
     public JsonNode getNode() {
         return node;
     }
 
+    /**
+     * Get an ArrayNode element if the content is an ArrayNode.
+     *
+     * @param index index of the specific ArrayNode element
+     * @return The specific ArrayNode element
+     */
     public JsonNode getNode(int index) {
         return node.isArray() ? node.get(index) : null;
     }
 
-    public JsonNode getNode(String path) {
-        return getNode(node, path);
+    /**
+     * Query data by Josson query language.
+     *
+     * @param jossonPath the Josson query path
+     * @return The resulting Jackson JsonNode
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public JsonNode getNode(String jossonPath) {
+        return getNode(node, jossonPath);
     }
 
-    public JsonNode getNode(int index, String path) {
-        return node.isArray() ? getNode(node.get(index), path) : null;
+    /**
+     * Query data on an element of ArrayNode by Josson query language.
+     *
+     * @param index index of the specific ArrayNode element
+     * @param jossonPath the Josson query path
+     * @return The resulting Jackson JsonNode
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public JsonNode getNode(int index, String jossonPath) {
+        return node.isArray() ? getNode(node.get(index), jossonPath) : null;
     }
 
-    public ArrayNode getArrayNode(String path) {
-        JsonNode node = getNode(path);
+    /**
+     * Query data by Josson query language, return result for ArrayNode only.
+     *
+     * @param jossonPath the Josson query path
+     * @return The resulting Jackson ArrayNode. {@code null} if the result is not an ArrayNode.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public ArrayNode getArrayNode(String jossonPath) {
+        JsonNode node = getNode(jossonPath);
         return node != null && node.isArray() ? (ArrayNode) node : null;
     }
 
-    public int getArraySize() {
-        return node.isArray() ? node.size() : -1;
+    /**
+     * Query data by Josson query language, return result for ValueNode only.
+     *
+     * @param jossonPath the Josson query path
+     * @return The resulting Jackson ArrayNode. {@code null} if the result is not an ValueNode.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public ValueNode getValueNode(String jossonPath) {
+        JsonNode node = getNode(jossonPath);
+        return node != null && node.isValueNode() ? (ValueNode) node : null;
     }
 
-    public int getArraySize(String path) {
-        ArrayNode node = getArrayNode(path);
-        return node == null ? -1 : node.size();
-    }
-
-    public JsonNode getValueNode(String path) {
-        JsonNode node = getNode(path);
-        return node != null && node.isValueNode() ? node : null;
-    }
-
-    public JsonNode getRequiredValueNode(String path) throws Exception {
-        JsonNode node = getNode(path);
-        if (node == null) {
-            throw new Exception("Missing path: " + path);
+    public ValueNode getRequiredValueNode(String jossonPath) throws Exception {
+        JsonNode node = getNode(jossonPath);
+        if (node == null || !node.isValueNode()) {
+            throw new Exception("This Josson path cannot evaluate to a value node: " + jossonPath);
         }
-        if (!node.isValueNode()) {
-            throw new Exception("This path is not a value node: " + path);
-        }
-        return node;
+        return (ValueNode) node;
     }
 
-    public String getString(String path) {
-        JsonNode node = getNode(path);
+    public String getString(String jossonPath) {
+        JsonNode node = getNode(jossonPath);
         return node == null || node.isNull() ? null : node.isValueNode() ? node.asText() : node.toString();
     }
 
-    public String getRequiredString(String path) throws Exception {
-        return getRequiredValueNode(path).asText();
+    public String getRequiredString(String jossonPath) throws Exception {
+        return getRequiredValueNode(jossonPath).asText();
     }
 
-    public Long getLong(String path) {
-        JsonNode node = getValueNode(path);
+    public Long getLong(String jossonPath) {
+        ValueNode node = getValueNode(jossonPath);
         return node == null || node.isNull() ? null : node.asLong();
     }
 
-    public Long getRequiredLong(String path) throws Exception {
-        return getRequiredValueNode(path).asLong();
+    public Long getRequiredLong(String jossonPath) throws Exception {
+        return getRequiredValueNode(jossonPath).asLong();
     }
 
-    public Integer getInteger(String path) {
-        JsonNode node = getValueNode(path);
+    public Integer getInteger(String jossonPath) {
+        ValueNode node = getValueNode(jossonPath);
         return node == null || node.isNull() ? null : node.asInt();
     }
 
-    public Integer getRequiredInteger(String path) throws Exception {
-        return getRequiredValueNode(path).asInt();
+    public Integer getRequiredInteger(String jossonPath) throws Exception {
+        return getRequiredValueNode(jossonPath).asInt();
     }
 
-    public Double getDouble(String path) {
-        JsonNode node = getValueNode(path);
+    public Double getDouble(String jossonPath) {
+        ValueNode node = getValueNode(jossonPath);
         return node == null || node.isNull() ? null : node.asDouble();
     }
 
-    public Double getRequiredDouble(String path) throws Exception {
-        return getRequiredValueNode(path).asDouble();
+    public Double getRequiredDouble(String jossonPath) throws Exception {
+        return getRequiredValueNode(jossonPath).asDouble();
     }
 
-    public Boolean getBoolean(String path) {
-        JsonNode node = getValueNode(path);
+    public Boolean getBoolean(String jossonPath) {
+        ValueNode node = getValueNode(jossonPath);
         return node == null || node.isNull() ? null : node.asBoolean();
     }
 
-    public Boolean getRequiredBoolean(String path) throws Exception {
-        return getRequiredValueNode(path).asBoolean();
+    public Boolean getRequiredBoolean(String jossonPath) throws Exception {
+        return getRequiredValueNode(jossonPath).asBoolean();
     }
 
-    public LocalDateTime getIsoLocalDateTime(String path) {
-        JsonNode node = getValueNode(path);
+    public LocalDateTime getIsoLocalDateTime(String jossonPath) {
+        ValueNode node = getValueNode(jossonPath);
         return node == null || node.isNull() ? null : LocalDateTime.parse(node.asText());
     }
 
-    public LocalDateTime getRequiredIsoLocalDateTime(String path) throws Exception {
-        return LocalDateTime.parse(getRequiredValueNode(path).asText());
+    public LocalDateTime getRequiredIsoLocalDateTime(String jossonPath) throws Exception {
+        return LocalDateTime.parse(getRequiredValueNode(jossonPath).asText());
     }
 
-    public LocalDate getIsoLocalDate(String path) {
-        JsonNode node = getValueNode(path);
+    public LocalDate getIsoLocalDate(String jossonPath) {
+        ValueNode node = getValueNode(jossonPath);
         return node == null || node.isNull() ? null : LocalDate.parse(node.asText());
     }
 
-    public LocalDate getRequiredIsoLocalDate(String path) throws Exception {
-        return LocalDate.parse(getRequiredValueNode(path).asText());
+    public LocalDate getRequiredIsoLocalDate(String jossonPath) throws Exception {
+        return LocalDate.parse(getRequiredValueNode(jossonPath).asText());
     }
 
-    public OffsetDateTime getOffsetDateTime(String path) {
-        JsonNode node = getValueNode(path);
+    public OffsetDateTime getOffsetDateTime(String jossonPath) {
+        ValueNode node = getValueNode(jossonPath);
         return node == null || node.isNull() ? null : OffsetDateTime.parse(node.asText());
     }
 
-    public OffsetDateTime getRequiredOffsetDateTime(String path) throws Exception {
-        return OffsetDateTime.parse(getRequiredValueNode(path).asText());
+    public OffsetDateTime getRequiredOffsetDateTime(String jossonPath) throws Exception {
+        return OffsetDateTime.parse(getRequiredValueNode(jossonPath).asText());
     }
 
+    /**
+     * Convert the content into instance of given value type.
+     *
+     * @param <T> the specific type of the result
+     * @return The generated JSON that converted to the result type
+     * @throws IllegalArgumentException if conversion fails due to incompatible type
+     */
+    public <T> T convertValue() {
+        return convertValue(node);
+    }
+
+    /**
+     * Serialize the content to a JSON as a string.
+     *
+     * @return The generated JSON as a string
+     */
+    public String jsonString() {
+        return node.toString();
+    }
+
+    /**
+     * Serialize the content using Jackson default pretty-printer.
+     *
+     * @return The generated JSON as a string in pretty format
+     */
+    public String jsonPretty() {
+        return node.toPrettyString();
+    }
+
+    /**
+     * Create an empty Jackson ObjectNode.
+     *
+     * @return The new empty Jackson ObjectNode
+     */
     public static ObjectNode createObjectNode() {
         return MAPPER.createObjectNode();
     }
 
+    /**
+     * Create an empty Jackson ArrayNode.
+     *
+     * @return The new empty Jackson ArrayNode
+     */
     public static ArrayNode createArrayNode() {
         return MAPPER.createArrayNode();
     }
 
+    /**
+     * Convert an object to an equivalent JSON Tree representation.
+     *
+     * @param object the object to convert
+     * @return Root node of the resulting JSON tree
+     * @throws IllegalArgumentException
+     */
     public static JsonNode readJsonNode(Object object) {
         return MAPPER.valueToTree(object);
     }
 
+    /**
+     * Convert an object to a Jackson ObjectNode.
+     *
+     * @param object the object to convert
+     * @return The resulting Jackson ObjectNode
+     * @throws IllegalArgumentException if the converted JSON is not a Jackson object
+     */
     public static ObjectNode readObjectNode(Object object) {
         JsonNode node = MAPPER.valueToTree(object);
         if (node.isObject()) {
@@ -274,6 +372,13 @@ public class Josson {
         throw new IllegalArgumentException("The provided object is not an object node");
     }
 
+    /**
+     * Convert an object to a Jackson ArrayNode.
+     *
+     * @param object the object to convert
+     * @return The resulting Jackson ArrayNode
+     * @throws IllegalArgumentException if the converted JSON is not a Jackson array
+     */
     public static ArrayNode readArrayNode(Object object) {
         JsonNode node = MAPPER.valueToTree(object);
         if (node.isArray()) {
@@ -282,6 +387,13 @@ public class Josson {
         throw new IllegalArgumentException("The provided object is not an array node");
     }
 
+    /**
+     * Deserialize JSON content string to a Jackson JsonNode.
+     *
+     * @param json the string content for building the JSON tree
+     * @return A JsonNode, if valid JSON content found
+     * @throws JsonProcessingException if underlying input contains invalid content
+     */
     public static JsonNode readJsonNode(String json) throws JsonProcessingException {
         if (json == null) {
             return null;
@@ -289,18 +401,53 @@ public class Josson {
         return MAPPER.readTree(json);
     }
 
-    public static <T> T readValue(String json, Class<T> valueType) throws JsonProcessingException {
+    /**
+     * Deserialize JSON content string into given Java type.
+     *
+     * @param json the string content for building the JSON tree
+     * @param valueType the result class type
+     * @param <T> the specific type of the result
+     * @return The deserialized JSON content converted to the result type
+     * @throws JsonProcessingException if underlying input contains invalid content
+     * @throws JsonMappingException if the input JSON structure does not match structure expected for result type
+     */
+    public static <T> T readValue(String json, Class<T> valueType) throws JsonProcessingException, JsonMappingException {
         return MAPPER.readValue(json, valueType);
     }
 
-    public static <T> T readValue(File file, Class<T> valueType) throws IOException {
+    /**
+     * Deserialize JSON content from given file into given Java type.
+     *
+     * @param file the string content for building the JSON tree
+     * @param valueType the result class type
+     * @param <T> the specific type of the result
+     * @return The deserialized JSON content converted to the result type
+     * @throws IOException if a low-level I/O problem occurs
+     * @throws JsonParseException if underlying input contains invalid content
+     * @throws JsonMappingException if the input JSON structure does not match structure expected for result type
+     */
+    public static <T> T readValue(File file, Class<T> valueType) throws IOException, JsonParseException {
         return MAPPER.readValue(file, valueType);
     }
 
+    /**
+     * Convenience method for doing two-step conversion from given value, into instance of given value type.
+     *
+     * @param node the Jackson JsonNode to convert
+     * @param <T> the specific type of the result
+     * @return The generated JSON that converted to the result type
+     * @throws IllegalArgumentException if conversion fails due to incompatible type
+     */
     public static <T> T convertValue(JsonNode node) {
         return MAPPER.convertValue(node, new TypeReference<T>(){});
     }
 
+    /**
+     * Serializing an object to a JSON as a string.
+     *
+     * @param object the object to convert
+     * @return The generated JSON as a string
+     */
     public static String toJsonString(Object object) {
         try {
             return MAPPER.writeValueAsString(object);
@@ -309,6 +456,12 @@ public class Josson {
         }
     }
 
+    /**
+     * Serializing an object to a JSON as a string in pretty format.
+     *
+     * @param object the object to convert
+     * @return The generated JSON as a string in pretty format
+     */
     public static String toJsonPretty(Object object) {
         try {
             return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(object);
@@ -317,11 +470,19 @@ public class Josson {
         }
     }
 
-    public static JsonNode getNode(JsonNode node, String path) {
-        if (node == null || StringUtils.isBlank(path)) {
+    /**
+     * Query data from a Jackson JsonNode by Josson query language.
+     *
+     * @param node the Jackson JsonNode that retrieve data from
+     * @param jossonPath the Josson query path
+     * @return The resulting Jackson JsonNode
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public static JsonNode getNode(JsonNode node, String jossonPath) {
+        if (node == null || StringUtils.isBlank(jossonPath)) {
             return node;
         }
-        List<String> keys = decomposePaths(path);
+        List<String> keys = decomposePaths(jossonPath);
         if (keys.isEmpty()) {
             return node;
         }

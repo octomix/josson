@@ -18,16 +18,39 @@ import static org.apache.commons.text.StringEscapeUtils.unescapeXml;
 public class Jossons {
 
     private final Map<String, Josson> datasets = new HashMap<>();
-    private ShowResolvedValueMode showResolvedValueMode = ShowResolvedValueMode.VALUE_NODE_ONLY;
+    private ResolverProgress.DebugLevel resolverDebugLevel = ResolverProgress.DebugLevel.SHOW_CONTENT_OF_VALUE_NODE_ONLY;
 
     private enum JoinOperator {
-        INNER_JOIN_ONE,
-        LEFT_JOIN_ONE,
-        RIGHT_JOIN_ONE,
-        LEFT_JOIN_MANY,
-        RIGHT_JOIN_MANY
+        INNER_JOIN_ONE(">=<"),
+        LEFT_JOIN_ONE("<=<"),
+        RIGHT_JOIN_ONE(">=>"),
+        LEFT_JOIN_MANY("<=<<"),
+        RIGHT_JOIN_MANY(">>=>");
+
+        final String symbol;
+
+        JoinOperator(String symbol) {
+            this.symbol = symbol;
+        }
+
+        private static JoinOperator fromSymbol(String symbol) {
+            for (JoinOperator operator : values()) {
+                if (operator.symbol.equals(symbol)) {
+                    return operator;
+                }
+            }
+            return null;
+        }
     }
 
+    /**
+     * <p>Create a Jossons object with given Jackson ObjectNode.
+     * Each element of the ObjectNode will become a member of the default dataset mapping.</p>
+     *
+     * @param datasets the default datasets
+     * @return The new Jossons object
+     * @throws IllegalArgumentException if {@code datasets} is not a Jackson ObjectNode
+     */
     public static Jossons create(JsonNode datasets) {
         if (datasets != null && datasets.getNodeType() != JsonNodeType.OBJECT) {
             throw new IllegalArgumentException("Argument is not an object node");
@@ -40,19 +63,41 @@ public class Jossons {
         return jossons;
     }
 
+    /**
+     * <p>Create a Jossons object with given JSON content string that deserialized to a Jackson ObjectNode.
+     * Each element of the ObjectNode will become a member of the default dataset mapping.</p>
+     *
+     * @param json the string content for building the JSON tree
+     * @return The new Jossons object
+     * @throws IllegalArgumentException if {@code json} cannot deserialize to a valid Jackson ObjectNode
+     */
     public static Jossons fromJsonString(String json) throws JsonProcessingException {
         return create(Josson.readJsonNode(json));
     }
 
+    /**
+     * <p>Create a Jossons object with given text-based dataset mapping.
+     * Each element of the mapping will become a member of the default dataset mapping.</p>
+     *
+     * @param textParams the text-based dataset mapping
+     * @return The new Jossons object
+     */
     public static Jossons fromMap(Map<String, String> textParams) {
         Jossons jossons = new Jossons();
         if (textParams != null) {
             textParams.forEach((key, value) ->
-                    jossons.datasets.put(key, Josson.fromText(value)));
+                    jossons.datasets.put(key, Josson.create(TextNode.valueOf(value))));
         }
         return jossons;
     }
 
+    /**
+     * Put dataset to the dataset mapping.
+     *
+     * @param key the mapping key
+     * @param value the mapping Josson object as the data value
+     * @return {@code this}
+     */
     public Jossons putDataset(String key, Josson value) {
         datasets.put(key, value);
         return this;
@@ -62,25 +107,32 @@ public class Jossons {
         return datasets;
     }
 
-    public ShowResolvedValueMode getProgressShowResolvedValueMode() {
-        return showResolvedValueMode;
+    public ResolverProgress.DebugLevel getResolverDebugLevel() {
+        return resolverDebugLevel;
     }
 
-    public void setProgressShowResolvedValueMode(ShowResolvedValueMode mode) {
-        showResolvedValueMode = mode;
+    public void setResolverDebugLevel(ResolverProgress.DebugLevel mode) {
+        resolverDebugLevel = mode;
     }
 
     private String showProgressResolvedValue(JsonNode node) {
-        if (showResolvedValueMode == ShowResolvedValueMode.VALUE_NODE_ONLY) {
-            if (node.isArray()) {
-                return "Array with " + node.size() + " elements";
-            }
-            if (node.isObject()) {
-                return "Object with " + node.size() + " elements";
-            }
+        switch (resolverDebugLevel) {
+            case SHOW_CONTENT_UP_TO_ARRAY_NODE:
+                if (node.isArray()) {
+                    return node.toString();
+                }
+                // fallthrough
+            case SHOW_CONTENT_UP_TO_OBJECT_NODE:
+                if (node.isObject()) {
+                    return node.toString();
+                }
+                // fallthrough
         }
-        if (node.isTextual()) {
-            return '"' + node.asText() + '"';
+        if (node.isObject()) {
+            return "Object with " + node.size() + " elements";
+        }
+        if (node.isArray()) {
+            return "Array with " + node.size() + " elements";
         }
         return node.toString();
     }
@@ -91,7 +143,7 @@ public class Jossons {
         if (tokens != null) {
             String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
             Josson dataset = dataFinder.apply(collectionName, tokens[2]);
-            progress.addStep((dataset == null ? "Unresolved " : "Resolved ") + name + " from DB query " + findQuery);
+            progress.addStep((dataset == null ? "Unresolvable " : "Resolved ") + name + " from DB query " + findQuery);
             putDataset(name, dataset);
             return true;
         }
@@ -106,25 +158,9 @@ public class Jossons {
         if (conditions.size() > 2) {
             throw new IllegalArgumentException("too many arguments: " + findQuery);
         }
-        JoinOperator operator;
-        switch (conditions.get(1)[0]) {
-            case ">=<":
-                operator = JoinOperator.INNER_JOIN_ONE;
-                break;
-            case "<=<":
-                operator = JoinOperator.LEFT_JOIN_ONE;
-                break;
-            case ">=>":
-                operator = JoinOperator.RIGHT_JOIN_ONE;
-                break;
-            case "<=<<":
-                operator = JoinOperator.LEFT_JOIN_MANY;
-                break;
-            case ">>=>":
-                operator = JoinOperator.RIGHT_JOIN_MANY;
-                break;
-            default:
-                return false;
+        JoinOperator operator = JoinOperator.fromSymbol(conditions.get(1)[0]);
+        if (operator == null) {
+            return false;
         }
         try {
             String[] rightQuery = matchJoinOperation(conditions.get(1)[1]);
@@ -175,39 +211,59 @@ public class Jossons {
             progress.addStep("Resolved " + name + " by join operation " + findQuery);
         } catch (IllegalArgumentException e) {
             putDataset(name, null);
-            progress.addStep("Unresolved " + name + " - " + e.getMessage() + " " + findQuery);
+            progress.addStep("Unresolvable " + name + " - " + e.getMessage() + " " + findQuery);
         }
         return true;
     }
 
-    public String fillInXmlPlaceholder(String content) throws NoValuePresentException {
-        return fillInPlaceholderLoop(content, true);
+    /**
+     * <p>XML template version of {@code fillInPlaceholder()}.
+     * Unescapes placeholder before the resolution process of that placeholder.
+     * Useful to merge docx template document.</p>
+     *
+     * @param template the XML template to be executed
+     * @return The merged text content
+     * @throws NoValuePresentException if any placeholder was unable to resolve
+     * @see #fillInPlaceholder
+     */
+    public String fillInXmlPlaceholder(String template) throws NoValuePresentException {
+        return fillInPlaceholderLoop(template, true);
     }
 
-    public String fillInPlaceholder(String content) throws NoValuePresentException {
-        return fillInPlaceholderLoop(content, false);
+    /**
+     * <p>Uses the stored dataset mapping to merge and fill all placeholders in a template.
+     * Placeholder is start with "{{" and end with "}}" as the quote marks.</p>
+     * <p>Any unresolvable placeholder will raise {@code NoValuePresentException} with the incomplete merged text content.
+     * All unresolvable placeholders are quoted with "**" to replace the original "{{" and "}}".</p>
+     *
+     * @param template the template to be executed
+     * @return The merged text content
+     * @throws NoValuePresentException if any placeholder was unable to resolve
+     */
+    public String fillInPlaceholder(String template) throws NoValuePresentException {
+        return fillInPlaceholderLoop(template, false);
     }
 
-    private String fillInPlaceholderLoop(String content, boolean isXml) throws NoValuePresentException {
+    private String fillInPlaceholderLoop(String template, boolean isXml) throws NoValuePresentException {
         Set<String> unresolvedDatasets = new HashSet<>();
         Set<String> unresolvedPlaceholders = new HashSet<>();
         StringBuilder sb = new StringBuilder();
-        int last = content.length() - 1;
+        int last = template.length() - 1;
         int offset = 0;
         int placeholderAt = -1;
         for (int i = 0; i < last; i++) {
-            if (content.charAt(i) == '{') {
-                if (content.charAt(i + 1) == '{') {
+            if (template.charAt(i) == '{') {
+                if (template.charAt(i + 1) == '{') {
                     i++;
-                    while (content.charAt(i + 1) == '{' && i < last) {
+                    while (template.charAt(i + 1) == '{' && i < last) {
                         i++;
                     }
                     placeholderAt = i - 1;
-                    sb.append(content, offset, placeholderAt);
+                    sb.append(template, offset, placeholderAt);
                     offset = placeholderAt;
                 }
-            } else if (placeholderAt >= 0 && content.charAt(i) == '}' && content.charAt(i + 1) == '}') {
-                String query = content.substring(placeholderAt + 2, i);
+            } else if (placeholderAt >= 0 && template.charAt(i) == '}' && template.charAt(i + 1) == '}') {
+                String query = template.substring(placeholderAt + 2, i);
                 if (isXml) {
                     StringBuilder rebuild = new StringBuilder();
                     for (String token : separateXmlTags(query)) {
@@ -240,60 +296,91 @@ public class Jossons {
             }
         }
         if (sb.length() == 0) {
-            return content;
+            return template;
         }
-        sb.append(content, offset, content.length());
-        content = sb.toString();
+        sb.append(template, offset, template.length());
+        template = sb.toString();
         if (!unresolvedDatasets.isEmpty() || !unresolvedPlaceholders.isEmpty()) {
-            throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, content);
+            throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, template);
         }
-        return fillInPlaceholderLoop(content, isXml);
+        return fillInPlaceholderLoop(template, isXml);
     }
 
-    public String fillInXmlPlaceholderWithResolver(String content, Function<String, String> dictionaryFinder,
+    /**
+     * <p>XML template version of {@code fillInPlaceholderWithResolver()}.
+     * Unescapes placeholder before the resolution process of that placeholder.
+     * Useful to merge docx template document.</p>
+     *
+     * @param template the template to be executed
+     * @param dictionaryFinder a callback function to return solution query statement
+     * @param dataFinder a callback function to process database query statement
+     * @param progress a {@code ResolverProgress} object to log the resolver progress steps
+     * @return The merged text content
+     * @throws NoValuePresentException if any placeholder was unable to resolve
+     * @see #fillInPlaceholderWithResolver
+     */
+    public String fillInXmlPlaceholderWithResolver(String template, Function<String, String> dictionaryFinder,
                                                    BiFunction<String, String, Josson> dataFinder,
                                                    ResolverProgress progress) throws NoValuePresentException {
         try {
-            return fillInPlaceholderWithResolver(content, dictionaryFinder, dataFinder, true, progress);
+            return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, true, progress);
         } finally {
             progress.markCompleted();
         }
     }
 
-    public String fillInPlaceholderWithResolver(String content, Function<String, String> dictionaryFinder,
+    /**
+     * <p>Uses the stored dataset mapping and with the help of on demand callback dataset resolver
+     * to merge and fill all placeholders in a template.
+     * Placeholder is start with "{{" and end with "}}" as the quote marks.</p>
+     * <p>An unresolved dataset will trigger {@code dictionaryFinder} callback that shall return either:
+     * (1) a Jossons query that can retrieve data from the stored dataset mapping; or
+     * (2) a join operation query to merge two datasets from the stored dataset mapping; or
+     * (3) a database query statement that will further trigger {@code dataFinder} callback.</p>
+     * <p>Any unresolvable placeholder will raise {@code NoValuePresentException} with the incomplete merged text content.
+     * All unresolvable placeholders are quoted with "**" to replace the original "{{" and "}}".</p>
+     *
+     * @param template the template to be executed
+     * @param dictionaryFinder a callback function to return solution query statement
+     * @param dataFinder a callback function to process database query statement
+     * @param progress a {@code ResolverProgress} object to log the resolver progress steps
+     * @return The merged text content
+     * @throws NoValuePresentException if any placeholder was unable to resolve
+     */
+    public String fillInPlaceholderWithResolver(String template, Function<String, String> dictionaryFinder,
                                                 BiFunction<String, String, Josson> dataFinder,
                                                 ResolverProgress progress) throws NoValuePresentException {
         try {
-            return fillInPlaceholderWithResolver(content, dictionaryFinder, dataFinder, false, progress);
+            return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, false, progress);
         } finally {
             progress.markCompleted();
         }
     }
 
-    private String fillInPlaceholderWithResolver(String content, Function<String, String> dictionaryFinder,
+    private String fillInPlaceholderWithResolver(String template, Function<String, String> dictionaryFinder,
                                                  BiFunction<String, String, Josson> dataFinder, boolean isXml,
                                                  ResolverProgress progress) throws NoValuePresentException {
-        Set<String> unresolvedPlaceholders = new HashSet<>();
+        Set<String> unresolvablePlaceholders = new HashSet<>();
         Set<String> unresolvedDatasetNames = new HashSet<>();
         for (;;progress.nextRound()) {
             try {
                 if (!unresolvedDatasetNames.isEmpty()) {
                     throw new NoValuePresentException(new HashSet<>(unresolvedDatasetNames), null);
                 }
-                content = fillInPlaceholderLoop(content, isXml);
+                template = fillInPlaceholderLoop(template, isXml);
                 break;
             } catch (NoValuePresentException e) {
                 if (!e.getDatasetNames().isEmpty()) {
                     progress.addStep("Unresolved " + e.getDatasetNames());
                 }
                 if (e.getPlaceholders() != null && !e.getPlaceholders().isEmpty()) {
-                    progress.addStep("Unresolved placeholders " + e.getPlaceholders());
+                    progress.addStep("Unresolvable placeholders " + e.getPlaceholders());
                 }
                 if (e.getPlaceholders() == null) {
                     unresolvedDatasetNames.clear();
                 } else {
-                    unresolvedPlaceholders.addAll(e.getPlaceholders());
-                    content = e.getContent();
+                    unresolvablePlaceholders.addAll(e.getPlaceholders());
+                    template = e.getContent();
                 }
                 Map<String, String> namedQueries = new HashMap<>();
                 e.getDatasetNames().forEach(name -> {
@@ -314,7 +401,7 @@ public class Jossons {
                                     .filter(s -> !namedQueries.containsKey(s))
                                     .forEach(unresolvedDatasetNames::add);
                         } else {
-                            unresolvedPlaceholders.addAll(ex.getPlaceholders());
+                            unresolvablePlaceholders.addAll(ex.getPlaceholders());
                             putDataset(name, null);
                         }
                     }
@@ -325,7 +412,7 @@ public class Jossons {
                         try {
                             JsonNode node = evaluateQuery(findQuery);
                             if (node == null) {
-                                unresolvedPlaceholders.add(name);
+                                unresolvablePlaceholders.add(name);
                                 putDataset(name, null);
                             } else {
                                 putDataset(name, Josson.create(node));
@@ -339,13 +426,26 @@ public class Jossons {
                 }
             }
         }
-        if (!unresolvedPlaceholders.isEmpty()) {
-            progress.addStep("Unresolved placeholders " + unresolvedPlaceholders);
-            throw new NoValuePresentException(null, unresolvedPlaceholders, content);
+        if (!unresolvablePlaceholders.isEmpty()) {
+            progress.addStep("Unresolvable placeholders " + unresolvablePlaceholders);
+            throw new NoValuePresentException(null, unresolvablePlaceholders, template);
         }
-        return content;
+        return template;
     }
 
+    /**
+     * <p>Uses the stored dataset mapping and with the help of on demand callback dataset resolver to retrieve data.</p>
+     * <p>An unresolved dataset will trigger {@code dictionaryFinder} callback that shall return either:
+     * (1) a Jossons query that can retrieve data from the stored dataset mapping; or
+     * (2) a join operation query to merge two datasets from the stored dataset mapping; or
+     * (3) a database query statement that will further trigger {@code dataFinder} callback.</p>
+     *
+     * @param query the Jossons query
+     * @param dictionaryFinder a callback function to return solution query statement
+     * @param dataFinder a callback function to process database query statement
+     * @param progress a {@code ResolverProgress} object to log the resolver progress steps
+     * @return The resulting Jackson JsonNode
+     */
     public JsonNode evaluateQueryWithResolver(String query, Function<String, String> dictionaryFinder,
                                               BiFunction<String, String, Josson> dataFinder,
                                               ResolverProgress progress) {
@@ -392,6 +492,13 @@ public class Jossons {
         return result;
     }
 
+    /**
+     * Evaluate a Jossons query to retrieve data from the stored dataset mapping.
+     *
+     * @param query the Jossons query
+     * @return The resulting Jackson JsonNode
+     * @throws UnresolvedDatasetException if the query is looking for a non-exists dataset
+     */
     public JsonNode evaluateQuery(String query) throws UnresolvedDatasetException {
         String ifTrueValue = null;
         List<String[]> steps = decomposeTernarySteps(query);
@@ -417,6 +524,13 @@ public class Jossons {
         return StringUtils.isEmpty(ifTrueValue) ? null : TextNode.valueOf("");
     }
 
+    /**
+     * Evaluate a Jossons statement to retrieve data from the stored dataset mapping.
+     *
+     * @param statement the Jossons statement
+     * @return The resulting Jackson JsonNode
+     * @throws UnresolvedDatasetException if the query is looking for a non-exists dataset
+     */
     public JsonNode evaluateStatement(String statement) throws UnresolvedDatasetException {
         try {
             return toValueNode(statement);
@@ -436,21 +550,6 @@ public class Jossons {
             }
         }
         return opStack.finalResult();
-    }
-
-    public String evaluateExpressionForText(String expression) throws UnresolvedDatasetException {
-        JsonNode node = evaluateExpression(expression.trim(), datasets);
-        return node == null ? null : node.textValue();
-    }
-
-    public Number evaluateExpressionForNumber(String expression) throws UnresolvedDatasetException {
-        JsonNode node = evaluateExpression(expression.trim(), datasets);
-        return node == null ? null : node.numberValue();
-    }
-
-    public Boolean evaluateExpressionForBoolean(String expression) throws UnresolvedDatasetException {
-        JsonNode node = evaluateExpression(expression.trim(), datasets);
-        return node == null ? null : node.booleanValue();
     }
 
     private static JsonNode joinNodes(JsonNode leftNode, String[] leftKeys, String leftArrayName, JoinOperator operator,

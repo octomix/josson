@@ -8,6 +8,12 @@ public class ResolverProgress {
     private int round = 1;
     private final List<String> steps = new ArrayList<>();
 
+    public enum DebugLevel {
+        SHOW_CONTENT_OF_VALUE_NODE_ONLY,
+        SHOW_CONTENT_UP_TO_OBJECT_NODE,
+        SHOW_CONTENT_UP_TO_ARRAY_NODE
+    }
+
     public ResolverProgress() {
     }
 
