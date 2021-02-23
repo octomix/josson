@@ -31,9 +31,9 @@ class FuncLogical {
             return BooleanNode.valueOf(not);
         }
         if (node.isTextual()) {
-            return BooleanNode.valueOf(not ^ (ignoreCase
-                    ? StringUtils.containsIgnoreCase(node.asText(), value)
-                    : StringUtils.contains(node.asText(), value)));
+            return BooleanNode.valueOf(not ^ (ignoreCase ?
+                    StringUtils.containsIgnoreCase(node.asText(), value) :
+                    StringUtils.contains(node.asText(), value)));
         }
         if (node.isObject()) {
             return BooleanNode.valueOf(not ^ node.get(value) != null);
@@ -76,11 +76,11 @@ class FuncLogical {
     }
 
     static BooleanNode funcIn(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        ArrayNode arrayNode = getParamArray(params, node);
+        ArrayNode array = getParamArray(params, node);
         if (node.isNumber()) {
             double num = node.asDouble();
-            for (int i = 0; i < arrayNode.size(); i++) {
-                JsonNode value = arrayNode.get(i);
+            for (int i = array.size() - 1; i >= 0; i--) {
+                JsonNode value = array.get(i);
                 if (value.isNumber() || value.isTextual()) {
                     if (value.asDouble() == num) {
                         return BooleanNode.valueOf(!not);
@@ -90,8 +90,8 @@ class FuncLogical {
             return BooleanNode.valueOf(not);
         } else if (node.isTextual()) {
             String text = node.asText();
-            for (int i = 0; i < arrayNode.size(); i++) {
-                JsonNode value = arrayNode.get(i);
+            for (int i = array.size() - 1; i >= 0; i--) {
+                JsonNode value = array.get(i);
                 if (value.isNumber() || value.isTextual()) {
                     if (ignoreCase) {
                         if (value.asText().equalsIgnoreCase(text)) {
@@ -107,6 +107,11 @@ class FuncLogical {
         return BooleanNode.FALSE;
     }
 
+    static BooleanNode funcIsBoolean(JsonNode node, String params) {
+        getParamNotAccept(params);
+        return BooleanNode.valueOf(node.isBoolean());
+    }
+
     static BooleanNode funcIsEven(JsonNode node, String params) {
         getParamNotAccept(params);
         if (nodeHasValue(node)) {
@@ -120,12 +125,22 @@ class FuncLogical {
         return BooleanNode.valueOf(not ^ node.isNull());
     }
 
+    static BooleanNode funcIsNumber(JsonNode node, String params) {
+        getParamNotAccept(params);
+        return BooleanNode.valueOf(node.isNumber());
+    }
+
     static BooleanNode funcIsOdd(JsonNode node, String params) {
         getParamNotAccept(params);
         if (nodeHasValue(node)) {
             return BooleanNode.valueOf((node.asInt() & 1) != 0);
         }
         return BooleanNode.FALSE;
+    }
+
+    static BooleanNode funcIsText(JsonNode node, String params) {
+        getParamNotAccept(params);
+        return BooleanNode.valueOf(node.isTextual());
     }
 
     static BooleanNode funcNot(JsonNode node, String params) {

@@ -167,47 +167,43 @@ class PatternMatcher {
         return null;
     }
 
-    static String[] matchArrayNodeQuery(String input) {
+    static String[] matchFilterQuery(String input) {
         int last = input.length() - 1;
-        int pos = 0;
-        int beg = 0;
-        for (;pos <= last; pos++) {
+        for (int pos = 0; pos <= last; pos++) {
             int end = matchSquareBrackets(input, pos, last);
             if (end > 0) {
-                beg = pos;
-                pos = end;
-                break;
+                String[] tokens = new String[3];
+                tokens[0] = rightTrimOf(input, 0, pos);
+                if (tokens[0].startsWith("@")) {
+                    throw new IllegalArgumentException("Invalid filter syntax: " + input);
+                }
+                tokens[1] = trimOf(input, pos + 1, end);
+                if (!tokens[0].isEmpty() && tokens[1].isEmpty()) {
+                    throw new IllegalArgumentException("Missing filter expression: " + input);
+                }
+                pos = eatSpaces(input, end + 1, last);
+                if (pos <= last) {
+                    if (input.charAt(pos) == '*') {
+                        if (tokens[1].isEmpty()) {
+                            throw new IllegalArgumentException("Invalid '*' at position " + pos + ": " + input);
+                        }
+                        pos = eatSpaces(input, ++pos, last);
+                    }
+                    if (pos <= last) {
+                        throw new IllegalArgumentException("Invalid filter syntax at position " + pos + ": " + input);
+                    }
+                    tokens[2] = "*";
+                }
+                return tokens;
             }
             pos = skipSyntaxElement(input, pos, last, STRING_LITERAL_ELEMENT | PARENTHESES_ELEMENT);
         }
-        if (pos > last) {
-            return null;
-        }
-        String[] tokens = new String[4];
-        tokens[0] = trimOf(input, 0, beg);
-        tokens[1] = trimOf(input, beg + 1, pos);
-        beg = eatSpaces(input, pos + 1, last);
-        if (beg <= last) {
-            if (input.charAt(beg) == '@') {
-                tokens[2] = "@";
-                beg = eatSpaces(input, beg + 1, last);
-            } else {
-                int end = matchSquareBrackets(input, beg, last);
-                if (end > 0) {
-                    if (!rightTrimOf(input, ++beg, end).equals("@")) {
-                        throw new IllegalArgumentException("Expected '@' at position " + beg + ": " + input);
-                    }
-                    tokens[2] = "[@]";
-                    beg = eatSpaces(input, end + 1, last);
-                }
-            }
-        }
-        tokens[3] = rightTrimOf(input, beg, last + 1);
-        return tokens;
+        return null;
     }
 
     static String[] matchFunctionAndArgument(String input) {
         int last = input.length() - 1;
+        int beg = last >= 0 && input.charAt(0) == '@' ? eatSpaces(input, 1, last) : 0;
         for (int pos = 0; pos <= last; pos++) {
             int end = matchParentheses(input, pos, last);
             if (end > 0) {
@@ -216,15 +212,18 @@ class PatternMatcher {
                     throw new IllegalArgumentException("Invalid '" + ending + "' at position " + end + ": " + input);
                 }
                 String[] tokens = new String[2];
-                tokens[0] = rightTrimOf(input, 0, pos);
-                tokens[1] = trimOf(input, pos + 1, end);
+                tokens[0] = rightTrimOf(input, beg, pos);
                 if (tokens[0].isEmpty()) {
                     throw new IllegalArgumentException("Missing function name: " + input);
                 }
+                tokens[1] = trimOf(input, pos + 1, end);
                 return tokens;
             } else if (matchStringLiteral(input, pos, last) > 0 || matchSquareBrackets(input, pos, last) > 0) {
                 return null;
             }
+        }
+        if (beg > 0) {
+            throw new IllegalArgumentException("Invalid syntax: " + input);
         }
         return null;
     }
@@ -265,7 +264,7 @@ class PatternMatcher {
         List<String> paths = new ArrayList<>();
         int last = input.length() - 1;
         String isInt = null;
-        for (int pos = 0; pos <= last; pos++) {
+        for (int pos = 0; pos <= last; pos = eatSpaces(input, ++pos, last)) {
             int beg = pos;
             do {
                 if (input.charAt(pos) == '.') {
@@ -299,29 +298,6 @@ class PatternMatcher {
             }
         }
         return paths;
-    }
-
-    static List<String> decomposeNestedResultFunctions(String input) {
-        List<String> functions = new ArrayList<>();
-        int last = input.length() - 1;
-        int pos = 0;
-        for (int beg = pos; pos <= last; pos++) {
-            int end = matchParentheses(input, pos, last);
-            if (end > 0) {
-                if (beg == pos) {
-                    throw new IllegalArgumentException("Expected function name at position " + beg + ": " + input);
-                }
-                functions.add(input.substring(beg, ++end));
-                pos = eatSpaces(input, end, last);
-                if (pos <= last && input.charAt(pos) != '@') {
-                    throw new IllegalArgumentException("Expected '@' at position " + pos + ": " + input);
-                }
-                beg = pos + 1;
-            } else if (matchStringLiteral(input, pos, last) > 0 || matchSquareBrackets(input, pos, last) > 0) {
-                throw new IllegalArgumentException("Expected function name at position " + beg + ": " + input);
-            }
-        }
-        return functions;
     }
 
     static List<String[]> decomposeConditions(String input) {

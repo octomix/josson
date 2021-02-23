@@ -5,9 +5,12 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.function.Supplier;
+
+import static com.octomix.josson.PatternMatcher.decomposeConditions;
 
 class LogicalOpStack {
 
@@ -16,18 +19,16 @@ class LogicalOpStack {
     private final Stack<LogicalOpStep> steps = new Stack<>();
     private LogicalOpStep lastStep = null;
 
-    LogicalOpStack(JsonNode arrayNode) {
-        this.arrayNode = Josson.create(arrayNode);
+    LogicalOpStack(JsonNode node) {
+        this.arrayNode = node.isArray() ?
+                Josson.create(node) :
+                Josson.create(Josson.createArrayNode().add(node));
         this.datasets = null;
     }
 
     LogicalOpStack(Map<String, Josson> datasets) {
         this.arrayNode = null;
         this.datasets = datasets;
-    }
-
-    void clear() {
-        steps.clear();
     }
 
     private void push(String operator, String unresolved) {
@@ -111,9 +112,25 @@ class LogicalOpStack {
     }
 
     /*
-        For JossonCore.filterArrayNode()
+        For JossonCore.evaluateFilter()
      */
-    void evaluate(String operator, String expression, int arrayIndex) {
+    JsonNode evaluate(String statement, int arrayIndex) {
+        steps.clear();
+        List<String[]> conditions = decomposeConditions(statement);
+        for (String[] condition : conditions) {
+            try {
+                evaluate(condition[0], condition[1], arrayIndex);
+            } catch (IllegalArgumentException e) {
+                if (e.getMessage() == null) {
+                    throw new IllegalArgumentException(statement);
+                }
+                throw new IllegalArgumentException("\"" + e.getMessage() + "\" in " + statement);
+            }
+        }
+        return finalResult(() -> lastStep.resolveFrom(arrayNode, arrayIndex));
+    }
+
+    private void evaluate(String operator, String expression, int arrayIndex) {
         if (operator.isEmpty()) {
             if (")".equals(expression)) {
                 reduceLastGroup(() -> lastStep.resolveFrom(arrayNode, arrayIndex));
@@ -156,14 +173,39 @@ class LogicalOpStack {
         }
     }
 
-    JsonNode finalResult(int arrayIndex) {
-        return finalResult(() -> lastStep.resolveFrom(arrayNode, arrayIndex));
-    }
-
     /*
         For Jossons.evaluateStatement()
      */
-    void evaluate(String operator, String expression) throws UnresolvedDatasetException {
+    JsonNode evaluate(String statement) throws UnresolvedDatasetException {
+        List<String[]> conditions = decomposeConditions(statement);
+        for (String[] condition : conditions) {
+            try {
+                evaluate(condition[0], condition[1]);
+            } catch (IllegalArgumentException e) {
+                if (e.getMessage() == null) {
+                    throw new IllegalArgumentException(statement);
+                }
+                throw new IllegalArgumentException("\"" + e.getMessage() + "\" in " + statement);
+            }
+        }
+        try {
+            return finalResult(() -> {
+                try {
+                    return lastStep.resolveFrom(datasets);
+                } catch (UnresolvedDatasetException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof UnresolvedDatasetException) {
+                throw (UnresolvedDatasetException) e.getCause();
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    private void evaluate(String operator, String expression) throws UnresolvedDatasetException {
         if (operator.isEmpty()) {
             if (")".equals(expression)) {
                 try {
@@ -217,24 +259,6 @@ class LogicalOpStack {
             }
         } else {
             lastStep.setResolved(lastStep.relationalCompare(operator, expression, datasets));
-        }
-    }
-
-    JsonNode finalResult() throws UnresolvedDatasetException {
-        try {
-            return finalResult(() -> {
-                try {
-                    return lastStep.resolveFrom(datasets);
-                } catch (UnresolvedDatasetException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof UnresolvedDatasetException) {
-                throw (UnresolvedDatasetException) e.getCause();
-            } else {
-                throw e;
-            }
         }
     }
 }

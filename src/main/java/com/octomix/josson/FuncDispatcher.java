@@ -2,6 +2,8 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.Base64;
+
 import static com.octomix.josson.FuncArithmetic.*;
 import static com.octomix.josson.FuncArray.*;
 import static com.octomix.josson.FuncFormat.*;
@@ -33,8 +35,8 @@ class FuncDispatcher {
                     return funcRound(node, params);
 
                 // Array
-                case "distinct":
-                    return funcDistinct(node, params);
+                case "distinctvalue":
+                    return funcDistinctValue(node, params);
                 case "first":
                     return funcFirst(node, params);
                 case "indexof":
@@ -45,18 +47,22 @@ class FuncDispatcher {
                     return funcLastIndex(node, params);
                 case "lastindexof":
                     return funcLastIndexOf(node, params);
+                case "findbymax":
+                    return funcFindByMaxMin(node, params, true, 0);
+                case "findbymaxornull":
+                    return funcFindByMaxMin(node, params, true, -1);
+                case "findbymin":
+                    return funcFindByMaxMin(node, params, false, 0);
+                case "findbyminornull":
+                    return funcFindByMaxMin(node, params, false, -1);
+                case "findbynullormax":
+                    return funcFindByMaxMin(node, params, true, 1);
+                case "findbynullormin":
+                    return funcFindByMaxMin(node, params, false, 1);
                 case "max":
-                    return funcMaxMin(node, params, true, 0);
-                case "maxnull":
-                    return funcMaxMin(node, params, true, -1);
+                    return funcMaxMin(node, params, true);
                 case "min":
-                    return funcMaxMin(node, params, false, 0);
-                case "minnull":
-                    return funcMaxMin(node, params, false, -1);
-                case "nullmax":
-                    return funcMaxMin(node, params, true, 1);
-                case "nullmin":
-                    return funcMaxMin(node, params, false, 1);
+                    return funcMaxMin(node, params, false);
                 case "reverse":
                     return funcReverse(node, params);
                 case "slice":
@@ -65,20 +71,46 @@ class FuncDispatcher {
                     return funcSort(node, params);
 
                 // Format
+                case "b64decode":
+                    return funcB64Decode(node, params, Base64.getDecoder());
+                case "b64mimedecode":
+                    return funcB64Decode(node, params, Base64.getMimeDecoder());
+                case "b64urldecode":
+                    return funcB64Decode(node, params, Base64.getUrlDecoder());
+                case "b64encode":
+                    return funcB64Encode(node, params, Base64.getEncoder());
+                case "b64encodenopadding":
+                    return funcB64Encode(node, params, Base64.getEncoder().withoutPadding());
+                case "b64mimeencode":
+                    return funcB64Encode(node, params, Base64.getMimeEncoder());
+                case "b64mimeencodenopadding":
+                    return funcB64Encode(node, params, Base64.getMimeEncoder().withoutPadding());
+                case "b64urlencode":
+                    return funcB64Encode(node, params, Base64.getUrlEncoder());
+                case "b64urlencodenopadding":
+                    return funcB64Encode(node, params, Base64.getUrlEncoder().withoutPadding());
                 case "casevalue":
                     return funcCaseValue(node, params);
                 case "cyclevalue":
                     return funcCycleValue(node, params);
                 case "formatdate":
                     return funcFormatDate(node, params);
-                case "formatnum":
+                case "formatnumber":
                     return funcFormatNumber(node, params);
                 case "formattext":
                     return funcFormatText(node, params);
                 case "indexedvalue":
                     return funcIndexedValue(node, params);
+                case "tonumber":
+                    return funcToNumber(node, params);
+                case "totext":
+                    return funcToText(node, params);
+                case "urldecode":
+                    return funcUrlDecode(node, params);
+                case "urlencode":
+                    return funcUrlEncode(node, params);
 
-                // Logical
+                    // Logical
                 case "contains":
                     return funcContains(node, params, false, false);
                 case "containsignorecase":
@@ -111,14 +143,20 @@ class FuncDispatcher {
                     return funcIn(node, params, false, true);
                 case "notinignorecase":
                     return funcIn(node, params, true, true);
+                case "isboolean":
+                    return funcIsBoolean(node, params);
                 case "iseven":
                     return funcIsEven(node, params);
                 case "isnull":
                     return funcIsNull(node, params, false);
                 case "isnotnull":
                     return funcIsNull(node, params, true);
+                case "isnumber":
+                    return funcIsNumber(node, params);
                 case "isodd":
                     return funcIsOdd(node, params);
+                case "istext":
+                    return funcIsText(node, params);
                 case "not":
                     return funcNot(node, params);
                 case "startswith":
@@ -137,10 +175,6 @@ class FuncDispatcher {
                     return funcAppendIfMissing(node, params, false);
                 case "appendifmissingignorecase":
                     return funcAppendIfMissing(node, params, true);
-                case "b64decode":
-                    return funcB64Decode(node, params);
-                case "b64encode":
-                    return funcB64Encode(node, params);
                 case "capitalize":
                     return funcCapitalize(node, params);
                 case "center":
@@ -167,6 +201,8 @@ class FuncDispatcher {
                     return funcKeepBefore(node, params, true, true);
                 case "leftpad":
                     return funcLeftPad(node, params);
+                case "length":
+                    return funcLength(node, params);
                 case "lowercase":
                     return funcLowerCase(node, params);
                 case "prependifmissing":
@@ -197,8 +233,8 @@ class FuncDispatcher {
                     return funcUpperCase(node, params);
 
                 // Structural
-                case "length":
-                    return funcLength(node, params);
+                case "flatten":
+                    return funcFlatten(node, params);
                 case "map":
                     return funcMap(node, params);
                 case "size":

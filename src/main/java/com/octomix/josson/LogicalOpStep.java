@@ -8,6 +8,7 @@ import com.octomix.josson.exception.UnresolvedDatasetException;
 import java.util.Map;
 
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.PatternMatcher.matchJsonQuery;
 
 class LogicalOpStep {
 
@@ -56,6 +57,36 @@ class LogicalOpStep {
     void setResolved(JsonNode resolved) {
         this.unresolved = null;
         this.resolved = resolved;
+    }
+
+    private static JsonNode evaluateExpression(String expression, Map<String, Josson> datasets)
+            throws UnresolvedDatasetException {
+        try {
+            return toValueNode(expression);
+        } catch (NumberFormatException e) {
+            // continue
+        }
+        if (datasets.containsKey(expression)) {
+            Josson josson = datasets.get(expression);
+            if (josson == null) {
+                return null;
+            }
+            return josson.getNode();
+        }
+        String[] tokens = matchJsonQuery(expression);
+        if (tokens == null) {
+            throw new UnresolvedDatasetException(expression);
+        }
+        if (!datasets.containsKey(tokens[0])) {
+            throw new UnresolvedDatasetException(tokens[0]);
+        }
+        Josson josson = datasets.get(tokens[0]);
+        if (josson == null) {
+            return null;
+        }
+        JsonNode node = josson.getNode(tokens[1]);
+        datasets.put(expression, node == null ? null : Josson.create(node));
+        return node;
     }
 
     private static BooleanNode relationalCompare(JsonNode leftNode, String operator, JsonNode rightNode) {
@@ -142,7 +173,7 @@ class LogicalOpStep {
     }
 
     /*
-        For JossonCore.filterArrayNode()
+        For JossonCore.evaluateFilter()
      */
     private static JsonNode getNodeFrom(Josson arrayNode, int index, String expression) {
         if (expression.equals("?")) {

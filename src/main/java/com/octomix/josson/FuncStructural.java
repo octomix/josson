@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
@@ -15,15 +14,20 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncStructural {
 
-    static IntNode funcLength(JsonNode node, String params) {
+    static JsonNode funcFlatten(JsonNode node, String params) {
         getParamNotAccept(params);
-        if (node.isContainerNode()) {
-            return IntNode.valueOf(node.size());
+        if (!node.isArray()) {
+            return node;
         }
-        if (node.isTextual()) {
-            return IntNode.valueOf(node.asText().length());
+        ArrayNode array = MAPPER.createArrayNode();
+        for (int i = 0; i < node.size(); i++) {
+            if (node.get(i).isArray()) {
+                array.addAll((ArrayNode) node.get(i));
+            } else {
+                array.add(node.get(i));
+            }
         }
-        return IntNode.valueOf(0);
+        return array;
     }
 
     static JsonNode funcMap(JsonNode node, String params) {
@@ -67,19 +71,7 @@ class FuncStructural {
 
     static IntNode funcSize(JsonNode node, String params) {
         getParamNotAccept(params);
-        if (node.isContainerNode()) {
-            AtomicInteger count = new AtomicInteger(0);
-            node.forEach(element -> {
-                if (!element.isNull()) {
-                    count.getAndIncrement();
-                }
-            });
-            return IntNode.valueOf(count.get());
-        }
-        if (node.isTextual()) {
-            return IntNode.valueOf(node.asText().length());
-        }
-        return IntNode.valueOf(0);
+        return IntNode.valueOf(node.size());
     }
 
     static JsonNode funcToArray(JsonNode node, String params) {

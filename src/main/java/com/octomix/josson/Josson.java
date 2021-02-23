@@ -211,7 +211,7 @@ public class Josson {
      * Query data by Josson query language, return result for ValueNode only.
      *
      * @param jossonPath the Josson query path
-     * @return The resulting Jackson ArrayNode. {@code null} if the result is not an ValueNode.
+     * @return The resulting Jackson ValueNode. {@code null} if the result is not a ValueNode.
      * @throws IllegalArgumentException if the query path is invalid
      */
     public ValueNode getValueNode(String jossonPath) {
@@ -219,6 +219,14 @@ public class Josson {
         return node != null && node.isValueNode() ? (ValueNode) node : null;
     }
 
+    /**
+     * Query data by Josson query language, return result for ValueNode only.
+     *
+     * @param jossonPath the Josson query path
+     * @return The resulting Jackson ValueNode.
+     * @throws IllegalArgumentException if the query path is invalid
+     * @throws Exception if the result is not a ValueNode
+     */
     public ValueNode getRequiredValueNode(String jossonPath) throws Exception {
         JsonNode node = getNode(jossonPath);
         if (node == null || !node.isValueNode()) {

@@ -2,12 +2,9 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import com.octomix.josson.exception.UnresolvedDatasetException;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.PatternMatcher.*;
@@ -140,24 +137,23 @@ class JossonCore {
         } else if (node.isValueNode()) {
             return null;
         } else {
-            tokens = matchArrayNodeQuery(key);
+            tokens = matchFilterQuery(key);
             if (tokens != null) {
-                String field = tokens[0];
-                FilterArrayReturn mode = tokens[2] == null
-                        ? FilterArrayReturn.FIRST_MATCHED : FilterArrayReturn.ALL_MATCHED;
-                node = filterArrayNode(field.isEmpty() ? node : node.get(field), tokens[1], mode);
-                if (node != null && node.isArray()) {
-                    keys.remove(0);
-                    return forEachElement(node, keys, tokens[3], "@".equals(tokens[2]));
+                FilterArrayReturn mode = tokens[2] == null ?
+                        FilterArrayReturn.FIRST_MATCHED : FilterArrayReturn.ALL_MATCHED;
+                if (tokens[0].isEmpty()) {
+                    node = evaluateFilter(node, tokens[1], mode);
+                } else {
+                    JsonNode tryNode = node.get(tokens[0]);
+                    if (tryNode == null || !tryNode.isArray()) {
+                        tryNode = forEachElement(node, new ArrayList<>(Collections.singletonList(tokens[0])));
+                    }
+                    node = evaluateFilter(tryNode, tokens[1], mode);
                 }
             } else if (node.isArray()) {
-                return forEachElement(node, keys, "", true);
+                return forEachElement(node, keys);
             } else {
                 node = node.get(key);
-                if (node != null && node.isArray()) {
-                    keys.remove(0);
-                    return forEachElement(node, keys, "", true);
-                }
             }
         }
         keys.remove(0);
@@ -165,23 +161,31 @@ class JossonCore {
     }
 
     /**
-     * Find an element or filtered array in an array node
+     * Find an element or filter an array node
      *
-     * @param arrayNode A json array node
-     * @param statement Multiple conditions combined with relational operator
-     * @param mode      FIRST_MATCHED - return the 1st matched element
-     *                  ALL_MATCHED - return all matched elements in array node
-     * @return matched element node or matched elements in array node
+     * @param node the Jackson JsonNode to be processed
+     * @param statement multiple conditions combined with relational operator
+     * @param mode {@code FIRST_MATCHED} | {@code ALL_MATCHED}
+     * @return The 1st matched element for {@code FIRST_MATCHED} or
+     * all matched elements in an array node for {@code ALL_MATCHED}
      */
-    static JsonNode filterArrayNode(JsonNode arrayNode, String statement, FilterArrayReturn mode) {
-        if (arrayNode == null || !arrayNode.isArray() || arrayNode.size() == 0) {
+    private static JsonNode evaluateFilter(JsonNode node, String statement, FilterArrayReturn mode) {
+        if (node == null) {
             return null;
         }
         if (statement.isEmpty()) {
-            if (FilterArrayReturn.FIRST_MATCHED == mode) {
-                return arrayNode.get(0);
+            return node;
+        }
+        if (node.isArray()) {
+            if (node.size() == 0) {
+                return null;
             }
-            return arrayNode;
+        } else {
+            JsonNode result = new LogicalOpStack(node).evaluate(statement, 0);
+            if (result != null && result.asBoolean()) {
+                return node;
+            }
+            return null;
         }
         ArrayNode matchedNodes = null;
         if (FilterArrayReturn.FIRST_MATCHED != mode) {
@@ -189,81 +193,59 @@ class JossonCore {
         }
         try {
             if (FilterArrayReturn.FIRST_MATCHED == mode) {
-                return arrayNode.get(Integer.parseInt(statement));
+                return node.get(Integer.parseInt(statement));
             }
-            matchedNodes.add(arrayNode.get(Integer.parseInt(statement)));
+            matchedNodes.add(node.get(Integer.parseInt(statement)));
             return matchedNodes;
         } catch (NumberFormatException e) {
             // continue
         }
-        LogicalOpStack opStack = new LogicalOpStack(arrayNode);
-        for (int i = 0; i < arrayNode.size(); i++) {
-            opStack.clear();
-            List<String[]> tokens = decomposeConditions(statement);
-            for (String[] token : tokens) {
-                try {
-                    opStack.evaluate(token[0], token[1], i);
-                } catch (IllegalArgumentException e) {
-                    if (e.getMessage() == null) {
-                        throw new IllegalArgumentException(statement);
-                    }
-                    throw new IllegalArgumentException("\"" + e.getMessage() + "\" in " + statement);
-                }
-            }
-            JsonNode result = opStack.finalResult(i);
+        LogicalOpStack opStack = new LogicalOpStack(node);
+        for (int i = 0; i < node.size(); i++) {
+            JsonNode result = opStack.evaluate(statement, i);
             if (result != null && result.asBoolean()) {
                 if (FilterArrayReturn.FIRST_MATCHED == mode) {
-                    return arrayNode.get(i);
+                    return node.get(i);
                 }
-                matchedNodes.add(arrayNode.get(i));
+                matchedNodes.add(node.get(i));
             }
         }
         return matchedNodes;
     }
 
-    static JsonNode evaluateExpression(String expression, Map<String, Josson> datasets)
-            throws UnresolvedDatasetException {
-        try {
-            return toValueNode(expression);
-        } catch (NumberFormatException e) {
-            // continue
-        }
-        if (datasets.containsKey(expression)) {
-            Josson josson = datasets.get(expression);
-            if (josson == null) {
-                return null;
+    private static JsonNode forEachElement(JsonNode node, List<String> keys) {
+        List<String> keysAfterGrouping = new ArrayList<>();
+        boolean isFlattenArray = true;
+        for (int i = 0; i < keys.size(); i++) {
+            boolean isGroupInArray = keys.get(i).startsWith("@");
+            if (!isGroupInArray && i > 0) {
+                String[] tokens = matchFilterQuery(keys.get(i));
+                if (tokens != null) {
+                    isGroupInArray = true;
+                    isFlattenArray = !tokens[1].isEmpty();
+                }
             }
-            return josson.getNode();
+            if (isGroupInArray) {
+                if (!isFlattenArray) {
+                    keys.remove(i);
+                }
+                while (i < keys.size()) {
+                    keysAfterGrouping.add(keys.remove(i));
+                }
+                break;
+            }
         }
-        String[] tokens = matchJsonQuery(expression);
-        if (tokens == null) {
-            throw new UnresolvedDatasetException(expression);
-        }
-        if (!datasets.containsKey(tokens[0])) {
-            throw new UnresolvedDatasetException(tokens[0]);
-        }
-        Josson josson = datasets.get(tokens[0]);
-        if (josson == null) {
-            return null;
-        }
-        JsonNode node = josson.getNode(tokens[1]);
-        datasets.put(expression, node == null ? null : Josson.create(node));
-        return node;
-    }
-
-    static JsonNode forEachElement(JsonNode node, List<String> keys, String funcChain, boolean flattenArray) {
-        List<String> functions = decomposeNestedResultFunctions(funcChain);
         ArrayNode matchedNodes = MAPPER.createArrayNode();
         for (int i = 0; i < node.size(); i++) {
             JsonNode tryNode = getNodeByKeys(node.get(i), new ArrayList<>(keys));
             if (tryNode != null) {
-                if (tryNode.isArray() && flattenArray) {
+                if (isFlattenArray && tryNode.isArray()) {
                     matchedNodes.addAll((ArrayNode) tryNode);
                 } else {
                     matchedNodes.add(tryNode);
                 }
             }
         }
-        return getNodeByKeys(matchedNodes, functions);
+        return getNodeByKeys(matchedNodes, keysAfterGrouping);
     }
 }

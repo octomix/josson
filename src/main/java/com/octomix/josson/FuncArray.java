@@ -16,16 +16,16 @@ import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncArray {
-    static JsonNode funcDistinct(JsonNode node, String params) {
-        getParamNotAccept(params);
-        if (!node.isArray()) {
-            return node;
+    static JsonNode funcDistinctValue(JsonNode node, String params) {
+        ArrayNode array = getParamArrayOrItself(params, node);
+        if (array == null) {
+            return null;
         }
         Set<String> texts = new HashSet<>();
         Set<Double> doubles = new HashSet<>();
         Set<Boolean> booleans = new HashSet<>();
-        for (int i = 0; i < node.size(); i++) {
-            JsonNode tryNode = node.get(i);
+        for (int i = 0; i < array.size(); i++) {
+            JsonNode tryNode = array.get(i);
             if (tryNode.isTextual()) {
                 texts.add(tryNode.asText());
             } else if (tryNode.isNumber()) {
@@ -34,11 +34,11 @@ class FuncArray {
                 booleans.add(tryNode.asBoolean());
             }
         }
-        ArrayNode array = MAPPER.createArrayNode();
-        texts.forEach(value -> array.add(TextNode.valueOf(value)));
-        doubles.forEach(value -> array.add(DoubleNode.valueOf(value)));
-        booleans.forEach(value -> array.add(BooleanNode.valueOf(value)));
-        return array;
+        ArrayNode result = MAPPER.createArrayNode();
+        texts.forEach(value -> result.add(TextNode.valueOf(value)));
+        doubles.forEach(value -> result.add(DoubleNode.valueOf(value)));
+        booleans.forEach(value -> result.add(BooleanNode.valueOf(value)));
+        return result;
     }
 
     static JsonNode funcFirst(JsonNode node, String params) {
@@ -61,7 +61,7 @@ class FuncArray {
         if (valueNode != null && valueNode.isValueNode()) {
             if (valueNode.isNumber()) {
                 double value = valueNode.asDouble();
-                for (int i = 0; i < node.size() - 1; i++) {
+                for (int i = 0; i < node.size(); i++) {
                     JsonNode tryNode = node.get(i);
                     if (tryNode.isNumber() || tryNode.isTextual()) {
                         if (tryNode.asDouble() == value) {
@@ -71,7 +71,7 @@ class FuncArray {
                 }
             } else {
                 String value = valueNode.asText();
-                for (int i = 0; i < node.size() - 1; i++) {
+                for (int i = 0; i < node.size(); i++) {
                     JsonNode tryNode = node.get(i);
                     if (tryNode.isNumber() || tryNode.isTextual()) {
                         if (tryNode.asText().equals(value)) {
@@ -135,48 +135,86 @@ class FuncArray {
         return null;
     }
 
-    static JsonNode funcMaxMin(JsonNode node, String params, boolean isMax, int nullPriority) {
-        List<String> paramList = decomposeFunctionParameters(params, 0, 1);
+    static JsonNode funcFindByMaxMin(JsonNode node, String params, boolean isMax, int nullPriority) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, 1);
         if (!node.isArray()) {
             return node;
         }
-        String path = paramList.size() > 0 ? paramList.get(0) : null;
+        String path = paramList.get(0);
         int foundIndex = -1;
-        Double maxDouble = null;
+        Double maxMinDouble = null;
         String maxMinString = null;
         for (int i = 0; i < node.size(); i++) {
-            JsonNode value = getNode(node.get(i), path);
-            if (value == null || value.isNull()) {
+            JsonNode tryNode = getNode(node.get(i), path);
+            if (tryNode == null || tryNode.isNull()) {
                 if (nullPriority > 0) {
-                    return value;
+                    return tryNode;
                 }
                 if (nullPriority < 0 && foundIndex < 0) {
                     foundIndex = i;
                 }
                 continue;
             }
-            if (value.isContainerNode()) {
+            if (tryNode.isContainerNode()) {
                 continue;
             }
-            if (maxDouble != null || value.isNumber()) {
-                if (value.isNumber()) {
-                    double asDouble = value.asDouble();
-                    if (maxDouble == null || asDouble > maxDouble) {
-                        maxDouble = isMax ? asDouble : -asDouble;
+            if (maxMinDouble != null || tryNode.isNumber()) {
+                if (tryNode.isNumber()) {
+                    double tryValue = tryNode.asDouble();
+                    if (maxMinDouble == null
+                            || (isMax && tryValue > maxMinDouble)
+                            || (!isMax && tryValue < maxMinDouble)) {
+                        maxMinDouble = tryValue;
                         foundIndex = i;
                     }
                 }
             } else {
-                String asText = value.asText();
+                String tryValue = tryNode.asText();
                 if (maxMinString == null
-                    || (isMax && asText.compareTo(maxMinString) > 0)
-                    || (!isMax && asText.compareTo(maxMinString) < 0)) {
-                    maxMinString = asText;
+                        || (isMax && tryValue.compareTo(maxMinString) > 0)
+                        || (!isMax && tryValue.compareTo(maxMinString) < 0)) {
+                    maxMinString = tryValue;
                     foundIndex = i;
                 }
             }
         }
         return foundIndex >= 0 ? node.get(foundIndex) : null;
+    }
+
+    static ValueNode funcMaxMin(JsonNode node, String params, boolean isMax) {
+        ArrayNode array = getParamArrayOrItself(params, node);
+        if (array == null) {
+            return null;
+        }
+        double maxMinDouble = 0;
+        ValueNode maxMinNumber = null;
+        String maxMinString = null;
+        for (int i = array.size() - 1; i >= 0; i--) {
+            JsonNode tryNode = array.get(i);
+            if (!nodeHasValue(tryNode)) {
+                continue;
+            }
+            if (maxMinNumber != null || tryNode.isNumber()) {
+                if (tryNode.isNumber()) {
+                    double tryValue = tryNode.asDouble();
+                    if (maxMinNumber == null
+                            || (isMax && tryValue > maxMinDouble)
+                            || (!isMax && tryValue < maxMinDouble)) {
+                        maxMinNumber = (ValueNode) tryNode;
+                        maxMinDouble = tryValue;
+                    }
+                }
+            } else {
+                String tryValue = tryNode.asText();
+                if (maxMinString == null
+                        || (isMax && tryValue.compareTo(maxMinString) > 0)
+                        || (!isMax && tryValue.compareTo(maxMinString) < 0)) {
+                    maxMinString = tryValue;
+                }
+            }
+        }
+        return maxMinNumber != null ? maxMinNumber :
+                maxMinString != null ? TextNode.valueOf(maxMinString) : null;
     }
 
     static JsonNode funcReverse(JsonNode node, String params) {

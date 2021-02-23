@@ -2,13 +2,13 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 import static com.octomix.josson.GetFuncParam.*;
@@ -63,50 +63,6 @@ class FuncString {
         return TextNode.valueOf(ignoreCase ?
                 StringUtils.appendIfMissingIgnoreCase(node.asText(), suffix) :
                 StringUtils.appendIfMissing(node.asText(), suffix));
-    }
-
-    static JsonNode funcB64Decode(JsonNode node, String params) {
-        String value = getParamStringLiteral(params, false);
-        if (value != null) {
-            return TextNode.valueOf(new String(Base64.getDecoder().decode(value)));
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode textNode = node.get(i);
-                if (textNode.isTextual()) {
-                    array.add(TextNode.valueOf(
-                            new String(Base64.getDecoder().decode(textNode.asText()))));
-                }
-            }
-            return array;
-        }
-        if (!node.isTextual()) {
-            return null;
-        }
-        return TextNode.valueOf(new String(Base64.getDecoder().decode(node.asText())));
-    }
-
-    static JsonNode funcB64Encode(JsonNode node, String params) {
-        String value = getParamStringLiteral(params, false);
-        if (value != null) {
-            return TextNode.valueOf(Base64.getEncoder().encodeToString(value.getBytes()));
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode textNode = node.get(i);
-                if (textNode.isTextual()) {
-                    array.add(TextNode.valueOf(
-                            Base64.getEncoder().encodeToString(textNode.asText().getBytes())));
-                }
-            }
-            return array;
-        }
-        if (!node.isTextual()) {
-            return null;
-        }
-        return TextNode.valueOf(Base64.getEncoder().encodeToString(node.asText().getBytes()));
     }
 
     static JsonNode funcCapitalize(JsonNode node, String params) {
@@ -308,6 +264,24 @@ class FuncString {
             return null;
         }
         return TextNode.valueOf(StringUtils.leftPad(node.asText(), args.left, args.right));
+    }
+
+    static JsonNode funcLength(JsonNode node, String params) {
+        getParamNotAccept(params);
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isValueNode()) {
+                    array.add(IntNode.valueOf(textNode.asText().length()));
+                }
+            }
+            return array;
+        }
+        if (!node.isValueNode()) {
+            return null;
+        }
+        return IntNode.valueOf(node.asText().length());
     }
 
     static JsonNode funcLowerCase(JsonNode node, String params) {

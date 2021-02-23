@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,7 +64,7 @@ class GetFuncParam {
     }
 
     static Map<String, String> getParamNamePath(List<String> paramList) {
-        Map<String, String> elements = new HashMap<>();
+        Map<String, String> elements = new LinkedHashMap<>();
         for (String param : paramList) {
             String[] values = param.split(":", 2);
             String name = values[0].trim();
@@ -75,7 +75,7 @@ class GetFuncParam {
                     List<String> paths = decomposePaths(path);
                     for (int i = paths.size() - 1; i >= 0 ; i--) {
                         if (matchFunctionAndArgument(paths.get(i)) == null) {
-                            String[] tokens = matchArrayNodeQuery(paths.get(i));
+                            String[] tokens = matchFilterQuery(paths.get(i));
                             name = tokens == null ? paths.get(i) : tokens[0];
                             break;
                         }
@@ -89,23 +89,48 @@ class GetFuncParam {
         return elements;
     }
 
+    static ArrayNode getParamArrayOrItself(String params, JsonNode node) {
+        List<String> paramList = decomposeFunctionParameters(params, 0, -1);
+        if (paramList.size() == 0) {
+            if (node.isArray()) {
+                return (ArrayNode) node;
+            }
+            return null;
+        }
+        return getParamArray(paramList, node);
+    }
+
     static ArrayNode getParamArray(String params, JsonNode node) {
-        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
-        ArrayNode arrayNode = Josson.createArrayNode();
+        return getParamArray(decomposeFunctionParameters(params, 1, -1), node);
+    }
+
+    static ArrayNode getParamArray(List<String> paramList, JsonNode node) {
+        ArrayNode array = Josson.createArrayNode();
         for (String param : paramList) {
             if (param.startsWith("[")) {
                 try {
-                    arrayNode.addAll((ArrayNode) readJsonNode(param));
+                    array.addAll((ArrayNode) readJsonNode(param));
                 } catch (JsonProcessingException e) {
                     throw new IllegalArgumentException("Invalid JSON array: " + param);
                 }
+            } else if (node.isArray()) {
+                for (int i = 0; i < node.size(); i++) {
+                    JsonNode tryNode = getNode(node.get(i), param);
+                    if (tryNode != null) {
+                        array.add(tryNode);
+                    }
+                }
             } else {
-                JsonNode value = getNode(node, param);
-                if (value != null) {
-                    arrayNode.add(value);
+                JsonNode tryNode = getNode(node, param);
+                if (tryNode != null) {
+                    if (tryNode.isArray()) {
+                        array.addAll((ArrayNode) tryNode);
+                    } else {
+                        array.add(tryNode);
+                    }
                 }
             }
         }
-        return arrayNode;
+        return array;
     }
 }

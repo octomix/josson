@@ -537,19 +537,7 @@ public class Jossons {
         } catch (NumberFormatException e) {
             // continue
         }
-        LogicalOpStack opStack = new LogicalOpStack(datasets);
-        List<String[]> conditions = decomposeConditions(statement);
-        for (String[] condition : conditions) {
-            try {
-                opStack.evaluate(condition[0], condition[1]);
-            } catch (IllegalArgumentException e) {
-                if (e.getMessage() == null) {
-                    throw new IllegalArgumentException(statement);
-                }
-                throw new IllegalArgumentException("\"" + e.getMessage() + "\" in " + statement);
-            }
-        }
-        return opStack.finalResult();
+        return new LogicalOpStack(datasets).evaluate(statement);
     }
 
     private static JsonNode joinNodes(JsonNode leftNode, String[] leftKeys, String leftArrayName, JoinOperator operator,

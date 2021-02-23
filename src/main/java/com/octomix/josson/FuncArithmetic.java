@@ -16,15 +16,14 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncArithmetic {
     static ValueNode funcAggregate(JsonNode node, String funcId, String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 0, 1);
-        if (!node.isArray()) {
+        ArrayNode array = getParamArrayOrItself(params, node);
+        if (array == null) {
             return null;
         }
-        String path = paramList.size() > 0 ? paramList.get(0) : null;
         double sum = 0;
         int count = 0;
-        for (int i = 0; i < node.size(); i++) {
-            JsonNode tryNode = getNode(node.get(i), path);
+        for (int i = array.size() - 1; i >= 0; i--) {
+            JsonNode tryNode = array.get(i);
             if (nodeHasValue(tryNode)) {
                 sum += tryNode.asDouble();
                 count++;
