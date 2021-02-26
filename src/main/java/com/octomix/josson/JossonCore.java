@@ -60,8 +60,13 @@ class JossonCore {
         return DoubleNode.valueOf(Double.parseDouble(literal));
     }
 
-    static JsonNode getIndexNode(int index, String functions) {
-        List<String> keys = decomposePaths(functions);
+    static String getNodeAsText(JsonNode node, String jossonPath) {
+        node = getNode(node, jossonPath);
+        return node == null ? "" : node.asText();
+    }
+
+    static JsonNode getIndexId(int index, String path) {
+        List<String> keys = decomposePaths(path);
         String indexType = keys.remove(0);
         switch (indexType) {
             case "#":
@@ -110,7 +115,7 @@ class JossonCore {
                 if ("?".equals(param)) {
                     valueObject = valueAsObject(node);
                 } else if (param.charAt(0) == '#') {
-                    valueObject = valueAsObject(getIndexNode(index, param));
+                    valueObject = valueAsObject(getIndexId(index, param));
                 } else {
                     valueObject = valueAsObject(getNode(node, param));
                 }
@@ -133,7 +138,15 @@ class JossonCore {
         String key = keys.get(0);
         String[] tokens = matchFunctionAndArgument(key);
         if (tokens != null) {
-            node = FuncDispatcher.dispatch(node, tokens[0], tokens[1]);
+            if (tokens[2] == null && node.isArray()) {
+                ArrayNode array = MAPPER.createArrayNode();
+                for (int i = 0; i < node.size(); i++) {
+                    array.add(FuncDispatcher.dispatch(node.get(i), tokens[0], tokens[1]));
+                }
+                node = array;
+            } else {
+                node = FuncDispatcher.dispatch(node, tokens[0], tokens[1]);
+            }
         } else if (node.isValueNode()) {
             return null;
         } else {

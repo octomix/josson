@@ -181,9 +181,9 @@ class LogicalOpStep {
         }
         switch (expression.charAt(0)) {
             case '#':
-                return getIndexNode(index, expression);
+                return getIndexId(index, expression);
             case '@':
-                return arrayNode.getNode(expression.substring(1));
+                return arrayNode.getNode(expression);
         }
         return arrayNode.getNode(index, expression);
     }

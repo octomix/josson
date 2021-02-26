@@ -18,11 +18,17 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncString {
     static JsonNode funcAbbreviate(JsonNode node, String params) {
-        ImmutablePair<Integer, Integer> startEnd = getParamStartEnd(params);
-        int offset = startEnd.left;
+        ImmutablePair<String, Integer[]> pathAndParams = getParamPathAndStartEnd(params);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        int offset = pathAndParams.right[0];
         int maxWidth;
-        if (startEnd.right < Integer.MAX_VALUE) {
-            maxWidth = startEnd.right;
+        if (pathAndParams.right[1] < Integer.MAX_VALUE) {
+            maxWidth = pathAndParams.right[1];
         } else {
             maxWidth = offset;
             offset = 0;
@@ -44,7 +50,14 @@ class FuncString {
     }
 
     static JsonNode funcAppendIfMissing(JsonNode node, String params, boolean ignoreCase) {
-        String suffix = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String suffix = getNodeAsText(node, pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -66,7 +79,13 @@ class FuncString {
     }
 
     static JsonNode funcCapitalize(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -84,13 +103,20 @@ class FuncString {
     }
 
     static JsonNode funcCenter(JsonNode node, String params) {
-        ImmutablePair<Integer, String> args = getParamIntAndString(params);
+        ImmutableTriple<String, Integer, String> pathAndParams = getParamPathAndAlignment(params);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (nodeHasValue(textNode)) {
-                    array.add(TextNode.valueOf(StringUtils.center(textNode.asText(), args.left, args.right)));
+                    array.add(TextNode.valueOf(StringUtils.center(
+                            textNode.asText(), pathAndParams.middle, pathAndParams.right)));
                 }
             }
             return array;
@@ -98,7 +124,7 @@ class FuncString {
         if (!nodeHasValue(node)) {
             return null;
         }
-        return TextNode.valueOf(StringUtils.center(node.asText(), args.left, args.right));
+        return TextNode.valueOf(StringUtils.center(node.asText(), pathAndParams.middle, pathAndParams.right));
     }
 
     static JsonNode funcConcat(JsonNode node, String params) {
@@ -142,7 +168,7 @@ class FuncString {
                     sb.append(node.asText());
                     continue;
             }
-            JsonNode tryNode = arg.left == '#' ? getIndexNode(index, arg.right) : getNode(node, arg.right);
+            JsonNode tryNode = arg.left == '#' ? getIndexId(index, arg.right) : getNode(node, arg.right);
             if (!nodeHasValue(tryNode)) {
                 return null;
             }
@@ -152,10 +178,14 @@ class FuncString {
     }
 
     static JsonNode funcJoin(JsonNode node, String params) {
-        String delimiter = getParamStringLiteral(params, false);
-        if (!node.isArray()) {
-            return node;
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
         }
+        String delimiter = pathAndParams.right.size() > 0 ? getNodeAsText(node, pathAndParams.right.get(0)) : "";
         List<String> texts = new ArrayList<>();
         for (int i = 0; i < node.size(); i++) {
             JsonNode valueNode = node.get(i);
@@ -163,11 +193,18 @@ class FuncString {
                 texts.add(valueNode.asText());
             }
         }
-        return TextNode.valueOf(String.join(delimiter == null ? "" : delimiter, texts));
+        return TextNode.valueOf(String.join(delimiter, texts));
     }
 
     static JsonNode funcKeepAfter(JsonNode node, String params, boolean ignoreCase, boolean last) {
-        String find = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String find = getNodeAsText(node, pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -208,7 +245,14 @@ class FuncString {
     }
 
     static JsonNode funcKeepBefore(JsonNode node, String params, boolean ignoreCase, boolean last) {
-        String find = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String find = getNodeAsText(node, pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -249,13 +293,20 @@ class FuncString {
     }
 
     static JsonNode funcLeftPad(JsonNode node, String params) {
-        ImmutablePair<Integer, String> args = getParamIntAndString(params);
+        ImmutableTriple<String, Integer, String> pathAndParams = getParamPathAndAlignment(params);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (nodeHasValue(textNode)) {
-                    array.add(TextNode.valueOf(StringUtils.leftPad(textNode.asText(), args.left, args.right)));
+                    array.add(TextNode.valueOf(StringUtils.leftPad(
+                            textNode.asText(), pathAndParams.middle, pathAndParams.right)));
                 }
             }
             return array;
@@ -263,11 +314,17 @@ class FuncString {
         if (!nodeHasValue(node)) {
             return null;
         }
-        return TextNode.valueOf(StringUtils.leftPad(node.asText(), args.left, args.right));
+        return TextNode.valueOf(StringUtils.leftPad(node.asText(), pathAndParams.middle, pathAndParams.right));
     }
 
     static JsonNode funcLength(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -285,7 +342,13 @@ class FuncString {
     }
 
     static JsonNode funcLowerCase(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -303,7 +366,14 @@ class FuncString {
     }
 
     static JsonNode funcPrependIfMissing(JsonNode node, String params, boolean ignoreCase) {
-        String prefix = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String prefix = getNodeAsText(node, pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -325,15 +395,22 @@ class FuncString {
     }
 
     static JsonNode funcRemoveEnd(JsonNode node, String params, boolean ignoreCase) {
-        String prefix = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String remove = getNodeAsText(node, pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
                     array.add(TextNode.valueOf(ignoreCase ?
-                            StringUtils.removeEndIgnoreCase(textNode.asText(), prefix) :
-                            StringUtils.removeEnd(textNode.asText(), prefix)));
+                            StringUtils.removeEndIgnoreCase(textNode.asText(), remove) :
+                            StringUtils.removeEnd(textNode.asText(), remove)));
                 }
             }
             return array;
@@ -342,20 +419,27 @@ class FuncString {
             return null;
         }
         return TextNode.valueOf(ignoreCase ?
-                StringUtils.removeEndIgnoreCase(node.asText(), prefix) :
-                StringUtils.removeEnd(node.asText(), prefix));
+                StringUtils.removeEndIgnoreCase(node.asText(), remove) :
+                StringUtils.removeEnd(node.asText(), remove));
     }
 
     static JsonNode funcRemoveStart(JsonNode node, String params, boolean ignoreCase) {
-        String suffix = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String remove = getNodeAsText(node, pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
                     array.add(TextNode.valueOf(ignoreCase ?
-                            StringUtils.removeStartIgnoreCase(textNode.asText(), suffix) :
-                            StringUtils.removeStart(textNode.asText(), suffix)));
+                            StringUtils.removeStartIgnoreCase(textNode.asText(), remove) :
+                            StringUtils.removeStart(textNode.asText(), remove)));
                 }
             }
             return array;
@@ -364,12 +448,19 @@ class FuncString {
             return null;
         }
         return TextNode.valueOf(ignoreCase ?
-                StringUtils.removeStartIgnoreCase(node.asText(), suffix) :
-                StringUtils.removeStart(node.asText(), suffix));
+                StringUtils.removeStartIgnoreCase(node.asText(), remove) :
+                StringUtils.removeStart(node.asText(), remove));
     }
 
     static JsonNode funcReplace(JsonNode node, String params, boolean ignoreCase) {
-        ImmutableTriple<String, String, Integer> args = getParam2StringAndInt(params);
+        ImmutableTriple<String, String[], Integer> pathAndParams = getParamPathAnd2StringAndInt(params);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -377,9 +468,9 @@ class FuncString {
                 if (textNode.isTextual()) {
                     array.add(TextNode.valueOf(ignoreCase ?
                             StringUtils.replaceIgnoreCase(
-                                    textNode.asText(), args.left, args.middle, args.right == null ? -1 : args.right) :
+                                    textNode.asText(), pathAndParams.middle[0], pathAndParams.middle[1], pathAndParams.right == null ? -1 : pathAndParams.right) :
                             StringUtils.replace(
-                                    textNode.asText(), args.left, args.middle, args.right == null ? -1 : args.right)));
+                                    textNode.asText(), pathAndParams.middle[0], pathAndParams.middle[1], pathAndParams.right == null ? -1 : pathAndParams.right)));
                 }
             }
             return array;
@@ -389,19 +480,26 @@ class FuncString {
         }
         return TextNode.valueOf(ignoreCase ?
                 StringUtils.replaceIgnoreCase(
-                        node.asText(), args.left, args.middle, args.right == null ? -1 : args.right) :
+                        node.asText(), pathAndParams.middle[0], pathAndParams.middle[1], pathAndParams.right == null ? -1 : pathAndParams.right) :
                 StringUtils.replace(
-                        node.asText(), args.left, args.middle, args.right == null ? -1 : args.right));
+                        node.asText(), pathAndParams.middle[0], pathAndParams.middle[1], pathAndParams.right == null ? -1 : pathAndParams.right));
     }
 
     static JsonNode funcRightPad(JsonNode node, String params) {
-        ImmutablePair<Integer, String> args = getParamIntAndString(params);
+        ImmutableTriple<String, Integer, String> pathAndParams = getParamPathAndAlignment(params);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (nodeHasValue(textNode)) {
-                    array.add(TextNode.valueOf(StringUtils.rightPad(textNode.asText(), args.left, args.right)));
+                    array.add(TextNode.valueOf(StringUtils.rightPad(
+                            textNode.asText(), pathAndParams.middle, pathAndParams.right)));
                 }
             }
             return array;
@@ -409,11 +507,18 @@ class FuncString {
         if (!nodeHasValue(node)) {
             return null;
         }
-        return TextNode.valueOf(StringUtils.rightPad(node.asText(), args.left, args.right));
+        return TextNode.valueOf(StringUtils.rightPad(node.asText(), pathAndParams.middle, pathAndParams.right));
     }
 
     static ArrayNode funcSplit(JsonNode node, String params) {
-        String separator = getParamStringLiteral(params, false);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String separator = pathAndParams.right.size() > 0 ? getNodeAsText(node, pathAndParams.right.get(0)) : null;
         ArrayNode array = MAPPER.createArrayNode();
         if (node.isArray()) {
             for (int i  = 0; i < node.size(); i++) {
@@ -435,14 +540,20 @@ class FuncString {
     }
 
     static JsonNode funcSubstr(JsonNode node, String params) {
-        ImmutablePair<Integer, Integer> startEnd = getParamStartEnd(params);
+        ImmutablePair<String, Integer[]> pathAndParams = getParamPathAndStartEnd(params);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
                     array.add(TextNode.valueOf(StringUtils.substring(
-                            textNode.asText(), startEnd.left, startEnd.right)));
+                            textNode.asText(), pathAndParams.right[0], pathAndParams.right[1])));
                 }
             }
             return array;
@@ -450,11 +561,17 @@ class FuncString {
         if (!node.isTextual()) {
             return null;
         }
-        return TextNode.valueOf(StringUtils.substring(node.asText(), startEnd.left, startEnd.right));
+        return TextNode.valueOf(StringUtils.substring(node.asText(), pathAndParams.right[0], pathAndParams.right[1]));
     }
 
     static JsonNode funcTrim(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -472,7 +589,13 @@ class FuncString {
     }
 
     static JsonNode funcUpperCase(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {

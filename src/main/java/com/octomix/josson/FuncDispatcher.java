@@ -99,6 +99,8 @@ class FuncDispatcher {
                     return funcFormatNumber(node, params);
                 case "formattext":
                     return funcFormatText(node, params);
+                case "formattexts":
+                    return funcFormatTexts(node, params);
                 case "indexedvalue":
                     return funcIndexedValue(node, params);
                 case "tonumber":

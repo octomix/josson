@@ -22,9 +22,12 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncFormat {
     static JsonNode funcB64Decode(JsonNode node, String params, Base64.Decoder decoder) {
-        String value = getParamStringLiteral(params, false);
-        if (value != null) {
-            return TextNode.valueOf(new String(decoder.decode(value)));
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
         }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
@@ -44,9 +47,12 @@ class FuncFormat {
     }
 
     static JsonNode funcB64Encode(JsonNode node, String params, Base64.Encoder encoder) {
-        String value = getParamStringLiteral(params, false);
-        if (value != null) {
-            return TextNode.valueOf(encoder.encodeToString(value.getBytes()));
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
         }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
@@ -159,7 +165,14 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatDate(JsonNode node, String params) {
-        String pattern = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String pattern = getNodeAsText(node, pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
@@ -180,7 +193,14 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatNumber(JsonNode node, String params) {
-        String pattern = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String pattern = getNodeAsText(node, pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
@@ -198,19 +218,44 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatText(JsonNode node, String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
-        String pattern = unquoteString(paramList.remove(0));
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        String pattern = getNodeAsText(node, pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                Object[] valueObjects = valuesAsObjects(node.get(i), paramList, i);
+                Object valueObject = valueAsObject(node.get(i));
+                if (valueObject != null) {
+                    array.add(TextNode.valueOf(String.format(pattern, valueObject)));
+                }
+            }
+            return array;
+        }
+        if (!nodeHasValue(node)) {
+            return null;
+        }
+        return TextNode.valueOf(String.format(pattern, valueAsObject(node)));
+    }
+
+    static JsonNode funcFormatTexts(JsonNode node, String params) {
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 2, -2);
+        String pattern = getNodeAsText(node, pathAndParams.left);
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                Object[] valueObjects = valuesAsObjects(node.get(i), pathAndParams.right, i);
                 if (valueObjects != null) {
                     array.add(TextNode.valueOf(String.format(pattern, valueObjects)));
                 }
             }
             return array;
         }
-        Object[] valueObjects = valuesAsObjects(node, paramList, 0);
+        Object[] valueObjects = valuesAsObjects(node, pathAndParams.right, 0);
         if (valueObjects == null) {
             return null;
         }
@@ -241,7 +286,13 @@ class FuncFormat {
     }
 
     static JsonNode funcToNumber(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
@@ -259,7 +310,13 @@ class FuncFormat {
     }
 
     static JsonNode funcToText(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
@@ -277,11 +334,14 @@ class FuncFormat {
     }
 
     static JsonNode funcUrlDecode(JsonNode node, String params) {
-        String value = getParamStringLiteral(params, false);
-        try {
-            if (value != null) {
-                return TextNode.valueOf(URLDecoder.decode(value, StandardCharsets.UTF_8.toString()));
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
             }
+        }
+        try {
             if (node.isArray()) {
                 ArrayNode array = MAPPER.createArrayNode();
                 for (int i  = 0; i < node.size(); i++) {
@@ -302,11 +362,14 @@ class FuncFormat {
     }
 
     static JsonNode funcUrlEncode(JsonNode node, String params) {
-        String value = getParamStringLiteral(params, false);
-        try {
-            if (value != null) {
-                return TextNode.valueOf(URLEncoder.encode(value, StandardCharsets.UTF_8.toString()));
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
             }
+        }
+        try {
             if (node.isArray()) {
                 ArrayNode array = MAPPER.createArrayNode();
                 for (int i  = 0; i < node.size(); i++) {

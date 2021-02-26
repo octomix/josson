@@ -2,6 +2,7 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.mariuszgromada.math.mxparser.Argument;
 import org.mariuszgromada.math.mxparser.Expression;
 
@@ -44,7 +45,13 @@ class FuncArithmetic {
     }
 
     static JsonNode funcAbs(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -98,7 +105,7 @@ class FuncArithmetic {
             if ("?".equals(path)) {
                 value = node.asDouble();
             } else {
-                JsonNode tryNode = path.charAt(0) == '#' ? getIndexNode(index, path) : getNode(node, path);
+                JsonNode tryNode = path.charAt(0) == '#' ? getIndexId(index, path) : getNode(node, path);
                 if (!nodeHasValue(tryNode)) {
                     return null;
                 }
@@ -132,7 +139,13 @@ class FuncArithmetic {
     }
 
     static JsonNode funcCeil(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -150,7 +163,13 @@ class FuncArithmetic {
     }
 
     static JsonNode funcFloor(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -168,8 +187,14 @@ class FuncArithmetic {
     }
 
     static JsonNode funcMod(JsonNode node, String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 1, 1);
-        int divisor = Integer.parseInt(paramList.get(0));
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        int divisor = Integer.parseInt(pathAndParams.right.get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -189,8 +214,14 @@ class FuncArithmetic {
     }
 
     static JsonNode funcRound(JsonNode node, String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 0, 1);
-        int precision = paramList.size() > 0 ? Integer.parseInt(paramList.get(0)) : 0;
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return null;
+            }
+        }
+        int precision = pathAndParams.right.size() > 0 ? Integer.parseInt(pathAndParams.right.get(0)) : 0;
         double magnitude = Math.pow(10, precision);
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();

@@ -4,25 +4,33 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.List;
 
 import static com.octomix.josson.GetFuncParam.*;
+import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
-import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncLogical {
     static BooleanNode funcContains(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        List<String> paramList = decomposeFunctionParameters(params, 1, 1);
-        String value = paramList.get(0);
-        if (value.length() > 1 && value.charAt(0) == '\'') {
-            value = unquoteString(value);
-        } else {
-            double num = Double.parseDouble(value);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return BooleanNode.FALSE;
+            }
+        }
+        JsonNode valueNode = getNode(node, pathAndParams.right.get(0));
+        if (valueNode.isContainerNode()) {
+            return BooleanNode.FALSE;
+        }
+        if (valueNode.isNumber()) {
+            double value = valueNode.asDouble();
             if (node.isArray()) {
                 for (int i = 0; i < node.size(); i++) {
                     if (node.get(i).isNumber() || node.get(i).isTextual()) {
-                        if (node.get(i).asDouble() == num) {
+                        if (node.get(i).asDouble() == value) {
                             return BooleanNode.valueOf(!not);
                         }
                     }
@@ -30,6 +38,7 @@ class FuncLogical {
             }
             return BooleanNode.valueOf(not);
         }
+        String value = valueNode.asText();
         if (node.isTextual()) {
             return BooleanNode.valueOf(not ^ (ignoreCase ?
                     StringUtils.containsIgnoreCase(node.asText(), value) :
@@ -56,7 +65,14 @@ class FuncLogical {
     }
 
     static BooleanNode funcEndsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        String value = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return BooleanNode.FALSE;
+            }
+        }
+        String value = getNodeAsText(node, pathAndParams.right.get(0));
         if (!node.isTextual()) {
             return BooleanNode.FALSE;
         }
@@ -66,7 +82,14 @@ class FuncLogical {
     }
 
     static BooleanNode funcEquals(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        String value = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return BooleanNode.FALSE;
+            }
+        }
+        String value = getNodeAsText(node, pathAndParams.right.get(0));
         if (!node.isTextual()) {
             return BooleanNode.FALSE;
         }
@@ -108,12 +131,24 @@ class FuncLogical {
     }
 
     static BooleanNode funcIsBoolean(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         return BooleanNode.valueOf(node.isBoolean());
     }
 
     static BooleanNode funcIsEven(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (nodeHasValue(node)) {
             return BooleanNode.valueOf((node.asInt() & 1) == 0);
         }
@@ -121,17 +156,35 @@ class FuncLogical {
     }
 
     static BooleanNode funcIsNull(JsonNode node, String params, boolean not) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         return BooleanNode.valueOf(not ^ node.isNull());
     }
 
     static BooleanNode funcIsNumber(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         return BooleanNode.valueOf(node.isNumber());
     }
 
     static BooleanNode funcIsOdd(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (nodeHasValue(node)) {
             return BooleanNode.valueOf((node.asInt() & 1) != 0);
         }
@@ -139,12 +192,24 @@ class FuncLogical {
     }
 
     static BooleanNode funcIsText(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         return BooleanNode.valueOf(node.isTextual());
     }
 
     static BooleanNode funcNot(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (!node.isBoolean()) {
             return BooleanNode.FALSE;
         }
@@ -152,7 +217,14 @@ class FuncLogical {
     }
 
     static BooleanNode funcStartsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        String value = getParamStringLiteral(params);
+        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.left != null) {
+            node = getNode(node, pathAndParams.left);
+            if (node == null) {
+                return BooleanNode.FALSE;
+            }
+        }
+        String value = getNodeAsText(node, pathAndParams.right.get(0));
         if (!node.isTextual()) {
             return BooleanNode.FALSE;
         }

@@ -1,6 +1,5 @@
 package com.octomix.josson;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 
@@ -8,14 +7,19 @@ import java.util.Map;
 
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
-import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncStructural {
 
     static JsonNode funcFlatten(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         if (!node.isArray()) {
             return node;
         }
@@ -61,7 +65,7 @@ class FuncStructural {
             } else if ("?".equals(path)) {
                 objNode.set(name, node);
             } else if (path.charAt(0) == '#') {
-                objNode.set(name, getIndexNode(index, path));
+                objNode.set(name, getIndexId(index, path));
             } else if (node.isObject()) {
                 objNode.set(name, getNode(node, path));
             }
@@ -70,23 +74,22 @@ class FuncStructural {
     }
 
     static IntNode funcSize(JsonNode node, String params) {
-        getParamNotAccept(params);
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
         return IntNode.valueOf(node.size());
     }
 
     static JsonNode funcToArray(JsonNode node, String params) {
-        String value = getParamStringLiteral(params, false);
-        if (value != null) {
-            try {
-                JsonNode newNode = readJsonNode(params);
-                if (newNode.isArray()) {
-                    return newNode;
-                }
-                ArrayNode array = MAPPER.createArrayNode();
-                array.add(newNode);
-                return array;
-            } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException(e.getMessage());
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
             }
         }
         if (node.isArray()) {

@@ -17,50 +17,52 @@ import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.*;
 
 class GetFuncParam {
-    static void getParamNotAccept(String params) {
-        if (!StringUtils.isBlank(params)) {
-            throw new IllegalArgumentException("Not accept function argument");
-        }
+    static String getParamPath(String input) {
+        List<String> paramList = decomposeFunctionParameters(input, 0, 1);
+        return paramList.size() > 0 ? paramList.get(0) : null;
     }
 
-    static ImmutablePair<Integer, Integer> getParamStartEnd(String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 0, 2);
-        int start = paramList.get(0).isEmpty() ? 0 : Integer.parseInt(paramList.get(0));
-        int end = paramList.size() > 1 ? Integer.parseInt(paramList.get(1)) : Integer.MAX_VALUE;
-        return ImmutablePair.of(start, end);
+    static ImmutablePair<String, List<String>> getParamPathAndStrings(String input, int minCount, int maxCount) {
+        List<String> paramList = decomposeFunctionParameters(input, minCount, maxCount + 1);
+        String path = paramList.size() > maxCount ? paramList.remove(0) : null;
+        return new ImmutablePair<>(path, paramList);
     }
 
-    static ImmutableTriple<Integer, Integer, Integer> getParamStartEndStep(String params) {
+    static ImmutablePair<String, Integer[]> getParamPathAndStartEnd(String params) {
         List<String> paramList = decomposeFunctionParameters(params, 0, 3);
-        int start = paramList.get(0).isEmpty() ? 0 : Integer.parseInt(paramList.get(0));
-        int end = paramList.size() > 1 && !paramList.get(1).isEmpty() ?
+        String path = paramList.size() > 2 ? paramList.remove(0) : null;
+        Integer[] args = new Integer[2];
+        args[0] = paramList.get(0).isEmpty() ? 0 : Integer.parseInt(paramList.get(0));
+        args[1] = paramList.size() > 1 ? Integer.parseInt(paramList.get(1)) : Integer.MAX_VALUE;
+        return ImmutablePair.of(path, args);
+    }
+
+    static ImmutablePair<String, Integer[]> getParamPathAndStartEndStep(String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 0, 4);
+        String path = paramList.size() > 3 ? paramList.remove(0) : null;
+        Integer[] args = new Integer[3];
+        args[0] = paramList.get(0).isEmpty() ? 0 : Integer.parseInt(paramList.get(0));
+        args[1] = paramList.size() > 1 && !paramList.get(1).isEmpty() ?
                 Integer.parseInt(paramList.get(1)) : Integer.MAX_VALUE;
-        int step = paramList.size() > 2 ? Integer.parseInt(paramList.get(2)) : 1;
-        return ImmutableTriple.of(start, end, step);
+        args[2] = paramList.size() > 2 ? Integer.parseInt(paramList.get(2)) : 1;
+        return ImmutablePair.of(path, args);
     }
 
-    static String getParamStringLiteral(String params) {
-        return getParamStringLiteral(params, true);
-    }
-
-    static String getParamStringLiteral(String params, boolean required) {
-        List<String> paramList = decomposeFunctionParameters(params, required ? 1 : 0, 1);
-        return paramList.size() > 0 ? unquoteString(paramList.get(0)) : null;
-    }
-
-    static ImmutablePair<Integer, String> getParamIntAndString(String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 1, 2);
-        return ImmutablePair.of(
-                Integer.parseInt(paramList.get(0)),
+    static ImmutableTriple<String, Integer, String> getParamPathAndAlignment(String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, 3);
+        String path = paramList.size() > 2 ? paramList.remove(0) : null;
+        return ImmutableTriple.of(
+                path, Integer.parseInt(paramList.get(0)),
                 paramList.size() > 1 ? unquoteString(paramList.get(1)) : null);
     }
 
-    static ImmutableTriple<String, String, Integer> getParam2StringAndInt(String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 2, 3);
-        return ImmutableTriple.of(
-                unquoteString(paramList.get(0)),
-                unquoteString(paramList.get(1)),
-                paramList.size() > 2 ? Integer.parseInt(paramList.get(2)) : null);
+    static ImmutableTriple<String, String[], Integer> getParamPathAnd2StringAndInt(String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 2, 4);
+        String path = paramList.size() > 3 ? paramList.remove(0) : null;
+        String[] args = new String[2];
+        args[0] = unquoteString(paramList.get(0));
+        args[1] = unquoteString(paramList.get(1));
+        return ImmutableTriple.of(path, args, paramList.size() > 2 ? Integer.parseInt(paramList.get(2)) : null);
     }
 
     static Map<String, String> getParamNamePath(List<String> paramList) {

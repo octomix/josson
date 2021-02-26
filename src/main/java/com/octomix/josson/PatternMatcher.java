@@ -211,12 +211,13 @@ class PatternMatcher {
                 if (!ending.isEmpty()) {
                     throw new IllegalArgumentException("Invalid '" + ending + "' at position " + end + ": " + input);
                 }
-                String[] tokens = new String[2];
+                String[] tokens = new String[3];
                 tokens[0] = rightTrimOf(input, beg, pos);
                 if (tokens[0].isEmpty()) {
                     throw new IllegalArgumentException("Missing function name: " + input);
                 }
                 tokens[1] = trimOf(input, pos + 1, end);
+                tokens[2] = beg > 0 ? "@" : null;
                 return tokens;
             } else if (matchStringLiteral(input, pos, last) > 0 || matchSquareBrackets(input, pos, last) > 0) {
                 return null;
