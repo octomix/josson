@@ -59,9 +59,7 @@ class GetFuncParam {
     static ImmutableTriple<String, String[], Integer> getParamPathAnd2StringAndInt(String params) {
         List<String> paramList = decomposeFunctionParameters(params, 2, 4);
         String path = paramList.size() > 3 ? paramList.remove(0) : null;
-        String[] args = new String[2];
-        args[0] = unquoteString(paramList.get(0));
-        args[1] = unquoteString(paramList.get(1));
+        String[] args = new String[]{unquoteString(paramList.get(0)), unquoteString(paramList.get(1))};
         return ImmutableTriple.of(path, args, paramList.size() > 2 ? Integer.parseInt(paramList.get(2)) : null);
     }
 

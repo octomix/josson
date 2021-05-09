@@ -114,13 +114,8 @@ class PatternMatcher {
                 case '<':
                     return null;
                 case '-':
-                    if (input.charAt(pos + 1) != '>') {
-                        return null;
-                    }
-                    String[] tokens = new String[2];
-                    tokens[0] = rightTrimOf(input, beg, pos);
-                    tokens[1] = trimOf(input, pos + 2, last + 1);
-                    return tokens;
+                    return input.charAt(pos + 1) != '>' ? null :
+                            new String[]{rightTrimOf(input, beg, pos), trimOf(input, pos + 2, last + 1)};
             }
         }
         return null;
@@ -157,12 +152,10 @@ class PatternMatcher {
             return null;
         }
         String query = trimOf(input, pos + 1, last + 1);
-        if (query.length() >= 2 && query.charAt(0) == '{' && query.charAt(query.length() - 1) == '}') {
-            String[] tokens = new String[3];
-            tokens[0] = name;
-            tokens[1] = arrayEnd == 0 ? "" : "[]";
-            tokens[2] = query;
-            return tokens;
+        if (query.length() >= 2 &&
+                ((query.charAt(0) == '{' && query.charAt(query.length() - 1) == '}') ||
+                 (query.charAt(0) == '[' && query.charAt(query.length() - 1) == ']'))) {
+            return new String[]{name, arrayEnd == 0 ? "" : "[]", query};
         }
         return null;
     }

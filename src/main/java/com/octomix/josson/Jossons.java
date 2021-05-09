@@ -79,14 +79,30 @@ public class Jossons {
      * <p>Create a Jossons object with given text-based dataset mapping.
      * Each element of the mapping will become a member of the default dataset mapping.</p>
      *
-     * @param textParams the text-based dataset mapping
+     * @param mapping the text-based dataset mapping
      * @return The new Jossons object
      */
-    public static Jossons fromMap(Map<String, String> textParams) {
+    public static Jossons fromMap(Map<String, String> mapping) {
         Jossons jossons = new Jossons();
-        if (textParams != null) {
-            textParams.forEach((key, value) ->
+        if (mapping != null) {
+            mapping.forEach((key, value) ->
                     jossons.datasets.put(key, Josson.create(TextNode.valueOf(value))));
+        }
+        return jossons;
+    }
+
+    /**
+     * <p>Create a Jossons object with given integer-based dataset mapping.
+     * Each element of the mapping will become a member of the default dataset mapping.</p>
+     *
+     * @param mapping the integer-based dataset mapping
+     * @return The new Jossons object
+     */
+    public static Jossons fromMapOfInt(Map<String, Integer> mapping) {
+        Jossons jossons = new Jossons();
+        if (mapping != null) {
+            mapping.forEach((key, value) ->
+                    jossons.datasets.put(key, Josson.create(IntNode.valueOf(value))));
         }
         return jossons;
     }
@@ -281,7 +297,7 @@ public class Jossons {
                     if (node != null && node.isValueNode()) {
                         sb.append(node.asText());
                     } else if (node != null && node.isArray()) {
-                        sb.append(node.toString());
+                        sb.append(node);
                     } else {
                         unresolvedPlaceholders.add(query);
                         putDataset(query, null);
