@@ -267,6 +267,7 @@ public class Jossons {
         int last = template.length() - 1;
         int offset = 0;
         int placeholderAt = -1;
+        boolean textAdded = false;
         for (int i = 0; i < last; i++) {
             if (template.charAt(i) == '{') {
                 if (template.charAt(i + 1) == '{') {
@@ -296,6 +297,7 @@ public class Jossons {
                     JsonNode node = evaluateQuery(query);
                     if (node != null && node.isValueNode()) {
                         sb.append(node.asText());
+                        textAdded = true; // Remember even if it is an empty string
                     } else if (node != null && node.isArray()) {
                         sb.append(node);
                     } else {
@@ -311,7 +313,7 @@ public class Jossons {
                 offset = ++i + 1;
             }
         }
-        if (sb.length() == 0) {
+        if (sb.length() == 0 && !textAdded) {
             return template;
         }
         sb.append(template, offset, template.length());
