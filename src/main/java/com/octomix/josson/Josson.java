@@ -1,5 +1,6 @@
 package com.octomix.josson;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -21,10 +22,10 @@ import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 public class Josson {
 
-    private JsonNode node;
+    private JsonNode jsonNode;
 
     private Josson(JsonNode node) {
-        this.node = node;
+        this.jsonNode = node;
     }
 
     /**
@@ -97,7 +98,7 @@ public class Josson {
         if (node == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
-        this.node = node;
+        this.jsonNode = node;
     }
 
     /**
@@ -110,46 +111,46 @@ public class Josson {
         if (json == null) {
             throw new IllegalArgumentException("Argument cannot be null");
         }
-        node = readJsonNode(json);
+        jsonNode = readJsonNode(json);
     }
 
     public <E extends Enum<E>> Josson put(String key, Enum<E> value) {
-        ((ObjectNode) node).put(key, value == null ? null : value.name());
+        ((ObjectNode) jsonNode).put(key, value == null ? null : value.name());
         return this;
     }
 
     public Josson put(String key, String value) {
-        ((ObjectNode) node).put(key, value);
+        ((ObjectNode) jsonNode).put(key, value);
         return this;
     }
 
     public Josson put(String key, Long value) {
-        ((ObjectNode) node).put(key, value);
+        ((ObjectNode) jsonNode).put(key, value);
         return this;
     }
 
     public Josson put(String key, Integer value) {
-        ((ObjectNode) node).put(key, value);
+        ((ObjectNode) jsonNode).put(key, value);
         return this;
     }
 
     public Josson put(String key, Double value) {
-        ((ObjectNode) node).put(key, value);
+        ((ObjectNode) jsonNode).put(key, value);
         return this;
     }
 
     public Josson put(String key, Boolean value) {
-        ((ObjectNode) node).put(key, value);
+        ((ObjectNode) jsonNode).put(key, value);
         return this;
     }
 
     public Josson put(String key, LocalDateTime value) {
-        ((ObjectNode) node).put(key, value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        ((ObjectNode) jsonNode).put(key, value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return this;
     }
 
     public Josson put(String key, JsonNode value) {
-        ((ObjectNode) node).putPOJO(key, value);
+        ((ObjectNode) jsonNode).putPOJO(key, value);
         return this;
     }
 
@@ -159,7 +160,7 @@ public class Josson {
      * @return The content Jackson JsonNode
      */
     public JsonNode getNode() {
-        return node;
+        return jsonNode;
     }
 
     /**
@@ -169,7 +170,7 @@ public class Josson {
      * @return The specific ArrayNode element
      */
     public JsonNode getNode(int index) {
-        return node.isArray() ? node.get(index) : null;
+        return jsonNode.isArray() ? jsonNode.get(index) : null;
     }
 
     /**
@@ -180,7 +181,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(String jossonPath) {
-        return getNode(node, jossonPath);
+        return getNode(jsonNode, jossonPath);
     }
 
     /**
@@ -192,7 +193,30 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(int index, String jossonPath) {
-        return node.isArray() ? getNode(node.get(index), jossonPath) : null;
+        return jsonNode.isArray() ? getNode(jsonNode.get(index), jossonPath) : null;
+    }
+
+    /**
+     * Query data by Josson query language.
+     *
+     * @param jossonPath the Josson query path
+     * @return A new Josson object with the resulting JsonNode
+     */
+    public Josson getJosson(String jossonPath) {
+        JsonNode node = getNode(jossonPath);
+        return node == null ? null : new Josson(node);
+    }
+
+    /**
+     * Query data on an element of ArrayNode by Josson query language.
+     *
+     * @param index index of the specific ArrayNode element
+     * @param jossonPath the Josson query path
+     * @return A new Josson object with the resulting JsonNode
+     */
+    public Josson getJosson(int index, String jossonPath) {
+        JsonNode node = getNode(index, jossonPath);
+        return node == null ? null : new Josson(node);
     }
 
     /**
@@ -315,7 +339,7 @@ public class Josson {
      * @throws IllegalArgumentException if conversion fails due to incompatible type
      */
     public <T> T convertValue() {
-        return convertValue(node);
+        return convertValue(jsonNode);
     }
 
     /**
@@ -324,7 +348,7 @@ public class Josson {
      * @return The generated JSON as a string
      */
     public String jsonString() {
-        return node.toString();
+        return jsonNode.toString();
     }
 
     /**
@@ -333,7 +357,14 @@ public class Josson {
      * @return The generated JSON as a string in pretty format
      */
     public String jsonPretty() {
-        return node.toPrettyString();
+        return jsonNode.toPrettyString();
+    }
+
+    /**
+     * Set serializing inclusion options
+     */
+    public static void setSerializationInclusion(JsonInclude.Include include) {
+        MAPPER.setSerializationInclusion(include);
     }
 
     /**
