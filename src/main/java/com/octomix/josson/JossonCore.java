@@ -13,9 +13,25 @@ class JossonCore {
 
     static final Mapper MAPPER = new Mapper();
 
-    private enum FilterArrayReturn {
-        FIRST_MATCHED,
-        ALL_MATCHED
+    private enum FilterMode {
+        FIRST_MATCHED(null),
+        ALL_MATCHED("*"),
+        NESTED_ARRAY("@");
+
+        final String indicator;
+
+        FilterMode(String indicator) {
+            this.indicator = indicator;
+        }
+
+        private static FilterMode fromIndicator(String indicator) {
+            for (FilterMode mode : values()) {
+                if (StringUtils.equals(mode.indicator, indicator)) {
+                    return mode;
+                }
+            }
+            return null;
+        }
     }
 
     static String unquoteString(String quotedString) {
@@ -49,7 +65,7 @@ class JossonCore {
             return BooleanNode.TRUE;
         }
         if (literal.equalsIgnoreCase("false")) {
-            return  BooleanNode.FALSE;
+            return BooleanNode.FALSE;
         }
         if (literal.charAt(0) == '\'') {
             return TextNode.valueOf(unquoteString(literal));
@@ -135,7 +151,7 @@ class JossonCore {
         if (node == null || node.isNull()) {
             return null;
         }
-        String key = keys.get(0);
+        String key = keys.remove(0);
         String[] tokens = matchFunctionAndArgument(key);
         if (tokens != null) {
             if (tokens[2] == null && node.isArray()) {
@@ -147,42 +163,43 @@ class JossonCore {
             } else {
                 node = FuncDispatcher.dispatch(node, tokens[0], tokens[1]);
             }
-        } else if (node.isValueNode()) {
-            return null;
-        } else {
-            tokens = matchFilterQuery(key);
-            if (tokens != null) {
-                FilterArrayReturn mode = tokens[2] == null ?
-                        FilterArrayReturn.FIRST_MATCHED : FilterArrayReturn.ALL_MATCHED;
-                if (tokens[0].isEmpty()) {
-                    node = evaluateFilter(node, tokens[1], mode);
-                } else {
-                    JsonNode tryNode = node.get(tokens[0]);
-                    if (tryNode == null || !tryNode.isArray()) {
-                        tryNode = forEachElement(node, new ArrayList<>(Collections.singletonList(tokens[0])));
-                    }
-                    node = evaluateFilter(tryNode, tokens[1], mode);
-                }
-            } else if (node.isArray()) {
-                return forEachElement(node, keys);
-            } else {
-                node = node.get(key);
-            }
+            return getNodeByKeys(node, keys);
         }
-        keys.remove(0);
-        return getNodeByKeys(node, keys);
+        if (node.isValueNode()) {
+            return null;
+        }
+        tokens = matchFilterQuery(key);
+        FilterMode mode = FilterMode.fromIndicator(tokens[2]);
+        if (tokens[1] != null) {
+            if (!tokens[0].isEmpty()) {
+                if (node.isArray()) {
+                    node = forEachElement((ArrayNode) node, tokens[0], FilterMode.ALL_MATCHED, null);
+                } else {
+                    node = node.get(tokens[0]);
+                }
+            }
+            node = evaluateFilter(node, tokens[1], mode);
+            if (node.isArray()) {
+                return forEachElement((ArrayNode) node, null, mode, keys);
+            }
+            return getNodeByKeys(node, keys);
+        }
+        if (node.isArray()) {
+            return forEachElement((ArrayNode) node, tokens[0], mode, keys);
+        }
+        return getNodeByKeys(node.get(tokens[0]), keys);
     }
 
     /**
      * Find an element or filter an array node
      *
-     * @param node the Jackson JsonNode to be processed
+     * @param node      the Jackson JsonNode to be processed
      * @param statement multiple conditions combined with relational operator
-     * @param mode {@code FIRST_MATCHED} | {@code ALL_MATCHED}
+     * @param mode      {@code FIRST_MATCHED} | {@code ALL_MATCHED} | {@code NESTED_ARRAY}
      * @return The 1st matched element for {@code FIRST_MATCHED} or
-     * all matched elements in an array node for {@code ALL_MATCHED}
+     * all matched elements in an array node for {@code ALL_MATCHED} and {@code NESTED_ARRAY}
      */
-    private static JsonNode evaluateFilter(JsonNode node, String statement, FilterArrayReturn mode) {
+    private static JsonNode evaluateFilter(JsonNode node, String statement, FilterMode mode) {
         if (node == null) {
             return null;
         }
@@ -201,11 +218,11 @@ class JossonCore {
             return null;
         }
         ArrayNode matchedNodes = null;
-        if (FilterArrayReturn.FIRST_MATCHED != mode) {
+        if (FilterMode.FIRST_MATCHED != mode) {
             matchedNodes = MAPPER.createArrayNode();
         }
         try {
-            if (FilterArrayReturn.FIRST_MATCHED == mode) {
+            if (FilterMode.FIRST_MATCHED == mode) {
                 return node.get(Integer.parseInt(statement));
             }
             matchedNodes.add(node.get(Integer.parseInt(statement)));
@@ -217,7 +234,7 @@ class JossonCore {
         for (int i = 0; i < node.size(); i++) {
             JsonNode result = opStack.evaluate(statement, i);
             if (result != null && result.asBoolean()) {
-                if (FilterArrayReturn.FIRST_MATCHED == mode) {
+                if (FilterMode.FIRST_MATCHED == mode) {
                     return node.get(i);
                 }
                 matchedNodes.add(node.get(i));
@@ -226,22 +243,21 @@ class JossonCore {
         return matchedNodes;
     }
 
-    private static JsonNode forEachElement(JsonNode node, List<String> keys) {
+    private static JsonNode forEachElement(ArrayNode node, String elem, FilterMode mode, List<String> keys) {
+        ArrayNode matchedNodes = MAPPER.createArrayNode();
+        for (int i = 0; i < node.size(); i++) {
+            addEachElement(matchedNodes, elem == null ? node.get(i) : node.get(i).get(elem), mode, keys);
+        }
+        return mode == FilterMode.NESTED_ARRAY ? matchedNodes : getNodeByKeys(matchedNodes, keys);
+    }
+
+    private static JsonNode forEachElement(ArrayNode node, List<String> keys) {
         List<String> keysAfterGrouping = new ArrayList<>();
-        boolean isFlattenArray = true;
+        FilterMode mode = FilterMode.ALL_MATCHED;
         for (int i = 0; i < keys.size(); i++) {
-            boolean isGroupInArray = keys.get(i).startsWith("@");
-            if (!isGroupInArray && i > 0) {
-                String[] tokens = matchFilterQuery(keys.get(i));
-                if (tokens != null) {
-                    isGroupInArray = true;
-                    isFlattenArray = !tokens[1].isEmpty();
-                }
-            }
-            if (isGroupInArray) {
-                if (!isFlattenArray) {
-                    keys.remove(i);
-                }
+            String[] tokens = matchFilterQuery(keys.get(i));
+            mode = FilterMode.fromIndicator(tokens[2]);
+            if (mode != FilterMode.FIRST_MATCHED || tokens[0].startsWith("@")) {
                 while (i < keys.size()) {
                     keysAfterGrouping.add(keys.remove(i));
                 }
@@ -250,15 +266,25 @@ class JossonCore {
         }
         ArrayNode matchedNodes = MAPPER.createArrayNode();
         for (int i = 0; i < node.size(); i++) {
-            JsonNode tryNode = getNodeByKeys(node.get(i), new ArrayList<>(keys));
-            if (tryNode != null) {
-                if (isFlattenArray && tryNode.isArray()) {
-                    matchedNodes.addAll((ArrayNode) tryNode);
-                } else {
-                    matchedNodes.add(tryNode);
-                }
-            }
+            addEachElement(matchedNodes, getNodeByKeys(node.get(i), new ArrayList<>(keys)), mode, keysAfterGrouping);
         }
-        return getNodeByKeys(matchedNodes, keysAfterGrouping);
+        return mode == FilterMode.NESTED_ARRAY ? matchedNodes : getNodeByKeys(matchedNodes, keysAfterGrouping);
+    }
+
+    private static void addEachElement(ArrayNode array, JsonNode node, FilterMode mode, List<String> keys) {
+        if (node == null) {
+            return;
+        }
+        if (mode == FilterMode.NESTED_ARRAY) {
+            if (node.isArray()) {
+                array.add(forEachElement((ArrayNode) node, new ArrayList<>(keys)));
+            } else {
+                array.add(getNodeByKeys(node, new ArrayList<>(keys)));
+            }
+        } else if (mode == FilterMode.ALL_MATCHED && node.isArray()) {
+            array.addAll((ArrayNode) node);
+        } else {
+            array.add(node);
+        }
     }
 }

@@ -194,7 +194,7 @@ class FuncArithmetic {
                 return null;
             }
         }
-        int divisor = Integer.parseInt(pathAndParams.right.get(0));
+        int divisor = Integer.parseInt(getNodeAsText(node, pathAndParams.right.get(0)));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -221,7 +221,7 @@ class FuncArithmetic {
                 return null;
             }
         }
-        int precision = pathAndParams.right.size() > 0 ? Integer.parseInt(pathAndParams.right.get(0)) : 0;
+        int precision = pathAndParams.right.size() > 0 ? Integer.parseInt(getNodeAsText(node, pathAndParams.right.get(0))) : 0;
         double magnitude = Math.pow(10, precision);
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();

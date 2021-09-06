@@ -171,27 +171,29 @@ class PatternMatcher {
                     throw new IllegalArgumentException("Invalid filter syntax: " + input);
                 }
                 tokens[1] = trimOf(input, pos + 1, end);
-                if (!tokens[0].isEmpty() && tokens[1].isEmpty()) {
+                if (tokens[1].isEmpty()) {
                     throw new IllegalArgumentException("Missing filter expression: " + input);
                 }
                 pos = eatSpaces(input, end + 1, last);
                 if (pos <= last) {
-                    if (input.charAt(pos) == '*') {
-                        if (tokens[1].isEmpty()) {
-                            throw new IllegalArgumentException("Invalid '*' at position " + pos + ": " + input);
-                        }
+                    char filterIndicator = input.charAt(pos);
+                    if (filterIndicator == '*' || filterIndicator == '@') {
                         pos = eatSpaces(input, ++pos, last);
                     }
                     if (pos <= last) {
                         throw new IllegalArgumentException("Invalid filter syntax at position " + pos + ": " + input);
                     }
-                    tokens[2] = "*";
+                    tokens[2] = String.valueOf(filterIndicator);
                 }
                 return tokens;
             }
             pos = skipSyntaxElement(input, pos, last, STRING_LITERAL_ELEMENT | PARENTHESES_ELEMENT);
         }
-        return null;
+        char filterIndicator = input.charAt(last);
+        if (filterIndicator == '*' || filterIndicator == '@') {
+            return new String[]{rightTrimOf(input, 0, last), null, String.valueOf(filterIndicator)};
+        }
+        return new String[]{input, null, "*"};
     }
 
     static String[] matchFunctionAndArgument(String input) {

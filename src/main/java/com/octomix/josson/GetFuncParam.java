@@ -75,8 +75,7 @@ class GetFuncParam {
                     List<String> paths = decomposePaths(path);
                     for (int i = paths.size() - 1; i >= 0 ; i--) {
                         if (matchFunctionAndArgument(paths.get(i)) == null) {
-                            String[] tokens = matchFilterQuery(paths.get(i));
-                            name = tokens == null ? paths.get(i) : tokens[0];
+                            name = matchFilterQuery(paths.get(i))[0];
                             break;
                         }
                     }

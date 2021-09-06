@@ -175,7 +175,7 @@ class FuncArray {
         if (!node.isArray()) {
             return node;
         }
-        String path = getNodeAsText(node, pathAndParams.right.get(0));
+        String path = pathAndParams.right.get(0);
         int foundIndex = -1;
         Double maxMinDouble = null;
         String maxMinString = null;
