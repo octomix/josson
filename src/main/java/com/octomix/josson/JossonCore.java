@@ -179,6 +179,9 @@ class JossonCore {
                 }
             }
             node = evaluateFilter(node, tokens[1], mode);
+            if (node == null) {
+                return null;
+            }
             if (node.isArray()) {
                 return forEachElement((ArrayNode) node, null, mode, keys);
             }

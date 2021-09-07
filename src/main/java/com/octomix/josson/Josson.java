@@ -362,6 +362,8 @@ public class Josson {
 
     /**
      * Set serializing inclusion options
+     *
+     * @param include JsonInclude.Include e.g. NON_NULL
      */
     public static void setSerializationInclusion(JsonInclude.Include include) {
         MAPPER.setSerializationInclusion(include);
