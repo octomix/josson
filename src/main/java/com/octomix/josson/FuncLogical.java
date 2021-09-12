@@ -130,6 +130,17 @@ class FuncLogical {
         return BooleanNode.FALSE;
     }
 
+    static BooleanNode funcIsBlank(JsonNode node, String params, boolean not) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        return BooleanNode.valueOf(node.isTextual() && (not ^ StringUtils.isBlank(node.asText())));
+    }
+
     static BooleanNode funcIsBoolean(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
@@ -139,6 +150,17 @@ class FuncLogical {
             }
         }
         return BooleanNode.valueOf(node.isBoolean());
+    }
+
+    static BooleanNode funcIsEmpty(JsonNode node, String params, boolean not) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        return BooleanNode.valueOf(node.isTextual() && (not ^ node.asText().isEmpty()));
     }
 
     static BooleanNode funcIsEven(JsonNode node, String params) {

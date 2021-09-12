@@ -104,7 +104,7 @@ class FuncFormat {
                         double key = valueNode.asDouble();
                         ImmutablePair<JsonNode, JsonNode> casePair = casePairs.stream()
                                 .filter(pair -> (pair.left.isNumber() || pair.left.isTextual()) && pair.left.asDouble() == key)
-                                .findAny()
+                                .findFirst()
                                 .orElse(null);
                         if (casePair != null) {
                             array.add(casePair.right);
@@ -115,7 +115,7 @@ class FuncFormat {
                         String key = node.asText();
                         ImmutablePair<JsonNode, JsonNode> casePair = casePairs.stream()
                                 .filter(pair -> (pair.left.isNumber() || pair.left.isTextual()) && pair.left.asText().equals(key))
-                                .findAny()
+                                .findFirst()
                                 .orElse(null);
                         if (casePair != null) {
                             array.add(casePair.right);
@@ -131,14 +131,14 @@ class FuncFormat {
             double key = node.asDouble();
             return casePairs.stream()
                     .filter(pair -> (pair.left.isNumber() || pair.left.isTextual()) && pair.left.asDouble() == key)
-                    .findAny()
+                    .findFirst()
                     .map(pair -> pair.right)
                     .orElse(defaultValue);
         }
         String key = node.asText();
         return casePairs.stream()
                 .filter(pair -> (pair.left.isNumber() || pair.left.isTextual()) && pair.left.asText().equals(key))
-                .findAny()
+                .findFirst()
                 .map(pair -> pair.right)
                 .orElse(defaultValue);
     }

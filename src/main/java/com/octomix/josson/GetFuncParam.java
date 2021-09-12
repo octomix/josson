@@ -19,7 +19,7 @@ import static com.octomix.josson.PatternMatcher.*;
 class GetFuncParam {
     static String getParamPath(String input) {
         List<String> paramList = decomposeFunctionParameters(input, 0, 1);
-        return paramList.size() > 0 ? paramList.get(0) : null;
+        return paramList.isEmpty() ? null : paramList.get(0);
     }
 
     static ImmutablePair<String, List<String>> getParamPathAndStrings(String input, int minCount, int maxCount) {
@@ -90,7 +90,7 @@ class GetFuncParam {
 
     static ArrayNode getParamArrayOrItself(String params, JsonNode node) {
         List<String> paramList = decomposeFunctionParameters(params, 0, -1);
-        if (paramList.size() == 0) {
+        if (paramList.isEmpty()) {
             if (node.isArray()) {
                 return (ArrayNode) node;
             }

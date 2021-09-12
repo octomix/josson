@@ -145,8 +145,16 @@ class FuncDispatcher {
                     return funcIn(node, params, false, true);
                 case "notinignorecase":
                     return funcIn(node, params, true, true);
+                case "isblank":
+                    return funcIsBlank(node, params, false);
+                case "isnotblank":
+                    return funcIsBlank(node, params, true);
                 case "isboolean":
                     return funcIsBoolean(node, params);
+                case "isempty":
+                    return funcIsEmpty(node, params, false);
+                case "isnotempty":
+                    return funcIsEmpty(node, params, true);
                 case "iseven":
                     return funcIsEven(node, params);
                 case "isnull":
@@ -207,6 +215,10 @@ class FuncDispatcher {
                     return funcLength(node, params);
                 case "lowercase":
                     return funcLowerCase(node, params);
+                case "notblank":
+                    return funcNotBlank(node, params);
+                case "notempty":
+                    return funcNotEmpty(node, params);
                 case "prependifmissing":
                     return funcPrependIfMissing(node, params, false);
                 case "prependifmissingignorecase":
@@ -235,6 +247,8 @@ class FuncDispatcher {
                     return funcUpperCase(node, params);
 
                 // Structural
+                case "coalesce":
+                    return funcCoalesce(node, params);
                 case "flatten":
                     return funcFlatten(node, params);
                 case "map":

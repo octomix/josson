@@ -7,7 +7,7 @@
     <groupId>com.octomix.josson</groupId>
     <artifactId>josson</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.6</version>
+    <version>1.2.7</version>
     <build>
         <plugins>
             <plugin>

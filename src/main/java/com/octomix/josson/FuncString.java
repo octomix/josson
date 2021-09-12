@@ -365,6 +365,102 @@ class FuncString {
         return TextNode.valueOf(StringUtils.lowerCase(node.asText()));
     }
 
+    static JsonNode funcNotBlank(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+        if (node.isArray() && paramList.size() == 1) {
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode tryNode = getNode(node.get(i), paramList.get(0));
+                if (tryNode != null && tryNode.isTextual() && StringUtils.isNotBlank(tryNode.asText())) {
+                    return tryNode;
+                }
+            }
+            return null;
+        }
+        return funcNotBlank(node, paramList);
+    }
+
+    static JsonNode funcNotBlank(JsonNode node, List<String> paramList) {
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode tryNode = funcNotBlank(node.get(i), paramList);
+                if (tryNode != null) {
+                    array.add(tryNode);
+                }
+            }
+            return array;
+        }
+        if (node.isValueNode()) {
+            if (node.isTextual() && StringUtils.isNotBlank(node.asText())) {
+                return node;
+            }
+            for (String path : paramList) {
+                if (path.charAt(0) == '\'') {
+                    String text = unquoteString(path);
+                    if (StringUtils.isNotBlank(text)) {
+                        return TextNode.valueOf(text);
+                    }
+                }
+            }
+        } else if (node.isObject()) {
+            for (String path : paramList) {
+                JsonNode tryNode = getNode(node, path);
+                if (tryNode != null && tryNode.isTextual() && StringUtils.isNotBlank(tryNode.asText())) {
+                    return tryNode;
+                }
+            }
+        }
+        return null;
+    }
+
+    static JsonNode funcNotEmpty(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+        if (node.isArray() && paramList.size() == 1) {
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode tryNode = getNode(node.get(i), paramList.get(0));
+                if (tryNode != null && tryNode.isTextual() && !tryNode.asText().isEmpty()) {
+                    return tryNode;
+                }
+            }
+            return null;
+        }
+        return funcNotEmpty(node, paramList);
+    }
+
+    static JsonNode funcNotEmpty(JsonNode node, List<String> paramList) {
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode tryNode = funcNotEmpty(node.get(i), paramList);
+                if (tryNode != null) {
+                    array.add(tryNode);
+                }
+            }
+            return array;
+        }
+        if (node.isValueNode()) {
+            if (node.isTextual() && !node.asText().isEmpty()) {
+                return node;
+            }
+            for (String path : paramList) {
+                if (path.charAt(0) == '\'') {
+                    String text = unquoteString(path);
+                    if (!text.isEmpty()) {
+                        return TextNode.valueOf(text);
+                    }
+                }
+            }
+        } else if (node.isObject()) {
+            for (String path : paramList) {
+                JsonNode tryNode = getNode(node, path);
+                if (tryNode != null && tryNode.isTextual() && !tryNode.asText().isEmpty()) {
+                    return tryNode;
+                }
+            }
+        }
+        return null;
+    }
+
     static JsonNode funcPrependIfMissing(JsonNode node, String params, boolean ignoreCase) {
         ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.left != null) {

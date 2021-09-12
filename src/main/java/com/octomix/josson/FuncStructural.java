@@ -3,6 +3,7 @@ package com.octomix.josson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.octomix.josson.GetFuncParam.*;
@@ -11,6 +12,53 @@ import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncStructural {
+
+    static JsonNode funcCoalesce(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+        if (node.isArray() && paramList.size() == 1) {
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode tryNode = getNode(node.get(i), paramList.get(0));
+                if (tryNode != null && !tryNode.isNull()) {
+                    return tryNode;
+                }
+            }
+            return null;
+        }
+        return funcCoalesce(node, paramList);
+    }
+
+    static JsonNode funcCoalesce(JsonNode node, List<String> paramList) {
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                array.add(funcCoalesce(node.get(i), paramList));
+            }
+            return array;
+        }
+        if (node.isValueNode()) {
+            if (!node.isNull()) {
+                return node;
+            }
+            for (String path : paramList) {
+                try {
+                    node = toValueNode(path);
+                    if (node != null && !node.isNull()) {
+                        return node;
+                    }
+                } catch (NumberFormatException e) {
+                    // continue
+                }
+            }
+        } else if (node.isObject()) {
+            for (String path : paramList) {
+                JsonNode tryNode = getNode(node, path);
+                if (tryNode != null && !tryNode.isNull()) {
+                    return tryNode;
+                }
+            }
+        }
+        return null;
+    }
 
     static JsonNode funcFlatten(JsonNode node, String params) {
         String path = getParamPath(params);
