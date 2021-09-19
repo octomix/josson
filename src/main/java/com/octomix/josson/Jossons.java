@@ -18,7 +18,6 @@ import static org.apache.commons.text.StringEscapeUtils.unescapeXml;
 public class Jossons {
 
     private final Map<String, Josson> datasets = new HashMap<>();
-    private ResolverProgress.DebugLevel resolverDebugLevel = ResolverProgress.DebugLevel.SHOW_CONTENT_OF_VALUE_NODE_ONLY;
 
     private enum JoinOperator {
         INNER_JOIN_ONE(">=<"),
@@ -123,43 +122,13 @@ public class Jossons {
         return datasets;
     }
 
-    public ResolverProgress.DebugLevel getResolverDebugLevel() {
-        return resolverDebugLevel;
-    }
-
-    public void setResolverDebugLevel(ResolverProgress.DebugLevel mode) {
-        resolverDebugLevel = mode;
-    }
-
-    private String showProgressResolvedValue(JsonNode node) {
-        switch (resolverDebugLevel) {
-            case SHOW_CONTENT_UP_TO_ARRAY_NODE:
-                if (node.isArray()) {
-                    return node.toString();
-                }
-                // fallthrough
-            case SHOW_CONTENT_UP_TO_OBJECT_NODE:
-                if (node.isObject()) {
-                    return node.toString();
-                }
-                // fallthrough
-        }
-        if (node.isObject()) {
-            return "Object with " + node.size() + " elements";
-        }
-        if (node.isArray()) {
-            return "Array with " + node.size() + " elements";
-        }
-        return node.toString();
-    }
-
     private boolean buildDataset(String name, String findQuery, Function<String, String> dictionaryFinder,
                                  BiFunction<String, String, Josson> dataFinder, ResolverProgress progress) {
         String[] tokens = matchDbQuery(findQuery);
         if (tokens != null) {
             String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
             Josson dataset = dataFinder.apply(collectionName, tokens[2]);
-            progress.addStep((dataset == null ? "Unresolvable " : "Resolved ") + name + " from DB query " + findQuery);
+            progress.addResolvedNode(name, dataset, findQuery);
             putDataset(name, dataset);
             return true;
         }
@@ -223,11 +192,12 @@ public class Jossons {
             if (joinedNode == null) {
                 throw new IllegalArgumentException("no data matched");
             }
-            putDataset(name, Josson.create(joinedNode));
-            progress.addStep("Resolved " + name + " by join operation " + findQuery);
+            Josson dataset = Josson.create(joinedNode);
+            putDataset(name, dataset);
+            progress.addResolvedNode(name, dataset, findQuery);
         } catch (IllegalArgumentException e) {
             putDataset(name, null);
-            progress.addStep("Unresolvable " + name + " - " + e.getMessage() + " " + findQuery);
+            progress.addResolvedNode(name + " - " + e.getMessage(), null, findQuery);
         }
         return true;
     }
@@ -243,6 +213,9 @@ public class Jossons {
      * @see #fillInPlaceholder
      */
     public String fillInXmlPlaceholder(String template) throws NoValuePresentException {
+        if (StringUtils.isBlank(template)) {
+            return template;
+        }
         return fillInPlaceholderLoop(template, true);
     }
 
@@ -257,6 +230,9 @@ public class Jossons {
      * @throws NoValuePresentException if any placeholder was unable to resolve
      */
     public String fillInPlaceholder(String template) throws NoValuePresentException {
+        if (StringUtils.isBlank(template)) {
+            return template;
+        }
         return fillInPlaceholderLoop(template, false);
     }
 
@@ -340,10 +316,13 @@ public class Jossons {
     public String fillInXmlPlaceholderWithResolver(String template, Function<String, String> dictionaryFinder,
                                                    BiFunction<String, String, Josson> dataFinder,
                                                    ResolverProgress progress) throws NoValuePresentException {
+        if (StringUtils.isBlank(template)) {
+            return template;
+        }
         try {
             return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, true, progress);
         } finally {
-            progress.markCompleted();
+            progress.markEnd();
         }
     }
 
@@ -368,18 +347,23 @@ public class Jossons {
     public String fillInPlaceholderWithResolver(String template, Function<String, String> dictionaryFinder,
                                                 BiFunction<String, String, Josson> dataFinder,
                                                 ResolverProgress progress) throws NoValuePresentException {
+        if (StringUtils.isBlank(template)) {
+            return template;
+        }
         try {
             return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, false, progress);
         } finally {
-            progress.markCompleted();
+            progress.markEnd();
         }
     }
 
     private String fillInPlaceholderWithResolver(String template, Function<String, String> dictionaryFinder,
                                                  BiFunction<String, String, Josson> dataFinder, boolean isXml,
                                                  ResolverProgress progress) throws NoValuePresentException {
+        int unresolvableSteps = 0;
         Set<String> unresolvablePlaceholders = new HashSet<>();
         Set<String> unresolvedDatasetNames = new HashSet<>();
+        List<String> checkInfiniteLoop = new ArrayList<>();
         for (;;progress.nextRound()) {
             try {
                 if (!unresolvedDatasetNames.isEmpty()) {
@@ -391,17 +375,36 @@ public class Jossons {
                 if (!e.getDatasetNames().isEmpty()) {
                     progress.addStep("Unresolved " + e.getDatasetNames());
                 }
-                if (e.getPlaceholders() != null && !e.getPlaceholders().isEmpty()) {
-                    progress.addStep("Unresolvable placeholders " + e.getPlaceholders());
-                }
                 if (e.getPlaceholders() == null) {
                     unresolvedDatasetNames.clear();
                 } else {
-                    unresolvablePlaceholders.addAll(e.getPlaceholders());
+                    if (!e.getPlaceholders().isEmpty()) {
+                        progress.addStep("Unresolvable placeholders " + e.getPlaceholders());
+                        unresolvablePlaceholders.addAll(e.getPlaceholders());
+                        unresolvableSteps++;
+                    }
                     template = e.getContent();
                 }
                 Map<String, String> namedQueries = new HashMap<>();
                 e.getDatasetNames().forEach(name -> {
+                    checkInfiniteLoop.add(name);
+                    int half = checkInfiniteLoop.size() / 2;
+                    int i = checkInfiniteLoop.size() - 2;
+                    for (int j = i; j >= half; j--) {
+                        if (checkInfiniteLoop.get(j).equals(name)) {
+                            for (int k = j - 1; i > j; i--, k--) {
+                                if (!checkInfiniteLoop.get(k).equals(checkInfiniteLoop.get(i))) {
+                                    break;
+                                }
+                            }
+                            if (i == j) {
+                                unresolvablePlaceholders.add(name);
+                                putDataset(name, null);
+                                return;
+                            }
+                            break;
+                        }
+                    }
                     String findQuery = dictionaryFinder.apply(name);
                     if (findQuery == null) {
                         putDataset(name, null);
@@ -435,7 +438,7 @@ public class Jossons {
                             } else {
                                 putDataset(name, Josson.create(node));
                                 unresolvedDatasetNames.remove(name);
-                                progress.addStep("Resolved " + name + " = " + showProgressResolvedValue(node));
+                                progress.addResolvedNode(name, node);
                             }
                         } catch (UnresolvedDatasetException ex) {
                             unresolvedDatasetNames.add(ex.getDatasetName());
@@ -445,7 +448,9 @@ public class Jossons {
             }
         }
         if (!unresolvablePlaceholders.isEmpty()) {
-            progress.addStep("Unresolvable placeholders " + unresolvablePlaceholders);
+            if (unresolvableSteps > 1) {
+                progress.addStep("Unresolvable placeholders " + unresolvablePlaceholders);
+            }
             throw new NoValuePresentException(null, unresolvablePlaceholders, template);
         }
         return template;
@@ -468,7 +473,7 @@ public class Jossons {
                                               BiFunction<String, String, Josson> dataFinder,
                                               ResolverProgress progress) {
         JsonNode node = evaluateQueryWithResolverLoop(query, dictionaryFinder, dataFinder, progress);
-        progress.markCompleted();
+        progress.addQueryResult(node);
         return node;
     }
 
@@ -499,7 +504,7 @@ public class Jossons {
                             break;
                         }
                         putDataset(name, Josson.create(node));
-                        progress.addStep("Resolved " + name + " = " + showProgressResolvedValue(node));
+                        progress.addResolvedNode(name, node);
                     }
                 } catch (NoValuePresentException ex) {
                     putDataset(name, null);

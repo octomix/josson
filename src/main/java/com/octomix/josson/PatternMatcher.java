@@ -3,15 +3,20 @@ package com.octomix.josson;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+
+import static com.octomix.josson.PatternElement.*;
 
 class PatternMatcher {
 
-    private static final int STRING_LITERAL_ELEMENT = 0x01;
-    private static final int SQUARE_BRACKETS_ELEMENT = 0x02;
-    private static final int PARENTHESES_ELEMENT = 0x04;
-    private static final int ALL_SYNTAX_ELEMENTS = STRING_LITERAL_ELEMENT | SQUARE_BRACKETS_ELEMENT | PARENTHESES_ELEMENT;
-
+    private static class AtPositionException extends IllegalArgumentException {
+        AtPositionException(String input, String message, int pos) {
+            super(message + (pos == -1 ? " at the end" : " at position" + pos) + ": " + input);
+        }
+    }
+    
     private static int eatSpaces(String input, int beg, int last) {
         for (;beg <= last; beg++) {
             if (input.charAt(beg) != ' ') {
@@ -34,15 +39,15 @@ class PatternMatcher {
         return input.substring(beg, end);
     }
 
-    private static int skipSyntaxElement(String input, int pos, int last, int elements) {
+    private static int skipPatternElement(String input, int pos, int last, Set<PatternElement> elements) {
         int end;
-        if ((elements & STRING_LITERAL_ELEMENT) != 0 && (end = matchStringLiteral(input, pos, last)) > 0) {
+        if (elements.contains(STRING_LITERAL) && (end = matchStringLiteral(input, pos, last)) > 0) {
             return end;
         }
-        if ((elements & SQUARE_BRACKETS_ELEMENT) != 0 && (end = matchSquareBrackets(input, pos, last)) > 0) {
+        if (elements.contains(SQUARE_BRACKETS) && (end = matchSquareBrackets(input, pos, last)) > 0) {
             return end;
         }
-        if ((elements & PARENTHESES_ELEMENT) != 0 && (end = matchParentheses(input, pos, last)) > 0) {
+        if (elements.contains(PARENTHESES) && (end = matchParentheses(input, pos, last)) > 0) {
             return end;
         }
         return pos;
@@ -63,7 +68,7 @@ class PatternMatcher {
         if (pos == last && input.charAt(pos) == '\'') {
             return pos;
         }
-        throw new IllegalArgumentException("Expected \"'\" at position " + pos + ": " + input);
+        throw new AtPositionException(input, "Expected \"'\"", pos);
     }
 
     private static int matchSquareBrackets(String input, int pos, int last) {
@@ -85,12 +90,12 @@ class PatternMatcher {
             switch (input.charAt(pos)) {
                 case ')':
                     if (expectedEnd == ']') {
-                        throw new IllegalArgumentException("Invalid ')' at position " + pos + ": " + input);
+                        throw new AtPositionException(input, "Invalid ')'", pos);
                     }
                     return pos;
                 case ']':
                     if (expectedEnd == ')') {
-                        throw new IllegalArgumentException("Invalid ']' at position " + pos + ": " + input);
+                        throw new AtPositionException(input, "Invalid ']'", pos);
                     }
                     return pos;
                 case '(':
@@ -100,9 +105,9 @@ class PatternMatcher {
                     pos = findBracketEnd(input, pos, last, ']');
                     continue;
             }
-            pos = skipSyntaxElement(input, pos, last, STRING_LITERAL_ELEMENT);
+            pos = skipPatternElement(input, pos, last, EnumSet.of(STRING_LITERAL));
         }
-        throw new IllegalArgumentException("Missing '" + expectedEnd + "' at the end: " + input);
+        throw new AtPositionException(input, "Missing '" + expectedEnd + "'", -1);
     }
 
     static String[] matchJsonQuery(String input) {
@@ -168,7 +173,7 @@ class PatternMatcher {
                 String[] tokens = new String[3];
                 tokens[0] = rightTrimOf(input, 0, pos);
                 if (tokens[0].startsWith("@")) {
-                    throw new IllegalArgumentException("Invalid filter syntax: " + input);
+                    throw new IllegalArgumentException("Invalid filter expression: " + input);
                 }
                 tokens[1] = trimOf(input, pos + 1, end);
                 if (tokens[1].isEmpty()) {
@@ -181,13 +186,13 @@ class PatternMatcher {
                         pos = eatSpaces(input, ++pos, last);
                     }
                     if (pos <= last) {
-                        throw new IllegalArgumentException("Invalid filter syntax at position " + pos + ": " + input);
+                        throw new AtPositionException(input, "Invalid filter expression", pos);
                     }
                     tokens[2] = String.valueOf(filterIndicator);
                 }
                 return tokens;
             }
-            pos = skipSyntaxElement(input, pos, last, STRING_LITERAL_ELEMENT | PARENTHESES_ELEMENT);
+            pos = skipPatternElement(input, pos, last, EnumSet.of(STRING_LITERAL, PARENTHESES));
         }
         char filterIndicator = input.charAt(last);
         if (filterIndicator == '*' || filterIndicator == '@') {
@@ -204,7 +209,7 @@ class PatternMatcher {
             if (end > 0) {
                 String ending = rightTrimOf(input, end + 1, last + 1);
                 if (!ending.isEmpty()) {
-                    throw new IllegalArgumentException("Invalid '" + ending + "' at position " + end + ": " + input);
+                    throw new AtPositionException(input, "Invalid '" + ending +"'", end);
                 }
                 String[] tokens = new String[3];
                 tokens[0] = rightTrimOf(input, beg, pos);
@@ -231,7 +236,7 @@ class PatternMatcher {
             switch (input.charAt(pos)) {
                 case '{':
                     if (tokens != null || pos == 0) {
-                        throw new IllegalArgumentException("Invalid '{' at position " + pos + ": " + input);
+                        throw new AtPositionException(input, "Invalid '{'", pos);
                     }
                     tokens = new String[2];
                     tokens[0] = rightTrimOf(input, beg, pos);
@@ -239,19 +244,19 @@ class PatternMatcher {
                     continue;
                 case '}':
                     if (tokens == null) {
-                        throw new IllegalArgumentException("Invalid '}' at position " + pos + ": " + input);
+                        throw new AtPositionException(input, "Invalid '}'", pos);
                     }
                     tokens[1] = trimOf(input, beg, pos);
                     String ending = rightTrimOf(input, ++pos, last + 1);
                     if (!ending.isEmpty()) {
-                        throw new IllegalArgumentException("Invalid '" + ending + "' at position " + pos + ": " + input);
+                        throw new AtPositionException(input, "Invalid '" + ending +"'", pos);
                     }
                     return tokens;
             }
-            pos = skipSyntaxElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+            pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
         }
         if (tokens != null) {
-            throw new IllegalArgumentException("Missing '}' at the end: " + input);
+            throw new AtPositionException(input, "Missing '}'", -1);
         }
         return null;
     }
@@ -266,11 +271,11 @@ class PatternMatcher {
                 if (input.charAt(pos) == '.') {
                     break;
                 }
-                pos = skipSyntaxElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+                pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
             } while (++pos <= last);
             String path = trimOf(input, beg, pos);
             if (path.isEmpty()) {
-                throw new IllegalArgumentException("Invalid '.' at position " + pos + ": " + input);
+                throw new AtPositionException(input, "Invalid '.'", pos);
             }
             if (isInt == null) {
                 if (pos > last) {
@@ -305,7 +310,7 @@ class PatternMatcher {
             int beg = pos;
             while ("=!<>&|".indexOf(input.charAt(pos)) >= 0) {
                 if (pos++ == last) {
-                    throw new IllegalArgumentException("Invalid syntax at the end: " + input);
+                    throw new AtPositionException(input, "Invalid syntax", -1);
                 }
             }
             condition[0] = input.substring(beg, pos);
@@ -323,7 +328,7 @@ class PatternMatcher {
                                 break;
                             }
                         }
-                        pos = skipSyntaxElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+                        pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
                     }
             }
             condition[1] = rightTrimOf(input, beg, pos);
@@ -342,12 +347,12 @@ class PatternMatcher {
                 if (input.charAt(pos) == ',') {
                     break;
                 }
-                pos = skipSyntaxElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+                pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
             } while (++pos <= last);
             String param = trimOf(input, beg, pos);
             if (param.isEmpty()) {
                 if (maxCount < 0) {
-                    throw new IllegalArgumentException("Argument cannot be empty at position " + beg + ": " + input);
+                    throw new AtPositionException(input, "Argument cannot be empty", beg);
                 }
                 if (params.size() < minCount) {
                     break;
@@ -386,14 +391,14 @@ class PatternMatcher {
                     endIf = -1;
                 }
                 if (step[0].isEmpty()) {
-                    throw new IllegalArgumentException("Missing argument at position " + beg + ": " + input);
+                    throw new AtPositionException(input, "Missing argument", beg);
                 }
                 steps.add(step);
                 beg = pos + 1;
             } else if (input.charAt(pos) == '?') {
                 endIf = pos;
             } else {
-                pos = skipSyntaxElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+                pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
             }
         }
         return steps;
