@@ -392,12 +392,12 @@ public class Jossons {
                     int i = checkInfiniteLoop.size() - 2;
                     for (int j = i; j >= half; j--) {
                         if (checkInfiniteLoop.get(j).equals(name)) {
-                            for (int k = j - 1; i > j; i--, k--) {
+                            for (int k = j - 1; i >= j; i--, k--) {
                                 if (!checkInfiniteLoop.get(k).equals(checkInfiniteLoop.get(i))) {
                                     break;
                                 }
                             }
-                            if (i == j) {
+                            if (i < j) {
                                 unresolvablePlaceholders.add(name);
                                 putDataset(name, null);
                                 return;
