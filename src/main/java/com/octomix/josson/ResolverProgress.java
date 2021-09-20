@@ -36,7 +36,11 @@ public class ResolverProgress {
     }
 
     void addResolvedNode(String name, JsonNode node) {
-        addStep("Resolved " + name + " = " + resolvedValue(node));
+        if (node == null) {
+            addStep("Unresolvable " + name);
+        } else {
+            addStep("Resolved " + name + " = " + resolvedValue(node));
+        }
     }
 
     void addResolvedNode(String name, Josson dataset, String query) {

@@ -480,39 +480,31 @@ public class Jossons {
     private JsonNode evaluateQueryWithResolverLoop(String query, Function<String, String> dictionaryFinder,
                                                    BiFunction<String, String, Josson> dataFinder,
                                                    ResolverProgress progress) {
-        JsonNode result = null;
         for (;;progress.nextRound()) {
             try {
-                result = evaluateQuery(query);
-                break;
+                return evaluateQuery(query);
             } catch (UnresolvedDatasetException e) {
                 String name = e.getDatasetName();
                 progress.addStep("Unresolved " + name);
+                JsonNode node = null;
                 String findQuery = dictionaryFinder.apply(name);
-                if (findQuery == null) {
-                    putDataset(name, null);
-                    break;
-                }
-                try {
-                    findQuery = fillInPlaceholderWithResolver(
-                            findQuery, dictionaryFinder, dataFinder, false, progress);
-                    if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
-                        progress.addStep("Resolving " + name + " from " + findQuery);
-                        JsonNode node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
-                        if (node == null) {
-                            putDataset(name, null);
-                            break;
+                if (findQuery != null) {
+                    try {
+                        findQuery = fillInPlaceholderWithResolver(
+                                findQuery, dictionaryFinder, dataFinder, false, progress);
+                        if (buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
+                            continue;
                         }
-                        putDataset(name, Josson.create(node));
-                        progress.addResolvedNode(name, node);
+                        progress.addStep("Resolving " + name + " from " + findQuery);
+                        node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
+                    } catch (NoValuePresentException ex) {
+                        // ignore
                     }
-                } catch (NoValuePresentException ex) {
-                    putDataset(name, null);
-                    break;
                 }
+                putDataset(name, node == null ? null : Josson.create(node));
+                progress.addResolvedNode(name, node);
             }
         }
-        return result;
     }
 
     /**
