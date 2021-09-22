@@ -35,6 +35,10 @@ public class ResolverProgress {
         round++;
     }
 
+    void addResolvingFrom(String name, String query) {
+        addStep("Resolving " + name + " from " + query);
+    }
+
     void addResolvedNode(String name, JsonNode node) {
         if (node == null) {
             addStep("Unresolvable " + name);
@@ -43,11 +47,11 @@ public class ResolverProgress {
         }
     }
 
-    void addResolvedNode(String name, Josson dataset, String query) {
+    void addResolvedDataset(String name, Josson dataset) {
         if (dataset == null || dataset.getNode() == null) {
-            addStep("Unresolvable " + name + " from " + query);
+            addStep("Unresolvable " + name);
         } else {
-            addStep("Resolved " + name + " = " + simplifyResolvedValue(dataset.getNode()) + " from " + query);
+            addStep("Resolved " + name + " = " + simplifyResolvedValue(dataset.getNode()));
         }
     }
 
