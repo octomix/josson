@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.*;
-import static org.apache.commons.text.StringEscapeUtils.unescapeXml;
+import static com.octomix.josson.commons.StringEscapeUtils.unescapeXml;
 
 public class Jossons {
 
@@ -329,7 +329,9 @@ public class Jossons {
         try {
             return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, true, progress);
         } finally {
-            progress.markEnd();
+            if (progress.isAutoMarkEnd()) {
+                progress.markEnd();
+            }
         }
     }
 
@@ -360,7 +362,9 @@ public class Jossons {
         try {
             return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, false, progress);
         } finally {
-            progress.markEnd();
+            if (progress.isAutoMarkEnd()) {
+                progress.markEnd();
+            }
         }
     }
 

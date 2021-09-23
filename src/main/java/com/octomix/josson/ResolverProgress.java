@@ -8,6 +8,7 @@ import java.util.List;
 public class ResolverProgress {
 
     private ResolverDebugLevel debugLevel = ResolverDebugLevel.SHOW_CONTENT_OF_VALUE_NODE_ONLY;
+    private boolean autoMarkEnd = true;
     private int round = 1;
     private final List<String> steps = new ArrayList<>();
 
@@ -25,6 +26,19 @@ public class ResolverProgress {
 
     public ResolverDebugLevel getResolverDebugLevel() {
         return debugLevel;
+    }
+
+    public ResolverProgress autoMarkEnd(boolean auto) {
+        autoMarkEnd = auto;
+        return this;
+    }
+
+    public boolean isAutoMarkEnd() {
+        return autoMarkEnd;
+    }
+
+    public void markEnd() {
+        addStep("End");
     }
 
     public List<String> getSteps() {
@@ -59,6 +73,10 @@ public class ResolverProgress {
         addStep("Query result = " + (node == null ? "null" : resolvedValue(node)));
     }
 
+    void addStep(String step) {
+        steps.add("Round " + round + " : " + step);
+    }
+
     private String resolvedValue(JsonNode node) {
         switch (debugLevel) {
             case SHOW_CONTENT_UP_TO_ARRAY_NODE:
@@ -83,13 +101,5 @@ public class ResolverProgress {
             return "Array with " + node.size() + " elements";
         }
         return node.toString();
-    }
-
-    void addStep(String step) {
-        steps.add("Round " + round + " : " + step);
-    }
-
-    void markEnd() {
-        addStep("End");
     }
 }
