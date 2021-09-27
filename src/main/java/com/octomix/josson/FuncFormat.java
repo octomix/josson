@@ -1,10 +1,24 @@
+/*
+ * Copyright 2020 Octomix Software Technology Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -19,6 +33,7 @@ import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 class FuncFormat {
     static JsonNode funcB64Decode(JsonNode node, String params, Base64.Decoder decoder) {
@@ -76,7 +91,7 @@ class FuncFormat {
             return null;
         }
         int last = paramList.size() - 1;
-        List<ImmutablePair<JsonNode, JsonNode>> casePairs = new ArrayList<>();
+        List<Pair<JsonNode, JsonNode>> casePairs = new ArrayList<>();
         JsonNode defaultValue = null;
         for (int i = 0; i <= last; i++) {
             JsonNode caseKey = null;
@@ -92,7 +107,7 @@ class FuncFormat {
             if (caseKey == null) {
                 defaultValue = caseValue;
             } else {
-                casePairs.add(ImmutablePair.of(caseKey, caseValue));
+                casePairs.add(Pair.of(caseKey, caseValue));
             }
         }
         if (node.isArray()) {
@@ -102,23 +117,27 @@ class FuncFormat {
                 if (valueNode.isValueNode()) {
                     if (valueNode.isNumber()) {
                         double key = valueNode.asDouble();
-                        ImmutablePair<JsonNode, JsonNode> casePair = casePairs.stream()
-                                .filter(pair -> (pair.left.isNumber() || pair.left.isTextual()) && pair.left.asDouble() == key)
+                        Pair<JsonNode, JsonNode> casePair = casePairs.stream()
+                                .filter(pair ->
+                                        (pair.getKey().isNumber() || pair.getKey().isTextual())
+                                                && pair.getKey().asDouble() == key)
                                 .findFirst()
                                 .orElse(null);
                         if (casePair != null) {
-                            array.add(casePair.right);
+                            array.add(casePair.getValue());
                         } else if (defaultValue != null) {
                             array.add(defaultValue);
                         }
                     } else if (valueNode.isValueNode()) {
                         String key = node.asText();
-                        ImmutablePair<JsonNode, JsonNode> casePair = casePairs.stream()
-                                .filter(pair -> (pair.left.isNumber() || pair.left.isTextual()) && pair.left.asText().equals(key))
+                        Pair<JsonNode, JsonNode> casePair = casePairs.stream()
+                                .filter(pair ->
+                                        (pair.getKey().isNumber() || pair.getKey().isTextual())
+                                                && pair.getKey().asText().equals(key))
                                 .findFirst()
                                 .orElse(null);
                         if (casePair != null) {
-                            array.add(casePair.right);
+                            array.add(casePair.getValue());
                         } else if (defaultValue != null) {
                             array.add(defaultValue);
                         }
@@ -130,16 +149,20 @@ class FuncFormat {
         if (node.isNumber()) {
             double key = node.asDouble();
             return casePairs.stream()
-                    .filter(pair -> (pair.left.isNumber() || pair.left.isTextual()) && pair.left.asDouble() == key)
+                    .filter(pair ->
+                            (pair.getKey().isNumber() || pair.getKey().isTextual())
+                                    && pair.getKey().asDouble() == key)
                     .findFirst()
-                    .map(pair -> pair.right)
+                    .map(Pair::getValue)
                     .orElse(defaultValue);
         }
         String key = node.asText();
         return casePairs.stream()
-                .filter(pair -> (pair.left.isNumber() || pair.left.isTextual()) && pair.left.asText().equals(key))
+                .filter(pair ->
+                        (pair.getKey().isNumber() || pair.getKey().isTextual())
+                                && pair.getKey().asText().equals(key))
                 .findFirst()
-                .map(pair -> pair.right)
+                .map(Pair::getValue)
                 .orElse(defaultValue);
     }
 
@@ -165,21 +188,21 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatDate(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String pattern = getNodeAsText(node, pathAndParams.right.get(0));
+        String pattern = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
                     array.add(TextNode.valueOf(
-                            LocalDateTime.parse(textNode.asText(), DateTimeFormatter.ISO_DATE_TIME)
+                            LocalDateTime.parse(textNode.asText(), ISO_LOCAL_DATE_TIME)
                                     .format(DateTimeFormatter.ofPattern(pattern))));
                 }
             }
@@ -188,19 +211,19 @@ class FuncFormat {
         if (!node.isTextual()) {
             return null;
         }
-        return TextNode.valueOf(LocalDateTime.parse(node.asText(), DateTimeFormatter.ISO_DATE_TIME)
+        return TextNode.valueOf(LocalDateTime.parse(node.asText(), ISO_LOCAL_DATE_TIME)
                 .format(DateTimeFormatter.ofPattern(pattern)));
     }
 
     static JsonNode funcFormatNumber(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String pattern = getNodeAsText(node, pathAndParams.right.get(0));
+        String pattern = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
@@ -218,14 +241,14 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatText(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String pattern = getNodeAsText(node, pathAndParams.right.get(0));
+        String pattern = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
@@ -243,19 +266,19 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatTexts(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 2, -2);
-        String pattern = getNodeAsText(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 2, -2);
+        String pattern = getNodeAsText(node, pathAndParams.getKey());
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                Object[] valueObjects = valuesAsObjects(node.get(i), pathAndParams.right, i);
+                Object[] valueObjects = valuesAsObjects(node.get(i), pathAndParams.getValue(), i);
                 if (valueObjects != null) {
                     array.add(TextNode.valueOf(String.format(pattern, valueObjects)));
                 }
             }
             return array;
         }
-        Object[] valueObjects = valuesAsObjects(node, pathAndParams.right, 0);
+        Object[] valueObjects = valuesAsObjects(node, pathAndParams.getValue(), 0);
         if (valueObjects == null) {
             return null;
         }

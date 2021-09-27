@@ -1,14 +1,33 @@
+/*
+ * Copyright 2020 Octomix Software Technology Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.matchJsonQuery;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 class LogicalOpStep {
 
@@ -77,12 +96,25 @@ class LogicalOpStep {
         if (tokens == null) {
             throw new UnresolvedDatasetException(expression);
         }
-        if (!datasets.containsKey(tokens[0])) {
+        Josson josson;
+        if (datasets.containsKey(tokens[0])) {
+            josson = datasets.get(tokens[0]);
+            if (josson == null) {
+                return null;
+            }
+        } else if (tokens[0].charAt(0) == '$') {
+            switch (StringUtils.stripStart(tokens[0].substring(1), null)) {
+                case "":
+                    josson = Josson.create(NullNode.getInstance());
+                    break;
+                case "now":
+                    josson = Josson.create(TextNode.valueOf(LocalDateTime.now().format(ISO_LOCAL_DATE_TIME)));
+                    break;
+                default:
+                    throw new UnresolvedDatasetException(tokens[0]);
+            }
+        } else {
             throw new UnresolvedDatasetException(tokens[0]);
-        }
-        Josson josson = datasets.get(tokens[0]);
-        if (josson == null) {
-            return null;
         }
         JsonNode node = josson.getNode(tokens[1]);
         datasets.put(expression, node == null ? null : Josson.create(node));

@@ -1,8 +1,22 @@
+/*
+ * Copyright 2020 Octomix Software Technology Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.mariuszgromada.math.mxparser.Argument;
 import org.mariuszgromada.math.mxparser.Expression;
 
@@ -187,14 +201,14 @@ class FuncArithmetic {
     }
 
     static JsonNode funcMod(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        int divisor = Integer.parseInt(getNodeAsText(node, pathAndParams.right.get(0)));
+        int divisor = Integer.parseInt(getNodeAsText(node, pathAndParams.getValue().get(0)));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -214,14 +228,15 @@ class FuncArithmetic {
     }
 
     static JsonNode funcRound(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        int precision = pathAndParams.right.size() > 0 ? Integer.parseInt(getNodeAsText(node, pathAndParams.right.get(0))) : 0;
+        int precision = pathAndParams.getValue().size() > 0 ?
+                Integer.parseInt(getNodeAsText(node, pathAndParams.getValue().get(0))) : 0;
         double magnitude = Math.pow(10, precision);
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();

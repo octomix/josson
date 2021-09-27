@@ -1,10 +1,24 @@
+/*
+ * Copyright 2020 Octomix Software Technology Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
+import com.octomix.josson.commons.StringUtils;
 
 import java.util.List;
 
@@ -14,14 +28,14 @@ import static com.octomix.josson.JossonCore.*;
 
 class FuncLogical {
     static BooleanNode funcContains(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return BooleanNode.FALSE;
             }
         }
-        JsonNode valueNode = getNode(node, pathAndParams.right.get(0));
+        JsonNode valueNode = getNode(node, pathAndParams.getValue().get(0));
         if (valueNode.isContainerNode()) {
             return BooleanNode.FALSE;
         }
@@ -65,14 +79,14 @@ class FuncLogical {
     }
 
     static BooleanNode funcEndsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return BooleanNode.FALSE;
             }
         }
-        String value = getNodeAsText(node, pathAndParams.right.get(0));
+        String value = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (!node.isTextual()) {
             return BooleanNode.FALSE;
         }
@@ -82,14 +96,14 @@ class FuncLogical {
     }
 
     static BooleanNode funcEquals(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return BooleanNode.FALSE;
             }
         }
-        String value = getNodeAsText(node, pathAndParams.right.get(0));
+        String value = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (!node.isTextual()) {
             return BooleanNode.FALSE;
         }
@@ -239,14 +253,14 @@ class FuncLogical {
     }
 
     static BooleanNode funcStartsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return BooleanNode.FALSE;
             }
         }
-        String value = getNodeAsText(node, pathAndParams.right.get(0));
+        String value = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (!node.isTextual()) {
             return BooleanNode.FALSE;
         }

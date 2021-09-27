@@ -1,12 +1,25 @@
+/*
+ * Copyright 2020 Octomix Software Technology Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
+import com.octomix.josson.commons.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,17 +31,17 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncString {
     static JsonNode funcAbbreviate(JsonNode node, String params) {
-        ImmutablePair<String, Integer[]> pathAndParams = getParamPathAndStartEnd(params);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, Integer[]> pathAndParams = getParamPathAndStartEnd(params);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        int offset = pathAndParams.right[0];
+        int offset = pathAndParams.getValue()[0];
         int maxWidth;
-        if (pathAndParams.right[1] < Integer.MAX_VALUE) {
-            maxWidth = pathAndParams.right[1];
+        if (pathAndParams.getValue()[1] < Integer.MAX_VALUE) {
+            maxWidth = pathAndParams.getValue()[1];
         } else {
             maxWidth = offset;
             offset = 0;
@@ -50,14 +63,14 @@ class FuncString {
     }
 
     static JsonNode funcAppendIfMissing(JsonNode node, String params, boolean ignoreCase) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String suffix = getNodeAsText(node, pathAndParams.right.get(0));
+        String suffix = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -103,9 +116,9 @@ class FuncString {
     }
 
     static JsonNode funcCenter(JsonNode node, String params) {
-        ImmutableTriple<String, Integer, String> pathAndParams = getParamPathAndAlignment(params);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Triple<String, Integer, String> pathAndParams = getParamPathAndAlignment(params);
+        if (pathAndParams.getLeft() != null) {
+            node = getNode(node, pathAndParams.getLeft());
             if (node == null) {
                 return null;
             }
@@ -116,7 +129,7 @@ class FuncString {
                 JsonNode textNode = node.get(i);
                 if (nodeHasValue(textNode)) {
                     array.add(TextNode.valueOf(StringUtils.center(
-                            textNode.asText(), pathAndParams.middle, pathAndParams.right)));
+                            textNode.asText(), pathAndParams.getMiddle(), pathAndParams.getRight())));
                 }
             }
             return array;
@@ -124,24 +137,24 @@ class FuncString {
         if (!nodeHasValue(node)) {
             return null;
         }
-        return TextNode.valueOf(StringUtils.center(node.asText(), pathAndParams.middle, pathAndParams.right));
+        return TextNode.valueOf(StringUtils.center(node.asText(), pathAndParams.getMiddle(), pathAndParams.getRight()));
     }
 
     static JsonNode funcConcat(JsonNode node, String params) {
         List<String> paramList = decomposeFunctionParameters(params, 1, -1);
-        List<ImmutablePair<Character, String>> args = new ArrayList<>();
+        List<Pair<Character, String>> args = new ArrayList<>();
         for (String param : paramList) {
             if (param.isEmpty()) {
                 continue;
             }
             if (param.charAt(0) == '\'') {
-                args.add(ImmutablePair.of('\'', unquoteString(param)));
+                args.add(Pair.of('\'', unquoteString(param)));
             } else if ("?".equals(param)) {
-                args.add(ImmutablePair.of('?', null));
+                args.add(Pair.of('?', null));
             } else if (param.startsWith("#")) {
-                args.add(ImmutablePair.of('#', param));
+                args.add(Pair.of('#', param));
             } else {
-                args.add(ImmutablePair.of('.', param));
+                args.add(Pair.of('.', param));
             }
         }
         if (!node.isArray()) {
@@ -157,18 +170,18 @@ class FuncString {
         return array;
     }
 
-    private static String funcConcatElement(JsonNode node, List<ImmutablePair<Character, String>> args, int index) {
+    private static String funcConcatElement(JsonNode node, List<Pair<Character, String>> args, int index) {
         StringBuilder sb = new StringBuilder();
-        for (ImmutablePair<Character, String> arg : args) {
-            switch (arg.left) {
+        for (Pair<Character, String> arg : args) {
+            switch (arg.getKey()) {
                 case '\'':
-                    sb.append(arg.right);
+                    sb.append(arg.getValue());
                     continue;
                 case '?':
                     sb.append(node.asText());
                     continue;
             }
-            JsonNode tryNode = arg.left == '#' ? getIndexId(index, arg.right) : getNode(node, arg.right);
+            JsonNode tryNode = arg.getKey() == '#' ? getIndexId(index, arg.getValue()) : getNode(node, arg.getValue());
             if (!nodeHasValue(tryNode)) {
                 return null;
             }
@@ -178,14 +191,14 @@ class FuncString {
     }
 
     static JsonNode funcJoin(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String delimiter = pathAndParams.right.size() > 0 ? getNodeAsText(node, pathAndParams.right.get(0)) : "";
+        String delimiter = pathAndParams.getValue().size() > 0 ? getNodeAsText(node, pathAndParams.getValue().get(0)) : "";
         List<String> texts = new ArrayList<>();
         for (int i = 0; i < node.size(); i++) {
             JsonNode valueNode = node.get(i);
@@ -197,14 +210,14 @@ class FuncString {
     }
 
     static JsonNode funcKeepAfter(JsonNode node, String params, boolean ignoreCase, boolean last) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String find = getNodeAsText(node, pathAndParams.right.get(0));
+        String find = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -245,14 +258,14 @@ class FuncString {
     }
 
     static JsonNode funcKeepBefore(JsonNode node, String params, boolean ignoreCase, boolean last) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String find = getNodeAsText(node, pathAndParams.right.get(0));
+        String find = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -293,9 +306,9 @@ class FuncString {
     }
 
     static JsonNode funcLeftPad(JsonNode node, String params) {
-        ImmutableTriple<String, Integer, String> pathAndParams = getParamPathAndAlignment(params);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Triple<String, Integer, String> pathAndParams = getParamPathAndAlignment(params);
+        if (pathAndParams.getLeft() != null) {
+            node = getNode(node, pathAndParams.getLeft());
             if (node == null) {
                 return null;
             }
@@ -306,7 +319,7 @@ class FuncString {
                 JsonNode textNode = node.get(i);
                 if (nodeHasValue(textNode)) {
                     array.add(TextNode.valueOf(StringUtils.leftPad(
-                            textNode.asText(), pathAndParams.middle, pathAndParams.right)));
+                            textNode.asText(), pathAndParams.getMiddle(), pathAndParams.getRight())));
                 }
             }
             return array;
@@ -314,7 +327,7 @@ class FuncString {
         if (!nodeHasValue(node)) {
             return null;
         }
-        return TextNode.valueOf(StringUtils.leftPad(node.asText(), pathAndParams.middle, pathAndParams.right));
+        return TextNode.valueOf(StringUtils.leftPad(node.asText(), pathAndParams.getMiddle(), pathAndParams.getRight()));
     }
 
     static JsonNode funcLength(JsonNode node, String params) {
@@ -462,14 +475,14 @@ class FuncString {
     }
 
     static JsonNode funcPrependIfMissing(JsonNode node, String params, boolean ignoreCase) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String prefix = getNodeAsText(node, pathAndParams.right.get(0));
+        String prefix = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -491,14 +504,14 @@ class FuncString {
     }
 
     static JsonNode funcRemoveEnd(JsonNode node, String params, boolean ignoreCase) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String remove = getNodeAsText(node, pathAndParams.right.get(0));
+        String remove = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -520,14 +533,14 @@ class FuncString {
     }
 
     static JsonNode funcRemoveStart(JsonNode node, String params, boolean ignoreCase) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String remove = getNodeAsText(node, pathAndParams.right.get(0));
+        String remove = getNodeAsText(node, pathAndParams.getValue().get(0));
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -548,15 +561,38 @@ class FuncString {
                 StringUtils.removeStart(node.asText(), remove));
     }
 
-    static JsonNode funcReplace(JsonNode node, String params, boolean ignoreCase) {
-        ImmutableTriple<String, String[], Integer> pathAndParams = getParamPathAnd2StringAndInt(params);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+    static JsonNode funcRepeat(JsonNode node, String params) {
+        Pair<String, Integer> pathAndParams = getParamPathAndInt(params);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (nodeHasValue(textNode)) {
+                    array.add(TextNode.valueOf(StringUtils.repeat(textNode.asText(), pathAndParams.getValue())));
+                }
+            }
+            return array;
+        }
+        if (!nodeHasValue(node)) {
+            return null;
+        }
+        return TextNode.valueOf(StringUtils.repeat(node.asText(), pathAndParams.getValue()));
+    }
 
+    static JsonNode funcReplace(JsonNode node, String params, boolean ignoreCase) {
+        Triple<String, String[], Integer> pathAndParams = getParamPathAnd2StringAndInt(params);
+        if (pathAndParams.getLeft() != null) {
+            node = getNode(node, pathAndParams.getLeft());
+            if (node == null) {
+                return null;
+            }
+        }
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -564,9 +600,11 @@ class FuncString {
                 if (textNode.isTextual()) {
                     array.add(TextNode.valueOf(ignoreCase ?
                             StringUtils.replaceIgnoreCase(
-                                    textNode.asText(), pathAndParams.middle[0], pathAndParams.middle[1], pathAndParams.right == null ? -1 : pathAndParams.right) :
+                                    textNode.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
+                                    pathAndParams.getRight() == null ? -1 : pathAndParams.getRight()) :
                             StringUtils.replace(
-                                    textNode.asText(), pathAndParams.middle[0], pathAndParams.middle[1], pathAndParams.right == null ? -1 : pathAndParams.right)));
+                                    textNode.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
+                                    pathAndParams.getRight() == null ? -1 : pathAndParams.getRight())));
                 }
             }
             return array;
@@ -576,15 +614,17 @@ class FuncString {
         }
         return TextNode.valueOf(ignoreCase ?
                 StringUtils.replaceIgnoreCase(
-                        node.asText(), pathAndParams.middle[0], pathAndParams.middle[1], pathAndParams.right == null ? -1 : pathAndParams.right) :
+                        node.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
+                        pathAndParams.getRight() == null ? -1 : pathAndParams.getRight()) :
                 StringUtils.replace(
-                        node.asText(), pathAndParams.middle[0], pathAndParams.middle[1], pathAndParams.right == null ? -1 : pathAndParams.right));
+                        node.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
+                        pathAndParams.getRight() == null ? -1 : pathAndParams.getRight()));
     }
 
     static JsonNode funcRightPad(JsonNode node, String params) {
-        ImmutableTriple<String, Integer, String> pathAndParams = getParamPathAndAlignment(params);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Triple<String, Integer, String> pathAndParams = getParamPathAndAlignment(params);
+        if (pathAndParams.getLeft() != null) {
+            node = getNode(node, pathAndParams.getLeft());
             if (node == null) {
                 return null;
             }
@@ -595,7 +635,7 @@ class FuncString {
                 JsonNode textNode = node.get(i);
                 if (nodeHasValue(textNode)) {
                     array.add(TextNode.valueOf(StringUtils.rightPad(
-                            textNode.asText(), pathAndParams.middle, pathAndParams.right)));
+                            textNode.asText(), pathAndParams.getMiddle(), pathAndParams.getRight())));
                 }
             }
             return array;
@@ -603,18 +643,18 @@ class FuncString {
         if (!nodeHasValue(node)) {
             return null;
         }
-        return TextNode.valueOf(StringUtils.rightPad(node.asText(), pathAndParams.middle, pathAndParams.right));
+        return TextNode.valueOf(StringUtils.rightPad(node.asText(), pathAndParams.getMiddle(), pathAndParams.getRight()));
     }
 
     static ArrayNode funcSplit(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String separator = pathAndParams.right.size() > 0 ? getNodeAsText(node, pathAndParams.right.get(0)) : null;
+        String separator = pathAndParams.getValue().size() > 0 ? getNodeAsText(node, pathAndParams.getValue().get(0)) : null;
         ArrayNode array = MAPPER.createArrayNode();
         if (node.isArray()) {
             for (int i  = 0; i < node.size(); i++) {
@@ -635,10 +675,85 @@ class FuncString {
         return array;
     }
 
+    static JsonNode funcStrip(JsonNode node, String params) {
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
+            if (node == null) {
+                return null;
+            }
+        }
+        String stripChars = pathAndParams.getValue().size() > 0 ? getNodeAsText(node, pathAndParams.getValue().get(0)) : null;
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    array.add(TextNode.valueOf(StringUtils.strip(textNode.asText(), stripChars)));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(StringUtils.strip(node.asText(), stripChars));
+    }
+
+    static JsonNode funcStripEnd(JsonNode node, String params) {
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
+            if (node == null) {
+                return null;
+            }
+        }
+        String stripChars = pathAndParams.getValue().size() > 0 ? getNodeAsText(node, pathAndParams.getValue().get(0)) : null;
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    array.add(TextNode.valueOf(StringUtils.stripEnd(textNode.asText(), stripChars)));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(StringUtils.stripEnd(node.asText(), stripChars));
+    }
+
+    static JsonNode funcStripStart(JsonNode node, String params) {
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
+            if (node == null) {
+                return null;
+            }
+        }
+        String stripChars = pathAndParams.getValue().size() > 0 ? getNodeAsText(node, pathAndParams.getValue().get(0)) : null;
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    array.add(TextNode.valueOf(StringUtils.stripStart(textNode.asText(), stripChars)));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(StringUtils.stripStart(node.asText(), stripChars));
+    }
+
     static JsonNode funcSubstr(JsonNode node, String params) {
-        ImmutablePair<String, Integer[]> pathAndParams = getParamPathAndStartEnd(params);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, Integer[]> pathAndParams = getParamPathAndStartEnd(params);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -649,7 +764,7 @@ class FuncString {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
                     array.add(TextNode.valueOf(StringUtils.substring(
-                            textNode.asText(), pathAndParams.right[0], pathAndParams.right[1])));
+                            textNode.asText(), pathAndParams.getValue()[0], pathAndParams.getValue()[1])));
                 }
             }
             return array;
@@ -657,7 +772,7 @@ class FuncString {
         if (!node.isTextual()) {
             return null;
         }
-        return TextNode.valueOf(StringUtils.substring(node.asText(), pathAndParams.right[0], pathAndParams.right[1]));
+        return TextNode.valueOf(StringUtils.substring(node.asText(), pathAndParams.getValue()[0], pathAndParams.getValue()[1]));
     }
 
     static JsonNode funcTrim(JsonNode node, String params) {
@@ -682,6 +797,30 @@ class FuncString {
             return null;
         }
         return TextNode.valueOf(StringUtils.trim(node.asText()));
+    }
+
+    static JsonNode funcUncapitalize(JsonNode node, String params) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    array.add(TextNode.valueOf(StringUtils.uncapitalize(textNode.asText())));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(StringUtils.uncapitalize(node.asText()));
     }
 
     static JsonNode funcUpperCase(JsonNode node, String params) {

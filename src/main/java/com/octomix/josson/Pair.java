@@ -15,14 +15,32 @@
  */
 package com.octomix.josson;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+class Pair<K, V> {
+    private final K key;
+    private final V value;
 
-import java.text.DateFormat;
+    static <K, V> Pair<K, V> of(K key, V value) {
+        return new Pair<>(key, value);
+    }
 
-class Mapper extends ObjectMapper {
-    Mapper() {
-        this.registerModule(new JavaTimeModule());
-        this.setDateFormat(DateFormat.getInstance());
+    Pair(K key, V value) {
+        this.key = key;
+        this.value = value;
+    }
+
+    K getKey() {
+        return key;
+    }
+
+    V getValue() {
+        return value;
+    }
+
+    boolean hasKey() {
+        return key != null;
+    }
+
+    public String toString() {
+        return "(" + key + ',' + value + ')';
     }
 }

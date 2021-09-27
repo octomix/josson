@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.octomix.josson;
+package com.octomix.josson.commons;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.lang.reflect.Array;
 
-import java.text.DateFormat;
+class ArrayUtils {
 
-class Mapper extends ObjectMapper {
-    Mapper() {
-        this.registerModule(new JavaTimeModule());
-        this.setDateFormat(DateFormat.getInstance());
+    static final String[] EMPTY_STRING_ARRAY = new String[0];
+
+    static int getLength(Object array) {
+        return array == null ? 0 : Array.getLength(array);
     }
+
+    static boolean isEmpty(Object[] array) {
+        return getLength(array) == 0;
+    }
+
+    static <T> boolean isNotEmpty(T[] array) {
+        return !isEmpty(array);
+    }
+
 }

@@ -1,3 +1,19 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson.commons;
 
 import java.io.IOException;
@@ -8,13 +24,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * org.apache.commons:commons-text:1.9
+ * <p>From org.apache.commons:commons-text:1.9</p>
  *
  * Translates a value using a lookup table.
  *
  * @since 1.0
  */
-public class LookupTranslator extends CharSequenceTranslator {
+class LookupTranslator extends CharSequenceTranslator {
 
     /** The mapping to be used in translation. */
     private final Map<String, String> lookupMap;
@@ -36,7 +52,7 @@ public class LookupTranslator extends CharSequenceTranslator {
      * @param lookupMap Map&lt;CharSequence, CharSequence&gt; table of translator
      *                  mappings
      */
-    public LookupTranslator(final Map<CharSequence, CharSequence> lookupMap) {
+    LookupTranslator(final Map<CharSequence, CharSequence> lookupMap) {
         if (lookupMap == null) {
             throw new InvalidParameterException("lookupMap cannot be null");
         }
@@ -64,7 +80,7 @@ public class LookupTranslator extends CharSequenceTranslator {
      * {@inheritDoc}
      */
     @Override
-    public int translate(final CharSequence input, final int index, final Writer out) throws IOException {
+    int translate(final CharSequence input, final int index, final Writer out) throws IOException {
         // check if translation exists for the input at position index
         if (prefixSet.get(input.charAt(index))) {
             int max = longest;

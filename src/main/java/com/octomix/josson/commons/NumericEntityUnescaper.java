@@ -1,3 +1,19 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson.commons;
 
 import java.io.IOException;
@@ -7,7 +23,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 
 /**
- * org.apache.commons:commons-text:1.9
+ * <p>From org.apache.commons:commons-text:1.9</p>
  *
  * Translate XML numeric entities of the form &amp;#[xX]?\d+;? to
  * the specific codepoint.
@@ -16,10 +32,10 @@ import java.util.EnumSet;
  *
  * @since 1.0
  */
-public class NumericEntityUnescaper extends CharSequenceTranslator {
+class NumericEntityUnescaper extends CharSequenceTranslator {
 
     /** NumericEntityUnescaper option enum. */
-    public enum OPTION {
+    enum OPTION {
 
         /**
          * Require a semicolon.
@@ -51,7 +67,7 @@ public class NumericEntityUnescaper extends CharSequenceTranslator {
      *
      * @param options to apply to this unescaper
      */
-    public NumericEntityUnescaper(final NumericEntityUnescaper.OPTION... options) {
+    NumericEntityUnescaper(final NumericEntityUnescaper.OPTION... options) {
         if (options.length > 0) {
             this.options = EnumSet.copyOf(Arrays.asList(options));
         } else {
@@ -65,7 +81,7 @@ public class NumericEntityUnescaper extends CharSequenceTranslator {
      * @param option to check state of
      * @return whether the option is set
      */
-    public boolean isSet(final NumericEntityUnescaper.OPTION option) {
+    boolean isSet(final NumericEntityUnescaper.OPTION option) {
         return options != null && options.contains(option);
     }
 
@@ -73,7 +89,7 @@ public class NumericEntityUnescaper extends CharSequenceTranslator {
      * {@inheritDoc}
      */
     @Override
-    public int translate(final CharSequence input, final int index, final Writer out) throws IOException {
+    int translate(final CharSequence input, final int index, final Writer out) throws IOException {
         final int seqEnd = input.length();
         // Uses -2 to ensure there is something after the &#
         if (input.charAt(index) == '&' && index < seqEnd - 2 && input.charAt(index + 1) == '#') {

@@ -1,9 +1,23 @@
+/*
+ * Copyright 2020 Octomix Software Technology Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
+import com.octomix.josson.commons.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -58,9 +72,9 @@ class FuncArray {
     }
 
     static IntNode funcIndexOf(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -68,7 +82,7 @@ class FuncArray {
         if (!node.isArray()) {
             return null;
         }
-        JsonNode valueNode = getNode(node, pathAndParams.right.get(0));
+        JsonNode valueNode = getNode(node, pathAndParams.getValue().get(0));
         if (valueNode != null && valueNode.isValueNode()) {
             if (valueNode.isNumber()) {
                 double value = valueNode.asDouble();
@@ -127,9 +141,9 @@ class FuncArray {
     }
 
     static IntNode funcLastIndexOf(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -137,7 +151,7 @@ class FuncArray {
         if (!node.isArray()) {
             return null;
         }
-        JsonNode valueNode = getNode(node, pathAndParams.right.get(0));
+        JsonNode valueNode = getNode(node, pathAndParams.getValue().get(0));
         if (valueNode != null && valueNode.isValueNode()) {
             if (valueNode.isNumber()) {
                 double value = valueNode.asDouble();
@@ -165,9 +179,9 @@ class FuncArray {
     }
 
     static JsonNode funcFindByMaxMin(JsonNode node, String params, boolean isMax, int nullPriority) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -175,7 +189,7 @@ class FuncArray {
         if (!node.isArray()) {
             return node;
         }
-        String path = pathAndParams.right.get(0);
+        String path = pathAndParams.getValue().get(0);
         int foundIndex = -1;
         Double maxMinDouble = null;
         String maxMinString = null;
@@ -276,9 +290,9 @@ class FuncArray {
     }
 
     static JsonNode funcSlice(JsonNode node, String params) {
-        ImmutablePair<String, Integer[]> pathAndParams = getParamPathAndStartEndStep(params);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, Integer[]> pathAndParams = getParamPathAndStartEndStep(params);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -287,11 +301,11 @@ class FuncArray {
             return node;
         }
         int size = node.size();
-        int start = pathAndParams.right[0] >= 0 ? pathAndParams.right[0] : size + pathAndParams.right[0];
+        int start = pathAndParams.getValue()[0] >= 0 ? pathAndParams.getValue()[0] : size + pathAndParams.getValue()[0];
         start = start < 0 ? 0 : Math.min(start, size);
-        int end = pathAndParams.right[1] >= 0 ? pathAndParams.right[1] : size + pathAndParams.right[1];
+        int end = pathAndParams.getValue()[1] >= 0 ? pathAndParams.getValue()[1] : size + pathAndParams.getValue()[1];
         end = end < 0 ? 0 : Math.min(end, size);
-        int step = pathAndParams.right[2] == 0 ? 1 : Math.abs(pathAndParams.right[2]);
+        int step = pathAndParams.getValue()[2] == 0 ? 1 : Math.abs(pathAndParams.getValue()[2]);
         ArrayNode array = MAPPER.createArrayNode();
         if (start <= end) {
             for (int i = start; i < end; i += step) {
@@ -306,9 +320,9 @@ class FuncArray {
     }
 
     static JsonNode funcSort(JsonNode node, String params) {
-        ImmutablePair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 2);
-        if (pathAndParams.left != null) {
-            node = getNode(node, pathAndParams.left);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 2);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -318,17 +332,17 @@ class FuncArray {
         }
         String param = null;
         double ordering = 1;
-        if (pathAndParams.right.size() > 0) {
-            param = pathAndParams.right.get(0);
+        if (pathAndParams.getValue().size() > 0) {
+            param = pathAndParams.getValue().get(0);
             try {
                 ordering = Double.parseDouble(param);
                 param = null;
-                if (pathAndParams.right.size() > 1) {
+                if (pathAndParams.getValue().size() > 1) {
                     throw new IllegalArgumentException("Too many function arguments: " + params);
                 }
             } catch (NumberFormatException e) {
-                if (pathAndParams.right.size() > 1) {
-                    ordering = Double.parseDouble(pathAndParams.right.get(1));
+                if (pathAndParams.getValue().size() > 1) {
+                    ordering = Double.parseDouble(pathAndParams.getValue().get(1));
                 }
             }
         }

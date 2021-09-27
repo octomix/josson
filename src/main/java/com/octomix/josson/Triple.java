@@ -15,14 +15,34 @@
  */
 package com.octomix.josson;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+class Triple<L, M, R> {
+    private final L left;
+    private final M middle;
+    private final R right;
 
-import java.text.DateFormat;
+    static <L, M, R> Triple<L, M, R> of(L left, M middle, R right) {
+        return new Triple<>(left, middle, right);
+    }
 
-class Mapper extends ObjectMapper {
-    Mapper() {
-        this.registerModule(new JavaTimeModule());
-        this.setDateFormat(DateFormat.getInstance());
+    Triple(L left, M middle, R right) {
+        this.left = left;
+        this.middle = middle;
+        this.right = right;
+    }
+
+    L getLeft() {
+        return left;
+    }
+
+    M getMiddle() {
+        return middle;
+    }
+
+    R getRight() {
+        return right;
+    }
+
+    public String toString() {
+        return "(" + left + "," + middle + "," + right + ")";
     }
 }

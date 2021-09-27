@@ -1,3 +1,19 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson.commons;
 
 import java.io.IOException;
@@ -5,7 +21,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 /**
- * org.apache.commons:commons-text:1.9
+ * <p>From org.apache.commons:commons-text:1.9</p>
  *
  * An API for translating text.
  * Its core use is to escape and unescape text. Because escaping and unescaping
@@ -13,7 +29,7 @@ import java.io.Writer;
  *
  * @since 1.0
  */
-public abstract class CharSequenceTranslator {
+abstract class CharSequenceTranslator {
 
     /**
      * Translate a set of codepoints, represented by an int index into a CharSequence,
@@ -27,14 +43,14 @@ public abstract class CharSequenceTranslator {
      * @return int count of codepoints consumed
      * @throws IOException if and only if the Writer produces an IOException
      */
-    public abstract int translate(CharSequence input, int index, Writer out) throws IOException;
+    abstract int translate(CharSequence input, int index, Writer out) throws IOException;
 
     /**
      * Helper for non-Writer usage.
      * @param input CharSequence to be translated
      * @return String output of translation
      */
-    public final String translate(final CharSequence input) {
+    final String translate(final CharSequence input) {
         if (input == null) {
             return null;
         }
@@ -56,7 +72,7 @@ public abstract class CharSequenceTranslator {
      * @param out Writer to translate the text to
      * @throws IOException if and only if the Writer produces an IOException
      */
-    public final void translate(final CharSequence input, final Writer out) throws IOException {
+    final void translate(final CharSequence input, final Writer out) throws IOException {
         if (out == null) {
             throw new IllegalArgumentException("The Writer must not be null");
         }

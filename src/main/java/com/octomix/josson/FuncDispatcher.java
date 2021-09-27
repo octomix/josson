@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Octomix Software Technology Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -231,6 +246,8 @@ class FuncDispatcher {
                     return funcRemoveStart(node, params, false);
                 case "removestartignorecase":
                     return funcRemoveStart(node, params, true);
+                case "repeat":
+                    return funcRepeat(node, params);
                 case "replace":
                     return funcReplace(node, params, false);
                 case "replaceignorecase":
@@ -239,10 +256,18 @@ class FuncDispatcher {
                     return funcRightPad(node, params);
                 case "split":
                     return funcSplit(node, params);
+                case "strip":
+                    return funcStrip(node, params);
+                case "stripend":
+                    return funcStripEnd(node, params);
+                case "stripstart":
+                    return funcStripStart(node, params);
                 case "substr":
                     return funcSubstr(node, params);
                 case "trim":
                     return funcTrim(node, params);
+                case "uncapitalize":
+                    return funcUncapitalize(node, params);
                 case "uppercase":
                     return funcUpperCase(node, params);
 
