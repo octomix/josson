@@ -23,6 +23,7 @@ import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import static com.octomix.josson.JossonCore.*;
@@ -92,6 +93,10 @@ class LogicalOpStep {
             }
             return josson.getNode();
         }
+        JsonNode implicitVariable = getImplicitVariable(expression);
+        if (implicitVariable != null) {
+            return implicitVariable;
+        }
         String[] tokens = matchJsonQuery(expression);
         if (tokens == null) {
             throw new UnresolvedDatasetException(expression);
@@ -102,23 +107,43 @@ class LogicalOpStep {
             if (josson == null) {
                 return null;
             }
-        } else if (tokens[0].charAt(0) == '$') {
-            switch (StringUtils.stripStart(tokens[0].substring(1), null)) {
-                case "":
-                    josson = Josson.create(NullNode.getInstance());
-                    break;
-                case "now":
-                    josson = Josson.create(TextNode.valueOf(LocalDateTime.now().format(ISO_LOCAL_DATE_TIME)));
-                    break;
-                default:
-                    throw new UnresolvedDatasetException(tokens[0]);
-            }
         } else {
-            throw new UnresolvedDatasetException(tokens[0]);
+            implicitVariable = getImplicitVariable(tokens[0]);
+            if (implicitVariable == null) {
+                throw new UnresolvedDatasetException(tokens[0]);
+            }
+            josson = Josson.create(implicitVariable);
         }
         JsonNode node = josson.getNode(tokens[1]);
         datasets.put(expression, node == null ? null : Josson.create(node));
         return node;
+    }
+
+    private static JsonNode getImplicitVariable(String name) {
+        if (name.charAt(0) == '$') {
+            switch (StringUtils.stripStart(name.substring(1), null).toLowerCase()) {
+                case "":
+                    return BooleanNode.TRUE;
+                case "now":
+                    return TextNode.valueOf(LocalDateTime.now()
+                            .format(ISO_LOCAL_DATE_TIME));
+                case "today":
+                    return TextNode.valueOf(LocalDateTime.now()
+                            .truncatedTo(ChronoUnit.DAYS)
+                            .format(ISO_LOCAL_DATE_TIME));
+                case "yesterday":
+                    return TextNode.valueOf(LocalDateTime.now()
+                            .truncatedTo(ChronoUnit.DAYS)
+                            .minusDays(1)
+                            .format(ISO_LOCAL_DATE_TIME));
+                case "tomorrow":
+                    return TextNode.valueOf(LocalDateTime.now()
+                            .truncatedTo(ChronoUnit.DAYS)
+                            .plusDays(1)
+                            .format(ISO_LOCAL_DATE_TIME));
+            }
+        }
+        return null;
     }
 
     private static BooleanNode relationalCompare(JsonNode leftNode, String operator, JsonNode rightNode) {

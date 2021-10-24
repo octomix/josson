@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 
+import java.time.DateTimeException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.octomix.josson.Josson.getNode;
@@ -61,8 +63,8 @@ class JossonCore {
         if (strings == null || strings.length == 0) {
             return true;
         }
-        for (int i = strings.length - 1; i >= 0; i--) {
-            if (StringUtils.isBlank(strings[i])) {
+        for (String str : strings) {
+            if (StringUtils.isBlank(str)) {
                 return true;
             }
         }
@@ -89,6 +91,14 @@ class JossonCore {
             return IntNode.valueOf(Integer.parseInt(literal));
         }
         return DoubleNode.valueOf(Double.parseDouble(literal));
+    }
+
+    static LocalDateTime toLocalDateTime(JsonNode node) {
+        try {
+            return LocalDateTime.parse(node.asText());
+        } catch (DateTimeException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
     }
 
     static String getNodeAsText(JsonNode node, String jossonPath) {

@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.octomix.josson.commons.StringUtils;
 
+import java.time.chrono.IsoChronology;
+import java.time.temporal.ChronoField;
 import java.util.List;
 
 import static com.octomix.josson.GetFuncParam.*;
@@ -267,5 +269,48 @@ class FuncLogical {
         return BooleanNode.valueOf(not ^ (ignoreCase ?
                 StringUtils.startsWithIgnoreCase(node.asText(), value) :
                 StringUtils.startsWith(node.asText(), value)));
+    }
+
+    static BooleanNode funcIsWeekDay(JsonNode node, String params) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return BooleanNode.valueOf(toLocalDateTime(node).get(ChronoField.DAY_OF_WEEK) <= 5);
+    }
+
+    static BooleanNode funcIsWeekEnd(JsonNode node, String params) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return BooleanNode.valueOf(toLocalDateTime(node).get(ChronoField.DAY_OF_WEEK) > 5);
+    }
+
+    static BooleanNode funcIsLeapYear(JsonNode node, String params) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        int year = toLocalDateTime(node).getYear();
+        return BooleanNode.valueOf(IsoChronology.INSTANCE.isLeapYear(year));
     }
 }

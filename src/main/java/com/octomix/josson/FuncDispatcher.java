@@ -17,10 +17,13 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 
 import static com.octomix.josson.FuncArithmetic.*;
 import static com.octomix.josson.FuncArray.*;
+import static com.octomix.josson.FuncDate.*;
 import static com.octomix.josson.FuncFormat.*;
 import static com.octomix.josson.FuncLogical.*;
 import static com.octomix.josson.FuncString.*;
@@ -84,6 +87,90 @@ class FuncDispatcher {
                     return funcSlice(node, params);
                 case "sort":
                     return funcSort(node, params);
+
+                // Date
+                case "ampmofday":
+                    return funcAmPmOfDay(node, params);
+                case "second":
+                    return funcChronometry(node, params, ChronoField.SECOND_OF_MINUTE);
+                case "secondofday":
+                    return funcChronometry(node, params, ChronoField.SECOND_OF_DAY);
+                case "minute":
+                    return funcChronometry(node, params, ChronoField.MINUTE_OF_HOUR);
+                case "minuteofday":
+                    return funcChronometry(node, params, ChronoField.MINUTE_OF_DAY);
+                case "hourofampm":
+                    return funcChronometry(node, params, ChronoField.HOUR_OF_AMPM);
+                case "hour":
+                    return funcChronometry(node, params, ChronoField.HOUR_OF_DAY);
+                case "dayofweek":
+                    return funcChronometry(node, params, ChronoField.DAY_OF_WEEK);
+                case "day":
+                    return funcChronometry(node, params, ChronoField.DAY_OF_MONTH);
+                case "dayofyear":
+                    return funcChronometry(node, params, ChronoField.DAY_OF_YEAR);
+                case "month":
+                    return funcChronometry(node, params, ChronoField.MONTH_OF_YEAR);
+                case "year":
+                    return funcChronometry(node, params, ChronoField.YEAR);
+                case "plusseconds":
+                    return funcDatePlus(node, params, ChronoUnit.SECONDS);
+                case "plusminutes":
+                    return funcDatePlus(node, params, ChronoUnit.MINUTES);
+                case "plushours":
+                    return funcDatePlus(node, params, ChronoUnit.HOURS);
+                case "plusdays":
+                    return funcDatePlus(node, params, ChronoUnit.DAYS);
+                case "plusweeks":
+                    return funcDatePlus(node, params, ChronoUnit.WEEKS);
+                case "plusmonths":
+                    return funcDatePlus(node, params, ChronoUnit.MONTHS);
+                case "plusyears":
+                    return funcDatePlus(node, params, ChronoUnit.YEARS);
+                case "minusseconds":
+                    return funcDateMinus(node, params, ChronoUnit.SECONDS);
+                case "minusminutes":
+                    return funcDateMinus(node, params, ChronoUnit.MINUTES);
+                case "minushours":
+                    return funcDateMinus(node, params, ChronoUnit.HOURS);
+                case "minusdays":
+                    return funcDateMinus(node, params, ChronoUnit.DAYS);
+                case "minusweeks":
+                    return funcDateMinus(node, params, ChronoUnit.WEEKS);
+                case "minusmonths":
+                    return funcDateMinus(node, params, ChronoUnit.MONTHS);
+                case "minusyears":
+                    return funcDateMinus(node, params, ChronoUnit.YEARS);
+                case "truncatetosecond":
+                    return funcDateTruncateTo(node, params, ChronoUnit.SECONDS);
+                case "truncatetominute":
+                    return funcDateTruncateTo(node, params, ChronoUnit.MINUTES);
+                case "truncatetohour":
+                    return funcDateTruncateTo(node, params, ChronoUnit.HOURS);
+                case "truncatetoday":
+                    return funcDateTruncateTo(node, params, ChronoUnit.DAYS);
+                case "withsecond":
+                    return funcDateWith(node, params, ChronoField.SECOND_OF_MINUTE);
+                case "withminute":
+                    return funcDateWith(node, params, ChronoField.MINUTE_OF_HOUR);
+                case "withhour":
+                    return funcDateWith(node, params, ChronoField.HOUR_OF_DAY);
+                case "withday":
+                    return funcDateWith(node, params, ChronoField.DAY_OF_MONTH);
+                case "withdayofyear":
+                    return funcDateWith(node, params, ChronoField.DAY_OF_YEAR);
+                case "withmonth":
+                    return funcDateWith(node, params, ChronoField.MONTH_OF_YEAR);
+                case "withyear":
+                    return funcDateWith(node, params, ChronoField.YEAR);
+                case "dayend":
+                    return funcDayEnd(node, params);
+                case "monthend":
+                    return funcMonthEnd(node, params);
+                case "lengthofmonth":
+                    return funcLengthOfMonth(node, params);
+                case "lengthofyear":
+                    return funcLengthOfYear(node, params);
 
                 // Format
                 case "b64decode":
@@ -192,6 +279,12 @@ class FuncDispatcher {
                     return funcStartsWith(node, params, false, true);
                 case "notstartswithignorecase":
                     return funcStartsWith(node, params, true, true);
+                case "isweekday":
+                    return funcIsWeekDay(node, params);
+                case "isweekend":
+                    return funcIsWeekEnd(node, params);
+                case "isleapyear":
+                    return funcIsLeapYear(node, params);
 
                 // String
                 case "abbreviate":

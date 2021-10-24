@@ -21,12 +21,8 @@ class ArrayUtils {
 
     static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-    static int getLength(Object array) {
-        return array == null ? 0 : Array.getLength(array);
-    }
-
     static boolean isEmpty(Object[] array) {
-        return getLength(array) == 0;
+        return array == null || Array.getLength(array) == 0;
     }
 
     static <T> boolean isNotEmpty(T[] array) {
