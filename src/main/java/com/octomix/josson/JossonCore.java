@@ -59,6 +59,22 @@ class JossonCore {
         return quotedString.substring(1, last).replaceAll("''", "'");
     }
 
+    static String csvQuote(String input) {
+        String result;
+        boolean needQuote;
+        if (input.contains("\"")) {
+            needQuote = true;
+            result = input.replace("\"", "\"\"");
+        } else {
+            needQuote = input.contains(",");
+            result = input;
+        }
+        if (needQuote) {
+            return "\"" + result + "\"";
+        }
+        return result;
+    }
+
     static boolean anyIsBlank(String[] strings) {
         if (strings == null || strings.length == 0) {
             return true;

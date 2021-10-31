@@ -25,6 +25,7 @@ public class ResolverProgress {
     private ResolverDebugLevel debugLevel = ResolverDebugLevel.SHOW_CONTENT_OF_VALUE_NODE_ONLY;
     private boolean autoMarkEnd = true;
     private int round = 1;
+    private boolean roundStarted = false;
     private final List<String> steps = new ArrayList<>();
 
     public ResolverProgress() {
@@ -61,7 +62,10 @@ public class ResolverProgress {
     }
 
     void nextRound() {
-        round++;
+        if (roundStarted) {
+            roundStarted = false;
+            round++;
+        }
     }
 
     void addResolvingFrom(String name, String query) {
@@ -90,6 +94,7 @@ public class ResolverProgress {
 
     void addStep(String step) {
         steps.add("Round " + round + " : " + step);
+        roundStarted = true;
     }
 
     private String resolvedValue(JsonNode node) {

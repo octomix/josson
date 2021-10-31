@@ -299,6 +299,8 @@ class FuncDispatcher {
                     return funcCenter(node, params);
                 case "concat":
                     return funcConcat(node, params);
+                case "csv":
+                    return funcCsv(node, params);
                 case "join":
                     return funcJoin(node, params);
                 case "keepafter":

@@ -386,7 +386,6 @@ public class Jossons {
     private String fillInPlaceholderWithResolver(String template, Function<String, String> dictionaryFinder,
                                                  BiFunction<String, String, Josson> dataFinder, boolean isXml,
                                                  ResolverProgress progress) throws NoValuePresentException {
-        int unresolvableSteps = 0;
         Set<String> unresolvablePlaceholders = new HashSet<>();
         Set<String> unresolvedDatasetNames = new HashSet<>();
         List<String> checkInfiniteLoop = new ArrayList<>();
@@ -398,17 +397,10 @@ public class Jossons {
                 template = fillInPlaceholderLoop(template, isXml);
                 break;
             } catch (NoValuePresentException e) {
-                if (!e.getDatasetNames().isEmpty()) {
-                    progress.addStep("Unresolved " + e.getDatasetNames());
-                }
                 if (e.getPlaceholders() == null) {
                     unresolvedDatasetNames.clear();
                 } else {
-                    if (!e.getPlaceholders().isEmpty()) {
-                        progress.addStep("Unresolvable placeholders " + e.getPlaceholders());
-                        unresolvablePlaceholders.addAll(e.getPlaceholders());
-                        unresolvableSteps++;
-                    }
+                    unresolvablePlaceholders.addAll(e.getPlaceholders());
                     template = e.getContent();
                 }
                 Map<String, String> namedQueries = new HashMap<>();
@@ -475,9 +467,7 @@ public class Jossons {
             }
         }
         if (!unresolvablePlaceholders.isEmpty()) {
-            if (unresolvableSteps > 1) {
-                progress.addStep("Unresolvable placeholders " + unresolvablePlaceholders);
-            }
+            progress.addStep("Unresolvable placeholders " + unresolvablePlaceholders);
             throw new NoValuePresentException(null, unresolvablePlaceholders, template);
         }
         return template;

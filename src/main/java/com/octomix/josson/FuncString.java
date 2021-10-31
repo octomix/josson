@@ -190,7 +190,22 @@ class FuncString {
         return sb.toString();
     }
 
-    static JsonNode funcJoin(JsonNode node, String params) {
+    static TextNode funcCsv(JsonNode node, String params) {
+        ArrayNode array = getParamArrayOrItself(params, node);
+        if (array == null) {
+            return null;
+        }
+        List<String> texts = new ArrayList<>();
+        for (int i = 0; i < array.size(); i++) {
+            JsonNode tryNode = array.get(i);
+            if (nodeHasValue(tryNode)) {
+                texts.add(csvQuote(tryNode.asText()));
+            }
+        }
+        return TextNode.valueOf(String.join(",", texts));
+    }
+
+    static TextNode funcJoin(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
         if (pathAndParams.hasKey()) {
             node = getNode(node, pathAndParams.getKey());
