@@ -76,25 +76,34 @@ class FuncStructural {
     }
 
     static JsonNode funcFlatten(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNode(node, path);
+        Pair<String, Integer> pathAndParams = getParamPathAndInt(params);
+        if (pathAndParams.hasKey()) {
+            node = getNode(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        if (!node.isArray()) {
+        int flattenLevels = pathAndParams.getValue() == null ? 1 : pathAndParams.getValue();
+        if (!node.isArray() || flattenLevels < 0) {
             return node;
         }
         ArrayNode array = MAPPER.createArrayNode();
+        funcFlattenElement(array, node, flattenLevels);
+        return array;
+    }
+
+    private static void funcFlattenElement(ArrayNode array, JsonNode node, int level) {
         for (int i = 0; i < node.size(); i++) {
             if (node.get(i).isArray()) {
-                array.addAll((ArrayNode) node.get(i));
+                if (level == 1) {
+                    array.addAll((ArrayNode) node.get(i));
+                } else {
+                    funcFlattenElement(array, node.get(i), level - 1);
+                }
             } else {
                 array.add(node.get(i));
             }
         }
-        return array;
     }
 
     static JsonNode funcMap(JsonNode node, String params) {
@@ -148,22 +157,15 @@ class FuncStructural {
     }
 
     static JsonNode funcToArray(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNode(node, path);
-            if (node == null) {
-                return null;
-            }
+        JsonNode container = getParamArrayOrItselfIsContainer(params, node);
+        if (container == null) {
+            return null;
         }
-        if (node.isArray()) {
-            return node;
+        if (container.isArray()) {
+            return container;
         }
         ArrayNode array = MAPPER.createArrayNode();
-        if (node.isObject()) {
-            node.forEach(array::add);
-        } else {
-            array.add(node);
-        }
+        container.forEach(array::add);
         return array;
     }
 }

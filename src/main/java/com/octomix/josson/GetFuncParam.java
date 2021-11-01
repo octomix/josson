@@ -42,9 +42,9 @@ class GetFuncParam {
     }
 
     static Pair<String, Integer> getParamPathAndInt(String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 1, 2);
+        List<String> paramList = decomposeFunctionParameters(params, 0, 2);
         String path = paramList.size() > 1 ? paramList.remove(0) : null;
-        return Pair.of(path, Integer.parseInt(paramList.get(0)));
+        return Pair.of(path, paramList.size() > 0 ? Integer.parseInt(paramList.get(0)) : null);
     }
 
     static Pair<String, Integer[]> getParamPathAndStartEnd(String params) {
@@ -105,6 +105,17 @@ class GetFuncParam {
             elements.put(name, path);
         }
         return elements;
+    }
+
+    static JsonNode getParamArrayOrItselfIsContainer(String params, JsonNode node) {
+        List<String> paramList = decomposeFunctionParameters(params, 0, -1);
+        if (paramList.isEmpty()) {
+            if (node.isContainerNode()) {
+                return node;
+            }
+            return null;
+        }
+        return getParamArray(paramList, node);
     }
 
     static ArrayNode getParamArrayOrItself(String params, JsonNode node) {

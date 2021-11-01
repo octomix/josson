@@ -23,6 +23,7 @@ import com.octomix.josson.commons.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.JossonCore.*;
@@ -191,18 +192,36 @@ class FuncString {
     }
 
     static TextNode funcCsv(JsonNode node, String params) {
-        ArrayNode array = getParamArrayOrItself(params, node);
-        if (array == null) {
+        JsonNode container = getParamArrayOrItselfIsContainer(params, node);
+        if (container == null) {
             return null;
         }
-        List<String> texts = new ArrayList<>();
-        for (int i = 0; i < array.size(); i++) {
-            JsonNode tryNode = array.get(i);
-            if (nodeHasValue(tryNode)) {
-                texts.add(csvQuote(tryNode.asText()));
+        List<JsonNode> values = new ArrayList<>();
+        funcCsvCollectValues(values, container);
+        return TextNode.valueOf(values.stream()
+                .map(value -> csvQuote(value.asText()))
+                .collect(Collectors.joining(",")));
+    }
+
+    static void funcCsvCollectValues(List<JsonNode> values, JsonNode node) {
+        if (node.isObject()) {
+            node.forEach(elem -> {
+                if (elem.isContainerNode()) {
+                    funcCsvCollectValues(values, elem);
+                } else if (!elem.isNull()) {
+                    values.add(elem);
+                }
+            });
+            return;
+        }
+        for (int i = 0; i < node.size(); i++) {
+            JsonNode tryNode = node.get(i);
+            if (tryNode.isContainerNode()) {
+                funcCsvCollectValues(values, tryNode);
+            } else if (!tryNode.isNull()) {
+                values.add(tryNode);
             }
         }
-        return TextNode.valueOf(String.join(",", texts));
     }
 
     static TextNode funcJoin(JsonNode node, String params) {
@@ -584,12 +603,13 @@ class FuncString {
                 return null;
             }
         }
+        int repeat = pathAndParams.getValue() == null ? 0 : pathAndParams.getValue();
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (nodeHasValue(textNode)) {
-                    array.add(TextNode.valueOf(StringUtils.repeat(textNode.asText(), pathAndParams.getValue())));
+                    array.add(TextNode.valueOf(StringUtils.repeat(textNode.asText(), repeat)));
                 }
             }
             return array;
@@ -597,7 +617,7 @@ class FuncString {
         if (!nodeHasValue(node)) {
             return null;
         }
-        return TextNode.valueOf(StringUtils.repeat(node.asText(), pathAndParams.getValue()));
+        return TextNode.valueOf(StringUtils.repeat(node.asText(), repeat));
     }
 
     static JsonNode funcReplace(JsonNode node, String params, boolean ignoreCase) {
