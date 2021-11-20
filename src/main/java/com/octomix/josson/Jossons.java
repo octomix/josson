@@ -314,7 +314,13 @@ public class Jossons {
         if (sb.length() == 0 && !textAdded) {
             return template;
         }
-        sb.append(template, offset, template.length());
+        if (placeholderAt >= 0) {
+            unresolvedPlaceholders.add("Lack of closing tag: " +
+                    StringUtils.abbreviate(template.substring(placeholderAt), 0, 20));
+            sb.append("**").append(template, placeholderAt + 2, template.length());
+        } else {
+            sb.append(template, offset, template.length());
+        }
         template = sb.toString();
         if (!unresolvedDatasets.isEmpty() || !unresolvedPlaceholders.isEmpty()) {
             throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, template);
@@ -628,7 +634,7 @@ public class Jossons {
         }
         if (operator == JoinOperator.LEFT_JOIN_MANY) {
             JsonNode rightToJoin = Josson.getNode(
-                    rightArray, "[" + StringUtils.join(conditions, " & ") + "]@");
+                    rightArray, "[" + StringUtils.join(conditions, " & ") + "]*");
             if (rightToJoin != null) {
                 ObjectNode joinedNode = leftObject.deepCopy();
                 joinedNode.set(arrayName, rightToJoin);

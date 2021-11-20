@@ -16,7 +16,6 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -172,7 +171,34 @@ public class Josson {
     /**
      * Simply returns the content.
      *
-     * @return The content Jackson JsonNode
+     * @return The root Jackson JsonNode
+     */
+    public JsonNode getRoot() {
+        return jsonNode;
+    }
+
+    /**
+     * Simply returns the content if it is an ObjectNode.
+     *
+     * @return The root as Jackson ObjectNode. {@code null} if the root is not an ObjectNode.
+     */
+    public ObjectNode getRootAsObject() {
+        return jsonNode != null && jsonNode.isObject() ? (ObjectNode) jsonNode : null;
+    }
+
+    /**
+     * Simply returns the content if it is an ArrayNode.
+     *
+     * @return The root as Jackson ArrayNode. {@code null} if the root is not an ArrayNode.
+     */
+    public ArrayNode getRootAsArray() {
+        return jsonNode != null && jsonNode.isArray() ? (ArrayNode) jsonNode : null;
+    }
+
+    /**
+     * Simply returns the content.
+     *
+     * @return The root Jackson JsonNode
      */
     public JsonNode getNode() {
         return jsonNode;
@@ -182,10 +208,10 @@ public class Josson {
      * Get an ArrayNode element if the content is an ArrayNode.
      *
      * @param index index of the specific ArrayNode element
-     * @return The specific ArrayNode element
+     * @return The specific ArrayNode element. {@code null} if the root is not an ArrayNode.
      */
     public JsonNode getNode(int index) {
-        return jsonNode.isArray() ? jsonNode.get(index) : null;
+        return jsonNode != null && jsonNode.isArray() ? jsonNode.get(index) : null;
     }
 
     /**
@@ -204,11 +230,11 @@ public class Josson {
      *
      * @param index index of the specific ArrayNode element
      * @param jossonPath the Josson query path
-     * @return The resulting Jackson JsonNode
+     * @return The resulting Jackson JsonNode. {@code null} if the root is not an ArrayNode.
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(int index, String jossonPath) {
-        return jsonNode.isArray() ? getNode(jsonNode.get(index), jossonPath) : null;
+        return jsonNode != null && jsonNode.isArray() ? getNode(jsonNode.get(index), jossonPath) : null;
     }
 
     /**
@@ -227,7 +253,7 @@ public class Josson {
      *
      * @param index index of the specific ArrayNode element
      * @param jossonPath the Josson query path
-     * @return A new Josson object with the resulting JsonNode
+     * @return A new Josson object with the resulting JsonNode. {@code null} if the root is not an ArrayNode.
      */
     public Josson getJosson(int index, String jossonPath) {
         JsonNode node = getNode(index, jossonPath);
@@ -477,11 +503,8 @@ public class Josson {
      * @param valueType the result class type
      * @param <T> the specific type of the result
      * @return The deserialized JSON content converted to the result type
-     * @throws IOException if a low-level I/O problem occurs
-     * @throws JsonParseException if underlying input contains invalid content
-     * @throws JsonMappingException if the input JSON structure does not match structure expected for result type
      */
-    public static <T> T readValue(File file, Class<T> valueType) throws IOException, JsonParseException {
+    public static <T> T readValue(File file, Class<T> valueType) throws IOException {
         return MAPPER.readValue(file, valueType);
     }
 
