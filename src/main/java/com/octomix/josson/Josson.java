@@ -503,6 +503,7 @@ public class Josson {
      * @param valueType the result class type
      * @param <T> the specific type of the result
      * @return The deserialized JSON content converted to the result type
+     * @throws IOException if a low-level I/O problem occurs
      */
     public static <T> T readValue(File file, Class<T> valueType) throws IOException {
         return MAPPER.readValue(file, valueType);
