@@ -452,4 +452,20 @@ class PatternMatcher {
         }
         return tokens;
     }
+
+    static String getLastElementName(String path) {
+        List<String> paths = decomposePaths(path);
+        for (int i = paths.size() - 1; i >= 0 ; i--) {
+            if (matchFunctionAndArgument(paths.get(i)) == null) {
+                return matchFilterQuery(paths.get(i))[0];
+            }
+        }
+        return "undefined";
+    }
+
+    static void checkElementName(String name) {
+        if (name.contains(".")) {
+            throw new IllegalArgumentException("Illegal '.' in element name '" + name + "'");
+        }
+    }
 }

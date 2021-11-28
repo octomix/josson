@@ -205,17 +205,29 @@ public class Jossons {
         String rightArrayName = null;
         int pos = leftKeys[0].indexOf(':');
         if (pos >= 0) {
-            leftArrayName = leftKeys[0].substring(0, pos);
+            leftArrayName = leftKeys[0].substring(0, pos).trim();
             leftKeys[0] = leftKeys[0].substring(pos + 1);
         }
         pos = rightKeys[0].indexOf(':');
         if (pos >= 0) {
-            rightArrayName = rightKeys[0].substring(0, pos);
+            rightArrayName = rightKeys[0].substring(0, pos).trim();
             rightKeys[0] = rightKeys[0].substring(pos + 1);
         }
-        if ((operator == JoinOperator.LEFT_JOIN_MANY && rightArrayName == null)
-                || (operator == JoinOperator.RIGHT_JOIN_MANY && leftArrayName == null)) {
-            throw new IllegalArgumentException("missing array name for join-many");
+        switch (operator) {
+            case LEFT_JOIN_MANY:
+                if (rightArrayName == null) {
+                    rightArrayName = getLastElementName(rightQuery[0]);
+                } else {
+                    checkElementName(rightArrayName);
+                }
+                break;
+            case RIGHT_JOIN_MANY:
+                if (leftArrayName == null) {
+                    leftArrayName = getLastElementName(leftQuery[0]);
+                } else {
+                    checkElementName(leftArrayName);
+                }
+                break;
         }
         JsonNode joinedNode = joinNodes(leftNode, leftKeys, leftArrayName, operator, rightNode, rightKeys, rightArrayName);
         if (joinedNode == null) {

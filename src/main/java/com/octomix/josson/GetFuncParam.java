@@ -91,15 +91,12 @@ class GetFuncParam {
             if (!"?".equals(name)) {
                 if (values.length == 1) {
                     path = name;
-                    List<String> paths = decomposePaths(path);
-                    for (int i = paths.size() - 1; i >= 0 ; i--) {
-                        if (matchFunctionAndArgument(paths.get(i)) == null) {
-                            name = matchFilterQuery(paths.get(i))[0];
-                            break;
-                        }
+                    name = getLastElementName(path);
+                } else {
+                    checkElementName(name);
+                    if (!StringUtils.isBlank(values[1])) {
+                        path = values[1].trim();
                     }
-                } else if (!StringUtils.isBlank(values[1])) {
-                    path = values[1].trim();
                 }
             }
             elements.put(name, path);
