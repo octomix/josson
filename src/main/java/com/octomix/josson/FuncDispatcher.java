@@ -141,6 +141,10 @@ class FuncDispatcher {
                     return funcDateMinus(node, params, ChronoUnit.MONTHS);
                 case "minusyears":
                     return funcDateMinus(node, params, ChronoUnit.YEARS);
+                case "truncatetomicro":
+                    return funcDateTruncateTo(node, params, ChronoUnit.MICROS);
+                case "truncatetomilli":
+                    return funcDateTruncateTo(node, params, ChronoUnit.MILLIS);
                 case "truncatetosecond":
                     return funcDateTruncateTo(node, params, ChronoUnit.SECONDS);
                 case "truncatetominute":
@@ -149,6 +153,16 @@ class FuncDispatcher {
                     return funcDateTruncateTo(node, params, ChronoUnit.HOURS);
                 case "truncatetoday":
                     return funcDateTruncateTo(node, params, ChronoUnit.DAYS);
+                case "truncatetomonth":
+                    return funcDateTruncateToMonth(node, params);
+                case "truncatetoyear":
+                    return funcDateTruncateToYear(node, params);
+                case "withnano":
+                    return funcDateWith(node, params, ChronoField.NANO_OF_SECOND);
+                case "withmicro":
+                    return funcDateWith(node, params, ChronoField.MICRO_OF_SECOND);
+                case "withmilli":
+                    return funcDateWith(node, params, ChronoField.MILLI_OF_SECOND);
                 case "withsecond":
                     return funcDateWith(node, params, ChronoField.SECOND_OF_MINUTE);
                 case "withminute":
@@ -167,6 +181,8 @@ class FuncDispatcher {
                     return funcDayEnd(node, params);
                 case "monthend":
                     return funcMonthEnd(node, params);
+                case "yearend":
+                    return funcYearEnd(node, params);
                 case "lengthofmonth":
                     return funcLengthOfMonth(node, params);
                 case "lengthofyear":

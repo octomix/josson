@@ -139,6 +139,58 @@ public class FuncDate {
         return TextNode.valueOf(toLocalDateTime(node).truncatedTo(unit).format(ISO_LOCAL_DATE_TIME));
     }
 
+    static JsonNode funcDateTruncateToMonth(JsonNode node, String params) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode valueNode = node.get(i);
+                if (valueNode.isTextual()) {
+                    array.add(TextNode.valueOf(toLocalDateTime(valueNode).truncatedTo(ChronoUnit.DAYS)
+                            .withDayOfMonth(1).format(ISO_LOCAL_DATE_TIME)));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(toLocalDateTime(node).truncatedTo(ChronoUnit.DAYS)
+                .withDayOfMonth(1).format(ISO_LOCAL_DATE_TIME));
+    }
+
+    static JsonNode funcDateTruncateToYear(JsonNode node, String params) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode valueNode = node.get(i);
+                if (valueNode.isTextual()) {
+                    array.add(TextNode.valueOf(toLocalDateTime(valueNode).truncatedTo(ChronoUnit.DAYS)
+                            .withDayOfYear(1).format(ISO_LOCAL_DATE_TIME)));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(toLocalDateTime(node).truncatedTo(ChronoUnit.DAYS)
+                .withDayOfYear(1).format(ISO_LOCAL_DATE_TIME));
+    }
+
     static JsonNode funcDateWith(JsonNode node, String params, ChronoField field) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
@@ -203,8 +255,8 @@ public class FuncDate {
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode valueNode = node.get(i);
                 if (valueNode.isTextual()) {
-                    array.add(TextNode.valueOf(toLocalDateTime(valueNode).truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1)
-                            .plusMonths(1).minusNanos(1).format(ISO_LOCAL_DATE_TIME)));
+                    array.add(TextNode.valueOf(toLocalDateTime(valueNode).truncatedTo(ChronoUnit.DAYS)
+                            .withDayOfMonth(1).plusMonths(1).minusNanos(1).format(ISO_LOCAL_DATE_TIME)));
                 }
             }
             return array;
@@ -212,8 +264,34 @@ public class FuncDate {
         if (!node.isTextual()) {
             return null;
         }
-        return TextNode.valueOf(toLocalDateTime(node).truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1)
-                .plusMonths(1).minusNanos(1).format(ISO_LOCAL_DATE_TIME));
+        return TextNode.valueOf(toLocalDateTime(node).truncatedTo(ChronoUnit.DAYS)
+                .withDayOfMonth(1).plusMonths(1).minusNanos(1).format(ISO_LOCAL_DATE_TIME));
+    }
+
+    static JsonNode funcYearEnd(JsonNode node, String params) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i  = 0; i < node.size(); i++) {
+                JsonNode valueNode = node.get(i);
+                if (valueNode.isTextual()) {
+                    array.add(TextNode.valueOf(toLocalDateTime(valueNode).truncatedTo(ChronoUnit.DAYS)
+                            .withDayOfYear(1).plusYears(1).minusNanos(1).format(ISO_LOCAL_DATE_TIME)));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(toLocalDateTime(node).truncatedTo(ChronoUnit.DAYS)
+                .withDayOfYear(1).plusYears(1).minusNanos(1).format(ISO_LOCAL_DATE_TIME));
     }
 
     static JsonNode funcLengthOfMonth(JsonNode node, String params) {
