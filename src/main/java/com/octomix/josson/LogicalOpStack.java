@@ -62,19 +62,30 @@ class LogicalOpStack {
         boolean result = true;
         while (!steps.isEmpty()) {
             if ("(".equals(lastStep.getUnresolved())) {
-                break;
+                if ("!".equals(lastStep.getOperator())) {
+                    result = !result;
+                    lastStep.resetOperator();
+                }
+                lastStep.setResolved(BooleanNode.valueOf(result));
+                return;
             }
             if (node == null || !node.asBoolean()) {
                 switch (lastStep.getOperator()) {
                     case "":
                     case "&":
                     case "|":
+                    case "!":
                         if (result) {
                             JsonNode lastStepNode = resolveLastStep.get();
+                            result = lastStepNode != null && lastStepNode.asBoolean();
                             if (lastStep.getOperator().isEmpty()) {
                                 node = lastStepNode;
-                            } else {
-                                result = lastStepNode != null && lastStepNode.asBoolean();
+                                break;
+                            }
+                            if ("!".equals(lastStep.getOperator())) {
+                                result = !result;
+                                node = BooleanNode.valueOf(result);
+                                break;
                             }
                         }
                         if ("|".equals(lastStep.getOperator())) {
@@ -91,25 +102,38 @@ class LogicalOpStack {
             }
             pop();
         }
-        if (steps.isEmpty()) {
-            throw new IllegalArgumentException(")");
-        }
-        lastStep.setResolved(node);
+        throw new IllegalArgumentException(")");
     }
 
     private JsonNode finalResult(Supplier<JsonNode> resolveLastStep) {
         boolean result = true;
+        JsonNode stepNode = null;
         while (!steps.isEmpty()) {
+            if ("!".equals(lastStep.getOperator())) {
+                stepNode = resolveLastStep.get();
+                if (stepNode == null) {
+                    stepNode = BooleanNode.FALSE;
+                } else if (stepNode.isNull()) {
+                    stepNode = BooleanNode.TRUE;
+                } else {
+                    stepNode = BooleanNode.valueOf(!stepNode.asBoolean());
+                }
+                pop();
+                if (steps.isEmpty()) {
+                    return stepNode;
+                }
+                lastStep.setResolved(stepNode);
+            }
             switch (lastStep.getOperator()) {
                 case "":
                 case "&":
                 case "|":
                     if (result) {
-                        JsonNode lastStepNode = resolveLastStep.get();
+                        stepNode = resolveLastStep.get();
                         if (lastStep.getOperator().isEmpty()) {
-                            return lastStepNode;
+                            return stepNode;
                         }
-                        result = lastStepNode != null && lastStepNode.asBoolean();
+                        result = stepNode != null && stepNode.asBoolean();
                     }
                     if ("|".equals(lastStep.getOperator())) {
                         if (result) {
@@ -123,7 +147,7 @@ class LogicalOpStack {
             }
             pop();
         }
-        return TextNode.valueOf("");
+        return stepNode != null ? stepNode : TextNode.valueOf("");
     }
 
     /*
@@ -221,27 +245,29 @@ class LogicalOpStack {
     }
 
     private void evaluate(String operator, String expression) throws UnresolvedDatasetException {
-        if (operator.isEmpty()) {
-            if (")".equals(expression)) {
-                try {
-                    reduceLastGroup(() -> {
-                        try {
-                            return lastStep.resolveFrom(datasets);
-                        } catch (UnresolvedDatasetException e) {
-                            throw new RuntimeException(e);
+        switch (operator) {
+            case "":
+            case "!":
+                if (")".equals(expression)) {
+                    try {
+                        reduceLastGroup(() -> {
+                            try {
+                                return lastStep.resolveFrom(datasets);
+                            } catch (UnresolvedDatasetException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    } catch (RuntimeException e) {
+                        if (e.getCause() instanceof UnresolvedDatasetException) {
+                            throw (UnresolvedDatasetException) e.getCause();
+                        } else {
+                            throw e;
                         }
-                    });
-                } catch (RuntimeException e) {
-                    if (e.getCause() instanceof UnresolvedDatasetException) {
-                        throw (UnresolvedDatasetException) e.getCause();
-                    } else {
-                        throw e;
                     }
+                } else {
+                    push(operator, expression);
                 }
-            } else {
-                push(operator, expression);
-            }
-            return;
+                return;
         }
         if (steps.isEmpty()) {
             throw new IllegalArgumentException();

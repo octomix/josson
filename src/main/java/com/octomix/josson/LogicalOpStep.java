@@ -32,7 +32,7 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 class LogicalOpStep {
 
-    private final String operator;
+    private String operator;
     private String unresolved;
     private JsonNode resolved;
 
@@ -68,6 +68,10 @@ class LogicalOpStep {
 
     String getOperator() {
         return operator;
+    }
+
+    void resetOperator() {
+        operator = "";
     }
 
     String getUnresolved() {

@@ -336,7 +336,7 @@ class PatternMatcher {
                     pos = beg + 1;
                     break;
                 default:
-                    for (pos = beg; pos <= last && "=!<>&|".indexOf(input.charAt(pos)) < 0; pos++) {
+                    for (pos = beg; pos <= last && "=!<>&|)".indexOf(input.charAt(pos)) < 0; pos++) {
                         if (input.charAt(pos) == '-') {
                             // skip "->"
                             if (pos++ == last) {
