@@ -60,44 +60,35 @@ class LogicalOpStack {
     private void reduceLastGroup(Supplier<JsonNode> resolveLastStep) {
         JsonNode node = null;
         boolean result = true;
+        boolean evaluating = true;
         while (!steps.isEmpty()) {
             if ("(".equals(lastStep.getUnresolved())) {
                 if ("!".equals(lastStep.getOperator())) {
-                    result = !result;
                     lastStep.resetOperator();
+                    lastStep.setResolved(BooleanNode.valueOf(!result));
+                } else {
+                    lastStep.setResolved(node);
                 }
-                lastStep.setResolved(BooleanNode.valueOf(result));
                 return;
             }
-            if (node == null || !node.asBoolean()) {
+            if (evaluating) {
+                if (result) {
+                    node = resolveLastStep.get();
+                    result = node != null && node.asBoolean();
+                }
                 switch (lastStep.getOperator()) {
-                    case "":
-                    case "&":
                     case "|":
-                    case "!":
                         if (result) {
-                            JsonNode lastStepNode = resolveLastStep.get();
-                            result = lastStepNode != null && lastStepNode.asBoolean();
-                            if (lastStep.getOperator().isEmpty()) {
-                                node = lastStepNode;
-                                break;
-                            }
-                            if ("!".equals(lastStep.getOperator())) {
-                                result = !result;
-                                node = BooleanNode.valueOf(result);
-                                break;
-                            }
-                        }
-                        if ("|".equals(lastStep.getOperator())) {
-                            if (result) {
-                                node = BooleanNode.TRUE;
-                            } else {
-                                result = true;
-                            }
+                            node = BooleanNode.TRUE;
+                            evaluating = false;
+                        } else {
+                            result = true;
                         }
                         break;
-                    default:
-                        throw new IllegalArgumentException(lastStep.getOperator());
+                    case "!":
+                        result = node == null || node.isNull() || (node.isValueNode() && !node.asBoolean());
+                        node = BooleanNode.valueOf(result);
+                        break;
                 }
             }
             pop();
@@ -106,48 +97,39 @@ class LogicalOpStack {
     }
 
     private JsonNode finalResult(Supplier<JsonNode> resolveLastStep) {
+        JsonNode node = null;
         boolean result = true;
-        JsonNode stepNode = null;
         while (!steps.isEmpty()) {
-            if ("!".equals(lastStep.getOperator())) {
-                stepNode = resolveLastStep.get();
-                if (stepNode == null) {
-                    stepNode = BooleanNode.FALSE;
-                } else if (stepNode.isNull()) {
-                    stepNode = BooleanNode.TRUE;
-                } else {
-                    stepNode = BooleanNode.valueOf(!stepNode.asBoolean());
-                }
-                pop();
-                if (steps.isEmpty()) {
-                    return stepNode;
-                }
-                lastStep.setResolved(stepNode);
-            }
             switch (lastStep.getOperator()) {
                 case "":
+                    return result ? resolveLastStep.get() : node != null ? node : TextNode.valueOf("");
                 case "&":
-                case "|":
-                    if (result) {
-                        stepNode = resolveLastStep.get();
-                        if (lastStep.getOperator().isEmpty()) {
-                            return stepNode;
-                        }
-                        result = stepNode != null && stepNode.asBoolean();
-                    }
-                    if ("|".equals(lastStep.getOperator())) {
-                        if (result) {
-                            return BooleanNode.TRUE;
-                        }
-                        result = true;
+                    if (result && !"".equals(lastStep.getUnresolved())) {
+                        node = resolveLastStep.get();
+                        result = node != null && node.asBoolean();
                     }
                     break;
-                default:
-                    throw new IllegalArgumentException(lastStep.getOperator());
+                case "|":
+                    if (result && !"".equals(lastStep.getUnresolved())) {
+                        node = resolveLastStep.get();
+                        result = node != null && node.asBoolean();
+                    }
+                    if (result) {
+                        return BooleanNode.TRUE;
+                    }
+                    result = true;
+                    break;
+                case "!":
+                    if (result) {
+                        node = resolveLastStep.get();
+                        result = node == null || node.isNull() || (node.isValueNode() && !node.asBoolean());
+                        node = BooleanNode.valueOf(result);
+                    }
+                    break;
             }
             pop();
         }
-        return stepNode != null ? stepNode : TextNode.valueOf("");
+        return node;
     }
 
     /*

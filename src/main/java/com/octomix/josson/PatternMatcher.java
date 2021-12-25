@@ -28,7 +28,7 @@ class PatternMatcher {
 
     private static class AtPositionException extends IllegalArgumentException {
         AtPositionException(String input, String message, int pos) {
-            super(message + (pos == -1 ? " at the end" : " at position" + pos) + ": " + input);
+            super(message + (pos == -1 ? " at the end" : " at position " + pos) + ": " + input);
         }
     }
     
