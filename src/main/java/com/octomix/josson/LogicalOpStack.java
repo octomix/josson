@@ -72,7 +72,7 @@ class LogicalOpStack {
                 return;
             }
             if (evaluating) {
-                if (result) {
+                if (result && !"".equals(lastStep.getUnresolved())) {
                     node = resolveLastStep.get();
                     result = node != null && node.asBoolean();
                 }
