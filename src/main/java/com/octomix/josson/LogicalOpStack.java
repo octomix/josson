@@ -20,10 +20,10 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import static com.octomix.josson.PatternMatcher.decomposeConditions;
 
@@ -31,7 +31,7 @@ class LogicalOpStack {
 
     private final Josson arrayNode;
     private final Map<String, Josson> datasets;
-    private final Stack<LogicalOpStep> steps = new Stack<>();
+    private final LinkedList<LogicalOpStep> steps = new LinkedList<>();
     private LogicalOpStep lastStep = null;
 
     LogicalOpStack(JsonNode node) {
@@ -48,88 +48,63 @@ class LogicalOpStack {
 
     private void push(String operator, String unresolved) {
         lastStep = new LogicalOpStep(operator, unresolved);
-        steps.push(lastStep);
+        steps.addLast(lastStep);
     }
 
     private LogicalOpStep pop() {
-        LogicalOpStep thisStep = steps.pop();
-        lastStep = steps.isEmpty() ? null : steps.peek();
+        LogicalOpStep thisStep = steps.removeLast();
+        lastStep = steps.peekLast();
         return thisStep;
     }
 
-    private void reduceLastGroup(Supplier<JsonNode> resolveLastStep) {
+    private JsonNode evaluateSteps(boolean inParentheses, Function<LogicalOpStep, JsonNode> resolver) {
+        LinkedList<LogicalOpStep> iterator;
+        if (inParentheses) {
+            iterator = new LinkedList<>();
+            while (!steps.isEmpty()) {
+                if ("(".equals(lastStep.getUnresolved())) {
+                    break;
+                }
+                iterator.addFirst(pop());
+            }
+            if (lastStep == null) {
+                throw new IllegalArgumentException(")");
+            }
+        } else {
+            iterator = steps;
+        }
         JsonNode node = null;
         boolean result = true;
-        boolean evaluating = true;
-        while (!steps.isEmpty()) {
-            if ("(".equals(lastStep.getUnresolved())) {
-                if ("!".equals(lastStep.getOperator())) {
-                    lastStep.resetOperator();
-                    lastStep.setResolved(BooleanNode.valueOf(!result));
-                } else {
-                    lastStep.setResolved(node);
+        for (LogicalOpStep step : iterator) {
+            if ("|".equals(step.getOperator())) {
+                if (result) {
+                    node = BooleanNode.TRUE;
+                    break;
                 }
-                return;
+                result = true;
             }
-            if (evaluating) {
-                if (result && !"".equals(lastStep.getUnresolved())) {
-                    node = resolveLastStep.get();
+            if ("".equals(step.getUnresolved())) {
+                continue;
+            }
+            if (result) {
+                node = resolver.apply(step);
+                if ("!".equals(step.getOperator())) {
+                    result = node == null || node.isNull() || (node.isValueNode() && !node.asBoolean());
+                    node = BooleanNode.valueOf(result);
+                } else {
                     result = node != null && node.asBoolean();
                 }
-                switch (lastStep.getOperator()) {
-                    case "|":
-                        if (result) {
-                            node = BooleanNode.TRUE;
-                            evaluating = false;
-                        } else {
-                            result = true;
-                        }
-                        break;
-                    case "!":
-                        result = node == null || node.isNull() || (node.isValueNode() && !node.asBoolean());
-                        node = BooleanNode.valueOf(result);
-                        break;
-                }
             }
-            pop();
         }
-        throw new IllegalArgumentException(")");
-    }
-
-    private JsonNode finalResult(Supplier<JsonNode> resolveLastStep) {
-        JsonNode node = null;
-        boolean result = true;
-        while (!steps.isEmpty()) {
-            switch (lastStep.getOperator()) {
-                case "":
-                    return result ? resolveLastStep.get() : node != null ? node : TextNode.valueOf("");
-                case "&":
-                    if (result && !"".equals(lastStep.getUnresolved())) {
-                        node = resolveLastStep.get();
-                        result = node != null && node.asBoolean();
-                    }
-                    break;
-                case "|":
-                    if (result && !"".equals(lastStep.getUnresolved())) {
-                        node = resolveLastStep.get();
-                        result = node != null && node.asBoolean();
-                    }
-                    if (result) {
-                        return BooleanNode.TRUE;
-                    }
-                    result = true;
-                    break;
-                case "!":
-                    if (result) {
-                        node = resolveLastStep.get();
-                        result = node == null || node.isNull() || (node.isValueNode() && !node.asBoolean());
-                        node = BooleanNode.valueOf(result);
-                    }
-                    break;
+        if (inParentheses) {
+            if ("!".equals(lastStep.getOperator())) {
+                lastStep.resetOperator();
+                node = BooleanNode.valueOf(!result);
             }
-            pop();
+            lastStep.setResolved(node);
+            return null;
         }
-        return node;
+        return result || node != null ? node : TextNode.valueOf("");
     }
 
     /*
@@ -148,13 +123,13 @@ class LogicalOpStack {
                 throw new IllegalArgumentException("\"" + e.getMessage() + "\" in " + statement);
             }
         }
-        return finalResult(() -> lastStep.resolveFrom(arrayNode, arrayIndex));
+        return evaluateSteps(false, (LogicalOpStep step) -> step.resolveFrom(arrayNode, arrayIndex));
     }
 
     private void evaluate(String operator, String expression, int arrayIndex) {
         if (operator.isEmpty()) {
             if (")".equals(expression)) {
-                reduceLastGroup(() -> lastStep.resolveFrom(arrayNode, arrayIndex));
+                evaluateSteps(true, (LogicalOpStep step) -> step.resolveFrom(arrayNode, arrayIndex));
             } else {
                 push(operator, expression);
             }
@@ -210,9 +185,9 @@ class LogicalOpStack {
             }
         }
         try {
-            return finalResult(() -> {
+            return evaluateSteps(false, (LogicalOpStep step) -> {
                 try {
-                    return lastStep.resolveFrom(datasets);
+                    return step.resolveFrom(datasets);
                 } catch (UnresolvedDatasetException e) {
                     throw new RuntimeException(e);
                 }
@@ -232,9 +207,9 @@ class LogicalOpStack {
             case "!":
                 if (")".equals(expression)) {
                     try {
-                        reduceLastGroup(() -> {
+                        evaluateSteps(true, (LogicalOpStep step) -> {
                             try {
-                                return lastStep.resolveFrom(datasets);
+                                return step.resolveFrom(datasets);
                             } catch (UnresolvedDatasetException e) {
                                 throw new RuntimeException(e);
                             }
