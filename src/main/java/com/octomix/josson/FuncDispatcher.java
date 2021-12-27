@@ -187,6 +187,10 @@ class FuncDispatcher {
                     return funcLengthOfMonth(node, params);
                 case "lengthofyear":
                     return funcLengthOfYear(node, params);
+                case "localtooffsetdate":
+                    return funcLocalToOffsetDate(node, params);
+                case "offsettolocaldate":
+                    return funcOffsetToLocalDate(node, params);
 
                 // Format
                 case "b64decode":

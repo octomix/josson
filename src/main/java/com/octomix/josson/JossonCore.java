@@ -19,8 +19,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 
-import java.time.DateTimeException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import static com.octomix.josson.Josson.getNode;
@@ -29,6 +31,7 @@ import static com.octomix.josson.PatternMatcher.*;
 class JossonCore {
 
     static final Mapper MAPPER = new Mapper();
+    static ZoneId zoneId = ZoneId.systemDefault();
 
     private enum FilterMode {
         FIRST_MATCHED(null),
@@ -112,9 +115,26 @@ class JossonCore {
     static LocalDateTime toLocalDateTime(JsonNode node) {
         try {
             return LocalDateTime.parse(node.asText());
-        } catch (DateTimeException e) {
+        } catch (DateTimeParseException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
+    }
+
+    static LocalDateTime offsetToLocalDateTime(JsonNode node) {
+        return toOffsetDateTime(node).atZoneSameInstant(zoneId).toLocalDateTime();
+    }
+
+    static OffsetDateTime toOffsetDateTime(JsonNode node) {
+        try {
+            return OffsetDateTime.parse(node.asText());
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
+
+    static OffsetDateTime localToOffsetDateTime(JsonNode node) {
+        LocalDateTime dateTime = toLocalDateTime(node);
+        return dateTime.atOffset(zoneId.getRules().getOffset(dateTime));
     }
 
     static String getNodeAsText(JsonNode node, String jossonPath) {

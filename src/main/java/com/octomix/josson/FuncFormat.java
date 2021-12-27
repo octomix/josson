@@ -25,7 +25,6 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -33,7 +32,6 @@ import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 class FuncFormat {
     static JsonNode funcB64Decode(JsonNode node, String params, Base64.Decoder decoder) {
@@ -201,9 +199,7 @@ class FuncFormat {
             for (int i = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
-                    array.add(TextNode.valueOf(
-                            LocalDateTime.parse(textNode.asText(), ISO_LOCAL_DATE_TIME)
-                                    .format(DateTimeFormatter.ofPattern(pattern))));
+                    array.add(TextNode.valueOf(toLocalDateTime(textNode).format(DateTimeFormatter.ofPattern(pattern))));
                 }
             }
             return array;
@@ -211,8 +207,7 @@ class FuncFormat {
         if (!node.isTextual()) {
             return null;
         }
-        return TextNode.valueOf(LocalDateTime.parse(node.asText(), ISO_LOCAL_DATE_TIME)
-                .format(DateTimeFormatter.ofPattern(pattern)));
+        return TextNode.valueOf(toLocalDateTime(node).format(DateTimeFormatter.ofPattern(pattern)));
     }
 
     static JsonNode funcFormatNumber(JsonNode node, String params) {

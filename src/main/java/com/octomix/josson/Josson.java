@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -347,11 +348,11 @@ public class Josson {
 
     public LocalDateTime getIsoLocalDateTime(String jossonPath) {
         ValueNode node = getValueNode(jossonPath);
-        return node == null || node.isNull() ? null : LocalDateTime.parse(node.asText());
+        return node == null || node.isNull() ? null : toLocalDateTime(node);
     }
 
     public LocalDateTime getRequiredIsoLocalDateTime(String jossonPath) throws Exception {
-        return LocalDateTime.parse(getRequiredValueNode(jossonPath).asText());
+        return toLocalDateTime(getRequiredValueNode(jossonPath));
     }
 
     public LocalDate getIsoLocalDate(String jossonPath) {
@@ -365,11 +366,11 @@ public class Josson {
 
     public OffsetDateTime getOffsetDateTime(String jossonPath) {
         ValueNode node = getValueNode(jossonPath);
-        return node == null || node.isNull() ? null : OffsetDateTime.parse(node.asText());
+        return node == null || node.isNull() ? null : toOffsetDateTime(node);
     }
 
     public OffsetDateTime getRequiredOffsetDateTime(String jossonPath) throws Exception {
-        return OffsetDateTime.parse(getRequiredValueNode(jossonPath).asText());
+        return toOffsetDateTime(getRequiredValueNode(jossonPath));
     }
 
     /**
@@ -408,6 +409,14 @@ public class Josson {
      */
     public static void setSerializationInclusion(JsonInclude.Include include) {
         MAPPER.setSerializationInclusion(include);
+    }
+
+    public static void setZoneId(ZoneId zoneId) {
+        JossonCore.zoneId = zoneId;
+    }
+
+    public static ZoneId getZoneId() {
+        return JossonCore.zoneId;
     }
 
     /**

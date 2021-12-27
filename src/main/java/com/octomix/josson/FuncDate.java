@@ -15,8 +15,7 @@ import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-public class FuncDate {
-
+class FuncDate {
     static JsonNode funcAmPmOfDay(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
@@ -340,5 +339,53 @@ public class FuncDate {
             return null;
         }
         return IntNode.valueOf(toLocalDateTime(node).toLocalDate().lengthOfYear());
+    }
+
+    static JsonNode funcLocalToOffsetDate(JsonNode node, String params) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    array.add(TextNode.valueOf(localToOffsetDateTime(textNode).toString()));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(localToOffsetDateTime(node).toString());
+    }
+
+    static JsonNode funcOffsetToLocalDate(JsonNode node, String params) {
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNode(node, path);
+            if (node == null) {
+                return null;
+            }
+        }
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode textNode = node.get(i);
+                if (textNode.isTextual()) {
+                    array.add(TextNode.valueOf(offsetToLocalDateTime(textNode).toString()));
+                }
+            }
+            return array;
+        }
+        if (!node.isTextual()) {
+            return null;
+        }
+        return TextNode.valueOf(offsetToLocalDateTime(node).toString());
     }
 }
