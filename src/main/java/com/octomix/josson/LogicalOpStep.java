@@ -22,18 +22,18 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
+import static com.octomix.josson.FuncDispatcher.isArrayModeFunction;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.matchJsonQuery;
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 class LogicalOpStep {
 
     private String operator;
-    private String unresolved;
+    private String expression;
     private JsonNode resolved;
 
     private enum RelationalOperator {
@@ -60,9 +60,9 @@ class LogicalOpStep {
         }
     }
 
-    LogicalOpStep(String operator, String unresolved) {
+    LogicalOpStep(String operator, String expression) {
         this.operator = operator;
-        this.unresolved = unresolved;
+        this.expression = expression;
         this.resolved = null;
     }
 
@@ -74,16 +74,16 @@ class LogicalOpStep {
         operator = "";
     }
 
-    String getUnresolved() {
-        return unresolved;
+    String getExpression() {
+        return expression;
     }
 
     void setResolved(JsonNode resolved) {
-        this.unresolved = null;
+        this.expression = null;
         this.resolved = resolved;
     }
 
-    private static JsonNode evaluateExpression(String expression, Map<String, Josson> datasets)
+    private JsonNode evaluateExpression(Map<String, Josson> datasets)
             throws UnresolvedDatasetException {
         try {
             return toValueNode(expression);
@@ -129,22 +129,13 @@ class LogicalOpStep {
                 case "":
                     return BooleanNode.TRUE;
                 case "now":
-                    return TextNode.valueOf(LocalDateTime.now()
-                            .format(ISO_LOCAL_DATE_TIME));
+                    return TextNode.valueOf(LocalDateTime.now().toString());
                 case "today":
-                    return TextNode.valueOf(LocalDateTime.now()
-                            .truncatedTo(ChronoUnit.DAYS)
-                            .format(ISO_LOCAL_DATE_TIME));
+                    return TextNode.valueOf(LocalDate.now().atStartOfDay().toString());
                 case "yesterday":
-                    return TextNode.valueOf(LocalDateTime.now()
-                            .truncatedTo(ChronoUnit.DAYS)
-                            .minusDays(1)
-                            .format(ISO_LOCAL_DATE_TIME));
+                    return TextNode.valueOf(LocalDate.now().atStartOfDay().minusDays(1).toString());
                 case "tomorrow":
-                    return TextNode.valueOf(LocalDateTime.now()
-                            .truncatedTo(ChronoUnit.DAYS)
-                            .plusDays(1)
-                            .format(ISO_LOCAL_DATE_TIME));
+                    return TextNode.valueOf(LocalDate.now().atStartOfDay().plusDays(1).toString());
             }
         }
         return null;
@@ -236,23 +227,22 @@ class LogicalOpStep {
     /*
         For JossonCore.evaluateFilter()
      */
-    private static JsonNode getNodeFrom(Josson arrayNode, int index, String expression) {
-        if (expression.equals("?")) {
+    private JsonNode getNodeFrom(Josson arrayNode, int index) {
+        if (expression.charAt(0) == INDEX_SYMBOL) {
+            return getIndexId(index, expression);
+        }
+        if (isCurrentNodeSymbol(expression)) {
             return arrayNode.getNode(index);
         }
-        switch (expression.charAt(0)) {
-            case '#':
-                return getIndexId(index, expression);
-            case '@':
-                return arrayNode.getNode(expression);
+        if (isArrayModeFunction(expression)) {
+            return arrayNode.getNode(expression);
         }
         return arrayNode.getNode(index, expression);
     }
 
     JsonNode resolveFrom(Josson arrayNode, int arrayIndex) {
-        if (unresolved != null) {
-            resolved = getNodeFrom(arrayNode, arrayIndex, unresolved);
-            unresolved = null;
+        if (expression != null) {
+            setResolved(getNodeFrom(arrayNode, arrayIndex));
         }
         return resolved;
     }
@@ -267,9 +257,9 @@ class LogicalOpStep {
         return node != null && !node.asBoolean();
     }
 
-    JsonNode relationalCompare(String operator, String expression, Josson arrayNode, int arrayIndex) {
+    JsonNode relationalCompare(LogicalOpStep opStep, Josson arrayNode, int arrayIndex) {
         resolved = relationalCompare(
-                resolveFrom(arrayNode, arrayIndex), operator, getNodeFrom(arrayNode, arrayIndex, expression));
+                resolveFrom(arrayNode, arrayIndex), opStep.getOperator(), opStep.getNodeFrom(arrayNode, arrayIndex));
         return resolved;
     }
 
@@ -277,9 +267,8 @@ class LogicalOpStep {
         For Jossons.evaluateStatement()
      */
     JsonNode resolveFrom(Map<String, Josson> datasets) throws UnresolvedDatasetException {
-        if (unresolved != null) {
-            resolved = evaluateExpression(unresolved, datasets);
-            unresolved = null;
+        if (expression != null) {
+            setResolved(evaluateExpression(datasets));
         }
         return resolved;
     }
@@ -294,10 +283,9 @@ class LogicalOpStep {
         return node != null && !node.asBoolean();
     }
 
-    JsonNode relationalCompare(String operator, String expression, Map<String, Josson> datasets)
+    JsonNode relationalCompare(LogicalOpStep opStep, Map<String, Josson> datasets)
             throws UnresolvedDatasetException {
-        resolved = relationalCompare(
-                resolveFrom(datasets), operator, evaluateExpression(expression, datasets));
+        resolved = relationalCompare(resolveFrom(datasets), opStep.getOperator(), opStep.evaluateExpression(datasets));
         return resolved;
     }
 }

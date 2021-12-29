@@ -24,6 +24,7 @@ import java.util.Map;
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncStructural {
@@ -125,7 +126,7 @@ class FuncStructural {
         ObjectNode objNode = MAPPER.createObjectNode();
         for (Map.Entry<String, String> arg : args.entrySet()) {
             String name = arg.getKey();
-            if ("?".equals(name)) {
+            if (isCurrentNodeSymbol(name)) {
                 if (node.isObject()) {
                     objNode.setAll((ObjectNode) node);
                 }
@@ -134,10 +135,10 @@ class FuncStructural {
             String path = arg.getValue();
             if (path == null) {
                 objNode.putNull(name);
-            } else if ("?".equals(path)) {
-                objNode.set(name, node);
-            } else if (path.charAt(0) == '#') {
+            } else if (path.charAt(0) == INDEX_SYMBOL) {
                 objNode.set(name, getIndexId(index, path));
+            } else if (isCurrentNodeSymbol(path)) {
+                objNode.set(name, node);
             } else if (node.isObject()) {
                 objNode.set(name, getNode(node, path));
             }

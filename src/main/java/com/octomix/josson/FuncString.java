@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Josson.getNode;
+import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncString {
@@ -148,14 +149,19 @@ class FuncString {
             if (param.isEmpty()) {
                 continue;
             }
-            if (param.charAt(0) == '\'') {
-                args.add(Pair.of('\'', unquoteString(param)));
-            } else if ("?".equals(param)) {
-                args.add(Pair.of('?', null));
-            } else if (param.startsWith("#")) {
-                args.add(Pair.of('#', param));
-            } else {
-                args.add(Pair.of('.', param));
+            switch (param.charAt(0)) {
+                case QUOTE_SYMBOL:
+                    args.add(Pair.of(QUOTE_SYMBOL, unquoteString(param)));
+                    break;
+                case INDEX_SYMBOL:
+                    args.add(Pair.of(INDEX_SYMBOL, param));
+                    break;
+                default:
+                    if (isCurrentNodeSymbol(param)) {
+                        args.add(Pair.of(CURRENT_NODE_SYMBOL, null));
+                    } else {
+                        args.add(Pair.of('.', param));
+                    }
             }
         }
         if (!node.isArray()) {
@@ -175,14 +181,14 @@ class FuncString {
         StringBuilder sb = new StringBuilder();
         for (Pair<Character, String> arg : args) {
             switch (arg.getKey()) {
-                case '\'':
+                case QUOTE_SYMBOL:
                     sb.append(arg.getValue());
                     continue;
-                case '?':
+                case CURRENT_NODE_SYMBOL:
                     sb.append(node.asText());
                     continue;
             }
-            JsonNode tryNode = arg.getKey() == '#' ? getIndexId(index, arg.getValue()) : getNode(node, arg.getValue());
+            JsonNode tryNode = arg.getKey() == INDEX_SYMBOL ? getIndexId(index, arg.getValue()) : getNode(node, arg.getValue());
             if (!nodeHasValue(tryNode)) {
                 return null;
             }
@@ -442,7 +448,7 @@ class FuncString {
                 return node;
             }
             for (String path : paramList) {
-                if (path.charAt(0) == '\'') {
+                if (path.charAt(0) == QUOTE_SYMBOL) {
                     String text = unquoteString(path);
                     if (StringUtils.isNotBlank(text)) {
                         return TextNode.valueOf(text);
@@ -490,7 +496,7 @@ class FuncString {
                 return node;
             }
             for (String path : paramList) {
-                if (path.charAt(0) == '\'') {
+                if (path.charAt(0) == QUOTE_SYMBOL) {
                     String text = unquoteString(path);
                     if (!text.isEmpty()) {
                         return TextNode.valueOf(text);
@@ -633,13 +639,9 @@ class FuncString {
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
-                    array.add(TextNode.valueOf(ignoreCase ?
-                            StringUtils.replaceIgnoreCase(
-                                    textNode.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
-                                    pathAndParams.getRight() == null ? -1 : pathAndParams.getRight()) :
-                            StringUtils.replace(
-                                    textNode.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
-                                    pathAndParams.getRight() == null ? -1 : pathAndParams.getRight())));
+                    array.add(TextNode.valueOf(StringUtils.replace(
+                            textNode.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
+                            pathAndParams.getRight() == null ? -1 : pathAndParams.getRight(), ignoreCase)));
                 }
             }
             return array;
@@ -647,13 +649,9 @@ class FuncString {
         if (!node.isTextual()) {
             return null;
         }
-        return TextNode.valueOf(ignoreCase ?
-                StringUtils.replaceIgnoreCase(
-                        node.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
-                        pathAndParams.getRight() == null ? -1 : pathAndParams.getRight()) :
-                StringUtils.replace(
-                        node.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
-                        pathAndParams.getRight() == null ? -1 : pathAndParams.getRight()));
+        return TextNode.valueOf(StringUtils.replace(
+                node.asText(), pathAndParams.getMiddle()[0], pathAndParams.getMiddle()[1],
+                pathAndParams.getRight() == null ? -1 : pathAndParams.getRight(), ignoreCase));
     }
 
     static JsonNode funcRightPad(JsonNode node, String params) {

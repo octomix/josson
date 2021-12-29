@@ -16,6 +16,7 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
@@ -28,17 +29,45 @@ import static com.octomix.josson.FuncFormat.*;
 import static com.octomix.josson.FuncLogical.*;
 import static com.octomix.josson.FuncString.*;
 import static com.octomix.josson.FuncStructural.*;
+import static com.octomix.josson.Mapper.MAPPER;
 
 class FuncDispatcher {
-    static JsonNode dispatch(JsonNode node, String funcId, String params) {
+
+    private final String funcName;
+    private final String params;
+    private final boolean isArrayMode;
+
+    FuncDispatcher(String funcName, String params, boolean isArrayMode) {
+        this.funcName = funcName;
+        this.params = params;
+        this.isArrayMode = isArrayMode;
+    }
+
+    static boolean isArrayModeFunction(String name) {
+        return name.length() > 0 && name.charAt(0) == '@';
+    }
+
+    JsonNode apply(JsonNode node) {
+        if (isArrayMode || !node.isArray()) {
+            return dispatch(node);
+        } else {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                array.add(dispatch(node.get(i)));
+            }
+            return array;
+        }
+    }
+
+    JsonNode dispatch(JsonNode node) {
         try {
-            switch (funcId.toLowerCase()) {
+            switch (funcName.toLowerCase()) {
 
                 // Arithmetic
                 case "sum":
                 case "avg":
                 case "count":
-                    return funcAggregate(node, funcId, params);
+                    return funcAggregate(node, funcName, params);
                 case "abs":
                     return funcAbs(node, params);
                 case "calc":
@@ -399,8 +428,8 @@ class FuncDispatcher {
                     return funcToArray(node, params);
             }
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid function call " + funcId + "() : " + e.getMessage());
+            throw new IllegalArgumentException("Invalid function call " + funcName + "() : " + e.getMessage());
         }
-        throw new UnsupportedOperationException("Unsupported function " + funcId + "()");
+        throw new UnsupportedOperationException("Unsupported function " + funcName + "()");
     }
 }

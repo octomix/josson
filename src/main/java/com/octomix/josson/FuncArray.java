@@ -27,6 +27,7 @@ import java.util.Set;
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Josson.getNode;
+import static com.octomix.josson.Mapper.MAPPER;
 
 class FuncArray {
     static JsonNode funcDistinctValue(JsonNode node, String params) {

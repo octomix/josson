@@ -88,7 +88,7 @@ class GetFuncParam {
             String[] values = param.split(":", 2);
             String name = values[0].trim();
             String path = null;
-            if (!"?".equals(name)) {
+            if (!isCurrentNodeSymbol(name)) {
                 if (values.length == 1) {
                     path = name;
                     name = getLastElementName(path);

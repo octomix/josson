@@ -1603,38 +1603,6 @@ public class StringUtils {
 
     /**
      * <p>Replaces a String with another String inside a larger String,
-     * for the first {@code max} values of the search String.</p>
-     *
-     * <p>A {@code null} reference passed to this method is a no-op.</p>
-     *
-     * <pre>
-     * StringUtils.replace(null, *, *, *)         = null
-     * StringUtils.replace("", *, *, *)           = ""
-     * StringUtils.replace("any", null, *, *)     = "any"
-     * StringUtils.replace("any", *, null, *)     = "any"
-     * StringUtils.replace("any", "", *, *)       = "any"
-     * StringUtils.replace("any", *, *, 0)        = "any"
-     * StringUtils.replace("abaa", "a", null, -1) = "abaa"
-     * StringUtils.replace("abaa", "a", "", -1)   = "b"
-     * StringUtils.replace("abaa", "a", "z", 0)   = "abaa"
-     * StringUtils.replace("abaa", "a", "z", 1)   = "zbaa"
-     * StringUtils.replace("abaa", "a", "z", 2)   = "zbza"
-     * StringUtils.replace("abaa", "a", "z", -1)  = "zbzz"
-     * </pre>
-     *
-     * @param text  text to search and replace in, may be null
-     * @param searchString  the String to search for, may be null
-     * @param replacement  the String to replace it with, may be null
-     * @param max  maximum number of values to replace, or {@code -1} if no maximum
-     * @return the text with any replacements processed,
-     *  {@code null} if null String input
-     */
-    public static String replace(final String text, final String searchString, final String replacement, final int max) {
-        return replace(text, searchString, replacement, max, false);
-    }
-
-    /**
-     * <p>Replaces a String with another String inside a larger String,
      * for the first {@code max} values of the search String,
      * case sensitively/insensitively based on {@code ignoreCase} value.</p>
      *
@@ -1664,7 +1632,7 @@ public class StringUtils {
      * @return the text with any replacements processed,
      *  {@code null} if null String input
      */
-    private static String replace(final String text, String searchString, final String replacement, int max, final boolean ignoreCase) {
+    public static String replace(final String text, String searchString, final String replacement, int max, final boolean ignoreCase) {
         if (isEmpty(text) || isEmpty(searchString) || replacement == null || max == 0) {
             return text;
         }
@@ -1690,39 +1658,6 @@ public class StringUtils {
         }
         buf.append(text, start, text.length());
         return buf.toString();
-    }
-
-    /**
-     * <p>Case insensitively replaces a String with another String inside a larger String,
-     * for the first {@code max} values of the search String.</p>
-     *
-     * <p>A {@code null} reference passed to this method is a no-op.</p>
-     *
-     * <pre>
-     * StringUtils.replaceIgnoreCase(null, *, *, *)         = null
-     * StringUtils.replaceIgnoreCase("", *, *, *)           = ""
-     * StringUtils.replaceIgnoreCase("any", null, *, *)     = "any"
-     * StringUtils.replaceIgnoreCase("any", *, null, *)     = "any"
-     * StringUtils.replaceIgnoreCase("any", "", *, *)       = "any"
-     * StringUtils.replaceIgnoreCase("any", *, *, 0)        = "any"
-     * StringUtils.replaceIgnoreCase("abaa", "a", null, -1) = "abaa"
-     * StringUtils.replaceIgnoreCase("abaa", "a", "", -1)   = "b"
-     * StringUtils.replaceIgnoreCase("abaa", "a", "z", 0)   = "abaa"
-     * StringUtils.replaceIgnoreCase("abaa", "A", "z", 1)   = "zbaa"
-     * StringUtils.replaceIgnoreCase("abAa", "a", "z", 2)   = "zbza"
-     * StringUtils.replaceIgnoreCase("abAa", "a", "z", -1)  = "zbzz"
-     * </pre>
-     *
-     * @param text  text to search and replace in, may be null
-     * @param searchString  the String to search for (case insensitive), may be null
-     * @param replacement  the String to replace it with, may be null
-     * @param max  maximum number of values to replace, or {@code -1} if no maximum
-     * @return the text with any replacements processed,
-     *  {@code null} if null String input
-     * @since 3.5
-     */
-    public static String replaceIgnoreCase(final String text, final String searchString, final String replacement, final int max) {
-        return replace(text, searchString, replacement, max, true);
     }
 
     /**

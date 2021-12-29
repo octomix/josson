@@ -25,41 +25,30 @@ import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
+import static com.octomix.josson.ArrayFilter.FilterMode;
+import static com.octomix.josson.ArrayFilter.FilterMode.*;
+import static com.octomix.josson.FuncDispatcher.isArrayModeFunction;
 import static com.octomix.josson.Josson.getNode;
+import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
 
 class JossonCore {
 
-    static final Mapper MAPPER = new Mapper();
+    static final char QUOTE_SYMBOL = '\'';
+    static final char INDEX_SYMBOL = '#';
+    static final char CURRENT_NODE_SYMBOL = '?';
+
+    private static final String ZERO_BASED_INDEX = "" + INDEX_SYMBOL;
+    private static final String ONE_BASED_INDEX = ZERO_BASED_INDEX + INDEX_SYMBOL;
+
     static ZoneId zoneId = ZoneId.systemDefault();
-
-    private enum FilterMode {
-        FIRST_MATCHED(null),
-        ALL_MATCHED("*"),
-        NESTED_ARRAY("@");
-
-        final String indicator;
-
-        FilterMode(String indicator) {
-            this.indicator = indicator;
-        }
-
-        private static FilterMode fromIndicator(String indicator) {
-            for (FilterMode mode : values()) {
-                if (StringUtils.equals(mode.indicator, indicator)) {
-                    return mode;
-                }
-            }
-            return null;
-        }
-    }
 
     static String unquoteString(String quotedString) {
         int last = quotedString.length() - 1;
-        if (last < 1 || quotedString.charAt(0) != '\'' || quotedString.charAt(last) != '\'') {
+        if (last < 1 || quotedString.charAt(0) != QUOTE_SYMBOL || quotedString.charAt(last) != QUOTE_SYMBOL) {
             throw new IllegalArgumentException("Argument is not a valid string literal: " + quotedString);
         }
-        return quotedString.substring(1, last).replaceAll("''", "'");
+        return quotedString.substring(1, last).replace("''", "'");
     }
 
     static String csvQuote(String input) {
@@ -76,6 +65,16 @@ class JossonCore {
             return "\"" + result + "\"";
         }
         return result;
+    }
+
+    static boolean isCurrentNodeSymbol(String path) {
+        if (path.length() > 0 && path.charAt(0) == CURRENT_NODE_SYMBOL) {
+            if (path.length() > 1) {
+                throw new IllegalArgumentException("Invalid syntax: " + path);
+            }
+            return true;
+        }
+        return false;
     }
 
     static boolean anyIsBlank(String[] strings) {
@@ -103,7 +102,7 @@ class JossonCore {
         if (literal.equalsIgnoreCase("false")) {
             return BooleanNode.FALSE;
         }
-        if (literal.charAt(0) == '\'') {
+        if (literal.charAt(0) == QUOTE_SYMBOL) {
             return TextNode.valueOf(unquoteString(literal));
         }
         if (literal.indexOf('.') < 0) {
@@ -146,9 +145,9 @@ class JossonCore {
         List<String> keys = decomposePaths(path);
         String indexType = keys.remove(0);
         switch (indexType) {
-            case "#":
+            case ZERO_BASED_INDEX:
                 break;
-            case "##":
+            case ONE_BASED_INDEX:
                 index++;
                 break;
             default:
@@ -189,10 +188,10 @@ class JossonCore {
             for (int i = 0; i < size; i++) {
                 String param = paramList.get(i);
                 Object valueObject;
-                if ("?".equals(param)) {
-                    valueObject = valueAsObject(node);
-                } else if (param.charAt(0) == '#') {
+                if (param.charAt(0) == INDEX_SYMBOL) {
                     valueObject = valueAsObject(getIndexId(index, param));
+                } else if (isCurrentNodeSymbol(param)) {
+                    valueObject = valueAsObject(node);
                 } else {
                     valueObject = valueAsObject(getNode(node, param));
                 }
@@ -213,52 +212,42 @@ class JossonCore {
             return null;
         }
         String key = keys.remove(0);
-        String[] tokens = matchFunctionAndArgument(key);
-        if (tokens != null) {
-            if (tokens[2] == null && node.isArray()) {
-                ArrayNode array = MAPPER.createArrayNode();
-                for (int i = 0; i < node.size(); i++) {
-                    array.add(FuncDispatcher.dispatch(node.get(i), tokens[0], tokens[1]));
-                }
-                node = array;
-            } else {
-                node = FuncDispatcher.dispatch(node, tokens[0], tokens[1]);
-            }
-            return getNodeByKeys(node, keys);
+        FuncDispatcher funcDispatcher = matchFunctionAndArgument(key);
+        if (funcDispatcher != null) {
+            return getNodeByKeys(funcDispatcher.apply(node), keys);
         }
         if (node.isValueNode()) {
             return null;
         }
-        tokens = matchFilterQuery(key);
-        FilterMode mode = FilterMode.fromIndicator(tokens[2]);
-        if (tokens[1] != null) {
-            if (!tokens[0].isEmpty()) {
+        ArrayFilter arrayFilter = matchFilterQuery(key);
+        if (arrayFilter.getFilter() != null) {
+            if (!arrayFilter.getArrayName().isEmpty()) {
                 if (node.isArray()) {
-                    node = forEachElement((ArrayNode) node, tokens[0], FilterMode.ALL_MATCHED, null);
+                    node = forEachElement((ArrayNode) node, arrayFilter.getArrayName(), FILTER_FIND_ALL, null);
                 } else {
-                    node = node.get(tokens[0]);
+                    node = node.get(arrayFilter.getArrayName());
                 }
             }
-            node = evaluateFilter(node, tokens[1], mode);
+            node = evaluateFilter(node, arrayFilter.getFilter(), arrayFilter.getMode());
             if (node == null) {
                 return null;
             }
             if (node.isArray()) {
-                return forEachElement((ArrayNode) node, null, mode, keys);
+                return forEachElement((ArrayNode) node, null, arrayFilter.getMode(), keys);
             }
             return getNodeByKeys(node, keys);
         }
         if (node.isArray()) {
-            return forEachElement((ArrayNode) node, tokens[0], mode, keys);
+            return forEachElement((ArrayNode) node, arrayFilter.getArrayName(), arrayFilter.getMode(), keys);
         }
-        return getNodeByKeys(node.get(tokens[0]), keys);
+        return getNodeByKeys(node.get(arrayFilter.getArrayName()), keys);
     }
 
     /**
      * Find an element or filter an array node
      *
      * @param node      the Jackson JsonNode to be processed
-     * @param statement multiple conditions combined with relational operator
+     * @param statement multiple relational operations combined with logical operators
      * @param mode      {@code FIRST_MATCHED} | {@code ALL_MATCHED} | {@code NESTED_ARRAY}
      * @return The 1st matched element for {@code FIRST_MATCHED} or
      * all matched elements in an array node for {@code ALL_MATCHED} and {@code NESTED_ARRAY}
@@ -282,11 +271,11 @@ class JossonCore {
             return null;
         }
         ArrayNode matchedNodes = null;
-        if (FilterMode.FIRST_MATCHED != mode) {
+        if (mode != FILTER_FIND_FIRST) {
             matchedNodes = MAPPER.createArrayNode();
         }
         try {
-            if (FilterMode.FIRST_MATCHED == mode) {
+            if (mode == FILTER_FIND_FIRST) {
                 return node.get(Integer.parseInt(statement));
             }
             matchedNodes.add(node.get(Integer.parseInt(statement)));
@@ -298,7 +287,7 @@ class JossonCore {
         for (int i = 0; i < node.size(); i++) {
             JsonNode result = opStack.evaluate(statement, i);
             if (result != null && result.asBoolean()) {
-                if (FilterMode.FIRST_MATCHED == mode) {
+                if (mode == FILTER_FIND_FIRST) {
                     return node.get(i);
                 }
                 matchedNodes.add(node.get(i));
@@ -312,16 +301,17 @@ class JossonCore {
         for (int i = 0; i < node.size(); i++) {
             addEachElement(matchedNodes, elem == null ? node.get(i) : node.get(i).get(elem), mode, keys);
         }
-        return mode == FilterMode.NESTED_ARRAY ? matchedNodes : getNodeByKeys(matchedNodes, keys);
+        return mode == FILTER_NESTED_ARRAY ? matchedNodes : getNodeByKeys(matchedNodes, keys);
     }
 
     private static JsonNode forEachElement(ArrayNode node, List<String> keys) {
         List<String> keysAfterGrouping = new ArrayList<>();
-        FilterMode mode = FilterMode.ALL_MATCHED;
+        FilterMode mode = FILTER_FIND_ALL;
         for (int i = 0; i < keys.size(); i++) {
-            String[] tokens = matchFilterQuery(keys.get(i));
-            mode = FilterMode.fromIndicator(tokens[2]);
-            if (mode != FilterMode.FIRST_MATCHED || tokens[0].startsWith("@")) {
+            ArrayFilter arrayFilter = matchFilterQuery(keys.get(i));
+            String arrayName = arrayFilter.getArrayName();
+            mode = arrayFilter.getMode();
+            if (mode == FILTER_FIND_ALL || mode == FILTER_NESTED_ARRAY || isArrayModeFunction(arrayName)) {
                 while (i < keys.size()) {
                     keysAfterGrouping.add(keys.remove(i));
                 }
@@ -332,20 +322,20 @@ class JossonCore {
         for (int i = 0; i < node.size(); i++) {
             addEachElement(matchedNodes, getNodeByKeys(node.get(i), new ArrayList<>(keys)), mode, keysAfterGrouping);
         }
-        return mode == FilterMode.NESTED_ARRAY ? matchedNodes : getNodeByKeys(matchedNodes, keysAfterGrouping);
+        return mode == FILTER_NESTED_ARRAY ? matchedNodes : getNodeByKeys(matchedNodes, keysAfterGrouping);
     }
 
     private static void addEachElement(ArrayNode array, JsonNode node, FilterMode mode, List<String> keys) {
         if (node == null) {
             return;
         }
-        if (mode == FilterMode.NESTED_ARRAY) {
+        if (mode == FILTER_NESTED_ARRAY) {
             if (node.isArray()) {
                 array.add(forEachElement((ArrayNode) node, new ArrayList<>(keys)));
             } else {
                 array.add(getNodeByKeys(node, new ArrayList<>(keys)));
             }
-        } else if (mode == FilterMode.ALL_MATCHED && node.isArray()) {
+        } else if (mode == FILTER_FIND_ALL && node.isArray()) {
             array.addAll((ArrayNode) node);
         } else {
             array.add(node);

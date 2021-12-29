@@ -34,29 +34,6 @@ public class Jossons {
 
     private final Map<String, Josson> datasets = new HashMap<>();
 
-    private enum JoinOperator {
-        INNER_JOIN_ONE(">=<"),
-        LEFT_JOIN_ONE("<=<"),
-        RIGHT_JOIN_ONE(">=>"),
-        LEFT_JOIN_MANY("<=<<"),
-        RIGHT_JOIN_MANY(">>=>");
-
-        final String symbol;
-
-        JoinOperator(String symbol) {
-            this.symbol = symbol;
-        }
-
-        private static JoinOperator fromSymbol(String symbol) {
-            for (JoinOperator operator : values()) {
-                if (operator.symbol.equals(symbol)) {
-                    return operator;
-                }
-            }
-            return null;
-        }
-    }
-
     /**
      * <p>Create a Jossons object with given Jackson ObjectNode.
      * Each element of the ObjectNode will become a member of the default dataset mapping.</p>
@@ -162,74 +139,28 @@ public class Jossons {
 
     private Josson joinDatasets(String name, String query, Function<String, String> dictionaryFinder,
                                 BiFunction<String, String, Josson> dataFinder, ResolverProgress progress) {
-        List<String[]> conditions = decomposeConditions(query);
-        if (conditions.size() < 2) {
-            return null;
-        }
-        String[] leftQuery = matchJoinOperation(conditions.get(0)[1]);
-        if (leftQuery == null) {
-            return null;
-        }
-        JoinOperator operator = JoinOperator.fromSymbol(conditions.get(1)[0]);
-        if (operator == null) {
+        JoinDatasets datasets = JoinDatasets.fromStatement(query);
+        if (datasets == null) {
             return null;
         }
         progress.addResolvingFrom(name, query);
-        if (conditions.size() > 2) {
-            throw new IllegalArgumentException("too many arguments");
-        }
-        String[] rightQuery = matchJoinOperation(conditions.get(1)[1]);
-        String[] leftKeys = leftQuery[1].split(",");
-        String[] rightKeys = rightQuery == null ? null : rightQuery[1].split(",");
-        if (anyIsBlank(leftKeys) || anyIsBlank(rightKeys)) {
-            throw new IllegalArgumentException("missing join key");
-        }
-        if (leftKeys.length != rightKeys.length) {
-            throw new IllegalArgumentException("mismatch key count");
-        }
-        JsonNode leftNode = evaluateQueryWithResolverLoop(leftQuery[0], dictionaryFinder, dataFinder, progress);
+        JsonNode leftNode = evaluateQueryWithResolverLoop(
+                datasets.getLeftDataset().getQuery(), dictionaryFinder, dataFinder, progress);
         if (leftNode == null) {
             throw new IllegalArgumentException("unresolvable left side");
         }
         if (!leftNode.isContainerNode()) {
             throw new IllegalArgumentException("left side is not a container node");
         }
-        JsonNode rightNode = evaluateQueryWithResolverLoop(rightQuery[0], dictionaryFinder, dataFinder, progress);
+        JsonNode rightNode = evaluateQueryWithResolverLoop(
+                datasets.getRightDataset().getQuery(), dictionaryFinder, dataFinder, progress);
         if (rightNode == null) {
             throw new IllegalArgumentException("unresolvable right side");
         }
         if (!rightNode.isContainerNode()) {
             throw new IllegalArgumentException("right side is not a container node");
         }
-        String leftArrayName = null;
-        String rightArrayName = null;
-        int pos = leftKeys[0].indexOf(':');
-        if (pos >= 0) {
-            leftArrayName = leftKeys[0].substring(0, pos).trim();
-            leftKeys[0] = leftKeys[0].substring(pos + 1);
-        }
-        pos = rightKeys[0].indexOf(':');
-        if (pos >= 0) {
-            rightArrayName = rightKeys[0].substring(0, pos).trim();
-            rightKeys[0] = rightKeys[0].substring(pos + 1);
-        }
-        switch (operator) {
-            case LEFT_JOIN_MANY:
-                if (rightArrayName == null) {
-                    rightArrayName = getLastElementName(rightQuery[0]);
-                } else {
-                    checkElementName(rightArrayName);
-                }
-                break;
-            case RIGHT_JOIN_MANY:
-                if (leftArrayName == null) {
-                    leftArrayName = getLastElementName(leftQuery[0]);
-                } else {
-                    checkElementName(leftArrayName);
-                }
-                break;
-        }
-        JsonNode joinedNode = joinNodes(leftNode, leftKeys, leftArrayName, operator, rightNode, rightKeys, rightArrayName);
+        JsonNode joinedNode = datasets.joinNodes(leftNode, rightNode);
         if (joinedNode == null) {
             throw new IllegalArgumentException("invalid data");
         }
@@ -550,13 +481,13 @@ public class Jossons {
      */
     public JsonNode evaluateQuery(String query) throws UnresolvedDatasetException {
         String ifTrueValue = null;
-        List<String[]> steps = decomposeTernarySteps(query);
-        for (String[] step : steps) {
-            JsonNode node = evaluateStatement(step[0]);
-            if (step[1] == null) {
+        List<TernaryStep> steps = decomposeTernarySteps(query);
+        for (TernaryStep step : steps) {
+            JsonNode node = evaluateStatement(step.getStatement());
+            if (step.getIfTrueValue() == null) {
                 return node;
             }
-            ifTrueValue = step[1];
+            ifTrueValue = step.getIfTrueValue();
             if (node != null) {
                 if (ifTrueValue.isEmpty()) {
                     if (!(node.isTextual() && node.textValue().isEmpty())) {
@@ -587,83 +518,5 @@ public class Jossons {
             // continue
         }
         return new LogicalOpStack(datasets).evaluate(statement);
-    }
-
-    private static JsonNode joinNodes(JsonNode leftNode, String[] leftKeys, String leftArrayName, JoinOperator operator,
-                                      JsonNode rightNode, String[] rightKeys, String rightArrayName) {
-        String arrayName;
-        if (operator == JoinOperator.RIGHT_JOIN_ONE || operator == JoinOperator.RIGHT_JOIN_MANY
-                || (operator == JoinOperator.INNER_JOIN_ONE && !leftNode.isObject() && rightNode.isObject())) {
-            JsonNode swapNode = leftNode;
-            leftNode = rightNode;
-            rightNode = swapNode;
-            String[] swapKeys = leftKeys;
-            leftKeys = rightKeys;
-            rightKeys = swapKeys;
-            if (operator == JoinOperator.RIGHT_JOIN_ONE) {
-                operator = JoinOperator.LEFT_JOIN_ONE;
-            } else if (operator == JoinOperator.RIGHT_JOIN_MANY) {
-                operator = JoinOperator.LEFT_JOIN_MANY;
-            }
-            arrayName = leftArrayName;
-        } else {
-            arrayName = rightArrayName;
-        }
-        ArrayNode rightArray;
-        if (rightNode.isArray()) {
-            rightArray = (ArrayNode) rightNode;
-        } else {
-            rightArray = Josson.createArrayNode();
-            rightArray.add(rightNode);
-        }
-        if (leftNode.isObject()) {
-            return joinToObjectNode((ObjectNode) leftNode, leftKeys, operator, rightArray, rightKeys, arrayName);
-        }
-        ArrayNode joinedArray = Josson.createArrayNode();
-        for (int i = 0; i < leftNode.size(); i++) {
-            if (leftNode.get(i).isObject()) {
-                ObjectNode joinedNode = joinToObjectNode(
-                        (ObjectNode) leftNode.get(i), leftKeys, operator, rightArray, rightKeys, arrayName);
-                if (joinedNode != null) {
-                    joinedArray.add(joinedNode);
-                }
-            }
-        }
-        return joinedArray;
-    }
-
-    private static ObjectNode joinToObjectNode(ObjectNode leftObject, String[] leftKeys, JoinOperator operator,
-                                               ArrayNode rightArray, String[] rightKeys, String arrayName) {
-        String[] conditions = new String[leftKeys.length];
-        for (int j = leftKeys.length - 1; j >= 0; j--) {
-            JsonNode leftValue = Josson.getNode(leftObject, leftKeys[j]);
-            if (leftValue == null || !leftValue.isValueNode()) {
-                return null;
-            }
-            conditions[j] = rightKeys[j]
-                    + (leftValue.isTextual() ? "='" : "=") + leftValue.asText().replaceAll("'", "''")
-                    + (leftValue.isTextual() ? "'" : "");
-        }
-        if (operator == JoinOperator.LEFT_JOIN_MANY) {
-            JsonNode rightToJoin = Josson.getNode(
-                    rightArray, "[" + StringUtils.join(conditions, " & ") + "]*");
-            if (rightToJoin != null) {
-                ObjectNode joinedNode = leftObject.deepCopy();
-                joinedNode.set(arrayName, rightToJoin);
-                return joinedNode;
-            }
-        } else {
-            JsonNode rightToJoin = Josson.getNode(
-                    rightArray, "[" + StringUtils.join(conditions, " & ") + "]");
-            if (rightToJoin != null && rightToJoin.isObject()) {
-                ObjectNode joinedNode = leftObject.deepCopy();
-                joinedNode.setAll((ObjectNode) rightToJoin);
-                return joinedNode;
-            }
-            if (operator == JoinOperator.INNER_JOIN_ONE) {
-                return null;
-            }
-        }
-        return leftObject;
     }
 }

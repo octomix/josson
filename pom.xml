@@ -22,7 +22,7 @@
     <groupId>com.octomix.josson</groupId>
     <artifactId>josson</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.20</version>
+    <version>1.2.21</version>
     <build>
         <plugins>
             <plugin>

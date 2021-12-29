@@ -29,10 +29,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 public class Josson {
@@ -58,7 +58,7 @@ public class Josson {
      * @return The new Josson object
      */
     public static Josson createArray() {
-        return new Josson(createArrayNode());
+        return new Josson(MAPPER.createArrayNode());
     }
 
     /**
@@ -160,7 +160,7 @@ public class Josson {
     }
 
     public Josson put(String key, LocalDateTime value) {
-        ((ObjectNode) jsonNode).put(key, value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        ((ObjectNode) jsonNode).put(key, value.toString());
         return this;
     }
 

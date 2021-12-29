@@ -27,6 +27,7 @@ import java.util.Map;
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncArithmetic {
@@ -86,9 +87,10 @@ class FuncArithmetic {
         List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         String calc = paramList.remove(0);
         Map<String, String> args = getParamNamePath(paramList);
-        if (calc.contains("?")) {
-            calc = calc.replaceAll("\\?", "_THIS_NODE_ ");
-            args.put("_THIS_NODE_", "?");
+        String currentNodeSymbol = String.valueOf(CURRENT_NODE_SYMBOL);
+        if (calc.contains(currentNodeSymbol)) {
+            calc = calc.replace(currentNodeSymbol, "_THIS_NODE_ ");
+            args.put("_THIS_NODE_", currentNodeSymbol);
         }
         Expression expression = new Expression(calc);
         if (!node.isArray()) {
@@ -116,10 +118,10 @@ class FuncArithmetic {
                 continue;
             }
             double value;
-            if ("?".equals(path)) {
+            if (isCurrentNodeSymbol(path)) {
                 value = node.asDouble();
             } else {
-                JsonNode tryNode = path.charAt(0) == '#' ? getIndexId(index, path) : getNode(node, path);
+                JsonNode tryNode = path.charAt(0) == INDEX_SYMBOL ? getIndexId(index, path) : getNode(node, path);
                 if (!nodeHasValue(tryNode)) {
                     return null;
                 }

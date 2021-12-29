@@ -31,6 +31,7 @@ import java.util.*;
 import static com.octomix.josson.GetFuncParam.*;
 import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncFormat {
@@ -94,14 +95,14 @@ class FuncFormat {
         for (int i = 0; i <= last; i++) {
             JsonNode caseKey = null;
             if (i < last) {
-                if ("?".equals(paramList.get(i))) {
+                if (isCurrentNodeSymbol(paramList.get(i))) {
                     caseKey = node;
                 } else {
                     caseKey = getNode(node, paramList.get(i));
                 }
                 i++;
             }
-            JsonNode caseValue = "?".equals(paramList.get(i)) ? node : getNode(node, paramList.get(i));
+            JsonNode caseValue = isCurrentNodeSymbol(paramList.get(i)) ? node : getNode(node, paramList.get(i));
             if (caseKey == null) {
                 defaultValue = caseValue;
             } else {
