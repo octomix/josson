@@ -17,10 +17,7 @@ package com.octomix.josson;
 
 import com.octomix.josson.commons.StringUtils;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
@@ -265,10 +262,8 @@ class PatternMatcher {
                         throw new AtPositionException(input, "Invalid '" + ending +"'", pos + 1);
                     }
                     String[] keys = trimOf(input, beg, pos).split(",");
-                    for (String key : keys) {
-                        if (StringUtils.isBlank(key)) {
-                            throw new IllegalArgumentException("Missing join key: " + input);
-                        }
+                    if (Arrays.stream(keys).anyMatch(StringUtils::isBlank)) {
+                        throw new IllegalArgumentException("Missing join key: " + input);
                     }
                     return new JoinDatasets.Dataset(query, keys);
             }

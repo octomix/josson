@@ -17,7 +17,6 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
 import java.util.LinkedList;
@@ -84,10 +83,7 @@ class LogicalOpStack {
                 }
                 result = true;
             }
-            if ("".equals(opStep.getExpression())) {
-                continue;
-            }
-            if (result) {
+            if (result && !"".equals(opStep.getExpression())) {
                 node = resolver.apply(opStep);
                 if ("!".equals(opStep.getOperator())) {
                     result = node == null || node.isNull() || (node.isValueNode() && !node.asBoolean());
