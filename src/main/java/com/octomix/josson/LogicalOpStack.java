@@ -103,9 +103,8 @@ class LogicalOpStack {
                 node = BooleanNode.valueOf(!result);
             }
             lastStep.setResolved(node);
-            return null;
         }
-        return result || node != null ? node : TextNode.valueOf("");
+        return node;
     }
 
     /*

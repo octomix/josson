@@ -77,18 +77,6 @@ class JossonCore {
         return false;
     }
 
-    static boolean anyIsBlank(String[] strings) {
-        if (strings == null || strings.length == 0) {
-            return true;
-        }
-        for (String str : strings) {
-            if (StringUtils.isBlank(str)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     static ValueNode toValueNode(String literal) throws NumberFormatException {
         if (StringUtils.isEmpty(literal)) {
             return null;

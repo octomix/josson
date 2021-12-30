@@ -26,7 +26,6 @@ import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.FuncDispatcher.isArrayModeFunction;
 import static com.octomix.josson.JossonCore.*;
-import static com.octomix.josson.JossonCore.anyIsBlank;
 import static com.octomix.josson.PatternElement.*;
 
 class PatternMatcher {
@@ -266,8 +265,10 @@ class PatternMatcher {
                         throw new AtPositionException(input, "Invalid '" + ending +"'", pos + 1);
                     }
                     String[] keys = trimOf(input, beg, pos).split(",");
-                    if (anyIsBlank(keys)) {
-                        throw new IllegalArgumentException("Missing join key: " + input);
+                    for (String key : keys) {
+                        if (StringUtils.isBlank(key)) {
+                            throw new IllegalArgumentException("Missing join key: " + input);
+                        }
                     }
                     return new JoinDatasets.Dataset(query, keys);
             }
