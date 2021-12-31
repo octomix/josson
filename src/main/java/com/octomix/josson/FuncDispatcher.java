@@ -59,7 +59,7 @@ class FuncDispatcher {
         }
     }
 
-    JsonNode dispatch(JsonNode node) {
+    private JsonNode dispatch(JsonNode node) {
         try {
             switch (funcName.toLowerCase()) {
 

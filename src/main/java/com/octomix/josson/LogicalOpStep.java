@@ -36,7 +36,7 @@ class LogicalOpStep {
     private String expression;
     private JsonNode resolved;
 
-    private enum RelationalOperator {
+    enum RelationalOperator {
         EQ("="),
         NE("!="),
         GT(">"),
@@ -50,7 +50,7 @@ class LogicalOpStep {
             this.symbol = symbol;
         }
 
-        private static RelationalOperator fromSymbol(String symbol) {
+        static RelationalOperator fromSymbol(String symbol) {
             for (RelationalOperator operator : values()) {
                 if (operator.symbol.equals(symbol)) {
                     return operator;
@@ -83,8 +83,7 @@ class LogicalOpStep {
         this.resolved = resolved;
     }
 
-    private JsonNode evaluateExpression(Map<String, Josson> datasets)
-            throws UnresolvedDatasetException {
+    private JsonNode evaluateExpression(Map<String, Josson> datasets) throws UnresolvedDatasetException {
         try {
             return toValueNode(expression);
         } catch (NumberFormatException e) {
@@ -257,9 +256,9 @@ class LogicalOpStep {
         return node != null && !node.asBoolean();
     }
 
-    JsonNode relationalCompare(LogicalOpStep opStep, Josson arrayNode, int arrayIndex) {
+    JsonNode relationalCompare(LogicalOpStep step, Josson arrayNode, int arrayIndex) {
         resolved = relationalCompare(
-                resolveFrom(arrayNode, arrayIndex), opStep.getOperator(), opStep.getNodeFrom(arrayNode, arrayIndex));
+                resolveFrom(arrayNode, arrayIndex), step.getOperator(), step.getNodeFrom(arrayNode, arrayIndex));
         return resolved;
     }
 
@@ -283,9 +282,8 @@ class LogicalOpStep {
         return node != null && !node.asBoolean();
     }
 
-    JsonNode relationalCompare(LogicalOpStep opStep, Map<String, Josson> datasets)
-            throws UnresolvedDatasetException {
-        resolved = relationalCompare(resolveFrom(datasets), opStep.getOperator(), opStep.evaluateExpression(datasets));
+    JsonNode relationalCompare(LogicalOpStep step, Map<String, Josson> datasets) throws UnresolvedDatasetException {
+        resolved = relationalCompare(resolveFrom(datasets), step.getOperator(), step.evaluateExpression(datasets));
         return resolved;
     }
 }

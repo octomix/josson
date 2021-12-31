@@ -21,13 +21,13 @@ class JoinDatasets {
         LEFT_JOIN_MANY("<=<<"),
         RIGHT_JOIN_MANY(">>=>");
 
-        private final String symbol;
+        final String symbol;
 
         JoinOperator(String symbol) {
             this.symbol = symbol;
         }
 
-        private static JoinOperator fromSymbol(String symbol) {
+        static JoinOperator fromSymbol(String symbol) {
             for (JoinOperator operator : values()) {
                 if (operator.symbol.equals(symbol)) {
                     return operator;
@@ -92,19 +92,19 @@ class JoinDatasets {
     }
 
     static JoinDatasets fromStatement(String statement) {
-        List<LogicalOpStep> opSteps = decomposeStatement(statement);
-        if (opSteps.size() < 2) {
+        List<LogicalOpStep> steps = decomposeStatement(statement);
+        if (steps.size() < 2) {
             return null;
         }
-        JoinOperator operator = JoinOperator.fromSymbol(opSteps.get(1).getOperator());
+        JoinOperator operator = JoinOperator.fromSymbol(steps.get(1).getOperator());
         if (operator == null) {
             return null;
         }
-        if (opSteps.size() > 2) {
+        if (steps.size() > 2) {
             throw new IllegalArgumentException("too many arguments");
         }
-        JoinDatasets.Dataset leftDataset = matchJoinDatasetQuery(opSteps.get(0).getExpression());
-        JoinDatasets.Dataset rightDataset = matchJoinDatasetQuery(opSteps.get(1).getExpression());
+        JoinDatasets.Dataset leftDataset = matchJoinDatasetQuery(steps.get(0).getExpression());
+        JoinDatasets.Dataset rightDataset = matchJoinDatasetQuery(steps.get(1).getExpression());
         if (leftDataset.keys.length != rightDataset.keys.length) {
             throw new IllegalArgumentException("mismatch key count");
         }
@@ -158,12 +158,12 @@ class JoinDatasets {
             if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
-            relationalOps[j] = rightDataset.keys[j] + "="
+            relationalOps[j] = rightDataset.keys[j] + LogicalOpStep.RelationalOperator.EQ
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "")
                     + leftValue.asText().replace("'", "''")
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "");
         }
-        String path = "[" + StringUtils.join(relationalOps, " & ") + "]";
+        String path = "[" + StringUtils.join(relationalOps, LogicalOpStack.AND) + "]";
         if (operator == JoinOperator.LEFT_JOIN_MANY) {
             JsonNode rightToJoin = Josson.getNode(rightArray, path + FILTER_FIND_ALL.symbol);
             if (rightToJoin != null) {

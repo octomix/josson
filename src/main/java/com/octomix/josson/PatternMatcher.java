@@ -338,7 +338,7 @@ class PatternMatcher {
     }
 
     static List<LogicalOpStep> decomposeStatement(String input) {
-        List<LogicalOpStep> opSteps = new ArrayList<>();
+        List<LogicalOpStep> steps = new ArrayList<>();
         int last = input.length() - 1;
         int pos = 0;
         while (pos <= last) {
@@ -367,10 +367,10 @@ class PatternMatcher {
                     }
             }
             String expression = rightTrimOf(input, beg, pos);
-            opSteps.add(new LogicalOpStep(operator, expression));
+            steps.add(new LogicalOpStep(operator, expression));
             pos = eatSpaces(input, pos, last);
         }
-        return opSteps;
+        return steps;
     }
 
     static List<String> decomposeFunctionParameters(String input, int minCount, int maxCount) {
