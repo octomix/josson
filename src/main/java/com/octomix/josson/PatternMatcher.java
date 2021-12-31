@@ -23,9 +23,20 @@ import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.FuncDispatcher.isArrayModeFunction;
 import static com.octomix.josson.JossonCore.*;
-import static com.octomix.josson.PatternElement.*;
 
 class PatternMatcher {
+
+    private enum Enclosure {
+        STRING_LITERAL,
+        SQUARE_BRACKETS,
+        PARENTHESES;
+
+        static final Set<Enclosure> ALL_KINDS = EnumSet.of(
+            STRING_LITERAL,
+            SQUARE_BRACKETS,
+            PARENTHESES
+        );
+    }
 
     private static class AtPositionException extends IllegalArgumentException {
         AtPositionException(String input, String message, int pos) {
@@ -55,15 +66,15 @@ class PatternMatcher {
         return input.substring(beg, end);
     }
 
-    private static int skipPatternElement(String input, int pos, int last, Set<PatternElement> elements) {
+    private static int skipEnclosure(String input, int pos, int last, Set<Enclosure> enclosures) {
         int end;
-        if (elements.contains(STRING_LITERAL) && (end = matchStringLiteral(input, pos, last)) > 0) {
+        if (enclosures.contains(Enclosure.STRING_LITERAL) && (end = matchStringLiteral(input, pos, last)) > 0) {
             return end;
         }
-        if (elements.contains(SQUARE_BRACKETS) && (end = matchSquareBrackets(input, pos, last)) > 0) {
+        if (enclosures.contains(Enclosure.SQUARE_BRACKETS) && (end = matchSquareBrackets(input, pos, last)) > 0) {
             return end;
         }
-        if (elements.contains(PARENTHESES) && (end = matchParentheses(input, pos, last)) > 0) {
+        if (enclosures.contains(Enclosure.PARENTHESES) && (end = matchParentheses(input, pos, last)) > 0) {
             return end;
         }
         return pos;
@@ -121,7 +132,7 @@ class PatternMatcher {
                     pos = findBracketEnd(input, pos, last, ']');
                     continue;
             }
-            pos = skipPatternElement(input, pos, last, EnumSet.of(STRING_LITERAL));
+            pos = skipEnclosure(input, pos, last, EnumSet.of(Enclosure.STRING_LITERAL));
         }
         throw new AtPositionException(input, "Missing '" + expectedEnd + "'", -1);
     }
@@ -207,7 +218,7 @@ class PatternMatcher {
                 }
                 return new ArrayFilter(arrayName, filter, mode);
             }
-            pos = skipPatternElement(input, pos, last, EnumSet.of(STRING_LITERAL, PARENTHESES));
+            pos = skipEnclosure(input, pos, last, EnumSet.of(Enclosure.STRING_LITERAL, Enclosure.PARENTHESES));
         }
         FilterMode mode = FilterMode.fromSymbol(input.charAt(last));
         if (mode == FILTER_FIND_ALL || mode == FILTER_NESTED_ARRAY) {
@@ -267,7 +278,7 @@ class PatternMatcher {
                     }
                     return new JoinDatasets.Dataset(query, keys);
             }
-            pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+            pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
         }
         if (query != null) {
             throw new AtPositionException(input, "Missing '}'", -1);
@@ -285,7 +296,7 @@ class PatternMatcher {
                 if (input.charAt(pos) == '.') {
                     break;
                 }
-                pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+                pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
             } while (++pos <= last);
             String path = trimOf(input, beg, pos);
             if (path.isEmpty()) {
@@ -352,7 +363,7 @@ class PatternMatcher {
                                 break;
                             }
                         }
-                        pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+                        pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
                     }
             }
             String expression = rightTrimOf(input, beg, pos);
@@ -371,7 +382,7 @@ class PatternMatcher {
                 if (input.charAt(pos) == ',') {
                     break;
                 }
-                pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+                pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
             } while (++pos <= last);
             String param = trimOf(input, beg, pos);
             if (param.isEmpty()) {
@@ -423,7 +434,7 @@ class PatternMatcher {
             } else if (input.charAt(pos) == '?') {
                 endIf = pos;
             } else {
-                pos = skipPatternElement(input, pos, last, ALL_SYNTAX_ELEMENTS);
+                pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
             }
         }
         return steps;
