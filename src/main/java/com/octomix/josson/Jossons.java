@@ -123,11 +123,13 @@ public class Jossons {
             String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
             dataset = dataFinder.apply(collectionName, tokens[2]);
         } else {
+            JoinDatasets joinDatasets = matchJoinDatasetOperation(query);
+            if (joinDatasets == null) {
+                return false;
+            }
+            progress.addResolvingFrom(name, query);
             try {
-                dataset = joinDatasets(name, query, dictionaryFinder, dataFinder, progress);
-                if (dataset == null) {
-                    return false;
-                }
+                dataset = joinDatasets(joinDatasets, dictionaryFinder, dataFinder, progress);
             } catch (IllegalArgumentException e) {
                 progress.addStep("Join operation failed - " + e.getMessage());
             }
@@ -137,13 +139,8 @@ public class Jossons {
         return true;
     }
 
-    private Josson joinDatasets(String name, String query, Function<String, String> dictionaryFinder,
+    private Josson joinDatasets(JoinDatasets datasets, Function<String, String> dictionaryFinder,
                                 BiFunction<String, String, Josson> dataFinder, ResolverProgress progress) {
-        JoinDatasets datasets = JoinDatasets.fromStatement(query);
-        if (datasets == null) {
-            return null;
-        }
-        progress.addResolvingFrom(name, query);
         JsonNode leftNode = evaluateQueryWithResolverLoop(
                 datasets.getLeftDataset().getQuery(), dictionaryFinder, dataFinder, progress);
         if (leftNode == null) {
@@ -517,6 +514,6 @@ public class Jossons {
         } catch (NumberFormatException e) {
             // continue
         }
-        return new LogicalOpStack(datasets).evaluate(statement);
+        return new OperationStack(datasets).evaluate(statement);
     }
 }

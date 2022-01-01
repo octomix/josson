@@ -27,42 +27,38 @@ import java.util.function.Function;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeStatement;
 
-class LogicalOpStack {
-
-    static final String AND = "&";
-    static final String OR = "|";
-    static final String NOT = "!";
+class OperationStack {
 
     private final Josson arrayNode;
     private final Map<String, Josson> datasets;
-    private final LinkedList<LogicalOpStep> stack = new LinkedList<>();
-    private LogicalOpStep lastStep = null;
+    private final LinkedList<OperationStep> stack = new LinkedList<>();
+    private OperationStep lastStep = null;
 
-    LogicalOpStack(JsonNode node) {
+    OperationStack(JsonNode node) {
         this.arrayNode = node.isArray() ?
                 Josson.create(node) :
                 Josson.create(MAPPER.createArrayNode().add(node));
         this.datasets = null;
     }
 
-    LogicalOpStack(Map<String, Josson> datasets) {
+    OperationStack(Map<String, Josson> datasets) {
         this.arrayNode = null;
         this.datasets = datasets;
     }
 
-    private void pushStep(LogicalOpStep step) {
+    private void pushStep(OperationStep step) {
         stack.addLast(step);
         lastStep = step;
     }
 
-    private LogicalOpStep popStep() {
-        LogicalOpStep step = stack.removeLast();
+    private OperationStep popStep() {
+        OperationStep step = stack.removeLast();
         lastStep = stack.peekLast();
         return step;
     }
 
-    private JsonNode evaluateSteps(boolean inParentheses, Function<LogicalOpStep, JsonNode> resolver) {
-        LinkedList<LogicalOpStep> iterator;
+    private JsonNode evaluateSteps(boolean inParentheses, Function<OperationStep, JsonNode> resolver) {
+        LinkedList<OperationStep> iterator;
         if (inParentheses) {
             iterator = new LinkedList<>();
             while (!stack.isEmpty()) {
@@ -79,8 +75,8 @@ class LogicalOpStack {
         }
         JsonNode node = null;
         boolean result = true;
-        for (LogicalOpStep step : iterator) {
-            if (OR.equals(step.getOperator())) {
+        for (OperationStep step : iterator) {
+            if (step.getOperator() == Operator.OR) {
                 if (result) {
                     node = BooleanNode.TRUE;
                     break;
@@ -89,7 +85,7 @@ class LogicalOpStack {
             }
             if (result && !"".equals(step.getExpression())) {
                 node = resolver.apply(step);
-                if (NOT.equals(step.getOperator())) {
+                if (step.getOperator() == Operator.NOT) {
                     result = node == null || node.isNull() || (node.isValueNode() && !node.asBoolean());
                     node = BooleanNode.valueOf(result);
                 } else {
@@ -98,7 +94,7 @@ class LogicalOpStack {
             }
         }
         if (inParentheses) {
-            if (NOT.equals(lastStep.getOperator())) {
+            if (lastStep.getOperator() == Operator.NOT) {
                 lastStep.resetOperator();
                 node = BooleanNode.valueOf(!result);
             }
@@ -112,8 +108,8 @@ class LogicalOpStack {
      */
     JsonNode evaluate(String statement, int arrayIndex) {
         stack.clear();
-        List<LogicalOpStep> steps = decomposeStatement(statement);
-        for (LogicalOpStep step : steps) {
+        List<OperationStep> steps = decomposeStatement(statement);
+        for (OperationStep step : steps) {
             try {
                 evaluate(step, arrayIndex);
             } catch (IllegalArgumentException e) {
@@ -123,13 +119,13 @@ class LogicalOpStack {
                 throw new IllegalArgumentException("\"" + e.getMessage() + "\" in " + statement);
             }
         }
-        return evaluateSteps(false, (LogicalOpStep opStep) -> opStep.resolveFrom(arrayNode, arrayIndex));
+        return evaluateSteps(false, (OperationStep opStep) -> opStep.resolveFrom(arrayNode, arrayIndex));
     }
 
-    private void evaluate(LogicalOpStep step, int arrayIndex) {
-        if (step.getOperator().isEmpty()) {
+    private void evaluate(OperationStep step, int arrayIndex) {
+        if (step.getOperator() == Operator.NOP) {
             if (")".equals(step.getExpression())) {
-                evaluateSteps(true, (LogicalOpStep opStep) -> opStep.resolveFrom(arrayNode, arrayIndex));
+                evaluateSteps(true, (OperationStep opStep) -> opStep.resolveFrom(arrayNode, arrayIndex));
             } else {
                 pushStep(step);
             }
@@ -145,13 +141,13 @@ class LogicalOpStack {
         switch (step.getOperator()) {
             case AND:
             case OR:
-                if (AND.equals(lastStep.getOperator())) {
-                    LogicalOpStep thisStep = popStep();
+                if (lastStep.getOperator() == Operator.AND) {
+                    OperationStep thisStep = popStep();
                     if (lastStep.isResolveToTrueFrom(arrayNode, arrayIndex)) {
                         lastStep.setResolved(thisStep.resolveFrom(arrayNode, arrayIndex));
                     }
-                } else if (OR.equals(lastStep.getOperator()) && OR.equals(step.getOperator())) {
-                    LogicalOpStep thisStep = popStep();
+                } else if (lastStep.getOperator() == Operator.OR && step.getOperator() == Operator.OR) {
+                    OperationStep thisStep = popStep();
                     if (lastStep.isResolveToFalseFrom(arrayNode, arrayIndex)) {
                         lastStep.setResolved(thisStep.resolveFrom(arrayNode, arrayIndex));
                     }
@@ -159,8 +155,8 @@ class LogicalOpStack {
                 pushStep(step);
                 return;
         }
-        if (AND.equals(lastStep.getOperator())) {
-            LogicalOpStep thisStep = popStep();
+        if (lastStep.getOperator() == Operator.AND) {
+            OperationStep thisStep = popStep();
             if (lastStep.isResolveToTrueFrom(arrayNode, arrayIndex)) {
                 lastStep.setResolved(thisStep.relationalCompare(step, arrayNode, arrayIndex));
             }
@@ -173,8 +169,8 @@ class LogicalOpStack {
         For Jossons.evaluateStatement()
      */
     JsonNode evaluate(String statement) throws UnresolvedDatasetException {
-        List<LogicalOpStep> steps = decomposeStatement(statement);
-        for (LogicalOpStep step : steps) {
+        List<OperationStep> steps = decomposeStatement(statement);
+        for (OperationStep step : steps) {
             try {
                 evaluate(step);
             } catch (IllegalArgumentException e) {
@@ -185,7 +181,7 @@ class LogicalOpStack {
             }
         }
         try {
-            return evaluateSteps(false, (LogicalOpStep opStep) -> {
+            return evaluateSteps(false, (OperationStep opStep) -> {
                 try {
                     return opStep.resolveFrom(datasets);
                 } catch (UnresolvedDatasetException e) {
@@ -200,13 +196,13 @@ class LogicalOpStack {
         }
     }
 
-    private void evaluate(LogicalOpStep step) throws UnresolvedDatasetException {
+    private void evaluate(OperationStep step) throws UnresolvedDatasetException {
         switch (step.getOperator()) {
-            case "":
             case NOT:
+            case NOP:
                 if (")".equals(step.getExpression())) {
                     try {
-                        evaluateSteps(true, (LogicalOpStep opStep) -> {
+                        evaluateSteps(true, (OperationStep opStep) -> {
                             try {
                                 return opStep.resolveFrom(datasets);
                             } catch (UnresolvedDatasetException e) {
@@ -234,13 +230,13 @@ class LogicalOpStack {
         switch (step.getOperator()) {
             case AND:
             case OR:
-                if (AND.equals(lastStep.getOperator())) {
-                    LogicalOpStep thisStep = popStep();
+                if (lastStep.getOperator() == Operator.AND) {
+                    OperationStep thisStep = popStep();
                     if (lastStep.isResolveToTrueFrom(datasets)) {
                         lastStep.setResolved(thisStep.resolveFrom(datasets));
                     }
-                } else if (OR.equals(lastStep.getOperator()) && OR.equals(step.getOperator())) {
-                    LogicalOpStep thisStep = popStep();
+                } else if (lastStep.getOperator() == Operator.OR && step.getOperator() == Operator.OR) {
+                    OperationStep thisStep = popStep();
                     if (lastStep.isResolveToFalseFrom(datasets)) {
                         lastStep.setResolved(thisStep.resolveFrom(datasets));
                     }
@@ -248,8 +244,8 @@ class LogicalOpStack {
                 pushStep(step);
                 return;
         }
-        if (AND.equals(lastStep.getOperator())) {
-            LogicalOpStep thisStep = popStep();
+        if (lastStep.getOperator() == Operator.AND) {
+            OperationStep thisStep = popStep();
             if (lastStep.isResolveToTrueFrom(datasets)) {
                 lastStep.setResolved(thisStep.relationalCompare(step, datasets));
             }

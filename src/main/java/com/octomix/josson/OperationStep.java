@@ -18,60 +18,32 @@ package com.octomix.josson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 import static com.octomix.josson.FuncDispatcher.isArrayModeFunction;
 import static com.octomix.josson.JossonCore.*;
-import static com.octomix.josson.PatternMatcher.matchJsonQuery;
+import static com.octomix.josson.PatternMatcher.matchDatasetQuery;
 
-class LogicalOpStep {
+class OperationStep {
 
-    private String operator;
+    private Operator operator;
     private String expression;
     private JsonNode resolved;
 
-    enum RelationalOperator {
-        EQ("="),
-        NE("!="),
-        GT(">"),
-        GTE(">="),
-        LT("<"),
-        LTE("<=");
-
-        final String symbol;
-
-        RelationalOperator(String symbol) {
-            this.symbol = symbol;
-        }
-
-        static RelationalOperator fromSymbol(String symbol) {
-            for (RelationalOperator operator : values()) {
-                if (operator.symbol.equals(symbol)) {
-                    return operator;
-                }
-            }
-            throw new IllegalArgumentException(symbol);
-        }
-    }
-
-    LogicalOpStep(String operator, String expression) {
+    OperationStep(Operator operator, String expression) {
         this.operator = operator;
         this.expression = expression;
         this.resolved = null;
     }
 
-    String getOperator() {
+    Operator getOperator() {
         return operator;
     }
 
     void resetOperator() {
-        operator = "";
+        operator = Operator.NOP;
     }
 
     String getExpression() {
@@ -81,6 +53,88 @@ class LogicalOpStep {
     void setResolved(JsonNode resolved) {
         this.expression = null;
         this.resolved = resolved;
+    }
+
+    private static BooleanNode relationalCompare(JsonNode leftNode, Operator operator, JsonNode rightNode) {
+        if (leftNode == null) {
+            leftNode = NullNode.getInstance();
+        }
+        if (rightNode == null) {
+            rightNode = NullNode.getInstance();
+        }
+        if (rightNode.isTextual()) {
+            if (leftNode.isTextual()) {
+                int compareResult = leftNode.asText().compareTo(rightNode.asText());
+                switch (operator) {
+                    case EQ:
+                        return BooleanNode.valueOf(compareResult == 0);
+                    case NE:
+                        return BooleanNode.valueOf(compareResult != 0);
+                    case GT:
+                        return BooleanNode.valueOf(compareResult > 0);
+                    case GTE:
+                        return BooleanNode.valueOf(compareResult >= 0);
+                    case LT:
+                        return BooleanNode.valueOf(compareResult < 0);
+                    case LTE:
+                        return BooleanNode.valueOf(compareResult <= 0);
+                }
+            }
+            JsonNode swap = leftNode;
+            leftNode = rightNode;
+            rightNode = swap;
+            switch (operator) {
+                case GT:
+                    operator = Operator.LT;
+                    break;
+                case GTE:
+                    operator = Operator.LTE;
+                    break;
+                case LT:
+                    operator = Operator.GT;
+                    break;
+                case LTE:
+                    operator = Operator.GTE;
+                    break;
+            }
+        }
+        if (!leftNode.isContainerNode() && rightNode.isNumber()) {
+            try {
+                double value = leftNode.isNumber() ? leftNode.asDouble() : Double.parseDouble(leftNode.asText());
+                switch (operator) {
+                    case EQ:
+                        return BooleanNode.valueOf(value == rightNode.asDouble());
+                    case NE:
+                        return BooleanNode.valueOf(value != rightNode.asDouble());
+                    case GT:
+                        return BooleanNode.valueOf(value > rightNode.asDouble());
+                    case GTE:
+                        return BooleanNode.valueOf(value >= rightNode.asDouble());
+                    case LT:
+                        return BooleanNode.valueOf(value < rightNode.asDouble());
+                    case LTE:
+                        return BooleanNode.valueOf(value <= rightNode.asDouble());
+                }
+            } catch (NumberFormatException e) {
+                return BooleanNode.FALSE;
+            }
+        }
+        if (!leftNode.isContainerNode() && rightNode.isBoolean()) {
+            switch (operator) {
+                case EQ:
+                    return BooleanNode.valueOf(!leftNode.asBoolean() ^ rightNode.asBoolean());
+                case NE:
+                    return BooleanNode.valueOf(leftNode.asBoolean() ^ rightNode.asBoolean());
+            }
+        } else {
+            switch (operator) {
+                case EQ:
+                    return BooleanNode.valueOf(leftNode.isNull() && rightNode.isNull());
+                case NE:
+                    return BooleanNode.valueOf(leftNode.isNull() ^ rightNode.isNull());
+            }
+        }
+        return BooleanNode.FALSE;
     }
 
     private JsonNode evaluateExpression(Map<String, Josson> datasets) throws UnresolvedDatasetException {
@@ -100,7 +154,7 @@ class LogicalOpStep {
         if (implicitVariable != null) {
             return implicitVariable;
         }
-        String[] tokens = matchJsonQuery(expression);
+        String[] tokens = matchDatasetQuery(expression);
         if (tokens == null) {
             throw new UnresolvedDatasetException(expression);
         }
@@ -120,107 +174,6 @@ class LogicalOpStep {
         JsonNode node = josson.getNode(tokens[1]);
         datasets.put(expression, node == null ? null : Josson.create(node));
         return node;
-    }
-
-    private static JsonNode getImplicitVariable(String name) {
-        if (name.charAt(0) == '$') {
-            switch (StringUtils.stripStart(name.substring(1), null).toLowerCase()) {
-                case "":
-                    return BooleanNode.TRUE;
-                case "now":
-                    return TextNode.valueOf(LocalDateTime.now().toString());
-                case "today":
-                    return TextNode.valueOf(LocalDate.now().atStartOfDay().toString());
-                case "yesterday":
-                    return TextNode.valueOf(LocalDate.now().atStartOfDay().minusDays(1).toString());
-                case "tomorrow":
-                    return TextNode.valueOf(LocalDate.now().atStartOfDay().plusDays(1).toString());
-            }
-        }
-        return null;
-    }
-
-    private static BooleanNode relationalCompare(JsonNode leftNode, String operator, JsonNode rightNode) {
-        RelationalOperator oper = RelationalOperator.fromSymbol(operator);
-        if (leftNode == null) {
-            leftNode = NullNode.getInstance();
-        }
-        if (rightNode == null) {
-            rightNode = NullNode.getInstance();
-        }
-        if (rightNode.isTextual()) {
-            if (leftNode.isTextual()) {
-                int compareResult = leftNode.asText().compareTo(rightNode.asText());
-                switch (oper) {
-                    case EQ:
-                        return BooleanNode.valueOf(compareResult == 0);
-                    case NE:
-                        return BooleanNode.valueOf(compareResult != 0);
-                    case GT:
-                        return BooleanNode.valueOf(compareResult > 0);
-                    case GTE:
-                        return BooleanNode.valueOf(compareResult >= 0);
-                    case LT:
-                        return BooleanNode.valueOf(compareResult < 0);
-                    case LTE:
-                        return BooleanNode.valueOf(compareResult <= 0);
-                }
-            }
-            JsonNode swap = leftNode;
-            leftNode = rightNode;
-            rightNode = swap;
-            switch (oper) {
-                case GT:
-                    oper = RelationalOperator.LT;
-                    break;
-                case GTE:
-                    oper = RelationalOperator.LTE;
-                    break;
-                case LT:
-                    oper = RelationalOperator.GT;
-                    break;
-                case LTE:
-                    oper = RelationalOperator.GTE;
-                    break;
-            }
-        }
-        if (!leftNode.isContainerNode() && rightNode.isNumber()) {
-            try {
-                double value = leftNode.isNumber() ? leftNode.asDouble() : Double.parseDouble(leftNode.asText());
-                switch (oper) {
-                    case EQ:
-                        return BooleanNode.valueOf(value == rightNode.asDouble());
-                    case NE:
-                        return BooleanNode.valueOf(value != rightNode.asDouble());
-                    case GT:
-                        return BooleanNode.valueOf(value > rightNode.asDouble());
-                    case GTE:
-                        return BooleanNode.valueOf(value >= rightNode.asDouble());
-                    case LT:
-                        return BooleanNode.valueOf(value < rightNode.asDouble());
-                    case LTE:
-                        return BooleanNode.valueOf(value <= rightNode.asDouble());
-                }
-            } catch (NumberFormatException e) {
-                return BooleanNode.FALSE;
-            }
-        }
-        if (!leftNode.isContainerNode() && rightNode.isBoolean()) {
-            switch (oper) {
-                case EQ:
-                    return BooleanNode.valueOf(!leftNode.asBoolean() ^ rightNode.asBoolean());
-                case NE:
-                    return BooleanNode.valueOf(leftNode.asBoolean() ^ rightNode.asBoolean());
-            }
-        } else {
-            switch (oper) {
-                case EQ:
-                    return BooleanNode.valueOf(leftNode.isNull() && rightNode.isNull());
-                case NE:
-                    return BooleanNode.valueOf(leftNode.isNull() ^ rightNode.isNull());
-            }
-        }
-        return BooleanNode.FALSE;
     }
 
     /*
@@ -256,7 +209,7 @@ class LogicalOpStep {
         return node != null && !node.asBoolean();
     }
 
-    JsonNode relationalCompare(LogicalOpStep step, Josson arrayNode, int arrayIndex) {
+    JsonNode relationalCompare(OperationStep step, Josson arrayNode, int arrayIndex) {
         resolved = relationalCompare(
                 resolveFrom(arrayNode, arrayIndex), step.getOperator(), step.getNodeFrom(arrayNode, arrayIndex));
         return resolved;
@@ -282,7 +235,7 @@ class LogicalOpStep {
         return node != null && !node.asBoolean();
     }
 
-    JsonNode relationalCompare(LogicalOpStep step, Map<String, Josson> datasets) throws UnresolvedDatasetException {
+    JsonNode relationalCompare(OperationStep step, Map<String, Josson> datasets) throws UnresolvedDatasetException {
         resolved = relationalCompare(resolveFrom(datasets), step.getOperator(), step.evaluateExpression(datasets));
         return resolved;
     }

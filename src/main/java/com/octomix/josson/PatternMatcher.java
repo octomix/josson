@@ -31,11 +31,11 @@ class PatternMatcher {
         SQUARE_BRACKETS,
         PARENTHESES;
 
-        static final Set<Enclosure> ALL_KINDS = EnumSet.of(
+        static final Enclosure[] ALL_KINDS = new Enclosure[]{
             STRING_LITERAL,
             SQUARE_BRACKETS,
             PARENTHESES
-        );
+        };
     }
 
     private static class AtPositionException extends IllegalArgumentException {
@@ -66,16 +66,26 @@ class PatternMatcher {
         return input.substring(beg, end);
     }
 
-    private static int skipEnclosure(String input, int pos, int last, Set<Enclosure> enclosures) {
-        int end;
-        if (enclosures.contains(Enclosure.STRING_LITERAL) && (end = matchStringLiteral(input, pos, last)) > 0) {
-            return end;
-        }
-        if (enclosures.contains(Enclosure.SQUARE_BRACKETS) && (end = matchSquareBrackets(input, pos, last)) > 0) {
-            return end;
-        }
-        if (enclosures.contains(Enclosure.PARENTHESES) && (end = matchParentheses(input, pos, last)) > 0) {
-            return end;
+    private static int skipEnclosure(String input, int pos, int last, Enclosure... enclosures) {
+        for (Enclosure enclosure : enclosures) {
+            int end;
+            switch (enclosure) {
+                case STRING_LITERAL:
+                    if ((end = matchStringLiteral(input, pos, last)) > 0) {
+                        return end;
+                    }
+                    break;
+                case SQUARE_BRACKETS:
+                    if ((end = matchSquareBrackets(input, pos, last)) > 0) {
+                        return end;
+                    }
+                    break;
+                case PARENTHESES:
+                    if ((end = matchParentheses(input, pos, last)) > 0) {
+                        return end;
+                    }
+                    break;
+            }
         }
         return pos;
     }
@@ -132,12 +142,25 @@ class PatternMatcher {
                     pos = findBracketEnd(input, pos, last, ']');
                     continue;
             }
-            pos = skipEnclosure(input, pos, last, EnumSet.of(Enclosure.STRING_LITERAL));
+            pos = skipEnclosure(input, pos, last, Enclosure.STRING_LITERAL);
         }
         throw new AtPositionException(input, "Missing '" + expectedEnd + "'", -1);
     }
 
-    static String[] matchJsonQuery(String input) {
+    private static int skipDatasetQuery(String input, int pos, int last) {
+        for (;pos <= last && "=!<>&|)".indexOf(input.charAt(pos)) < 0; pos++) {
+            if (input.charAt(pos) == '-') {
+                // skip "->"
+                if (pos++ == last) {
+                    break;
+                }
+            }
+            pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
+        }
+        return pos;
+    }
+
+    static String[] matchDatasetQuery(String input) {
         int last = input.length() - 1;
         int pos = eatSpaces(input, 0, last);
         for (int beg = pos; pos < last; pos++) {
@@ -218,7 +241,7 @@ class PatternMatcher {
                 }
                 return new ArrayFilter(arrayName, filter, mode);
             }
-            pos = skipEnclosure(input, pos, last, EnumSet.of(Enclosure.STRING_LITERAL, Enclosure.PARENTHESES));
+            pos = skipEnclosure(input, pos, last, Enclosure.STRING_LITERAL, Enclosure.PARENTHESES);
         }
         FilterMode mode = FilterMode.fromSymbol(input.charAt(last));
         if (mode == FILTER_FIND_ALL || mode == FILTER_NESTED_ARRAY) {
@@ -252,7 +275,35 @@ class PatternMatcher {
         return null;
     }
 
-    static JoinDatasets.Dataset matchJoinDatasetQuery(String input) {
+    static JoinDatasets matchJoinDatasetOperation(String input) {
+        int last = input.length() - 1;
+        int pos = skipDatasetQuery(input, 0, last);
+        String leftQuery = trimOf(input, 0, pos);
+        int beg = pos;
+        for (;pos <= last; pos++) {
+            if ("<=>".indexOf(input.charAt(pos)) < 0) {
+                break;
+            }
+        }
+        JoinDatasets.JoinOperator operator = JoinDatasets.JoinOperator.fromSymbol(input.substring(beg, pos));
+        if (operator == null) {
+            return null;
+        }
+        int end = skipDatasetQuery(input, pos, last);
+        String rightQuery = trimOf(input, pos, last + 1);
+        pos = eatSpaces(input, end, last);
+        if (pos <= last) {
+            throw new AtPositionException(input, "Too many arguments for join operation", pos);
+        }
+        JoinDatasets.Dataset leftDataset = matchJoinDatasetQuery(leftQuery);
+        JoinDatasets.Dataset rightDataset = matchJoinDatasetQuery(rightQuery);
+        if (leftDataset.getKeys().length != rightDataset.getKeys().length) {
+            throw new IllegalArgumentException("Mismatch key count: " + input);
+        }
+        return new JoinDatasets(leftDataset, operator, rightDataset);
+    }
+
+    private static JoinDatasets.Dataset matchJoinDatasetQuery(String input) {
         int last = input.length() - 1;
         String query = null;
         for (int pos = 0, beg = 0; pos <= last; pos++) {
@@ -337,8 +388,8 @@ class PatternMatcher {
         paths.add(path);
     }
 
-    static List<LogicalOpStep> decomposeStatement(String input) {
-        List<LogicalOpStep> steps = new ArrayList<>();
+    static List<OperationStep> decomposeStatement(String input) {
+        List<OperationStep> steps = new ArrayList<>();
         int last = input.length() - 1;
         int pos = 0;
         while (pos <= last) {
@@ -348,7 +399,11 @@ class PatternMatcher {
                     throw new AtPositionException(input, "Invalid syntax", -1);
                 }
             }
-            String operator = input.substring(beg, pos);
+            String token = input.substring(beg, pos);
+            Operator operator = Operator.fromSymbol(token);
+            if (operator == null) {
+                throw new AtPositionException(input, "Invalid operator: " + token, beg);
+            }
             beg = eatSpaces(input, pos, last);
             switch (input.charAt(beg)) {
                 case '(':
@@ -356,18 +411,10 @@ class PatternMatcher {
                     pos = beg + 1;
                     break;
                 default:
-                    for (pos = beg; pos <= last && "=!<>&|)".indexOf(input.charAt(pos)) < 0; pos++) {
-                        if (input.charAt(pos) == '-') {
-                            // skip "->"
-                            if (pos++ == last) {
-                                break;
-                            }
-                        }
-                        pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
-                    }
+                    pos = skipDatasetQuery(input, beg, last);
             }
             String expression = rightTrimOf(input, beg, pos);
-            steps.add(new LogicalOpStep(operator, expression));
+            steps.add(new OperationStep(operator, expression));
             pos = eatSpaces(input, pos, last);
         }
         return steps;

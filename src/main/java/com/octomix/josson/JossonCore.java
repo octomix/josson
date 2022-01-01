@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -65,6 +66,24 @@ class JossonCore {
             return "\"" + result + "\"";
         }
         return result;
+    }
+
+    static JsonNode getImplicitVariable(String name) {
+        if (name.charAt(0) == '$') {
+            switch (StringUtils.stripStart(name.substring(1), null).toLowerCase()) {
+                case "":
+                    return BooleanNode.TRUE;
+                case "now":
+                    return TextNode.valueOf(LocalDateTime.now().toString());
+                case "today":
+                    return TextNode.valueOf(LocalDate.now().atStartOfDay().toString());
+                case "yesterday":
+                    return TextNode.valueOf(LocalDate.now().atStartOfDay().minusDays(1).toString());
+                case "tomorrow":
+                    return TextNode.valueOf(LocalDate.now().atStartOfDay().plusDays(1).toString());
+            }
+        }
+        return null;
     }
 
     static boolean isCurrentNodeSymbol(String path) {
@@ -252,7 +271,7 @@ class JossonCore {
                 return null;
             }
         } else {
-            JsonNode result = new LogicalOpStack(node).evaluate(statement, 0);
+            JsonNode result = new OperationStack(node).evaluate(statement, 0);
             if (result != null && result.asBoolean()) {
                 return node;
             }
@@ -271,7 +290,7 @@ class JossonCore {
         } catch (NumberFormatException e) {
             // continue
         }
-        LogicalOpStack opStack = new LogicalOpStack(node);
+        OperationStack opStack = new OperationStack(node);
         for (int i = 0; i < node.size(); i++) {
             JsonNode result = opStack.evaluate(statement, i);
             if (result != null && result.asBoolean()) {

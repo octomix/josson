@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.octomix.josson.commons.StringUtils;
 
-import java.util.List;
-
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTER_FIND_ALL;
 import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -14,7 +12,7 @@ import static com.octomix.josson.PatternMatcher.*;
 
 class JoinDatasets {
 
-    private enum JoinOperator {
+    enum JoinOperator {
         INNER_JOIN_ONE(">=<"),
         LEFT_JOIN_ONE("<=<"),
         RIGHT_JOIN_ONE(">=>"),
@@ -50,6 +48,10 @@ class JoinDatasets {
             return query;
         }
 
+        String[] getKeys() {
+            return keys;
+        }
+
         private String retrieveArrayName() {
             int pos = keys[0].indexOf(':');
             if (pos < 0) {
@@ -67,7 +69,7 @@ class JoinDatasets {
     private Dataset rightDataset;
     private final String arrayName;
 
-    private JoinDatasets(Dataset leftDataset, JoinOperator operator, Dataset rightDataset) {
+    JoinDatasets(Dataset leftDataset, JoinOperator operator, Dataset rightDataset) {
         this.leftDataset = leftDataset;
         this.operator = operator;
         this.rightDataset = rightDataset;
@@ -89,26 +91,6 @@ class JoinDatasets {
 
     Dataset getRightDataset() {
         return rightDataset;
-    }
-
-    static JoinDatasets fromStatement(String statement) {
-        List<LogicalOpStep> steps = decomposeStatement(statement);
-        if (steps.size() < 2) {
-            return null;
-        }
-        JoinOperator operator = JoinOperator.fromSymbol(steps.get(1).getOperator());
-        if (operator == null) {
-            return null;
-        }
-        if (steps.size() > 2) {
-            throw new IllegalArgumentException("too many arguments");
-        }
-        JoinDatasets.Dataset leftDataset = matchJoinDatasetQuery(steps.get(0).getExpression());
-        JoinDatasets.Dataset rightDataset = matchJoinDatasetQuery(steps.get(1).getExpression());
-        if (leftDataset.keys.length != rightDataset.keys.length) {
-            throw new IllegalArgumentException("mismatch key count");
-        }
-        return new JoinDatasets(leftDataset, operator, rightDataset);
     }
 
     JsonNode joinNodes(JsonNode leftNode, JsonNode rightNode) {
@@ -158,12 +140,12 @@ class JoinDatasets {
             if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
-            relationalOps[j] = rightDataset.keys[j] + LogicalOpStep.RelationalOperator.EQ
+            relationalOps[j] = rightDataset.keys[j] + Operator.EQ
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "")
                     + leftValue.asText().replace("'", "''")
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "");
         }
-        String path = "[" + StringUtils.join(relationalOps, LogicalOpStack.AND) + "]";
+        String path = "[" + StringUtils.join(relationalOps, Operator.AND.symbol) + "]";
         if (operator == JoinOperator.LEFT_JOIN_MANY) {
             JsonNode rightToJoin = Josson.getNode(rightArray, path + FILTER_FIND_ALL.symbol);
             if (rightToJoin != null) {

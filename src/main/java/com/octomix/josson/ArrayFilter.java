@@ -2,10 +2,6 @@ package com.octomix.josson;
 
 class ArrayFilter {
 
-    private final String arrayName;
-    private final String filter;
-    private final FilterMode mode;
-
     enum FilterMode {
         FILTER_FIND_FIRST(' '),
         FILTER_FIND_ALL('*'),
@@ -26,6 +22,10 @@ class ArrayFilter {
             return null;
         }
     }
+
+    private final String arrayName;
+    private final String filter;
+    private final FilterMode mode;
 
     ArrayFilter(String arrayName, String filter, FilterMode mode) {
         this.arrayName = arrayName;
