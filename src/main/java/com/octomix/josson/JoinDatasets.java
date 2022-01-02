@@ -140,7 +140,7 @@ class JoinDatasets {
             if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
-            relationalOps[j] = rightDataset.keys[j] + Operator.EQ
+            relationalOps[j] = rightDataset.keys[j] + Operator.EQ.symbol
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "")
                     + leftValue.asText().replace("'", "''")
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "");
