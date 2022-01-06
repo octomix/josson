@@ -24,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.*;
@@ -88,7 +87,7 @@ class GetFuncParam {
             String[] values = param.split(":", 2);
             String name = values[0].trim();
             String path = null;
-            if (!isCurrentNodeSymbol(name)) {
+            if (!isCurrentNodePath(name)) {
                 if (values.length == 1) {
                     path = name;
                     name = getLastElementName(path);
@@ -141,13 +140,13 @@ class GetFuncParam {
                 }
             } else if (node.isArray()) {
                 for (int i = 0; i < node.size(); i++) {
-                    JsonNode tryNode = getNode(node.get(i), param);
+                    JsonNode tryNode = getNodeByPath(node.get(i), param);
                     if (tryNode != null) {
                         array.add(tryNode);
                     }
                 }
             } else {
-                JsonNode tryNode = getNode(node, param);
+                JsonNode tryNode = getNodeByPath(node, param);
                 if (tryNode != null) {
                     if (tryNode.isArray()) {
                         array.addAll((ArrayNode) tryNode);

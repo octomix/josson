@@ -23,18 +23,18 @@ class ArrayFilter {
         }
     }
 
-    private final String arrayName;
+    private final String nodeName;
     private final String filter;
     private final FilterMode mode;
 
-    ArrayFilter(String arrayName, String filter, FilterMode mode) {
-        this.arrayName = arrayName;
+    ArrayFilter(String nodeName, String filter, FilterMode mode) {
+        this.nodeName = nodeName;
         this.filter = filter;
         this.mode = mode;
     }
 
-    String getArrayName() {
-        return arrayName;
+    String getNodeName() {
+        return nodeName;
     }
 
     String getFilter() {

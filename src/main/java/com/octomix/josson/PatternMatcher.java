@@ -21,7 +21,6 @@ import java.util.*;
 
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
-import static com.octomix.josson.FuncDispatcher.isArrayModeFunction;
 import static com.octomix.josson.JossonCore.*;
 
 class PatternMatcher {
@@ -221,12 +220,9 @@ class PatternMatcher {
             int end = matchSquareBrackets(input, pos, last);
             if (end > 0) {
                 String arrayName = rightTrimOf(input, 0, pos);
-                if (isArrayModeFunction(arrayName)) {
-                    throw new IllegalArgumentException("Invalid filter expression: " + input);
-                }
                 String filter = trimOf(input, pos + 1, end);
                 if (filter.isEmpty()) {
-                    throw new IllegalArgumentException("Missing filter expression: " + input);
+                    throw new AtPositionException(input, "Missing filter expression", pos + 1);
                 }
                 pos = eatSpaces(input, end + 1, last);
                 FilterMode mode = FILTER_FIND_FIRST;
@@ -252,7 +248,6 @@ class PatternMatcher {
 
     static FuncDispatcher matchFunctionAndArgument(String input) {
         int last = input.length() - 1;
-        int beg = last >= 0 && isArrayModeFunction(input) ? eatSpaces(input, 1, last) : 0;
         for (int pos = 0; pos <= last; pos++) {
             int end = matchParentheses(input, pos, last);
             if (end > 0) {
@@ -260,17 +255,14 @@ class PatternMatcher {
                 if (!ending.isEmpty()) {
                     throw new AtPositionException(input, "Invalid '" + ending +"'", end);
                 }
-                String name = rightTrimOf(input, beg, pos);
+                String name = rightTrimOf(input, 0, pos);
                 if (name.isEmpty()) {
                     throw new IllegalArgumentException("Missing function name: " + input);
                 }
-                return new FuncDispatcher(name, trimOf(input, pos + 1, end), beg > 0);
+                return new FuncDispatcher(name, trimOf(input, pos + 1, end));
             } else if (matchStringLiteral(input, pos, last) > 0 || matchSquareBrackets(input, pos, last) > 0) {
                 return null;
             }
-        }
-        if (beg > 0) {
-            throw new IllegalArgumentException("Invalid syntax: " + input);
         }
         return null;
     }
@@ -356,36 +348,29 @@ class PatternMatcher {
             try {
                 if (isInt == null) {
                     if (pos > last) {
-                        addDecomposedPath(paths, path);
+                        paths.add(path);
                     } else {
                         try {
                             Integer.parseInt(path);
                             isInt = path;
                         } catch (NumberFormatException e) {
-                            addDecomposedPath(paths, path);
+                            paths.add(path);
                         }
                     }
                 } else {
                     if (StringUtils.isNumeric(path)) {
-                        addDecomposedPath(paths, isInt + "." + path);
+                        paths.add(isInt + "." + path);
                     } else {
-                        addDecomposedPath(paths, isInt);
-                        addDecomposedPath(paths, path);
+                        paths.add(isInt);
+                        paths.add(path);
                     }
                     isInt = null;
                 }
-            } catch (Exception e) {
-                throw new AtPositionException(input, "Invalid '" + e.getMessage() + "'", beg);
+            } catch (IllegalArgumentException e) {
+                throw new AtPositionException(input, e.getMessage(), beg);
             }
         }
         return paths;
-    }
-
-    private static void addDecomposedPath(List<String> paths, String path) throws Exception {
-        if (isCurrentNodeSymbol(path) && !paths.isEmpty()) {
-            throw new Exception(path);
-        }
-        paths.add(path);
     }
 
     static List<OperationStep> decomposeStatement(String input) {
@@ -525,7 +510,7 @@ class PatternMatcher {
         List<String> paths = decomposePaths(path);
         for (int i = paths.size() - 1; i >= 0 ; i--) {
             if (matchFunctionAndArgument(paths.get(i)) == null) {
-                return matchFilterQuery(paths.get(i)).getArrayName();
+                return matchFilterQuery(paths.get(i)).getNodeName();
             }
         }
         return "undefined";

@@ -22,7 +22,6 @@ import com.octomix.josson.exception.UnresolvedDatasetException;
 
 import java.util.Map;
 
-import static com.octomix.josson.FuncDispatcher.isArrayModeFunction;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.matchDatasetQuery;
 
@@ -179,22 +178,9 @@ class OperationStep {
     /*
         For JossonCore.evaluateFilter()
      */
-    private JsonNode getNodeFrom(Josson arrayNode, int index) {
-        if (expression.charAt(0) == INDEX_SYMBOL) {
-            return getIndexId(index, expression);
-        }
-        if (isCurrentNodeSymbol(expression)) {
-            return arrayNode.getNode(index);
-        }
-        if (isArrayModeFunction(expression)) {
-            return arrayNode.getNode(expression);
-        }
-        return arrayNode.getNode(index, expression);
-    }
-
     JsonNode resolveFrom(Josson arrayNode, int arrayIndex) {
         if (expression != null) {
-            setResolved(getNodeFrom(arrayNode, arrayIndex));
+            setResolved(arrayNode.getNode(arrayIndex, expression));
         }
         return resolved;
     }
@@ -211,7 +197,7 @@ class OperationStep {
 
     JsonNode relationalCompare(OperationStep step, Josson arrayNode, int arrayIndex) {
         resolved = relationalCompare(
-                resolveFrom(arrayNode, arrayIndex), step.getOperator(), step.getNodeFrom(arrayNode, arrayIndex));
+                resolveFrom(arrayNode, arrayIndex), step.getOperator(), arrayNode.getNode(arrayIndex, step.getExpression()));
         return resolved;
     }
 

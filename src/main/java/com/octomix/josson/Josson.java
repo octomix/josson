@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import com.octomix.josson.commons.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,11 +28,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.List;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.PatternMatcher.decomposePaths;
 
 public class Josson {
 
@@ -235,7 +232,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(int index, String jossonPath) {
-        return jsonNode != null && jsonNode.isArray() ? getNode(jsonNode.get(index), jossonPath) : null;
+        return getNode(jsonNode, index, jossonPath);
     }
 
     /**
@@ -567,19 +564,19 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(JsonNode node, String jossonPath) {
-        if (node == null || StringUtils.isBlank(jossonPath)) {
-            return node;
-        }
-        List<String> keys = decomposePaths(jossonPath);
-        if (keys.isEmpty()) {
-            return node;
-        }
-        try {
-            node = toValueNode(keys.get(0));
-            keys.remove(0);
-        } catch (NumberFormatException e) {
-            // continue
-        }
-        return getNodeByKeys(node, keys);
+        return getNodeByPath(node, jossonPath);
+    }
+
+    /**
+     * Query data on an element of ArrayNode by Josson query language.
+     *
+     * @param node the Jackson JsonNode that retrieve data from
+     * @param index index of the specific ArrayNode element
+     * @param jossonPath the Josson query path
+     * @return The resulting Jackson JsonNode. {@code null} if the root is not an ArrayNode.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public static JsonNode getNode(JsonNode node, int index, String jossonPath) {
+        return getNodeByPath(node, index, jossonPath);
     }
 }

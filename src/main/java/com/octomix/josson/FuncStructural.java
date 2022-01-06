@@ -17,12 +17,14 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
+import com.octomix.josson.commons.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.octomix.josson.GetFuncParam.*;
-import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
@@ -33,7 +35,7 @@ class FuncStructural {
         List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         if (node.isArray() && paramList.size() == 1) {
             for (int i = 0; i < node.size(); i++) {
-                JsonNode tryNode = getNode(node.get(i), paramList.get(0));
+                JsonNode tryNode = getNodeByPath(node.get(i), paramList.get(0));
                 if (tryNode != null && !tryNode.isNull()) {
                     return tryNode;
                 }
@@ -67,7 +69,7 @@ class FuncStructural {
             }
         } else if (node.isObject()) {
             for (String path : paramList) {
-                JsonNode tryNode = getNode(node, path);
+                JsonNode tryNode = getNodeByPath(node, path);
                 if (tryNode != null && !tryNode.isNull()) {
                     return tryNode;
                 }
@@ -76,10 +78,43 @@ class FuncStructural {
         return null;
     }
 
+    static TextNode funcCsv(JsonNode node, String params) {
+        JsonNode container = getParamArrayOrItselfIsContainer(params, node);
+        if (container == null) {
+            return null;
+        }
+        List<JsonNode> values = new ArrayList<>();
+        funcCsvCollectValues(values, container);
+        return TextNode.valueOf(values.stream()
+                .map(value -> csvQuote(value.asText()))
+                .collect(Collectors.joining(",")));
+    }
+
+    static void funcCsvCollectValues(List<JsonNode> values, JsonNode node) {
+        if (node.isObject()) {
+            node.forEach(elem -> {
+                if (elem.isContainerNode()) {
+                    funcCsvCollectValues(values, elem);
+                } else if (!elem.isNull()) {
+                    values.add(elem);
+                }
+            });
+            return;
+        }
+        for (int i = 0; i < node.size(); i++) {
+            JsonNode tryNode = node.get(i);
+            if (tryNode.isContainerNode()) {
+                funcCsvCollectValues(values, tryNode);
+            } else if (!tryNode.isNull()) {
+                values.add(tryNode);
+            }
+        }
+    }
+
     static JsonNode funcFlatten(JsonNode node, String params) {
         Pair<String, Integer> pathAndParams = getParamPathAndInt(params);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -110,7 +145,7 @@ class FuncStructural {
     static JsonNode funcMap(JsonNode node, String params) {
         Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
         if (!node.isArray()) {
-            return funcMapElement(node, args, 0);
+            return funcMapElement(node, args, -1);
         }
         ArrayNode array = MAPPER.createArrayNode();
         for (int i  = 0; i < node.size(); i++) {
@@ -126,7 +161,7 @@ class FuncStructural {
         ObjectNode objNode = MAPPER.createObjectNode();
         for (Map.Entry<String, String> arg : args.entrySet()) {
             String name = arg.getKey();
-            if (isCurrentNodeSymbol(name)) {
+            if (isCurrentNodePath(name)) {
                 if (node.isObject()) {
                     objNode.setAll((ObjectNode) node);
                 }
@@ -135,26 +170,109 @@ class FuncStructural {
             String path = arg.getValue();
             if (path == null) {
                 objNode.putNull(name);
-            } else if (path.charAt(0) == INDEX_SYMBOL) {
-                objNode.set(name, getIndexId(index, path));
-            } else if (isCurrentNodeSymbol(path)) {
-                objNode.set(name, node);
-            } else if (node.isObject()) {
-                objNode.set(name, getNode(node, path));
+            } else if (node.isArray()) {
+                objNode.set(name, getNodeByPath(node, index, path));
+            } else {
+                objNode.set(name, getNodeByPath(node, path));
             }
         }
         return objNode;
     }
 
-    static IntNode funcSize(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNode(node, path);
-            if (node == null) {
-                return null;
+    static JsonNode funcNotBlank(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+        if (node.isArray() && paramList.size() == 1) {
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode tryNode = getNodeByPath(node.get(i), paramList.get(0));
+                if (tryNode != null && tryNode.isTextual() && StringUtils.isNotBlank(tryNode.asText())) {
+                    return tryNode;
+                }
+            }
+            return null;
+        }
+        return funcNotBlank(node, paramList);
+    }
+
+    static JsonNode funcNotBlank(JsonNode node, List<String> paramList) {
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode tryNode = funcNotBlank(node.get(i), paramList);
+                if (tryNode != null) {
+                    array.add(tryNode);
+                }
+            }
+            return array;
+        }
+        if (node.isValueNode()) {
+            if (node.isTextual() && StringUtils.isNotBlank(node.asText())) {
+                return node;
+            }
+            for (String path : paramList) {
+                if (path.charAt(0) == QUOTE_SYMBOL) {
+                    String text = unquoteString(path);
+                    if (StringUtils.isNotBlank(text)) {
+                        return TextNode.valueOf(text);
+                    }
+                }
+            }
+        } else if (node.isObject()) {
+            for (String path : paramList) {
+                JsonNode tryNode = getNodeByPath(node, path);
+                if (tryNode != null && tryNode.isTextual() && StringUtils.isNotBlank(tryNode.asText())) {
+                    return tryNode;
+                }
             }
         }
-        return IntNode.valueOf(node.size());
+        return null;
+    }
+
+    static JsonNode funcNotEmpty(JsonNode node, String params) {
+        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+        if (node.isArray() && paramList.size() == 1) {
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode tryNode = getNodeByPath(node.get(i), paramList.get(0));
+                if (tryNode != null && tryNode.isTextual() && !tryNode.asText().isEmpty()) {
+                    return tryNode;
+                }
+            }
+            return null;
+        }
+        return funcNotEmpty(node, paramList);
+    }
+
+    static JsonNode funcNotEmpty(JsonNode node, List<String> paramList) {
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode tryNode = funcNotEmpty(node.get(i), paramList);
+                if (tryNode != null) {
+                    array.add(tryNode);
+                }
+            }
+            return array;
+        }
+        if (node.isValueNode()) {
+            if (node.isTextual() && !node.asText().isEmpty()) {
+                return node;
+            }
+            for (String path : paramList) {
+                if (path.charAt(0) == QUOTE_SYMBOL) {
+                    String text = unquoteString(path);
+                    if (!text.isEmpty()) {
+                        return TextNode.valueOf(text);
+                    }
+                }
+            }
+        } else if (node.isObject()) {
+            for (String path : paramList) {
+                JsonNode tryNode = getNodeByPath(node, path);
+                if (tryNode != null && tryNode.isTextual() && !tryNode.asText().isEmpty()) {
+                    return tryNode;
+                }
+            }
+        }
+        return null;
     }
 
     static JsonNode funcToArray(JsonNode node, String params) {
@@ -162,11 +280,18 @@ class FuncStructural {
         if (container == null) {
             return null;
         }
-        if (container.isArray()) {
-            return container;
-        }
         ArrayNode array = MAPPER.createArrayNode();
-        container.forEach(array::add);
+        if (container.isArray()) {
+            for (int i = 0; i < container.size(); i++) {
+                if (container.get(i).isArray()) {
+                    array.addAll((ArrayNode) container.get(i));
+                } else {
+                    container.get(i).forEach(array::add);
+                }
+            }
+        } else {
+            container.forEach(array::add);
+        }
         return array;
     }
 }

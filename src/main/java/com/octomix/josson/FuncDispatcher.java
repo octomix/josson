@@ -16,7 +16,6 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
@@ -26,48 +25,42 @@ import static com.octomix.josson.FuncArithmetic.*;
 import static com.octomix.josson.FuncArray.*;
 import static com.octomix.josson.FuncDate.*;
 import static com.octomix.josson.FuncFormat.*;
+import static com.octomix.josson.FuncGrouping.*;
 import static com.octomix.josson.FuncLogical.*;
 import static com.octomix.josson.FuncString.*;
 import static com.octomix.josson.FuncStructural.*;
-import static com.octomix.josson.Mapper.MAPPER;
 
 class FuncDispatcher {
 
     private final String funcName;
     private final String params;
-    private final boolean isArrayMode;
 
-    FuncDispatcher(String funcName, String params, boolean isArrayMode) {
+    FuncDispatcher(String funcName, String params) {
         this.funcName = funcName;
         this.params = params;
-        this.isArrayMode = isArrayMode;
-    }
-
-    static boolean isArrayModeFunction(String name) {
-        return name.length() > 0 && name.charAt(0) == '@';
     }
 
     JsonNode apply(JsonNode node) {
-        if (isArrayMode || !node.isArray()) {
-            return dispatch(node);
-        } else {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                array.add(dispatch(node.get(i)));
-            }
-            return array;
-        }
-    }
-
-    private JsonNode dispatch(JsonNode node) {
         try {
             switch (funcName.toLowerCase()) {
 
-                // Arithmetic
+                // Grouping
                 case "sum":
                 case "avg":
                 case "count":
                     return funcAggregate(node, funcName, params);
+                case "distinctvalue":
+                    return funcDistinctValue(node, params);
+                case "join":
+                    return funcJoin(node, params);
+                case "max":
+                    return funcMaxMin(node, params, true);
+                case "min":
+                    return funcMaxMin(node, params, false);
+                case "size":
+                    return funcSize(node, params);
+
+                // Arithmetic
                 case "abs":
                     return funcAbs(node, params);
                 case "calc":
@@ -82,8 +75,6 @@ class FuncDispatcher {
                     return funcRound(node, params);
 
                 // Array
-                case "distinctvalue":
-                    return funcDistinctValue(node, params);
                 case "first":
                     return funcFirst(node, params);
                 case "indexof":
@@ -106,10 +97,6 @@ class FuncDispatcher {
                     return funcFindByMaxMin(node, params, true, 1);
                 case "findbynullormin":
                     return funcFindByMaxMin(node, params, false, 1);
-                case "max":
-                    return funcMaxMin(node, params, true);
-                case "min":
-                    return funcMaxMin(node, params, false);
                 case "reverse":
                     return funcReverse(node, params);
                 case "slice":
@@ -348,10 +335,6 @@ class FuncDispatcher {
                     return funcCenter(node, params);
                 case "concat":
                     return funcConcat(node, params);
-                case "csv":
-                    return funcCsv(node, params);
-                case "join":
-                    return funcJoin(node, params);
                 case "keepafter":
                     return funcKeepAfter(node, params, false, false);
                 case "keepafterignorecase":
@@ -374,10 +357,6 @@ class FuncDispatcher {
                     return funcLength(node, params);
                 case "lowercase":
                     return funcLowerCase(node, params);
-                case "notblank":
-                    return funcNotBlank(node, params);
-                case "notempty":
-                    return funcNotEmpty(node, params);
                 case "prependifmissing":
                     return funcPrependIfMissing(node, params, false);
                 case "prependifmissingignorecase":
@@ -418,12 +397,16 @@ class FuncDispatcher {
                 // Structural
                 case "coalesce":
                     return funcCoalesce(node, params);
+                case "csv":
+                    return funcCsv(node, params);
                 case "flatten":
                     return funcFlatten(node, params);
                 case "map":
                     return funcMap(node, params);
-                case "size":
-                    return funcSize(node, params);
+                case "notblank":
+                    return funcNotBlank(node, params);
+                case "notempty":
+                    return funcNotEmpty(node, params);
                 case "toarray":
                     return funcToArray(node, params);
             }

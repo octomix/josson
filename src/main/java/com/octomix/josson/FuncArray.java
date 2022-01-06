@@ -20,45 +20,17 @@ import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.octomix.josson.GetFuncParam.*;
-import static com.octomix.josson.JossonCore.*;
-import static com.octomix.josson.Josson.getNode;
+import static com.octomix.josson.JossonCore.getNodeByPath;
 import static com.octomix.josson.Mapper.MAPPER;
 
 class FuncArray {
-    static JsonNode funcDistinctValue(JsonNode node, String params) {
-        ArrayNode array = getParamArrayOrItself(params, node);
-        if (array == null) {
-            return null;
-        }
-        Set<String> texts = new HashSet<>();
-        Set<Double> doubles = new HashSet<>();
-        Set<Boolean> booleans = new HashSet<>();
-        for (int i = 0; i < array.size(); i++) {
-            JsonNode tryNode = array.get(i);
-            if (tryNode.isTextual()) {
-                texts.add(tryNode.asText());
-            } else if (tryNode.isNumber()) {
-                doubles.add(tryNode.asDouble());
-            } else if (tryNode.isBoolean()) {
-                booleans.add(tryNode.asBoolean());
-            }
-        }
-        ArrayNode result = MAPPER.createArrayNode();
-        texts.forEach(value -> result.add(TextNode.valueOf(value)));
-        doubles.forEach(value -> result.add(DoubleNode.valueOf(value)));
-        booleans.forEach(value -> result.add(BooleanNode.valueOf(value)));
-        return result;
-    }
-
     static JsonNode funcFirst(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -75,7 +47,7 @@ class FuncArray {
     static IntNode funcIndexOf(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -83,7 +55,7 @@ class FuncArray {
         if (!node.isArray()) {
             return null;
         }
-        JsonNode valueNode = getNode(node, pathAndParams.getValue().get(0));
+        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
         if (valueNode != null && valueNode.isValueNode()) {
             if (valueNode.isNumber()) {
                 double value = valueNode.asDouble();
@@ -113,7 +85,7 @@ class FuncArray {
     static JsonNode funcLast(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -130,7 +102,7 @@ class FuncArray {
     static IntNode funcLastIndex(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -144,7 +116,7 @@ class FuncArray {
     static IntNode funcLastIndexOf(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -152,7 +124,7 @@ class FuncArray {
         if (!node.isArray()) {
             return null;
         }
-        JsonNode valueNode = getNode(node, pathAndParams.getValue().get(0));
+        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
         if (valueNode != null && valueNode.isValueNode()) {
             if (valueNode.isNumber()) {
                 double value = valueNode.asDouble();
@@ -182,7 +154,7 @@ class FuncArray {
     static JsonNode funcFindByMaxMin(JsonNode node, String params, boolean isMax, int nullPriority) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -195,7 +167,7 @@ class FuncArray {
         Double maxMinDouble = null;
         String maxMinString = null;
         for (int i = 0; i < node.size(); i++) {
-            JsonNode tryNode = getNode(node.get(i), path);
+            JsonNode tryNode = getNodeByPath(node.get(i), path);
             if (tryNode == null || tryNode.isNull()) {
                 if (nullPriority > 0) {
                     return tryNode;
@@ -231,46 +203,10 @@ class FuncArray {
         return foundIndex >= 0 ? node.get(foundIndex) : null;
     }
 
-    static ValueNode funcMaxMin(JsonNode node, String params, boolean isMax) {
-        ArrayNode array = getParamArrayOrItself(params, node);
-        if (array == null) {
-            return null;
-        }
-        double maxMinDouble = 0;
-        ValueNode maxMinNumber = null;
-        String maxMinString = null;
-        for (int i = array.size() - 1; i >= 0; i--) {
-            JsonNode tryNode = array.get(i);
-            if (!nodeHasValue(tryNode)) {
-                continue;
-            }
-            if (maxMinNumber != null || tryNode.isNumber()) {
-                if (tryNode.isNumber()) {
-                    double tryValue = tryNode.asDouble();
-                    if (maxMinNumber == null
-                            || (isMax && tryValue > maxMinDouble)
-                            || (!isMax && tryValue < maxMinDouble)) {
-                        maxMinNumber = (ValueNode) tryNode;
-                        maxMinDouble = tryValue;
-                    }
-                }
-            } else {
-                String tryValue = tryNode.asText();
-                if (maxMinString == null
-                        || (isMax && tryValue.compareTo(maxMinString) > 0)
-                        || (!isMax && tryValue.compareTo(maxMinString) < 0)) {
-                    maxMinString = tryValue;
-                }
-            }
-        }
-        return maxMinNumber != null ? maxMinNumber :
-                maxMinString != null ? TextNode.valueOf(maxMinString) : null;
-    }
-
     static JsonNode funcReverse(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -293,7 +229,7 @@ class FuncArray {
     static JsonNode funcSlice(JsonNode node, String params) {
         Pair<String, Integer[]> pathAndParams = getParamPathAndStartEndStep(params);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -323,7 +259,7 @@ class FuncArray {
     static JsonNode funcSort(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 2);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -357,13 +293,13 @@ class FuncArray {
             int compare = 0;
             if (!StringUtils.isEmpty(path)) {
                 if (o1.isObject()) {
-                    o1 = getNode(o1, path);
+                    o1 = getNodeByPath(o1, path);
                     if (o1 == null) {
                         return 1;
                     }
                 }
                 if (o2.isObject()) {
-                    o2 = getNode(o2, path);
+                    o2 = getNodeByPath(o2, path);
                     if (o2 == null) {
                         return -1;
                     }

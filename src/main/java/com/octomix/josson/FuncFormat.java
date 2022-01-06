@@ -29,7 +29,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.octomix.josson.GetFuncParam.*;
-import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
@@ -38,7 +37,7 @@ class FuncFormat {
     static JsonNode funcB64Decode(JsonNode node, String params, Base64.Decoder decoder) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -48,8 +47,9 @@ class FuncFormat {
             for (int i  = 0; i < node.size(); i++) {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
-                    array.add(TextNode.valueOf(
-                            new String(decoder.decode(textNode.asText()))));
+                    array.add(TextNode.valueOf(new String(decoder.decode(textNode.asText()))));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -63,7 +63,7 @@ class FuncFormat {
     static JsonNode funcB64Encode(JsonNode node, String params, Base64.Encoder encoder) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -74,6 +74,8 @@ class FuncFormat {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
                     array.add(TextNode.valueOf(encoder.encodeToString(textNode.asText().getBytes())));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -95,14 +97,10 @@ class FuncFormat {
         for (int i = 0; i <= last; i++) {
             JsonNode caseKey = null;
             if (i < last) {
-                if (isCurrentNodeSymbol(paramList.get(i))) {
-                    caseKey = node;
-                } else {
-                    caseKey = getNode(node, paramList.get(i));
-                }
+                caseKey = getNodeByPath(node, paramList.get(i));
                 i++;
             }
-            JsonNode caseValue = isCurrentNodeSymbol(paramList.get(i)) ? node : getNode(node, paramList.get(i));
+            JsonNode caseValue = getNodeByPath(node, paramList.get(i));
             if (caseKey == null) {
                 defaultValue = caseValue;
             } else {
@@ -141,6 +139,8 @@ class FuncFormat {
                             array.add(defaultValue);
                         }
                     }
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -178,6 +178,8 @@ class FuncFormat {
                 if (nodeHasValue(valueNode)) {
                     int index = valueNode.asInt() % size;
                     array.add(paramArray.get(index < 0 ? index + size : index));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -189,7 +191,7 @@ class FuncFormat {
     static JsonNode funcFormatDate(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -201,6 +203,8 @@ class FuncFormat {
                 JsonNode textNode = node.get(i);
                 if (textNode.isTextual()) {
                     array.add(TextNode.valueOf(toLocalDateTime(textNode).format(DateTimeFormatter.ofPattern(pattern))));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -214,7 +218,7 @@ class FuncFormat {
     static JsonNode funcFormatNumber(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -226,6 +230,8 @@ class FuncFormat {
                 JsonNode textNode = node.get(i);
                 if (nodeHasValue(textNode)) {
                     array.add(TextNode.valueOf(new DecimalFormat(pattern).format(textNode.asDouble())));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -239,7 +245,7 @@ class FuncFormat {
     static JsonNode funcFormatText(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -251,6 +257,8 @@ class FuncFormat {
                 Object valueObject = valueAsObject(node.get(i));
                 if (valueObject != null) {
                     array.add(TextNode.valueOf(String.format(pattern, valueObject)));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -270,11 +278,13 @@ class FuncFormat {
                 Object[] valueObjects = valuesAsObjects(node.get(i), pathAndParams.getValue(), i);
                 if (valueObjects != null) {
                     array.add(TextNode.valueOf(String.format(pattern, valueObjects)));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
         }
-        Object[] valueObjects = valuesAsObjects(node, pathAndParams.getValue(), 0);
+        Object[] valueObjects = valuesAsObjects(node, pathAndParams.getValue(), -1);
         if (valueObjects == null) {
             return null;
         }
@@ -296,6 +306,8 @@ class FuncFormat {
                     if (index >= 0 && index < size) {
                         array.add(paramArray.get(index));
                     }
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -307,7 +319,7 @@ class FuncFormat {
     static JsonNode funcToNumber(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -318,6 +330,8 @@ class FuncFormat {
                 JsonNode tryNode = node.get(i);
                 if (nodeHasValue(tryNode)) {
                     array.add(tryNode.isNumber() ? tryNode : DoubleNode.valueOf(tryNode.asDouble()));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -331,7 +345,7 @@ class FuncFormat {
     static JsonNode funcToText(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -342,6 +356,8 @@ class FuncFormat {
                 JsonNode tryNode = node.get(i);
                 if (nodeHasValue(tryNode)) {
                     array.add(tryNode.isTextual() ? tryNode : TextNode.valueOf(tryNode.asText()));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -355,7 +371,7 @@ class FuncFormat {
     static JsonNode funcUrlDecode(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -367,6 +383,8 @@ class FuncFormat {
                     JsonNode textNode = node.get(i);
                     if (textNode.isTextual()) {
                         array.add(TextNode.valueOf(URLDecoder.decode(textNode.asText(), StandardCharsets.UTF_8.toString())));
+                    } else {
+                        array.addNull();
                     }
                 }
                 return array;
@@ -383,7 +401,7 @@ class FuncFormat {
     static JsonNode funcUrlEncode(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -395,6 +413,8 @@ class FuncFormat {
                     JsonNode textNode = node.get(i);
                     if (textNode.isTextual()) {
                         array.add(TextNode.valueOf(URLEncoder.encode(textNode.asText(), StandardCharsets.UTF_8.toString())));
+                    } else {
+                        array.addNull();
                     }
                 }
                 return array;

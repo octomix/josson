@@ -28,17 +28,17 @@ import java.util.*;
 
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
-import static com.octomix.josson.FuncDispatcher.isArrayModeFunction;
-import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
 
 class JossonCore {
 
     static final char QUOTE_SYMBOL = '\'';
-    static final char INDEX_SYMBOL = '#';
-    static final char CURRENT_NODE_SYMBOL = '?';
+    private static final char INDEX_SYMBOL = '#';
+    private static final char PARENT_ARRAY_SYMBOL = '@';
+    private static final char COLLECT_BRANCHES_SYMBOL = '@';
 
+    static final String CURRENT_NODE_PATH = "?";
     private static final String ZERO_BASED_INDEX = "" + INDEX_SYMBOL;
     private static final String ONE_BASED_INDEX = ZERO_BASED_INDEX + INDEX_SYMBOL;
 
@@ -86,10 +86,10 @@ class JossonCore {
         return null;
     }
 
-    static boolean isCurrentNodeSymbol(String path) {
-        if (path.length() > 0 && path.charAt(0) == CURRENT_NODE_SYMBOL) {
+    static boolean isCurrentNodePath(String path) {
+        if (path.startsWith(CURRENT_NODE_PATH)) {
             if (path.length() > 1) {
-                throw new IllegalArgumentException("Invalid syntax: " + path);
+                throw new IllegalArgumentException("Invalid path: " + path);
             }
             return true;
         }
@@ -144,12 +144,11 @@ class JossonCore {
     }
 
     static String getNodeAsText(JsonNode node, String jossonPath) {
-        node = getNode(node, jossonPath);
+        node = getNodeByPath(node, jossonPath);
         return node == null ? "" : node.asText();
     }
 
-    static JsonNode getIndexId(int index, String path) {
-        List<String> keys = decomposePaths(path);
+    static JsonNode getIndexId(int index, List<String> keys) {
         String indexType = keys.remove(0);
         switch (indexType) {
             case ZERO_BASED_INDEX:
@@ -195,12 +194,10 @@ class JossonCore {
             for (int i = 0; i < size; i++) {
                 String param = paramList.get(i);
                 Object valueObject;
-                if (param.charAt(0) == INDEX_SYMBOL) {
-                    valueObject = valueAsObject(getIndexId(index, param));
-                } else if (isCurrentNodeSymbol(param)) {
-                    valueObject = valueAsObject(node);
+                if (index < 0) {
+                    valueObject = valueAsObject(getNodeByPath(node, param));
                 } else {
-                    valueObject = valueAsObject(getNode(node, param));
+                    valueObject = valueAsObject(getNodeByPath(node, index, param));
                 }
                 if (valueObject == null) {
                     return null;
@@ -209,45 +206,6 @@ class JossonCore {
             }
         }
         return objects;
-    }
-
-    static JsonNode getNodeByKeys(JsonNode node, List<String> keys) {
-        if (keys == null || keys.isEmpty()) {
-            return node;
-        }
-        if (node == null || node.isNull()) {
-            return null;
-        }
-        String key = keys.remove(0);
-        FuncDispatcher funcDispatcher = matchFunctionAndArgument(key);
-        if (funcDispatcher != null) {
-            return getNodeByKeys(funcDispatcher.apply(node), keys);
-        }
-        if (node.isValueNode()) {
-            return null;
-        }
-        ArrayFilter arrayFilter = matchFilterQuery(key);
-        if (arrayFilter.getFilter() != null) {
-            if (!arrayFilter.getArrayName().isEmpty()) {
-                if (node.isArray()) {
-                    node = forEachElement((ArrayNode) node, arrayFilter.getArrayName(), FILTER_FIND_ALL, null);
-                } else {
-                    node = node.get(arrayFilter.getArrayName());
-                }
-            }
-            node = evaluateFilter(node, arrayFilter.getFilter(), arrayFilter.getMode());
-            if (node == null) {
-                return null;
-            }
-            if (node.isArray()) {
-                return forEachElement((ArrayNode) node, null, arrayFilter.getMode(), keys);
-            }
-            return getNodeByKeys(node, keys);
-        }
-        if (node.isArray()) {
-            return forEachElement((ArrayNode) node, arrayFilter.getArrayName(), arrayFilter.getMode(), keys);
-        }
-        return getNodeByKeys(node.get(arrayFilter.getArrayName()), keys);
     }
 
     /**
@@ -303,49 +261,130 @@ class JossonCore {
         return matchedNodes;
     }
 
-    private static JsonNode forEachElement(ArrayNode node, String elem, FilterMode mode, List<String> keys) {
-        ArrayNode matchedNodes = MAPPER.createArrayNode();
-        for (int i = 0; i < node.size(); i++) {
-            addEachElement(matchedNodes, elem == null ? node.get(i) : node.get(i).get(elem), mode, keys);
-        }
-        return mode == FILTER_NESTED_ARRAY ? matchedNodes : getNodeByKeys(matchedNodes, keys);
+    static JsonNode getNodeByPath(JsonNode node, String jossonPath) {
+        return getNodeByKeys(node, decomposePaths(jossonPath));
     }
 
-    private static JsonNode forEachElement(ArrayNode node, List<String> keys) {
-        List<String> keysAfterGrouping = new ArrayList<>();
-        FilterMode mode = FILTER_FIND_ALL;
-        for (int i = 0; i < keys.size(); i++) {
-            ArrayFilter arrayFilter = matchFilterQuery(keys.get(i));
-            String arrayName = arrayFilter.getArrayName();
-            mode = arrayFilter.getMode();
-            if (mode == FILTER_FIND_ALL || mode == FILTER_NESTED_ARRAY || isArrayModeFunction(arrayName)) {
-                while (i < keys.size()) {
-                    keysAfterGrouping.add(keys.remove(i));
+    static JsonNode getNodeByPath(JsonNode node, int index, String jossonPath) {
+        return getNodeByKeys(node, index, decomposePaths(jossonPath));
+    }
+
+    static JsonNode getNodeByKeys(JsonNode node, int index, List<String> keys) {
+        if (node == null) {
+            return null;
+        }
+        if (keys.isEmpty()) {
+            return node.get(index);
+        }
+        switch (keys.get(0).charAt(0)) {
+            case INDEX_SYMBOL:
+                return getIndexId(index, keys);
+            case PARENT_ARRAY_SYMBOL:
+                String key = keys.remove(0);
+                if (key.length() > 1) {
+                    throw new IllegalArgumentException("Invalid path: " + key);
                 }
                 break;
-            }
+            default:
+                if (node.isArray()) {
+                    node = node.get(index);
+                }
         }
-        ArrayNode matchedNodes = MAPPER.createArrayNode();
-        for (int i = 0; i < node.size(); i++) {
-            addEachElement(matchedNodes, getNodeByKeys(node.get(i), new ArrayList<>(keys)), mode, keysAfterGrouping);
-        }
-        return mode == FILTER_NESTED_ARRAY ? matchedNodes : getNodeByKeys(matchedNodes, keysAfterGrouping);
+        return getNodeByKeys(node, keys);
     }
 
-    private static void addEachElement(ArrayNode array, JsonNode node, FilterMode mode, List<String> keys) {
-        if (node == null) {
-            return;
-        }
-        if (mode == FILTER_NESTED_ARRAY) {
-            if (node.isArray()) {
-                array.add(forEachElement((ArrayNode) node, new ArrayList<>(keys)));
-            } else {
-                array.add(getNodeByKeys(node, new ArrayList<>(keys)));
+    static JsonNode getNodeByKeys(JsonNode node, List<String> keys) {
+        if (node != null && !keys.isEmpty()) {
+            try {
+                node = toValueNode(keys.get(0));
+                keys.remove(0);
+            } catch (NumberFormatException e) {
+                // continue
             }
-        } else if (mode == FILTER_FIND_ALL && node.isArray()) {
-            array.addAll((ArrayNode) node);
-        } else {
-            array.add(node);
+            while (node != null && !keys.isEmpty()) {
+                List<String> nextKeys = new ArrayList<>();
+                node = getNodeByKeys(node, keys, nextKeys);
+                keys = nextKeys;
+            }
         }
+        return node;
+    }
+
+    private static JsonNode getNodeByKeys(JsonNode node, List<String> keys, List<String> nextKeys) {
+        if (keys == null || keys.isEmpty()) {
+            return node;
+        }
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        String key = keys.get(0);
+        if (key.charAt(0) == COLLECT_BRANCHES_SYMBOL) {
+            nextKeys.addAll(keys);
+            nextKeys.set(0, key.substring(1).trim());
+            keys.clear();
+            return node;
+        }
+        keys.remove(0);
+        if (isCurrentNodePath(key)) {
+            return getNodeByKeys(node, keys, nextKeys);
+        }
+        FuncDispatcher funcDispatcher = matchFunctionAndArgument(key);
+        if (funcDispatcher != null) {
+            return getNodeByKeys(funcDispatcher.apply(node), keys, nextKeys);
+        }
+        if (node.isValueNode()) {
+            return null;
+        }
+        ArrayFilter filter = matchFilterQuery(key);
+        if (filter.getFilter() == null) {
+            if (node.isArray()) {
+                return forEachElement((ArrayNode) node, filter.getNodeName(), filter.getMode(), keys, nextKeys);
+            }
+            node = node.get(filter.getNodeName());
+        } else {
+            if (!filter.getNodeName().isEmpty()) {
+                node = getNodeByPath(node, filter.getNodeName());
+            }
+            node = evaluateFilter(node, filter.getFilter(), filter.getMode());
+        }
+        if (node == null) {
+            return null;
+        }
+        if (node.isArray()) {
+            return forEachElement((ArrayNode) node, null, filter.getMode(), keys, nextKeys);
+        }
+        return getNodeByKeys(node, keys, nextKeys);
+    }
+
+    private static JsonNode forEachElement(ArrayNode node, String elem, FilterMode mode, List<String> keys, List<String> nextKeys) {
+        ArrayNode array = MAPPER.createArrayNode();
+        if (mode == FILTER_NESTED_ARRAY) {
+            for (int i = 0; i < node.size(); i++) {
+                List<String> nextNextKeys = new ArrayList<>();
+                JsonNode addNode = getNodeByKeys(
+                        elem == null ? node.get(i) : node.get(i).get(elem), new ArrayList<>(keys), nextNextKeys);
+                if (addNode != null) {
+                    array.add(addNode);
+                }
+                if (nextKeys.isEmpty() && !nextNextKeys.isEmpty()) {
+                    nextKeys.addAll(nextNextKeys);
+                }
+            }
+            keys.clear();
+            keys.addAll(nextKeys);
+            nextKeys.clear();
+        } else {
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode addNode = elem == null ? node.get(i) : node.get(i).get(elem);
+                if (addNode != null) {
+                    if (mode == FILTER_FIND_ALL && addNode.isArray()) {
+                        array.addAll((ArrayNode) addNode);
+                    } else {
+                        array.add(addNode);
+                    }
+                }
+            }
+        }
+        return getNodeByKeys(array, keys, nextKeys);
     }
 }

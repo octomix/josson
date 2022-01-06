@@ -25,19 +25,18 @@ import java.time.temporal.ChronoField;
 import java.util.List;
 
 import static com.octomix.josson.GetFuncParam.*;
-import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
 
 class FuncLogical {
     static BooleanNode funcContains(JsonNode node, String params, boolean ignoreCase, boolean not) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return BooleanNode.FALSE;
             }
         }
-        JsonNode valueNode = getNode(node, pathAndParams.getValue().get(0));
+        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
         if (valueNode.isContainerNode()) {
             return BooleanNode.FALSE;
         }
@@ -83,7 +82,7 @@ class FuncLogical {
     static BooleanNode funcEndsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return BooleanNode.FALSE;
             }
@@ -100,7 +99,7 @@ class FuncLogical {
     static BooleanNode funcEquals(JsonNode node, String params, boolean ignoreCase, boolean not) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return BooleanNode.FALSE;
             }
@@ -149,7 +148,7 @@ class FuncLogical {
     static BooleanNode funcIsBlank(JsonNode node, String params, boolean not) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -160,7 +159,7 @@ class FuncLogical {
     static BooleanNode funcIsBoolean(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -171,7 +170,7 @@ class FuncLogical {
     static BooleanNode funcIsEmpty(JsonNode node, String params, boolean not) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -182,7 +181,7 @@ class FuncLogical {
     static BooleanNode funcIsEven(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -196,7 +195,7 @@ class FuncLogical {
     static BooleanNode funcIsNull(JsonNode node, String params, boolean not) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -207,7 +206,7 @@ class FuncLogical {
     static BooleanNode funcIsNumber(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -218,7 +217,7 @@ class FuncLogical {
     static BooleanNode funcIsOdd(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -232,7 +231,7 @@ class FuncLogical {
     static BooleanNode funcIsText(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -243,7 +242,7 @@ class FuncLogical {
     static BooleanNode funcNot(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -257,7 +256,7 @@ class FuncLogical {
     static BooleanNode funcStartsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return BooleanNode.FALSE;
             }
@@ -274,7 +273,7 @@ class FuncLogical {
     static BooleanNode funcIsWeekDay(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -288,7 +287,7 @@ class FuncLogical {
     static BooleanNode funcIsWeekEnd(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -302,7 +301,7 @@ class FuncLogical {
     static BooleanNode funcIsLeapYear(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }

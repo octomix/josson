@@ -7,6 +7,7 @@ import com.octomix.josson.commons.StringUtils;
 
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTER_FIND_ALL;
 import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
+import static com.octomix.josson.JossonCore.getNodeByPath;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
 
@@ -136,7 +137,7 @@ class JoinDatasets {
     private ObjectNode joinToObjectNode(ObjectNode leftObject, ArrayNode rightArray) {
         String[] relationalOps = new String[leftDataset.keys.length];
         for (int j = leftDataset.keys.length - 1; j >= 0; j--) {
-            JsonNode leftValue = Josson.getNode(leftObject, leftDataset.keys[j]);
+            JsonNode leftValue = getNodeByPath(leftObject, leftDataset.keys[j]);
             if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
@@ -147,14 +148,14 @@ class JoinDatasets {
         }
         String path = "[" + StringUtils.join(relationalOps, Operator.AND.symbol) + "]";
         if (operator == JoinOperator.LEFT_JOIN_MANY) {
-            JsonNode rightToJoin = Josson.getNode(rightArray, path + FILTER_FIND_ALL.symbol);
+            JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTER_FIND_ALL.symbol);
             if (rightToJoin != null) {
                 ObjectNode joinedNode = leftObject.deepCopy();
                 joinedNode.set(arrayName, rightToJoin);
                 return joinedNode;
             }
         } else {
-            JsonNode rightToJoin = Josson.getNode(rightArray, path);
+            JsonNode rightToJoin = getNodeByPath(rightArray, path);
             if (rightToJoin != null && rightToJoin.isObject()) {
                 ObjectNode joinedNode = leftObject.deepCopy();
                 joinedNode.setAll((ObjectNode) rightToJoin);

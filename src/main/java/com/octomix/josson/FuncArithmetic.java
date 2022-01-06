@@ -25,44 +25,15 @@ import java.util.List;
 import java.util.Map;
 
 import static com.octomix.josson.GetFuncParam.*;
-import static com.octomix.josson.Josson.getNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncArithmetic {
-    static ValueNode funcAggregate(JsonNode node, String funcId, String params) {
-        ArrayNode array = getParamArrayOrItself(params, node);
-        if (array == null) {
-            return null;
-        }
-        double sum = 0;
-        int count = 0;
-        for (int i = array.size() - 1; i >= 0; i--) {
-            JsonNode tryNode = array.get(i);
-            if (nodeHasValue(tryNode)) {
-                sum += tryNode.asDouble();
-                count++;
-            }
-        }
-        if ("count".equals(funcId)) {
-            return IntNode.valueOf(count);
-        }
-        if (count > 0) {
-            switch (funcId) {
-                case "sum":
-                    return DoubleNode.valueOf(sum);
-                case "avg":
-                    return DoubleNode.valueOf(sum / count);
-            }
-        }
-        return null;
-    }
-
     static JsonNode funcAbs(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -73,6 +44,8 @@ class FuncArithmetic {
                 JsonNode valueNode = node.get(i);
                 if (valueNode.isNumber() || valueNode.isTextual()) {
                     array.add(DoubleNode.valueOf(Math.abs(valueNode.asDouble())));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -87,27 +60,23 @@ class FuncArithmetic {
         List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         String calc = paramList.remove(0);
         Map<String, String> args = getParamNamePath(paramList);
-        String currentNodeSymbol = String.valueOf(CURRENT_NODE_SYMBOL);
-        if (calc.contains(currentNodeSymbol)) {
-            calc = calc.replace(currentNodeSymbol, "_THIS_NODE_ ");
-            args.put("_THIS_NODE_", currentNodeSymbol);
+        if (calc.contains(CURRENT_NODE_PATH)) {
+            calc = calc.replace(CURRENT_NODE_PATH, "_THIS_NODE_ ");
+            args.put("_THIS_NODE_", CURRENT_NODE_PATH);
         }
         Expression expression = new Expression(calc);
-        if (!node.isArray()) {
-            Double value = funcCalcElement(node, expression, args, 0);
-            if (value == null) {
-                return null;
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                array.add(funcCalcElement(node.get(i), expression, args, array.size()));
             }
-            return DoubleNode.valueOf(value);
+            return array;
         }
-        ArrayNode array = MAPPER.createArrayNode();
-        for (int i  = 0; i < node.size(); i++) {
-            Double value = funcCalcElement(node.get(i), expression, args, array.size());
-            if (value != null) {
-                array.add(value);
-            }
+        Double value = funcCalcElement(node, expression, args, 0);
+        if (value == null) {
+            return null;
         }
-        return array;
+        return DoubleNode.valueOf(value);
     }
 
     private static Double funcCalcElement(JsonNode node, Expression expression, Map<String, String> args, int index) {
@@ -117,21 +86,15 @@ class FuncArithmetic {
             if (path == null) {
                 continue;
             }
-            double value;
-            if (isCurrentNodeSymbol(path)) {
-                value = node.asDouble();
-            } else {
-                JsonNode tryNode = path.charAt(0) == INDEX_SYMBOL ? getIndexId(index, path) : getNode(node, path);
-                if (!nodeHasValue(tryNode)) {
-                    return null;
-                }
-                value = tryNode.asDouble();
+            JsonNode tryNode = getNodeByPath(node, index, path);
+            if (!nodeHasValue(tryNode)) {
+                return null;
             }
-            expression.addArguments(new Argument(arg.getKey(), value));
+            expression.addArguments(new Argument(arg.getKey(), tryNode.asDouble()));
         }
         if (!expression.checkSyntax()) {
             for (String missingArg : expression.getMissingUserDefinedArguments()) {
-                JsonNode tryNode = getNode(node, missingArg);
+                JsonNode tryNode = getNodeByPath(node, missingArg);
                 if (!nodeHasValue(tryNode)) {
                     return null;
                 }
@@ -157,7 +120,7 @@ class FuncArithmetic {
     static JsonNode funcCeil(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -168,6 +131,8 @@ class FuncArithmetic {
                 JsonNode valueNode = node.get(i);
                 if (valueNode.isNumber() || valueNode.isTextual()) {
                     array.add(IntNode.valueOf((int) Math.ceil(valueNode.asDouble())));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -181,7 +146,7 @@ class FuncArithmetic {
     static JsonNode funcFloor(JsonNode node, String params) {
         String path = getParamPath(params);
         if (path != null) {
-            node = getNode(node, path);
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }
@@ -192,6 +157,8 @@ class FuncArithmetic {
                 JsonNode valueNode = node.get(i);
                 if (valueNode.isNumber() || valueNode.isTextual()) {
                     array.add(IntNode.valueOf((int) Math.floor(valueNode.asDouble())));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -205,7 +172,7 @@ class FuncArithmetic {
     static JsonNode funcMod(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -218,6 +185,8 @@ class FuncArithmetic {
                 if (valueNode.isNumber() || valueNode.isTextual()) {
                     int result = valueNode.asInt() % divisor;
                     array.add(IntNode.valueOf(result < 0 ? result + divisor : result));
+                } else {
+                    array.addNull();
                 }
             }
             return array;
@@ -232,7 +201,7 @@ class FuncArithmetic {
     static JsonNode funcRound(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
         if (pathAndParams.hasKey()) {
-            node = getNode(node, pathAndParams.getKey());
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
@@ -251,6 +220,8 @@ class FuncArithmetic {
                     } else {
                         array.add(IntNode.valueOf((int) result));
                     }
+                } else {
+                    array.addNull();
                 }
             }
             return array;
