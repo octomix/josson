@@ -140,7 +140,7 @@ class GetFuncParam {
                 }
             } else if (node.isArray()) {
                 for (int i = 0; i < node.size(); i++) {
-                    JsonNode tryNode = getNodeByPath(node.get(i), param);
+                    JsonNode tryNode = getNodeByPath(node, i, param);
                     if (tryNode != null) {
                         array.add(tryNode);
                     }

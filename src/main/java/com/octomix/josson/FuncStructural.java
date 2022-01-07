@@ -35,7 +35,7 @@ class FuncStructural {
         List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         if (node.isArray() && paramList.size() == 1) {
             for (int i = 0; i < node.size(); i++) {
-                JsonNode tryNode = getNodeByPath(node.get(i), paramList.get(0));
+                JsonNode tryNode = getNodeByPath(node, i, paramList.get(0));
                 if (tryNode != null && !tryNode.isNull()) {
                     return tryNode;
                 }
@@ -149,10 +149,7 @@ class FuncStructural {
         }
         ArrayNode array = MAPPER.createArrayNode();
         for (int i  = 0; i < node.size(); i++) {
-            ObjectNode objNode = funcMapElement(node.get(i), args, array.size());
-            if (!objNode.isEmpty()) {
-                array.add(objNode);
-            }
+            array.add(funcMapElement(node, args, i));
         }
         return array;
     }
@@ -162,18 +159,16 @@ class FuncStructural {
         for (Map.Entry<String, String> arg : args.entrySet()) {
             String name = arg.getKey();
             if (isCurrentNodePath(name)) {
-                if (node.isObject()) {
-                    objNode.setAll((ObjectNode) node);
+                if ((index >= 0 ? node.get(index) : node).isObject()) {
+                    objNode.setAll((ObjectNode) (index >= 0 ? node.get(index) : node));
                 }
                 continue;
             }
             String path = arg.getValue();
             if (path == null) {
                 objNode.putNull(name);
-            } else if (node.isArray()) {
-                objNode.set(name, getNodeByPath(node, index, path));
             } else {
-                objNode.set(name, getNodeByPath(node, path));
+                objNode.set(name, getNodeByPath(node, index, path));
             }
         }
         return objNode;
@@ -183,7 +178,7 @@ class FuncStructural {
         List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         if (node.isArray() && paramList.size() == 1) {
             for (int i = 0; i < node.size(); i++) {
-                JsonNode tryNode = getNodeByPath(node.get(i), paramList.get(0));
+                JsonNode tryNode = getNodeByPath(node, i, paramList.get(0));
                 if (tryNode != null && tryNode.isTextual() && StringUtils.isNotBlank(tryNode.asText())) {
                     return tryNode;
                 }
@@ -231,7 +226,7 @@ class FuncStructural {
         List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         if (node.isArray() && paramList.size() == 1) {
             for (int i = 0; i < node.size(); i++) {
-                JsonNode tryNode = getNodeByPath(node.get(i), paramList.get(0));
+                JsonNode tryNode = getNodeByPath(node, i, paramList.get(0));
                 if (tryNode != null && tryNode.isTextual() && !tryNode.asText().isEmpty()) {
                     return tryNode;
                 }

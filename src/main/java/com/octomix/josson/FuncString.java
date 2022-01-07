@@ -162,16 +162,11 @@ class FuncString {
             }
         }
         if (!node.isArray()) {
-            return TextNode.valueOf(funcConcatElement(node, args, 0));
+            return TextNode.valueOf(funcConcatElement(node, args, -1));
         }
         ArrayNode array = MAPPER.createArrayNode();
         for (int i  = 0; i < node.size(); i++) {
-            String text = funcConcatElement(node.get(i), args, array.size());
-            if (text != null) {
-                array.add(text);
-            } else {
-                array.addNull();
-            }
+            array.add(funcConcatElement(node, args, i));
         }
         return array;
     }

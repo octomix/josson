@@ -179,11 +179,11 @@ class JossonCore {
         return node.asText();
     }
 
-    static Object[] valuesAsObjects(JsonNode node, List<String> paramList, int index) {
+    static Object[] valuesAsObjects(JsonNode node, int index, List<String> paramList) {
         Object[] objects;
         int size = paramList.size();
         if (size == 0) {
-            Object valueObject = valueAsObject(node);
+            Object valueObject = valueAsObject(index >= 0 ? node.get(index) : node);
             if (valueObject == null) {
                 return null;
             }
@@ -193,12 +193,7 @@ class JossonCore {
             objects = new Object[size];
             for (int i = 0; i < size; i++) {
                 String param = paramList.get(i);
-                Object valueObject;
-                if (index < 0) {
-                    valueObject = valueAsObject(getNodeByPath(node, param));
-                } else {
-                    valueObject = valueAsObject(getNodeByPath(node, index, param));
-                }
+                Object valueObject = valueAsObject(getNodeByPath(node, index, param));
                 if (valueObject == null) {
                     return null;
                 }
@@ -262,19 +257,13 @@ class JossonCore {
     }
 
     static JsonNode getNodeByPath(JsonNode node, String jossonPath) {
-        return getNodeByKeys(node, decomposePaths(jossonPath));
+        return getNodeByPath(node, -1, jossonPath);
     }
 
     static JsonNode getNodeByPath(JsonNode node, int index, String jossonPath) {
-        return getNodeByKeys(node, index, decomposePaths(jossonPath));
-    }
-
-    static JsonNode getNodeByKeys(JsonNode node, int index, List<String> keys) {
-        if (node == null) {
-            return null;
-        }
+        List<String> keys = decomposePaths(jossonPath);
         if (keys.isEmpty()) {
-            return node.get(index);
+            return index >= 0 ? node.get(index) : node;
         }
         switch (keys.get(0).charAt(0)) {
             case INDEX_SYMBOL:
@@ -286,7 +275,7 @@ class JossonCore {
                 }
                 break;
             default:
-                if (node.isArray()) {
+                if (index >= 0) {
                     node = node.get(index);
                 }
         }

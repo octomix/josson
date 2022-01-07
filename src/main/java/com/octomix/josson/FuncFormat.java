@@ -275,7 +275,7 @@ class FuncFormat {
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                Object[] valueObjects = valuesAsObjects(node.get(i), pathAndParams.getValue(), i);
+                Object[] valueObjects = valuesAsObjects(node, i, pathAndParams.getValue());
                 if (valueObjects != null) {
                     array.add(TextNode.valueOf(String.format(pattern, valueObjects)));
                 } else {
@@ -284,7 +284,7 @@ class FuncFormat {
             }
             return array;
         }
-        Object[] valueObjects = valuesAsObjects(node, pathAndParams.getValue(), -1);
+        Object[] valueObjects = valuesAsObjects(node, -1, pathAndParams.getValue());
         if (valueObjects == null) {
             return null;
         }

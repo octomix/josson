@@ -68,11 +68,11 @@ class FuncArithmetic {
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                array.add(funcCalcElement(node.get(i), expression, args, array.size()));
+                array.add(funcCalcElement(node, expression, args, i));
             }
             return array;
         }
-        Double value = funcCalcElement(node, expression, args, 0);
+        Double value = funcCalcElement(node, expression, args, -1);
         if (value == null) {
             return null;
         }
@@ -94,7 +94,7 @@ class FuncArithmetic {
         }
         if (!expression.checkSyntax()) {
             for (String missingArg : expression.getMissingUserDefinedArguments()) {
-                JsonNode tryNode = getNodeByPath(node, missingArg);
+                JsonNode tryNode = getNodeByPath(node, index, missingArg);
                 if (!nodeHasValue(tryNode)) {
                     return null;
                 }
