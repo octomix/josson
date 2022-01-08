@@ -35,12 +35,16 @@ class JossonCore {
 
     static final char QUOTE_SYMBOL = '\'';
     private static final char INDEX_SYMBOL = '#';
-    private static final char PARENT_ARRAY_SYMBOL = '@';
     private static final char COLLECT_BRANCHES_SYMBOL = '@';
 
     static final String CURRENT_NODE_PATH = "?";
+    private static final String PARENT_ARRAY_PATH = "@";
     private static final String ZERO_BASED_INDEX = "" + INDEX_SYMBOL;
     private static final String ONE_BASED_INDEX = ZERO_BASED_INDEX + INDEX_SYMBOL;
+    private static final String UPPERCASE_INDEX = ZERO_BASED_INDEX + "A";
+    private static final String LOWERCASE_INDEX = ZERO_BASED_INDEX + "a";
+    private static final String UPPER_ROMAN_INDEX = ZERO_BASED_INDEX + "R";
+    private static final String LOWER_ROMAN_INDEX = ZERO_BASED_INDEX + "r";
 
     static ZoneId zoneId = ZoneId.systemDefault();
 
@@ -88,6 +92,16 @@ class JossonCore {
 
     static boolean isCurrentNodePath(String path) {
         if (path.startsWith(CURRENT_NODE_PATH)) {
+            if (path.length() > 1) {
+                throw new IllegalArgumentException("Invalid path: " + path);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    static boolean isParentArrayPath(String path) {
+        if (path.startsWith(PARENT_ARRAY_PATH)) {
             if (path.length() > 1) {
                 throw new IllegalArgumentException("Invalid path: " + path);
             }
@@ -146,20 +160,6 @@ class JossonCore {
     static String getNodeAsText(JsonNode node, String jossonPath) {
         node = getNodeByPath(node, jossonPath);
         return node == null ? "" : node.asText();
-    }
-
-    static JsonNode getIndexId(int index, List<String> keys) {
-        String indexType = keys.remove(0);
-        switch (indexType) {
-            case ZERO_BASED_INDEX:
-                break;
-            case ONE_BASED_INDEX:
-                index++;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid syntax: " + indexType);
-        }
-        return getNodeByKeys(IntNode.valueOf(index), keys);
     }
 
     static boolean nodeHasValue(JsonNode node) {
@@ -261,23 +261,41 @@ class JossonCore {
     }
 
     static JsonNode getNodeByPath(JsonNode node, int index, String jossonPath) {
+        if (node == null) {
+            return null;
+        }
         List<String> keys = decomposePaths(jossonPath);
         if (keys.isEmpty()) {
             return index >= 0 ? node.get(index) : node;
         }
-        switch (keys.get(0).charAt(0)) {
-            case INDEX_SYMBOL:
-                return getIndexId(index, keys);
-            case PARENT_ARRAY_SYMBOL:
-                String key = keys.remove(0);
-                if (key.length() > 1) {
-                    throw new IllegalArgumentException("Invalid path: " + key);
-                }
-                break;
-            default:
-                if (index >= 0) {
-                    node = node.get(index);
-                }
+        String key = keys.get(0);
+        if (key.charAt(0) == INDEX_SYMBOL) {
+            String indexType = keys.remove(0);
+            switch (indexType) {
+                case ZERO_BASED_INDEX:
+                    return getNodeByKeys(IntNode.valueOf(index), keys);
+                case ONE_BASED_INDEX:
+                    return getNodeByKeys(IntNode.valueOf(index + 1), keys);
+                case UPPERCASE_INDEX:
+                    return getNodeByKeys(TextNode.valueOf(toAlphabetIndex(index, 'A')), keys);
+                case LOWERCASE_INDEX:
+                    return getNodeByKeys(TextNode.valueOf(toAlphabetIndex(index, 'a')), keys);
+                case UPPER_ROMAN_INDEX:
+                    return getNodeByKeys(TextNode.valueOf(toRomanIndex(index, true)), keys);
+                case LOWER_ROMAN_INDEX:
+                    return getNodeByKeys(TextNode.valueOf(toRomanIndex(index, false)), keys);
+            }
+            throw new IllegalArgumentException("Invalid index type: " + indexType);
+        }
+        if (isParentArrayPath(key)) {
+            keys.remove(0);
+        } else {
+            if (isCurrentNodePath(key)) {
+                keys.remove(0);
+            }
+            if (index >= 0) {
+                node = node.get(index);
+            }
         }
         return getNodeByKeys(node, keys);
     }
@@ -299,6 +317,32 @@ class JossonCore {
         return node;
     }
 
+    private static String toAlphabetIndex(int number, int base) {
+        if (number < 0) {
+            return "-" + toAlphabetIndex(-number - 1, base);
+        }
+        int quot = number / 26;
+        return (quot == 0 ? "" : toAlphabetIndex(quot - 1, base)) + (char)(base + number % 26);
+    }
+
+    static String toRomanIndex(int number, boolean isUpper) {
+        if (number < 0) {
+            return "-" + toRomanIndex(-number - 1, isUpper);
+        }
+        number++;
+        int[] numbers = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
+        String[] uppers = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+        String[] lowers = {"m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"};
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < numbers.length && number > 0; i++) {
+            while (number >= numbers[i]) {
+                number -= numbers[i];
+                result.append(isUpper ? uppers[i] : lowers[i]);
+            }
+        }
+        return result.toString();
+    }
+
     private static JsonNode getNodeByKeys(JsonNode node, List<String> keys, List<String> nextKeys) {
         if (keys == null || keys.isEmpty()) {
             return node;
@@ -307,16 +351,24 @@ class JossonCore {
             return null;
         }
         String key = keys.get(0);
-        if (key.charAt(0) == COLLECT_BRANCHES_SYMBOL) {
-            nextKeys.addAll(keys);
-            nextKeys.set(0, key.substring(1).trim());
-            keys.clear();
-            return node;
+        switch (key.charAt(0)) {
+            case INDEX_SYMBOL:
+                throw new IllegalArgumentException("Invalid path: " + key);
+            case COLLECT_BRANCHES_SYMBOL:
+                key = key.substring(1).trim();
+                nextKeys.addAll(keys);
+                if (key.isEmpty()) {
+                    nextKeys.remove(0);
+                } else {
+                    nextKeys.set(0, key);
+                }
+                keys.clear();
+                return node;
+        }
+        if (isCurrentNodePath(key)) {
+            throw new IllegalArgumentException("Invalid path: " + key);
         }
         keys.remove(0);
-        if (isCurrentNodePath(key)) {
-            return getNodeByKeys(node, keys, nextKeys);
-        }
         FuncDispatcher funcDispatcher = matchFunctionAndArgument(key);
         if (funcDispatcher != null) {
             return getNodeByKeys(funcDispatcher.apply(node), keys, nextKeys);
