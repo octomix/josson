@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2020 Octomix Software Technology Limited
+ Copyright 2020-2022 Octomix Software Technology Limited
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
     <groupId>com.octomix.josson</groupId>
     <artifactId>josson</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.23</version>
+    <version>1.2.24</version>
     <build>
         <plugins>
             <plugin>
@@ -161,9 +161,9 @@
             <version>4.4.2</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.8.2</version>
             <type>jar</type>
             <scope>test</scope>
             <optional>true</optional>

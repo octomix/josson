@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Octomix Software Technology Limited
+ * Copyright 2020-2022 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,6 +203,32 @@ class JossonCore {
         return objects;
     }
 
+    private static String toAlphabetIndex(int number, int base) {
+        if (number < 0) {
+            return "-" + toAlphabetIndex(-number - 1, base);
+        }
+        int quot = number / 26;
+        return (quot == 0 ? "" : toAlphabetIndex(quot - 1, base)) + (char)(base + number % 26);
+    }
+
+    static String toRomanIndex(int number, boolean isUpper) {
+        if (number < 0) {
+            return "-" + toRomanIndex(-number - 1, isUpper);
+        }
+        number++;
+        int[] numbers = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
+        String[] uppers = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+        String[] lowers = {"m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"};
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < numbers.length && number > 0; i++) {
+            while (number >= numbers[i]) {
+                number -= numbers[i];
+                result.append(isUpper ? uppers[i] : lowers[i]);
+            }
+        }
+        return result.toString();
+    }
+
     /**
      * Find an element or filter an array node
      *
@@ -315,32 +341,6 @@ class JossonCore {
             }
         }
         return node;
-    }
-
-    private static String toAlphabetIndex(int number, int base) {
-        if (number < 0) {
-            return "-" + toAlphabetIndex(-number - 1, base);
-        }
-        int quot = number / 26;
-        return (quot == 0 ? "" : toAlphabetIndex(quot - 1, base)) + (char)(base + number % 26);
-    }
-
-    static String toRomanIndex(int number, boolean isUpper) {
-        if (number < 0) {
-            return "-" + toRomanIndex(-number - 1, isUpper);
-        }
-        number++;
-        int[] numbers = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
-        String[] uppers = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
-        String[] lowers = {"m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"};
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < numbers.length && number > 0; i++) {
-            while (number >= numbers[i]) {
-                number -= numbers[i];
-                result.append(isUpper ? uppers[i] : lowers[i]);
-            }
-        }
-        return result.toString();
     }
 
     private static JsonNode getNodeByKeys(JsonNode node, List<String> keys, List<String> nextKeys) {

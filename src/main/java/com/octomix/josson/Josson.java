@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Octomix Software Technology Limited
+ * Copyright 2020-2022 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,7 +220,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(String jossonPath) {
-        return getNode(jsonNode, jossonPath);
+        return getNodeByPath(jsonNode, jossonPath);
     }
 
     /**
@@ -232,7 +232,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(int index, String jossonPath) {
-        return getNode(jsonNode, index, jossonPath);
+        return getNodeByPath(jsonNode, index, jossonPath);
     }
 
     /**
@@ -409,7 +409,9 @@ public class Josson {
     }
 
     public static void setZoneId(ZoneId zoneId) {
-        JossonCore.zoneId = zoneId;
+        if (zoneId != null) {
+            JossonCore.zoneId = zoneId;
+        }
     }
 
     public static ZoneId getZoneId() {
