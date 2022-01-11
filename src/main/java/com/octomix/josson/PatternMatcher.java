@@ -221,11 +221,8 @@ class PatternMatcher {
             if (end > 0) {
                 String arrayName = rightTrimOf(input, 0, pos);
                 String filter = trimOf(input, pos + 1, end);
-                if (filter.isEmpty()) {
-                    throw new AtPositionException(input, "Missing filter expression", pos + 1);
-                }
                 pos = eatSpaces(input, end + 1, last);
-                FilterMode mode = FILTER_FIND_FIRST;
+                FilterMode mode = FILTRATE_FIRST_FOUND;
                 if (pos <= last) {
                     mode = FilterMode.fromSymbol(input.charAt(pos));
                     if (mode != null) {
@@ -235,15 +232,18 @@ class PatternMatcher {
                         throw new AtPositionException(input, "Invalid filter expression", pos);
                     }
                 }
+                if (mode != FILTRATE_DIVERT_ALL && filter.isEmpty()) {
+                    throw new AtPositionException(input, "Missing filter expression", end);
+                }
                 return new ArrayFilter(arrayName, filter, mode);
             }
             pos = skipEnclosure(input, pos, last, Enclosure.STRING_LITERAL, Enclosure.PARENTHESES);
         }
         FilterMode mode = FilterMode.fromSymbol(input.charAt(last));
-        if (mode == FILTER_FIND_ALL || mode == FILTER_NESTED_ARRAY) {
+        if (mode == FILTRATE_COLLECT_ALL || mode == FILTRATE_DIVERT_ALL) {
             return new ArrayFilter(rightTrimOf(input, 0, last), null, mode);
         }
-        return new ArrayFilter(input, null, FILTER_FIND_ALL);
+        return new ArrayFilter(input, null, FILTRATE_COLLECT_ALL);
     }
 
     static FuncDispatcher matchFunctionAndArgument(String input) {
@@ -431,7 +431,7 @@ class PatternMatcher {
         }
         if (minCount > 0 && params.size() < minCount) {
             throw new IllegalArgumentException(
-                    "Expected" + ((minCount == maxCount) ? "" : " at least") + minCount + " arguments: " + input);
+                    "Expected" + ((minCount == maxCount) ? "" : " at least ") + minCount + " arguments: " + input);
         }
         for (int i = params.size() - 1; i >= 0; i--) {
             if (params.get(i).isEmpty()) {

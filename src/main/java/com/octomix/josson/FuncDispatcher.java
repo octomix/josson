@@ -25,7 +25,6 @@ import static com.octomix.josson.FuncArithmetic.*;
 import static com.octomix.josson.FuncArray.*;
 import static com.octomix.josson.FuncDate.*;
 import static com.octomix.josson.FuncFormat.*;
-import static com.octomix.josson.FuncGrouping.*;
 import static com.octomix.josson.FuncLogical.*;
 import static com.octomix.josson.FuncString.*;
 import static com.octomix.josson.FuncStructural.*;
@@ -44,22 +43,6 @@ class FuncDispatcher {
         try {
             switch (funcName.toLowerCase()) {
 
-                // Grouping
-                case "sum":
-                case "avg":
-                case "count":
-                    return funcAggregate(node, funcName, params);
-                case "distinctvalue":
-                    return funcDistinctValue(node, params);
-                case "join":
-                    return funcJoin(node, params);
-                case "max":
-                    return funcMaxMin(node, params, true);
-                case "min":
-                    return funcMaxMin(node, params, false);
-                case "size":
-                    return funcSize(node, params);
-
                 // Arithmetic
                 case "abs":
                     return funcAbs(node, params);
@@ -75,16 +58,12 @@ class FuncDispatcher {
                     return funcRound(node, params);
 
                 // Array
-                case "first":
-                    return funcFirst(node, params);
-                case "indexof":
-                    return funcIndexOf(node, params);
-                case "last":
-                    return funcLast(node, params);
-                case "lastindex":
-                    return funcLastIndex(node, params);
-                case "lastindexof":
-                    return funcLastIndexOf(node, params);
+                case "sum":
+                case "avg":
+                case "count":
+                    return funcAggregate(node, funcName, params);
+                case "distinctvalue":
+                    return funcDistinctValue(node, params);
                 case "findbymax":
                     return funcFindByMaxMin(node, params, true, 0);
                 case "findbymaxornull":
@@ -97,8 +76,26 @@ class FuncDispatcher {
                     return funcFindByMaxMin(node, params, true, 1);
                 case "findbynullormin":
                     return funcFindByMaxMin(node, params, false, 1);
+                case "first":
+                    return funcFirst(node, params);
+                case "indexof":
+                    return funcIndexOf(node, params);
+                case "join":
+                    return funcJoin(node, params);
+                case "last":
+                    return funcLast(node, params);
+                case "lastindex":
+                    return funcLastIndex(node, params);
+                case "lastindexof":
+                    return funcLastIndexOf(node, params);
+                case "max":
+                    return funcMaxMin(node, params, true);
+                case "min":
+                    return funcMaxMin(node, params, false);
                 case "reverse":
                     return funcReverse(node, params);
+                case "size":
+                    return funcSize(node, params);
                 case "slice":
                     return funcSlice(node, params);
                 case "sort":

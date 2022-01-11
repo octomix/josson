@@ -20,135 +20,66 @@ import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import static com.octomix.josson.GetFuncParam.*;
-import static com.octomix.josson.JossonCore.getNodeByPath;
+import static com.octomix.josson.FuncExecutor.*;
+import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 
 class FuncArray {
-    static JsonNode funcFirst(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (!node.isArray()) {
-            return node;
-        }
-        if (node.size() == 0) {
+    static ValueNode funcAggregate(JsonNode node, String funcId, String params) {
+        ArrayNode array = getParamArrayOrItself(params, node);
+        if (array == null) {
             return null;
         }
-        return node.get(0);
-    }
-
-    static IntNode funcIndexOf(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
+        double sum = 0;
+        int count = 0;
+        for (int i = array.size() - 1; i >= 0; i--) {
+            JsonNode tryNode = array.get(i);
+            if (nodeHasValue(tryNode)) {
+                sum += tryNode.asDouble();
+                count++;
             }
         }
-        if (!node.isArray()) {
-            return null;
+        if ("count".equals(funcId)) {
+            return IntNode.valueOf(count);
         }
-        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
-        if (valueNode != null && valueNode.isValueNode()) {
-            if (valueNode.isNumber()) {
-                double value = valueNode.asDouble();
-                for (int i = 0; i < node.size(); i++) {
-                    JsonNode tryNode = node.get(i);
-                    if (tryNode.isNumber() || tryNode.isTextual()) {
-                        if (tryNode.asDouble() == value) {
-                            return IntNode.valueOf(i);
-                        }
-                    }
-                }
-            } else {
-                String value = valueNode.asText();
-                for (int i = 0; i < node.size(); i++) {
-                    JsonNode tryNode = node.get(i);
-                    if (tryNode.isNumber() || tryNode.isTextual()) {
-                        if (tryNode.asText().equals(value)) {
-                            return IntNode.valueOf(i);
-                        }
-                    }
-                }
+        if (count > 0) {
+            switch (funcId) {
+                case "sum":
+                    return DoubleNode.valueOf(sum);
+                case "avg":
+                    return DoubleNode.valueOf(sum / count);
             }
         }
         return null;
     }
 
-    static JsonNode funcLast(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (!node.isArray()) {
-            return node;
-        }
-        if (node.size() == 0) {
+    static JsonNode funcDistinctValue(JsonNode node, String params) {
+        ArrayNode array = getParamArrayOrItself(params, node);
+        if (array == null) {
             return null;
         }
-        return node.get(node.size() - 1);
-    }
-
-    static IntNode funcLastIndex(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
+        Set<String> texts = new HashSet<>();
+        Set<Double> doubles = new HashSet<>();
+        Set<Boolean> booleans = new HashSet<>();
+        for (int i = 0; i < array.size(); i++) {
+            JsonNode tryNode = array.get(i);
+            if (tryNode.isTextual()) {
+                texts.add(tryNode.asText());
+            } else if (tryNode.isNumber()) {
+                doubles.add(tryNode.asDouble());
+            } else if (tryNode.isBoolean()) {
+                booleans.add(tryNode.asBoolean());
             }
         }
-        if (!node.isArray()) {
-            return null;
-        }
-        return IntNode.valueOf(node.size() - 1);
-    }
-
-    static IntNode funcLastIndexOf(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        if (!node.isArray()) {
-            return null;
-        }
-        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
-        if (valueNode != null && valueNode.isValueNode()) {
-            if (valueNode.isNumber()) {
-                double value = valueNode.asDouble();
-                for (int i = node.size() - 1; i >= 0; i--) {
-                    JsonNode tryNode = node.get(i);
-                    if (tryNode.isNumber() || tryNode.isTextual()) {
-                        if (tryNode.asDouble() == value) {
-                            return IntNode.valueOf(i);
-                        }
-                    }
-                }
-            } else {
-                String value = valueNode.asText();
-                for (int i = node.size() - 1; i >= 0; i--) {
-                    JsonNode tryNode = node.get(i);
-                    if (tryNode.isNumber() || tryNode.isTextual()) {
-                        if (tryNode.asText().equals(value)) {
-                            return IntNode.valueOf(i);
-                        }
-                    }
-                }
-            }
-        }
-        return null;
+        ArrayNode result = MAPPER.createArrayNode();
+        texts.forEach(value -> result.add(TextNode.valueOf(value)));
+        doubles.forEach(value -> result.add(DoubleNode.valueOf(value)));
+        booleans.forEach(value -> result.add(BooleanNode.valueOf(value)));
+        return result;
     }
 
     static JsonNode funcFindByMaxMin(JsonNode node, String params, boolean isMax, int nullPriority) {
@@ -203,31 +134,183 @@ class FuncArray {
         return foundIndex >= 0 ? node.get(foundIndex) : null;
     }
 
-    static JsonNode funcReverse(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
+    static JsonNode funcFirst(JsonNode node, String params) {
+        return applyWithoutArgument(node, params,
+                jsonNode -> !jsonNode.isArray() ? jsonNode : jsonNode.size() == 0 ? null : jsonNode.get(0)
+        );
+    }
+
+    static IntNode funcIndexOf(JsonNode node, String params) {
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        if (node.isTextual()) {
-            StringBuilder sb = new StringBuilder(node.asText());
-            return TextNode.valueOf(sb.reverse().toString());
+        if (!node.isArray()) {
+            return null;
+        }
+        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
+        if (valueNode != null && valueNode.isValueNode()) {
+            if (valueNode.isNumber()) {
+                double value = valueNode.asDouble();
+                for (int i = 0; i < node.size(); i++) {
+                    JsonNode tryNode = node.get(i);
+                    if (tryNode.isNumber() || tryNode.isTextual()) {
+                        if (tryNode.asDouble() == value) {
+                            return IntNode.valueOf(i);
+                        }
+                    }
+                }
+            } else {
+                String value = valueNode.asText();
+                for (int i = 0; i < node.size(); i++) {
+                    JsonNode tryNode = node.get(i);
+                    if (tryNode.isNumber() || tryNode.isTextual()) {
+                        if (tryNode.asText().equals(value)) {
+                            return IntNode.valueOf(i);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    static TextNode funcJoin(JsonNode node, String params) {
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNodeByPath(node, pathAndParams.getKey());
+            if (node == null) {
+                return null;
+            }
+        }
+        String delimiter = pathAndParams.getValue().size() > 0 ? getNodeAsText(node, pathAndParams.getValue().get(0)) : "";
+        List<String> texts = new ArrayList<>();
+        for (int i = 0; i < node.size(); i++) {
+            JsonNode valueNode = node.get(i);
+            if (nodeHasValue(valueNode)) {
+                texts.add(valueNode.asText());
+            }
+        }
+        return TextNode.valueOf(String.join(delimiter, texts));
+    }
+
+    static JsonNode funcLast(JsonNode node, String params) {
+        return applyWithoutArgument(node, params,
+                jsonNode -> !jsonNode.isArray() ? jsonNode : jsonNode.size() == 0 ? null : jsonNode.get(jsonNode.size() - 1)
+        );
+    }
+
+    static JsonNode funcLastIndex(JsonNode node, String params) {
+        return applyWithoutArgument(node, params,
+                jsonNode -> !jsonNode.isArray() ? null : IntNode.valueOf(jsonNode.size() - 1)
+        );
+    }
+
+    static IntNode funcLastIndexOf(JsonNode node, String params) {
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNodeByPath(node, pathAndParams.getKey());
+            if (node == null) {
+                return null;
+            }
         }
         if (!node.isArray()) {
             return null;
         }
-        ArrayNode array = MAPPER.createArrayNode();
-        int len = node.size();
-        for (int i = len - 1; i >= 0; i--) {
-            array.add(node.get(i));
+        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
+        if (valueNode != null && valueNode.isValueNode()) {
+            if (valueNode.isNumber()) {
+                double value = valueNode.asDouble();
+                for (int i = node.size() - 1; i >= 0; i--) {
+                    JsonNode tryNode = node.get(i);
+                    if (tryNode.isNumber() || tryNode.isTextual()) {
+                        if (tryNode.asDouble() == value) {
+                            return IntNode.valueOf(i);
+                        }
+                    }
+                }
+            } else {
+                String value = valueNode.asText();
+                for (int i = node.size() - 1; i >= 0; i--) {
+                    JsonNode tryNode = node.get(i);
+                    if (tryNode.isNumber() || tryNode.isTextual()) {
+                        if (tryNode.asText().equals(value)) {
+                            return IntNode.valueOf(i);
+                        }
+                    }
+                }
+            }
         }
-        return array;
+        return null;
+    }
+
+    static ValueNode funcMaxMin(JsonNode node, String params, boolean isMax) {
+        ArrayNode array = getParamArrayOrItself(params, node);
+        if (array == null) {
+            return null;
+        }
+        double maxMinDouble = 0;
+        ValueNode maxMinNumber = null;
+        String maxMinString = null;
+        for (int i = array.size() - 1; i >= 0; i--) {
+            JsonNode tryNode = array.get(i);
+            if (!nodeHasValue(tryNode)) {
+                continue;
+            }
+            if (maxMinNumber != null || tryNode.isNumber()) {
+                if (tryNode.isNumber()) {
+                    double tryValue = tryNode.asDouble();
+                    if (maxMinNumber == null
+                            || (isMax && tryValue > maxMinDouble)
+                            || (!isMax && tryValue < maxMinDouble)) {
+                        maxMinNumber = (ValueNode) tryNode;
+                        maxMinDouble = tryValue;
+                    }
+                }
+            } else {
+                String tryValue = tryNode.asText();
+                if (maxMinString == null
+                        || (isMax && tryValue.compareTo(maxMinString) > 0)
+                        || (!isMax && tryValue.compareTo(maxMinString) < 0)) {
+                    maxMinString = tryValue;
+                }
+            }
+        }
+        return maxMinNumber != null ? maxMinNumber :
+                maxMinString != null ? TextNode.valueOf(maxMinString) : null;
+    }
+
+    static JsonNode funcReverse(JsonNode node, String params) {
+        return applyWithoutArgument(node, params,
+                jsonNode -> {
+                    if (jsonNode.isTextual()) {
+                        StringBuilder sb = new StringBuilder(jsonNode.asText());
+                        return TextNode.valueOf(sb.reverse().toString());
+                    }
+                    if (!jsonNode.isArray()) {
+                        return null;
+                    }
+                    ArrayNode array = MAPPER.createArrayNode();
+                    int len = jsonNode.size();
+                    for (int i = len - 1; i >= 0; i--) {
+                        array.add(jsonNode.get(i));
+                    }
+                    return array;
+                }
+        );
+    }
+
+    static JsonNode funcSize(JsonNode node, String params) {
+        return applyWithoutArgument(node, params,
+                jsonNode -> IntNode.valueOf(jsonNode.size())
+        );
     }
 
     static JsonNode funcSlice(JsonNode node, String params) {
-        Pair<String, Integer[]> pathAndParams = getParamPathAndStartEndStep(params);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 3);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
@@ -237,12 +320,17 @@ class FuncArray {
         if (!node.isArray()) {
             return node;
         }
+        int start = pathAndParams.getValue().size() > 0 && !pathAndParams.getValue().get(0).isEmpty() ?
+                getNodeAsInt(node, pathAndParams.getValue().get(0)) : 0;
+        int end = pathAndParams.getValue().size() > 1 && !pathAndParams.getValue().get(1).isEmpty() ?
+                getNodeAsInt(node, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
+        int step = pathAndParams.getValue().size() > 2 ? getNodeAsInt(node, pathAndParams.getValue().get(2)) : 1;
         int size = node.size();
-        int start = pathAndParams.getValue()[0] >= 0 ? pathAndParams.getValue()[0] : size + pathAndParams.getValue()[0];
+        start = start >= 0 ? start : size + start;
         start = start < 0 ? 0 : Math.min(start, size);
-        int end = pathAndParams.getValue()[1] >= 0 ? pathAndParams.getValue()[1] : size + pathAndParams.getValue()[1];
+        end = end >= 0 ? end : size + end;
         end = end < 0 ? 0 : Math.min(end, size);
-        int step = pathAndParams.getValue()[2] == 0 ? 1 : Math.abs(pathAndParams.getValue()[2]);
+        step = step == 0 ? 1 : Math.abs(step);
         ArrayNode array = MAPPER.createArrayNode();
         if (start <= end) {
             for (int i = start; i < end; i += step) {
@@ -268,18 +356,18 @@ class FuncArray {
             return node;
         }
         String param = null;
-        double ordering = 1;
+        int ordering = 1;
         if (pathAndParams.getValue().size() > 0) {
             param = pathAndParams.getValue().get(0);
             try {
-                ordering = Double.parseDouble(param);
+                ordering = Integer.parseInt(param);
                 param = null;
                 if (pathAndParams.getValue().size() > 1) {
                     throw new IllegalArgumentException("Too many function arguments: " + params);
                 }
             } catch (NumberFormatException e) {
                 if (pathAndParams.getValue().size() > 1) {
-                    ordering = Double.parseDouble(pathAndParams.getValue().get(1));
+                    ordering = Integer.parseInt(pathAndParams.getValue().get(1));
                 }
             }
         }

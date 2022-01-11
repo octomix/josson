@@ -24,45 +24,26 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static com.octomix.josson.GetFuncParam.*;
+import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncArithmetic {
     static JsonNode funcAbs(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode valueNode = node.get(i);
-                if (valueNode.isNumber() || valueNode.isTextual()) {
-                    array.add(DoubleNode.valueOf(Math.abs(valueNode.asDouble())));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!node.isNumber() && !node.isTextual()) {
-            return null;
-        }
-        return DoubleNode.valueOf(Math.abs(node.asDouble()));
+        return applyWithoutArgument(node, params,
+                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                jsonNode -> DoubleNode.valueOf(Math.abs(jsonNode.asDouble()))
+        );
     }
 
     static JsonNode funcCalc(JsonNode node, String params) {
         List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         String calc = paramList.remove(0);
         Map<String, String> args = getParamNamePath(paramList);
-        if (calc.contains(CURRENT_NODE_PATH)) {
-            calc = calc.replace(CURRENT_NODE_PATH, "_THIS_NODE_ ");
-            args.put("_THIS_NODE_", CURRENT_NODE_PATH);
+        if (calc.contains(CURRENT_NODE)) {
+            calc = calc.replace(CURRENT_NODE, "_THIS_NODE_ ");
+            args.put("_THIS_NODE_", CURRENT_NODE);
         }
         Expression expression = new Expression(calc);
         if (node.isArray()) {
@@ -118,121 +99,45 @@ class FuncArithmetic {
     }
 
     static JsonNode funcCeil(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode valueNode = node.get(i);
-                if (valueNode.isNumber() || valueNode.isTextual()) {
-                    array.add(IntNode.valueOf((int) Math.ceil(valueNode.asDouble())));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!node.isNumber() && !node.isTextual()) {
-            return null;
-        }
-        return IntNode.valueOf((int) Math.ceil(node.asDouble()));
+        return applyWithoutArgument(node, params,
+                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                jsonNode -> IntNode.valueOf((int) Math.ceil(jsonNode.asDouble()))
+        );
     }
 
     static JsonNode funcFloor(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode valueNode = node.get(i);
-                if (valueNode.isNumber() || valueNode.isTextual()) {
-                    array.add(IntNode.valueOf((int) Math.floor(valueNode.asDouble())));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!node.isNumber() && !node.isTextual()) {
-            return null;
-        }
-        return IntNode.valueOf((int) Math.floor(node.asDouble()));
+        return applyWithoutArgument(node, params,
+                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                jsonNode -> IntNode.valueOf((int) Math.floor(jsonNode.asDouble()))
+        );
     }
 
     static JsonNode funcMod(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        int divisor = Integer.parseInt(getNodeAsText(node, pathAndParams.getValue().get(0)));
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode valueNode = node.get(i);
-                if (valueNode.isNumber() || valueNode.isTextual()) {
-                    int result = valueNode.asInt() % divisor;
-                    array.add(IntNode.valueOf(result < 0 ? result + divisor : result));
-                } else {
-                    array.addNull();
+        return applyWithArguments(node, params, 1, 1,
+                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                (jsonNode, paramList) -> getNodeAsInt(jsonNode, paramList.get(0)),
+                (jsonNode, objVar) -> {
+                    int divisor = (int) objVar;
+                    int result = jsonNode.asInt() % divisor;
+                    return IntNode.valueOf(result < 0 ? result + divisor : result);
                 }
-            }
-            return array;
-        }
-        if (!node.isNumber() && !node.isTextual()) {
-            return null;
-        }
-        int result = node.asInt() % divisor;
-        return IntNode.valueOf(result < 0 ? result + divisor : result);
+        );
     }
 
     static JsonNode funcRound(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        int precision = pathAndParams.getValue().size() > 0 ?
-                Integer.parseInt(getNodeAsText(node, pathAndParams.getValue().get(0))) : 0;
-        double magnitude = Math.pow(10, precision);
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode valueNode = node.get(i);
-                if (valueNode.isNumber() || valueNode.isTextual()) {
-                    double result = Math.round(valueNode.asDouble() * magnitude) / magnitude;
-                    if (precision > 0) {
-                        array.add(DoubleNode.valueOf(result));
-                    } else {
-                        array.add(IntNode.valueOf((int) result));
-                    }
-                } else {
-                    array.addNull();
+        return applyWithArguments(node, params, 0, 1,
+                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                (jsonNode, paramList) -> {
+                    int precision = paramList.size() > 0 ? getNodeAsInt(jsonNode, paramList.get(0)) : 0;
+                    double magnitude = Math.pow(10, precision);
+                    return Pair.of(precision, magnitude);
+                },
+                (jsonNode, objVar) -> {
+                    int precision = (int) ((Pair<?, ?>) objVar).getKey();
+                    double magnitude = (double) ((Pair<?, ?>) objVar).getValue();
+                    double result = Math.round(jsonNode.asDouble() * magnitude) / magnitude;
+                    return precision > 0 ? DoubleNode.valueOf(result) : IntNode.valueOf((int) result);
                 }
-            }
-            return array;
-        }
-        if (!node.isNumber() && !node.isTextual()) {
-            return null;
-        }
-        double result = Math.round(node.asDouble() * magnitude) / magnitude;
-        if (precision > 0) {
-            return DoubleNode.valueOf(result);
-        }
-        return IntNode.valueOf((int) result);
+        );
     }
 }

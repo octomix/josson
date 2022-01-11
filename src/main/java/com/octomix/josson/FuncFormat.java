@@ -28,62 +28,24 @@ import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static com.octomix.josson.GetFuncParam.*;
+import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncFormat {
     static JsonNode funcB64Decode(JsonNode node, String params, Base64.Decoder decoder) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode textNode = node.get(i);
-                if (textNode.isTextual()) {
-                    array.add(TextNode.valueOf(new String(decoder.decode(textNode.asText()))));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!node.isTextual()) {
-            return null;
-        }
-        return TextNode.valueOf(new String(decoder.decode(node.asText())));
+        return applyWithoutArgument(node, params,
+                JsonNode::isTextual,
+                jsonNode -> TextNode.valueOf(new String(decoder.decode(jsonNode.asText())))
+        );
     }
 
     static JsonNode funcB64Encode(JsonNode node, String params, Base64.Encoder encoder) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode textNode = node.get(i);
-                if (textNode.isTextual()) {
-                    array.add(TextNode.valueOf(encoder.encodeToString(textNode.asText().getBytes())));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!node.isTextual()) {
-            return null;
-        }
-        return TextNode.valueOf(encoder.encodeToString(node.asText().getBytes()));
+        return applyWithoutArgument(node, params,
+                JsonNode::isTextual,
+                jsonNode -> TextNode.valueOf(encoder.encodeToString(jsonNode.asText().getBytes()))
+        );
     }
 
     static JsonNode funcCaseValue(JsonNode node, String params) {
@@ -189,57 +151,19 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatDate(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        String pattern = getNodeAsText(node, pathAndParams.getValue().get(0));
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                JsonNode textNode = node.get(i);
-                if (textNode.isTextual()) {
-                    array.add(TextNode.valueOf(toLocalDateTime(textNode).format(DateTimeFormatter.ofPattern(pattern))));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!node.isTextual()) {
-            return null;
-        }
-        return TextNode.valueOf(toLocalDateTime(node).format(DateTimeFormatter.ofPattern(pattern)));
+        return applyWithArguments(node, params, 1, 1,
+                JsonNode::isTextual,
+                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
+                (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).format(DateTimeFormatter.ofPattern((String) objVar)))
+        );
     }
 
     static JsonNode funcFormatNumber(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        String pattern = getNodeAsText(node, pathAndParams.getValue().get(0));
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                JsonNode textNode = node.get(i);
-                if (nodeHasValue(textNode)) {
-                    array.add(TextNode.valueOf(new DecimalFormat(pattern).format(textNode.asDouble())));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!nodeHasValue(node)) {
-            return null;
-        }
-        return TextNode.valueOf(new DecimalFormat(pattern).format(node.asDouble()));
+        return applyWithArguments(node, params, 1, 1,
+                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
+                (jsonNode, objVar) -> TextNode.valueOf(new DecimalFormat((String) objVar).format(jsonNode.asDouble()))
+        );
     }
 
     static JsonNode funcFormatText(JsonNode node, String params) {
@@ -317,114 +241,42 @@ class FuncFormat {
     }
 
     static JsonNode funcToNumber(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                JsonNode tryNode = node.get(i);
-                if (nodeHasValue(tryNode)) {
-                    array.add(tryNode.isNumber() ? tryNode : DoubleNode.valueOf(tryNode.asDouble()));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!nodeHasValue(node)) {
-            return null;
-        }
-        return node.isNumber() ? node : DoubleNode.valueOf(node.asDouble());
+        return applyWithoutArgument(node, params,
+                JossonCore::nodeHasValue,
+                jsonNode -> jsonNode.isNumber() ? jsonNode : DoubleNode.valueOf(jsonNode.asDouble())
+        );
     }
 
     static JsonNode funcToText(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                JsonNode tryNode = node.get(i);
-                if (nodeHasValue(tryNode)) {
-                    array.add(tryNode.isTextual() ? tryNode : TextNode.valueOf(tryNode.asText()));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!nodeHasValue(node)) {
-            return null;
-        }
-        return node.isTextual() ? node : TextNode.valueOf(node.asText());
+        return applyWithoutArgument(node, params,
+                JossonCore::nodeHasValue,
+                jsonNode -> jsonNode.isTextual() ? jsonNode : TextNode.valueOf(jsonNode.asText())
+        );
     }
 
     static JsonNode funcUrlDecode(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        try {
-            if (node.isArray()) {
-                ArrayNode array = MAPPER.createArrayNode();
-                for (int i  = 0; i < node.size(); i++) {
-                    JsonNode textNode = node.get(i);
-                    if (textNode.isTextual()) {
-                        array.add(TextNode.valueOf(URLDecoder.decode(textNode.asText(), StandardCharsets.UTF_8.toString())));
-                    } else {
-                        array.addNull();
+        return applyWithoutArgument(node, params,
+                JsonNode::isTextual,
+                jsonNode -> {
+                    try {
+                        return TextNode.valueOf(URLDecoder.decode(jsonNode.asText(), StandardCharsets.UTF_8.toString()));
+                    } catch (UnsupportedEncodingException e) {
+                        throw new IllegalArgumentException(e.getMessage());
                     }
                 }
-                return array;
-            }
-            if (!node.isTextual()) {
-                return null;
-            }
-            return TextNode.valueOf(URLDecoder.decode(node.asText(), StandardCharsets.UTF_8.toString()));
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
+        );
     }
 
     static JsonNode funcUrlEncode(JsonNode node, String params) {
-        String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        try {
-            if (node.isArray()) {
-                ArrayNode array = MAPPER.createArrayNode();
-                for (int i  = 0; i < node.size(); i++) {
-                    JsonNode textNode = node.get(i);
-                    if (textNode.isTextual()) {
-                        array.add(TextNode.valueOf(URLEncoder.encode(textNode.asText(), StandardCharsets.UTF_8.toString())));
-                    } else {
-                        array.addNull();
+        return applyWithoutArgument(node, params,
+                JsonNode::isTextual,
+                jsonNode -> {
+                    try {
+                        return TextNode.valueOf(URLEncoder.encode(jsonNode.asText(), StandardCharsets.UTF_8.toString()));
+                    } catch (UnsupportedEncodingException e) {
+                        throw new IllegalArgumentException(e.getMessage());
                     }
                 }
-                return array;
-            }
-            if (!node.isTextual()) {
-                return null;
-            }
-            return TextNode.valueOf(URLEncoder.encode(node.asText(), StandardCharsets.UTF_8.toString()));
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
+        );
     }
 }

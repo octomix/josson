@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.octomix.josson.commons.StringUtils;
 
-import static com.octomix.josson.ArrayFilter.FilterMode.FILTER_FIND_ALL;
+import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_COLLECT_ALL;
 import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
 import static com.octomix.josson.JossonCore.getNodeByPath;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -163,7 +163,7 @@ class JoinDatasets {
         }
         String path = "[" + StringUtils.join(relationalOps, Operator.AND.symbol) + "]";
         if (operator == JoinOperator.LEFT_JOIN_MANY) {
-            JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTER_FIND_ALL.symbol);
+            JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.symbol);
             if (rightToJoin != null) {
                 ObjectNode joinedNode = leftObject.deepCopy();
                 joinedNode.set(arrayName, rightToJoin);

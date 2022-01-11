@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.octomix.josson.GetFuncParam.*;
+import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
@@ -112,15 +112,15 @@ class FuncStructural {
     }
 
     static JsonNode funcFlatten(JsonNode node, String params) {
-        Pair<String, Integer> pathAndParams = getParamPathAndInt(params);
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        int flattenLevels = pathAndParams.getValue() == null ? 1 : pathAndParams.getValue();
-        if (!node.isArray() || flattenLevels < 0) {
+        int flattenLevels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1;
+        if (!node.isArray() || flattenLevels < 1) {
             return node;
         }
         ArrayNode array = MAPPER.createArrayNode();

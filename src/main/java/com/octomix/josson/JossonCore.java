@@ -34,17 +34,17 @@ import static com.octomix.josson.PatternMatcher.*;
 class JossonCore {
 
     static final char QUOTE_SYMBOL = '\'';
-    private static final char INDEX_SYMBOL = '#';
+    private static final char INDEX_PREFIX_SYMBOL = '#';
     private static final char COLLECT_BRANCHES_SYMBOL = '@';
 
-    static final String CURRENT_NODE_PATH = "?";
-    private static final String PARENT_ARRAY_PATH = "@";
-    private static final String ZERO_BASED_INDEX = "" + INDEX_SYMBOL;
-    private static final String ONE_BASED_INDEX = ZERO_BASED_INDEX + INDEX_SYMBOL;
-    private static final String UPPERCASE_INDEX = ZERO_BASED_INDEX + "A";
-    private static final String LOWERCASE_INDEX = ZERO_BASED_INDEX + "a";
-    private static final String UPPER_ROMAN_INDEX = ZERO_BASED_INDEX + "R";
-    private static final String LOWER_ROMAN_INDEX = ZERO_BASED_INDEX + "r";
+    static final String CURRENT_NODE = "?";
+    private static final String PARENT_ARRAY_NODE = "@";
+    private static final String ZERO_BASED_INDEX = INDEX_PREFIX_SYMBOL + "";
+    private static final String ONE_BASED_INDEX = INDEX_PREFIX_SYMBOL + "#";
+    private static final String UPPERCASE_INDEX = INDEX_PREFIX_SYMBOL + "A";
+    private static final String LOWERCASE_INDEX = INDEX_PREFIX_SYMBOL + "a";
+    private static final String UPPER_ROMAN_INDEX = INDEX_PREFIX_SYMBOL + "R";
+    private static final String LOWER_ROMAN_INDEX = INDEX_PREFIX_SYMBOL + "r";
 
     static ZoneId zoneId = ZoneId.systemDefault();
 
@@ -91,7 +91,7 @@ class JossonCore {
     }
 
     static boolean isCurrentNodePath(String path) {
-        if (path.startsWith(CURRENT_NODE_PATH)) {
+        if (path.startsWith(CURRENT_NODE)) {
             if (path.length() > 1) {
                 throw new IllegalArgumentException("Invalid path: " + path);
             }
@@ -101,7 +101,7 @@ class JossonCore {
     }
 
     static boolean isParentArrayPath(String path) {
-        if (path.startsWith(PARENT_ARRAY_PATH)) {
+        if (path.startsWith(PARENT_ARRAY_NODE)) {
             if (path.length() > 1) {
                 throw new IllegalArgumentException("Invalid path: " + path);
             }
@@ -160,6 +160,21 @@ class JossonCore {
     static String getNodeAsText(JsonNode node, String jossonPath) {
         node = getNodeByPath(node, jossonPath);
         return node == null ? "" : node.asText();
+    }
+
+    static int getNodeAsInt(JsonNode node, String jossonPath) {
+        node = getNodeByPath(node, jossonPath);
+        if (node != null && node.isValueNode()) {
+            if (node.isTextual()) {
+                try {
+                    return Integer.parseInt(node.asText());
+                } catch (NumberFormatException e) {
+                    return 0;
+                }
+            }
+            return node.asInt();
+        }
+        return 0;
     }
 
     static boolean nodeHasValue(JsonNode node) {
@@ -234,9 +249,9 @@ class JossonCore {
      *
      * @param node      the Jackson JsonNode to be processed
      * @param statement multiple relational operations combined with logical operators
-     * @param mode      {@code FIRST_MATCHED} | {@code ALL_MATCHED} | {@code NESTED_ARRAY}
-     * @return The 1st matched element for {@code FIRST_MATCHED} or
-     * all matched elements in an array node for {@code ALL_MATCHED} and {@code NESTED_ARRAY}
+     * @param mode      {@code FILTRATE_FIRST_FOUND} | {@code FILTRATE_COLLECT_ALL} | {@code FILTRATE_DIVERT_ALL}
+     * @return The 1st matched element for {@code FILTRATE_FIRST_FOUND} or
+     * all matched elements in an array node for {@code FILTRATE_COLLECT_ALL} and {@code FILTRATE_DIVERT_ALL}
      */
     private static JsonNode evaluateFilter(JsonNode node, String statement, FilterMode mode) {
         if (node == null) {
@@ -257,11 +272,11 @@ class JossonCore {
             return null;
         }
         ArrayNode matchedNodes = null;
-        if (mode != FILTER_FIND_FIRST) {
+        if (mode != FILTRATE_FIRST_FOUND) {
             matchedNodes = MAPPER.createArrayNode();
         }
         try {
-            if (mode == FILTER_FIND_FIRST) {
+            if (mode == FILTRATE_FIRST_FOUND) {
                 return node.get(Integer.parseInt(statement));
             }
             matchedNodes.add(node.get(Integer.parseInt(statement)));
@@ -273,7 +288,7 @@ class JossonCore {
         for (int i = 0; i < node.size(); i++) {
             JsonNode result = opStack.evaluate(statement, i);
             if (result != null && result.asBoolean()) {
-                if (mode == FILTER_FIND_FIRST) {
+                if (mode == FILTRATE_FIRST_FOUND) {
                     return node.get(i);
                 }
                 matchedNodes.add(node.get(i));
@@ -295,7 +310,7 @@ class JossonCore {
             return index >= 0 ? node.get(index) : node;
         }
         String key = keys.get(0);
-        if (key.charAt(0) == INDEX_SYMBOL) {
+        if (key.charAt(0) == INDEX_PREFIX_SYMBOL) {
             String indexType = keys.remove(0);
             switch (indexType) {
                 case ZERO_BASED_INDEX:
@@ -352,7 +367,7 @@ class JossonCore {
         }
         String key = keys.get(0);
         switch (key.charAt(0)) {
-            case INDEX_SYMBOL:
+            case INDEX_PREFIX_SYMBOL:
                 throw new IllegalArgumentException("Invalid path: " + key);
             case COLLECT_BRANCHES_SYMBOL:
                 key = key.substring(1).trim();
@@ -399,7 +414,7 @@ class JossonCore {
 
     private static JsonNode forEachElement(ArrayNode node, String elem, FilterMode mode, List<String> keys, List<String> nextKeys) {
         ArrayNode array = MAPPER.createArrayNode();
-        if (mode == FILTER_NESTED_ARRAY) {
+        if (mode == FILTRATE_DIVERT_ALL) {
             for (int i = 0; i < node.size(); i++) {
                 List<String> nextNextKeys = new ArrayList<>();
                 JsonNode addNode = getNodeByKeys(
@@ -418,7 +433,7 @@ class JossonCore {
             for (int i = 0; i < node.size(); i++) {
                 JsonNode addNode = elem == null ? node.get(i) : node.get(i).get(elem);
                 if (addNode != null) {
-                    if (mode == FILTER_FIND_ALL && addNode.isArray()) {
+                    if (mode == FILTRATE_COLLECT_ALL && addNode.isArray()) {
                         array.addAll((ArrayNode) addNode);
                     } else {
                         array.add(addNode);
