@@ -272,18 +272,12 @@ class FuncStructural {
 
     static JsonNode funcToArray(JsonNode node, String params) {
         JsonNode container = getParamArrayOrItselfIsContainer(params, node);
-        if (container == null) {
-            return null;
+        if (container != null && container.isArray()) {
+            return container;
         }
         ArrayNode array = MAPPER.createArrayNode();
-        if (container.isArray()) {
-            for (int i = 0; i < container.size(); i++) {
-                if (container.get(i).isArray()) {
-                    array.addAll((ArrayNode) container.get(i));
-                } else {
-                    container.get(i).forEach(array::add);
-                }
-            }
+        if (container == null) {
+            array.add(node);
         } else {
             container.forEach(array::add);
         }

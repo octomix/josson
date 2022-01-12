@@ -20,6 +20,9 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static com.octomix.josson.JossonCore.*;
@@ -54,29 +57,72 @@ class OperationStep {
         this.resolved = resolved;
     }
 
-    private static BooleanNode relationalCompare(JsonNode leftNode, Operator operator, JsonNode rightNode) {
+    private static boolean relationalCompare(JsonNode leftNode, Operator operator, JsonNode rightNode) {
         if (leftNode == null) {
             leftNode = NullNode.getInstance();
         }
         if (rightNode == null) {
             rightNode = NullNode.getInstance();
         }
+        if (leftNode.isContainerNode() || rightNode.isContainerNode()) {
+            if (leftNode.getNodeType() != rightNode.getNodeType() || (operator != Operator.EQ && operator != Operator.NE)) {
+                return false;
+            }
+            int size = leftNode.size();
+            if (size != rightNode.size()) {
+                return operator == Operator.NE;
+            }
+            if (leftNode.isArray()) {
+                List<JsonNode> rightArray = new ArrayList<>();
+                for (int j = 0; j < size; j++) {
+                    if (!rightNode.get(j).isValueNode()) {
+                        return operator == Operator.NE;
+                    }
+                    rightArray.add(rightNode.get(j));
+                }
+                for (int i = size - 1; i >= 0; i--) {
+                    JsonNode leftElem = leftNode.get(i);
+                    if (!leftElem.isValueNode()) {
+                        return false;
+                    }
+                    int j = i;
+                    for (; j >= 0; j--) {
+                        if (relationalCompare(leftElem, Operator.EQ, rightArray.get(j))) {
+                            break;
+                        }
+                    }
+                    if (j < 0) {
+                        return operator == Operator.NE;
+                    }
+                    rightArray.remove(j);
+                }
+            } else {
+                Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
+                while (iterator.hasNext()) {
+                    Map.Entry<String, JsonNode> leftElem = iterator.next();
+                    if (!relationalCompare(leftElem.getValue(), Operator.EQ, rightNode.get(leftElem.getKey()))) {
+                        return operator == Operator.NE;
+                    }
+                }
+            }
+            return operator == Operator.EQ;
+        }
         if (rightNode.isTextual()) {
             if (leftNode.isTextual()) {
                 int compareResult = leftNode.asText().compareTo(rightNode.asText());
                 switch (operator) {
                     case EQ:
-                        return BooleanNode.valueOf(compareResult == 0);
+                        return compareResult == 0;
                     case NE:
-                        return BooleanNode.valueOf(compareResult != 0);
+                        return compareResult != 0;
                     case GT:
-                        return BooleanNode.valueOf(compareResult > 0);
+                        return compareResult > 0;
                     case GTE:
-                        return BooleanNode.valueOf(compareResult >= 0);
+                        return compareResult >= 0;
                     case LT:
-                        return BooleanNode.valueOf(compareResult < 0);
+                        return compareResult < 0;
                     case LTE:
-                        return BooleanNode.valueOf(compareResult <= 0);
+                        return compareResult <= 0;
                 }
             }
             JsonNode swap = leftNode;
@@ -97,43 +143,43 @@ class OperationStep {
                     break;
             }
         }
-        if (!leftNode.isContainerNode() && rightNode.isNumber()) {
+        if (rightNode.isNumber()) {
             try {
                 double value = leftNode.isNumber() ? leftNode.asDouble() : Double.parseDouble(leftNode.asText());
                 switch (operator) {
                     case EQ:
-                        return BooleanNode.valueOf(value == rightNode.asDouble());
+                        return value == rightNode.asDouble();
                     case NE:
-                        return BooleanNode.valueOf(value != rightNode.asDouble());
+                        return value != rightNode.asDouble();
                     case GT:
-                        return BooleanNode.valueOf(value > rightNode.asDouble());
+                        return value > rightNode.asDouble();
                     case GTE:
-                        return BooleanNode.valueOf(value >= rightNode.asDouble());
+                        return value >= rightNode.asDouble();
                     case LT:
-                        return BooleanNode.valueOf(value < rightNode.asDouble());
+                        return value < rightNode.asDouble();
                     case LTE:
-                        return BooleanNode.valueOf(value <= rightNode.asDouble());
+                        return value <= rightNode.asDouble();
                 }
             } catch (NumberFormatException e) {
-                return BooleanNode.FALSE;
+                return false;
             }
         }
-        if (!leftNode.isContainerNode() && rightNode.isBoolean()) {
+        if (rightNode.isBoolean()) {
             switch (operator) {
                 case EQ:
-                    return BooleanNode.valueOf(!leftNode.asBoolean() ^ rightNode.asBoolean());
+                    return !leftNode.asBoolean() ^ rightNode.asBoolean();
                 case NE:
-                    return BooleanNode.valueOf(leftNode.asBoolean() ^ rightNode.asBoolean());
+                    return leftNode.asBoolean() ^ rightNode.asBoolean();
             }
         } else {
             switch (operator) {
                 case EQ:
-                    return BooleanNode.valueOf(leftNode.isNull() && rightNode.isNull());
+                    return leftNode.isNull() && rightNode.isNull();
                 case NE:
-                    return BooleanNode.valueOf(leftNode.isNull() ^ rightNode.isNull());
+                    return leftNode.isNull() ^ rightNode.isNull();
             }
         }
-        return BooleanNode.FALSE;
+        return false;
     }
 
     private JsonNode evaluateExpression(Map<String, Josson> datasets) throws UnresolvedDatasetException {
@@ -196,8 +242,8 @@ class OperationStep {
     }
 
     JsonNode relationalCompare(OperationStep step, Josson arrayNode, int arrayIndex) {
-        resolved = relationalCompare(
-                resolveFrom(arrayNode, arrayIndex), step.getOperator(), arrayNode.getNode(arrayIndex, step.getExpression()));
+        resolved = BooleanNode.valueOf(relationalCompare(
+                resolveFrom(arrayNode, arrayIndex), step.getOperator(), arrayNode.getNode(arrayIndex, step.getExpression())));
         return resolved;
     }
 
@@ -222,7 +268,8 @@ class OperationStep {
     }
 
     JsonNode relationalCompare(OperationStep step, Map<String, Josson> datasets) throws UnresolvedDatasetException {
-        resolved = relationalCompare(resolveFrom(datasets), step.getOperator(), step.evaluateExpression(datasets));
+        resolved = BooleanNode.valueOf(relationalCompare(
+                resolveFrom(datasets), step.getOperator(), step.evaluateExpression(datasets)));
         return resolved;
     }
 }
