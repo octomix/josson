@@ -15,7 +15,6 @@
  */
 package com.octomix.josson;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.octomix.josson.commons.StringUtils;
@@ -27,7 +26,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
@@ -95,13 +93,7 @@ class FuncExecutor {
     static ArrayNode getParamArray(List<String> paramList, JsonNode node) {
         ArrayNode array = Josson.createArrayNode();
         for (String param : paramList) {
-            if (param.startsWith("[")) {
-                try {
-                    array.addAll((ArrayNode) readJsonNode(param));
-                } catch (JsonProcessingException e) {
-                    throw new IllegalArgumentException("Invalid JSON array: " + param);
-                }
-            } else if (node.isArray()) {
+            if (node.isArray()) {
                 for (int i = 0; i < node.size(); i++) {
                     JsonNode tryNode = getNodeByPath(node, i, param);
                     if (tryNode != null) {

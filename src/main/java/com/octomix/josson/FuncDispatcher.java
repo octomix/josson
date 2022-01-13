@@ -398,6 +398,8 @@ class FuncDispatcher {
                     return funcCsv(node, params);
                 case "flatten":
                     return funcFlatten(node, params);
+                case "json":
+                    return funcJson(node, params);
                 case "map":
                     return funcMap(node, params);
                 case "notblank":

@@ -15,6 +15,7 @@
  */
 package com.octomix.josson;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.octomix.josson.FuncExecutor.*;
+import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
@@ -126,6 +128,19 @@ class FuncStructural {
         ArrayNode array = MAPPER.createArrayNode();
         funcFlattenElement(array, node, flattenLevels);
         return array;
+    }
+
+    static JsonNode funcJson(JsonNode node, String params) {
+        return applyWithoutArgument(node, params,
+                JsonNode::isTextual,
+                jsonNode -> {
+                    try {
+                        return readJsonNode(jsonNode.asText());
+                    } catch (JsonProcessingException e) {
+                        throw new IllegalArgumentException(e.getMessage());
+                    }
+                }
+        );
     }
 
     private static void funcFlattenElement(ArrayNode array, JsonNode node, int level) {
