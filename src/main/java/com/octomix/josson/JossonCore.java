@@ -182,9 +182,6 @@ class JossonCore {
     }
 
     static Object valueAsObject(JsonNode node) {
-        if (!nodeHasValue(node)) {
-            return null;
-        }
         if (node.isIntegralNumber()) {
             return node.asInt();
         }
@@ -195,24 +192,23 @@ class JossonCore {
     }
 
     static Object[] valuesAsObjects(JsonNode node, int index, List<String> paramList) {
-        Object[] objects;
+        Object[] objects = null;
         int size = paramList.size();
         if (size == 0) {
-            Object valueObject = valueAsObject(index >= 0 ? node.get(index) : node);
-            if (valueObject == null) {
-                return null;
+            if (index >= 0) {
+                node = node.get(index);
             }
-            objects = new Object[1];
-            objects[0] = valueObject;
+            if (nodeHasValue(node)) {
+                objects = new Object[]{valueAsObject(node)};
+            }
         } else {
             objects = new Object[size];
             for (int i = 0; i < size; i++) {
-                String param = paramList.get(i);
-                Object valueObject = valueAsObject(getNodeByPath(node, index, param));
-                if (valueObject == null) {
+                JsonNode tryNode = getNodeByPath(node, index, paramList.get(i));
+                if (!nodeHasValue(tryNode)) {
                     return null;
                 }
-                objects[i] = valueObject;
+                objects[i] = valueAsObject(tryNode);
             }
         }
         return objects;
@@ -257,7 +253,7 @@ class JossonCore {
         if (node == null) {
             return null;
         }
-        if (statement.isEmpty()) {
+        if (StringUtils.isEmpty(statement)) {
             return node;
         }
         if (node.isArray()) {
@@ -392,7 +388,7 @@ class JossonCore {
             return null;
         }
         ArrayFilter filter = matchFilterQuery(key);
-        if (filter.getFilter() == null) {
+        if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
             if (node.isArray()) {
                 return forEachElement((ArrayNode) node, filter.getNodeName(), filter.getMode(), keys, nextKeys);
             }

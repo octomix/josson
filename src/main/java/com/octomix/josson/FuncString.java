@@ -31,7 +31,7 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncString {
     static JsonNode funcAbbreviate(JsonNode node, String params) {
-        return applyWithStartAndEnd(node, params,
+        return applyWithTwoInt(node, params,
                 JsonNode::isTextual,
                 (jsonNode, paramList) -> {
                     int offset = paramList[0];
@@ -211,7 +211,7 @@ class FuncString {
     static JsonNode funcRepeat(JsonNode node, String params) {
         return applyWithArguments(node, params, 1, 1,
                 JossonCore::nodeHasValue,
-                (jsonNode, paramList) -> paramList.size() > 0 ? getNodeAsInt(jsonNode, paramList.get(0)) : 0,
+                (jsonNode, paramList) -> getNodeAsInt(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(StringUtils.repeat(jsonNode.asText(), (int) objVar))
         );
     }
@@ -238,61 +238,46 @@ class FuncString {
         );
     }
 
-    static ArrayNode funcSplit(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        String separator = pathAndParams.getValue().size() > 0 ? getNodeAsText(node, pathAndParams.getValue().get(0)) : null;
-        ArrayNode array = MAPPER.createArrayNode();
-        if (node.isArray()) {
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode textNode = node.get(i);
-                if (textNode.isTextual()) {
-                    for (String text : StringUtils.split(textNode.asText(), separator)) {
-                        array.add(TextNode.valueOf(text));
-                    }
-                }
-            }
-        } else if (!node.isTextual()) {
-            return null;
-        } else {
-            for (String text : StringUtils.split(node.asText(), separator)) {
-                array.add(TextNode.valueOf(text));
-            }
-        }
-        return array;
-    }
-
-    static JsonNode funcStrip(JsonNode node, String params) {
+    static JsonNode funcSplit(JsonNode node, String params) {
         return applyWithArguments(node, params, 0, 1,
                 JsonNode::isTextual,
                 (jsonNode, paramList) -> paramList.size() > 0 ? getNodeAsText(jsonNode, paramList.get(0)) : null,
+                (jsonNode, objVar) -> {
+                    ArrayNode array = MAPPER.createArrayNode();
+                    for (String text : StringUtils.split(jsonNode.asText(), (String) objVar)) {
+                        array.add(TextNode.valueOf(text));
+                    }
+                    return array;
+                }
+        );
+    }
+
+    static JsonNode funcStrip(JsonNode node, String params) {
+        return applyWithArguments(node, params, 1, 1,
+                JsonNode::isTextual,
+                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(StringUtils.strip(jsonNode.asText(), (String) objVar))
         );
     }
 
     static JsonNode funcStripEnd(JsonNode node, String params) {
-        return applyWithArguments(node, params, 0, 1,
+        return applyWithArguments(node, params, 1, 1,
                 JsonNode::isTextual,
-                (jsonNode, paramList) -> paramList.size() > 0 ? getNodeAsText(jsonNode, paramList.get(0)) : null,
+                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(StringUtils.stripEnd(jsonNode.asText(), (String) objVar))
         );
     }
 
     static JsonNode funcStripStart(JsonNode node, String params) {
-        return applyWithArguments(node, params, 0, 1,
+        return applyWithArguments(node, params, 1, 1,
                 JsonNode::isTextual,
-                (jsonNode, paramList) -> paramList.size() > 0 ? getNodeAsText(jsonNode, paramList.get(0)) : null,
+                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(StringUtils.stripStart(jsonNode.asText(), (String) objVar))
         );
     }
 
     static JsonNode funcSubstr(JsonNode node, String params) {
-        return applyWithStartAndEnd(node, params,
+        return applyWithTwoInt(node, params,
                 JsonNode::isTextual,
                 (jsonNode, paramList) -> paramList,
                 (jsonNode, intVar) -> TextNode.valueOf(StringUtils.substring(jsonNode.asText(), intVar[0], intVar[1]))

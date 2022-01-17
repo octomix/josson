@@ -142,17 +142,17 @@ class FuncArray {
 
     static IntNode funcIndexOf(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
+        if (valueNode == null || !valueNode.isValueNode()) {
+            return null;
+        }
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        if (!node.isArray()) {
-            return null;
-        }
-        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
-        if (valueNode != null && valueNode.isValueNode()) {
+        if (node.isArray()) {
             if (valueNode.isNumber()) {
                 double value = valueNode.asDouble();
                 for (int i = 0; i < node.size(); i++) {
@@ -211,17 +211,17 @@ class FuncArray {
 
     static IntNode funcLastIndexOf(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
+        if (valueNode == null || !valueNode.isValueNode()) {
+            return null;
+        }
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        if (!node.isArray()) {
-            return null;
-        }
-        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
-        if (valueNode != null && valueNode.isValueNode()) {
+        if (node.isArray()) {
             if (valueNode.isNumber()) {
                 double value = valueNode.asDouble();
                 for (int i = node.size() - 1; i >= 0; i--) {

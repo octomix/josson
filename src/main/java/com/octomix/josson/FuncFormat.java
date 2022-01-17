@@ -167,30 +167,11 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatText(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        String pattern = getNodeAsText(node, pathAndParams.getValue().get(0));
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                Object valueObject = valueAsObject(node.get(i));
-                if (valueObject != null) {
-                    array.add(TextNode.valueOf(String.format(pattern, valueObject)));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (!nodeHasValue(node)) {
-            return null;
-        }
-        return TextNode.valueOf(String.format(pattern, valueAsObject(node)));
+        return applyWithArguments(node, params, 1, 1,
+                JossonCore::nodeHasValue,
+                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
+                (jsonNode, objVar) -> TextNode.valueOf(String.format((String) objVar, valueAsObject(jsonNode)))
+        );
     }
 
     static JsonNode funcFormatTexts(JsonNode node, String params) {

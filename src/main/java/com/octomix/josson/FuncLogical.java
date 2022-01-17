@@ -30,15 +30,15 @@ import static com.octomix.josson.JossonCore.*;
 class FuncLogical {
     static BooleanNode funcContains(JsonNode node, String params, boolean ignoreCase, boolean not) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
+        if (valueNode == null || valueNode.isContainerNode()) {
+            return BooleanNode.FALSE;
+        }
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return BooleanNode.FALSE;
             }
-        }
-        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
-        if (valueNode == null || valueNode.isContainerNode()) {
-            return BooleanNode.FALSE;
         }
         if (valueNode.isNumber()) {
             double value = valueNode.asDouble();

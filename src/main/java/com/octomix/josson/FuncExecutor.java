@@ -156,13 +156,13 @@ class FuncExecutor {
                                        BiFunction<JsonNode, List<String>, Object> prepare,
                                        BiFunction<JsonNode, Object, JsonNode> action) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, minCount, maxCount);
+        Object variables = prepare.apply(node, pathAndParams.getValue());
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        Object variables = prepare.apply(node, pathAndParams.getValue());
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -181,19 +181,19 @@ class FuncExecutor {
         return null;
     }
 
-    static JsonNode applyWithStartAndEnd(JsonNode node, String params, Predicate<JsonNode> isValid,
-                                         BiFunction<JsonNode, Integer[], Integer[]> prepare,
-                                         BiFunction<JsonNode, Integer[], JsonNode> action) {
+    static JsonNode applyWithTwoInt(JsonNode node, String params, Predicate<JsonNode> isValid,
+                                    BiFunction<JsonNode, Integer[], Integer[]> prepare,
+                                    BiFunction<JsonNode, Integer[], JsonNode> action) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 2);
+        int int1 = pathAndParams.getValue().get(0).isEmpty() ? 0 : getNodeAsInt(node, pathAndParams.getValue().get(0));
+        int int2 = pathAndParams.getValue().size() > 1 ? getNodeAsInt(node, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
+        Integer[] variables = prepare.apply(node, new Integer[]{int1, int2});
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        int start = pathAndParams.getValue().get(0).isEmpty() ? 0 : getNodeAsInt(node, pathAndParams.getValue().get(0));
-        int end = pathAndParams.getValue().size() > 1 ? getNodeAsInt(node, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
-        Integer[] variables = prepare.apply(node, new Integer[]{start, end});
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
@@ -215,14 +215,14 @@ class FuncExecutor {
     static JsonNode applyWithAlignment(JsonNode node, String params, Predicate<JsonNode> isValid,
                                        BiFunction<JsonNode, Pair<Integer, String>, JsonNode> action) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 2);
+        int size = getNodeAsInt(node, pathAndParams.getValue().get(0));
+        String padStr = pathAndParams.getValue().size() > 1 ? getNodeAsText(node, pathAndParams.getValue().get(1)) : null;
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        int size = getNodeAsInt(node, pathAndParams.getValue().get(0));
-        String padStr = pathAndParams.getValue().size() > 1 ? getNodeAsText(node, pathAndParams.getValue().get(1)) : null;
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {

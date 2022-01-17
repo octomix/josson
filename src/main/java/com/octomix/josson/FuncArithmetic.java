@@ -125,10 +125,10 @@ class FuncArithmetic {
     }
 
     static JsonNode funcRound(JsonNode node, String params) {
-        return applyWithArguments(node, params, 0, 1,
+        return applyWithArguments(node, params, 1, 1,
                 jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
                 (jsonNode, paramList) -> {
-                    int precision = paramList.size() > 0 ? getNodeAsInt(jsonNode, paramList.get(0)) : 0;
+                    int precision = getNodeAsInt(jsonNode, paramList.get(0));
                     double magnitude = Math.pow(10, precision);
                     return Pair.of(precision, magnitude);
                 },
