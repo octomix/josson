@@ -135,7 +135,7 @@ class FuncArray {
     }
 
     static JsonNode funcFirst(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> !jsonNode.isArray() ? jsonNode : jsonNode.size() == 0 ? null : jsonNode.get(0)
         );
     }
@@ -198,13 +198,13 @@ class FuncArray {
     }
 
     static JsonNode funcLast(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> !jsonNode.isArray() ? jsonNode : jsonNode.size() == 0 ? null : jsonNode.get(jsonNode.size() - 1)
         );
     }
 
     static JsonNode funcLastIndex(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> !jsonNode.isArray() ? null : IntNode.valueOf(jsonNode.size() - 1)
         );
     }
@@ -284,7 +284,7 @@ class FuncArray {
     }
 
     static JsonNode funcReverse(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> {
                     if (jsonNode.isTextual()) {
                         StringBuilder sb = new StringBuilder(jsonNode.asText());
@@ -304,7 +304,7 @@ class FuncArray {
     }
 
     static JsonNode funcSize(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> IntNode.valueOf(jsonNode.size())
         );
     }

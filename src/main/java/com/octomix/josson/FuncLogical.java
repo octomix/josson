@@ -80,9 +80,9 @@ class FuncLogical {
     }
 
     static JsonNode funcEndsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsText(node, paramList.get(0)),
                 JsonNode::isTextual,
-                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase ?
                         StringUtils.endsWithIgnoreCase(jsonNode.asText(), (String) objVar) :
                         StringUtils.endsWith(jsonNode.asText(), (String) objVar)))
@@ -90,9 +90,9 @@ class FuncLogical {
     }
 
     static JsonNode funcEquals(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsText(node, paramList.get(0)),
                 JsonNode::isTextual,
-                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase ?
                         StringUtils.equalsIgnoreCase(jsonNode.asText(), (String) objVar) :
                         StringUtils.equals(jsonNode.asText(), (String) objVar)))
@@ -132,63 +132,63 @@ class FuncLogical {
     }
 
     static JsonNode funcIsBlank(JsonNode node, String params, boolean not) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> BooleanNode.valueOf(jsonNode.isTextual() && (not ^ StringUtils.isBlank(jsonNode.asText())))
         );
     }
 
     static JsonNode funcIsBoolean(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> BooleanNode.valueOf(jsonNode.isBoolean())
         );
     }
 
     static JsonNode funcIsEmpty(JsonNode node, String params, boolean not) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> BooleanNode.valueOf(jsonNode.isTextual() && (not ^ jsonNode.asText().isEmpty()))
         );
     }
 
     static JsonNode funcIsEven(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> nodeHasValue(jsonNode) ? BooleanNode.valueOf((jsonNode.asInt() & 1) == 0) : BooleanNode.FALSE
         );
     }
 
     static JsonNode funcIsNull(JsonNode node, String params, boolean not) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> BooleanNode.valueOf(not ^ jsonNode.isNull())
         );
     }
 
     static JsonNode funcIsNumber(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> BooleanNode.valueOf(jsonNode.isNumber())
         );
     }
 
     static JsonNode funcIsOdd(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> nodeHasValue(jsonNode) ? BooleanNode.valueOf((jsonNode.asInt() & 1) != 0) : BooleanNode.FALSE
         );
     }
 
     static JsonNode funcIsText(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> BooleanNode.valueOf(jsonNode.isTextual())
         );
     }
 
     static JsonNode funcNot(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> jsonNode.isBoolean() ? BooleanNode.valueOf(!jsonNode.asBoolean()) : BooleanNode.FALSE
         );
     }
 
     static JsonNode funcStartsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsText(node, paramList.get(0)),
                 JsonNode::isTextual,
-                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase ?
                         StringUtils.startsWithIgnoreCase(jsonNode.asText(), (String) objVar) :
                         StringUtils.startsWith(jsonNode.asText(), (String) objVar)))
@@ -196,7 +196,7 @@ class FuncLogical {
     }
 
     static JsonNode funcIsWeekDay(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> jsonNode.isTextual()
                         ? BooleanNode.valueOf(toLocalDateTime(jsonNode).get(ChronoField.DAY_OF_WEEK) <= 5)
                         : null
@@ -204,7 +204,7 @@ class FuncLogical {
     }
 
     static JsonNode funcIsWeekEnd(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> jsonNode.isTextual()
                         ? BooleanNode.valueOf(toLocalDateTime(jsonNode).get(ChronoField.DAY_OF_WEEK) > 5)
                         : null
@@ -212,7 +212,7 @@ class FuncLogical {
     }
 
     static JsonNode funcIsLeapYear(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> jsonNode.isTextual()
                         ? BooleanNode.valueOf(IsoChronology.INSTANCE.isLeapYear(toLocalDateTime(jsonNode).getYear()))
                         : null

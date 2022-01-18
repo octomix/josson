@@ -31,7 +31,7 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncArithmetic {
     static JsonNode funcAbs(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
                 jsonNode -> DoubleNode.valueOf(Math.abs(jsonNode.asDouble()))
         );
@@ -99,23 +99,23 @@ class FuncArithmetic {
     }
 
     static JsonNode funcCeil(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
                 jsonNode -> IntNode.valueOf((int) Math.ceil(jsonNode.asDouble()))
         );
     }
 
     static JsonNode funcFloor(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
                 jsonNode -> IntNode.valueOf((int) Math.floor(jsonNode.asDouble()))
         );
     }
 
     static JsonNode funcMod(JsonNode node, String params) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsInt(node, paramList.get(0)),
                 jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (jsonNode, paramList) -> getNodeAsInt(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> {
                     int divisor = (int) objVar;
                     int result = jsonNode.asInt() % divisor;
@@ -125,16 +125,16 @@ class FuncArithmetic {
     }
 
     static JsonNode funcRound(JsonNode node, String params) {
-        return applyWithArguments(node, params, 1, 1,
-                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (jsonNode, paramList) -> {
-                    int precision = getNodeAsInt(jsonNode, paramList.get(0));
+        return applyFunc(node, params, 1, 1,
+                paramList -> {
+                    int precision = getNodeAsInt(node, paramList.get(0));
                     double magnitude = Math.pow(10, precision);
                     return Pair.of(precision, magnitude);
                 },
+                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
                 (jsonNode, objVar) -> {
-                    int precision = (int) ((Pair<?, ?>) objVar).getKey();
-                    double magnitude = (double) ((Pair<?, ?>) objVar).getValue();
+                    int precision = (int) ((Pair<?,?>) objVar).getKey();
+                    double magnitude = (double) ((Pair<?,?>) objVar).getValue();
                     double result = Math.round(jsonNode.asDouble() * magnitude) / magnitude;
                     return precision > 0 ? DoubleNode.valueOf(result) : IntNode.valueOf((int) result);
                 }

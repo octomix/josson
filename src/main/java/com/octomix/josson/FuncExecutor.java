@@ -114,7 +114,7 @@ class FuncExecutor {
         return array;
     }
 
-    static JsonNode applyWithoutArgument(JsonNode node, String params, Function<JsonNode, JsonNode> action) {
+    static JsonNode applyFunc(JsonNode node, String params, Function<JsonNode, JsonNode> action) {
         String path = getParamPath(params);
         if (path != null) {
             node = getNodeByPath(node, path);
@@ -125,8 +125,8 @@ class FuncExecutor {
         return action.apply(node);
     }
 
-    static JsonNode applyWithoutArgument(JsonNode node, String params, Predicate<JsonNode> isValid,
-                                         Function<JsonNode, JsonNode> action) {
+    static JsonNode applyFunc(JsonNode node, String params, Predicate<JsonNode> isValid,
+                              Function<JsonNode, JsonNode> action) {
         String path = getParamPath(params);
         if (path != null) {
             node = getNodeByPath(node, path);
@@ -152,17 +152,17 @@ class FuncExecutor {
         return null;
     }
 
-    static JsonNode applyWithArguments(JsonNode node, String params, int minCount, int maxCount, Predicate<JsonNode> isValid,
-                                       BiFunction<JsonNode, List<String>, Object> prepare,
-                                       BiFunction<JsonNode, Object, JsonNode> action) {
+    static JsonNode applyFunc(JsonNode node, String params, int minCount, int maxCount,
+                              Function<List<String>, Object> prepare, Predicate<JsonNode> isValid,
+                              BiFunction<JsonNode, Object, JsonNode> action) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, minCount, maxCount);
-        Object variables = prepare.apply(node, pathAndParams.getValue());
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
+        Object variables = prepare.apply(pathAndParams.getValue());
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i  = 0; i < node.size(); i++) {
@@ -177,66 +177,6 @@ class FuncExecutor {
         }
         if (isValid.test(node)) {
             return action.apply(node, variables);
-        }
-        return null;
-    }
-
-    static JsonNode applyWithTwoInt(JsonNode node, String params, Predicate<JsonNode> isValid,
-                                    BiFunction<JsonNode, Integer[], Integer[]> prepare,
-                                    BiFunction<JsonNode, Integer[], JsonNode> action) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 2);
-        int int1 = pathAndParams.getValue().get(0).isEmpty() ? 0 : getNodeAsInt(node, pathAndParams.getValue().get(0));
-        int int2 = pathAndParams.getValue().size() > 1 ? getNodeAsInt(node, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
-        Integer[] variables = prepare.apply(node, new Integer[]{int1, int2});
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                JsonNode jsonNode = node.get(i);
-                if (isValid.test(jsonNode)) {
-                    array.add(action.apply(jsonNode, variables));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (isValid.test(node)) {
-            return action.apply(node, variables);
-        }
-        return null;
-    }
-
-    static JsonNode applyWithAlignment(JsonNode node, String params, Predicate<JsonNode> isValid,
-                                       BiFunction<JsonNode, Pair<Integer, String>, JsonNode> action) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 2);
-        int size = getNodeAsInt(node, pathAndParams.getValue().get(0));
-        String padStr = pathAndParams.getValue().size() > 1 ? getNodeAsText(node, pathAndParams.getValue().get(1)) : null;
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                JsonNode jsonNode = node.get(i);
-                if (isValid.test(jsonNode)) {
-                    array.add(action.apply(jsonNode, Pair.of(size, padStr)));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (isValid.test(node)) {
-            return action.apply(node, Pair.of(size, padStr));
         }
         return null;
     }

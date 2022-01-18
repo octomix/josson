@@ -35,14 +35,14 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncFormat {
     static JsonNode funcB64Decode(JsonNode node, String params, Base64.Decoder decoder) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(new String(decoder.decode(jsonNode.asText())))
         );
     }
 
     static JsonNode funcB64Encode(JsonNode node, String params, Base64.Encoder encoder) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(encoder.encodeToString(jsonNode.asText().getBytes()))
         );
@@ -151,25 +151,25 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatDate(JsonNode node, String params) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsText(node, paramList.get(0)),
                 JsonNode::isTextual,
-                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).format(DateTimeFormatter.ofPattern((String) objVar)))
         );
     }
 
     static JsonNode funcFormatNumber(JsonNode node, String params) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsText(node, paramList.get(0)),
                 jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(new DecimalFormat((String) objVar).format(jsonNode.asDouble()))
         );
     }
 
     static JsonNode funcFormatText(JsonNode node, String params) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsText(node, paramList.get(0)),
                 JossonCore::nodeHasValue,
-                (jsonNode, paramList) -> getNodeAsText(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(String.format((String) objVar, valueAsObject(jsonNode)))
         );
     }
@@ -222,21 +222,21 @@ class FuncFormat {
     }
 
     static JsonNode funcToNumber(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JossonCore::nodeHasValue,
                 jsonNode -> jsonNode.isNumber() ? jsonNode : DoubleNode.valueOf(jsonNode.asDouble())
         );
     }
 
     static JsonNode funcToText(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JossonCore::nodeHasValue,
                 jsonNode -> jsonNode.isTextual() ? jsonNode : TextNode.valueOf(jsonNode.asText())
         );
     }
 
     static JsonNode funcUrlDecode(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> {
                     try {
@@ -249,7 +249,7 @@ class FuncFormat {
     }
 
     static JsonNode funcUrlEncode(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> {
                     try {

@@ -22,49 +22,49 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 
-import static com.octomix.josson.FuncExecutor.*;
+import static com.octomix.josson.FuncExecutor.applyFunc;
 import static com.octomix.josson.JossonCore.*;
 
 class FuncDate {
     static JsonNode funcAmPmOfDay(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).get(ChronoField.AMPM_OF_DAY) == 0 ? "AM" : "PM")
         );
     }
 
     static JsonNode funcChronometry(JsonNode node, String params, ChronoField field) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> IntNode.valueOf(toLocalDateTime(jsonNode).get(field))
         );
     }
 
     static JsonNode funcDatePlus(JsonNode node, String params, ChronoUnit unit) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsInt(node, paramList.get(0)),
                 JsonNode::isTextual,
-                (jsonNode, paramList) -> getNodeAsInt(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).plus((int) objVar, unit).toString())
         );
     }
 
     static JsonNode funcDateMinus(JsonNode node, String params, ChronoUnit unit) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsInt(node, paramList.get(0)),
                 JsonNode::isTextual,
-                (jsonNode, paramList) -> getNodeAsInt(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).minus((int) objVar, unit).toString())
         );
     }
 
     static JsonNode funcDateTruncateTo(JsonNode node, String params, ChronoUnit unit) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(unit).toString())
         );
     }
 
     static JsonNode funcDateTruncateToMonth(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
                         .withDayOfMonth(1).toString())
@@ -72,7 +72,7 @@ class FuncDate {
     }
 
     static JsonNode funcDateTruncateToYear(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
                         .withDayOfYear(1).toString())
@@ -80,15 +80,15 @@ class FuncDate {
     }
 
     static JsonNode funcDateWith(JsonNode node, String params, ChronoField field) {
-        return applyWithArguments(node, params, 1, 1,
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsInt(node, paramList.get(0)),
                 JsonNode::isTextual,
-                (jsonNode, paramList) -> getNodeAsInt(jsonNode, paramList.get(0)),
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).with(field, (int) objVar).toString())
         );
     }
 
     static JsonNode funcDayEnd(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
                         .plusDays(1).minusNanos(1).toString())
@@ -96,7 +96,7 @@ class FuncDate {
     }
 
     static JsonNode funcMonthEnd(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
                         .withDayOfMonth(1).plusMonths(1).minusNanos(1).toString())
@@ -104,7 +104,7 @@ class FuncDate {
     }
 
     static JsonNode funcYearEnd(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
                         .withDayOfYear(1).plusYears(1).minusNanos(1).toString())
@@ -112,28 +112,28 @@ class FuncDate {
     }
 
     static JsonNode funcLengthOfMonth(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> IntNode.valueOf(toLocalDateTime(jsonNode).toLocalDate().lengthOfMonth())
         );
     }
 
     static JsonNode funcLengthOfYear(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> IntNode.valueOf(toLocalDateTime(jsonNode).toLocalDate().lengthOfYear())
         );
     }
 
     static JsonNode funcLocalToOffsetDate(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(localToOffsetDateTime(jsonNode).toString())
         );
     }
 
     static JsonNode funcOffsetToLocalDate(JsonNode node, String params) {
-        return applyWithoutArgument(node, params,
+        return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(offsetToLocalDateTime(jsonNode).toString())
         );
