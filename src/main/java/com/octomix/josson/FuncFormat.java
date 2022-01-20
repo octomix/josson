@@ -57,16 +57,13 @@ class FuncFormat {
         List<Pair<JsonNode, JsonNode>> casePairs = new ArrayList<>();
         JsonNode defaultValue = null;
         for (int i = 0; i <= last; i++) {
-            JsonNode caseKey = null;
-            if (i < last) {
-                caseKey = getNodeByPath(node, paramList.get(i));
-                i++;
-            }
-            JsonNode caseValue = getNodeByPath(node, paramList.get(i));
-            if (caseKey == null) {
-                defaultValue = caseValue;
-            } else {
-                casePairs.add(Pair.of(caseKey, caseValue));
+            JsonNode caseKey;
+            if ((caseKey = getNodeByPath(node, paramList.get(i++))) != null) {
+                if (i > last) {
+                    defaultValue = caseKey;
+                } else {
+                    casePairs.add(Pair.of(caseKey, getNodeByPath(node, paramList.get(i))));
+                }
             }
         }
         if (node.isArray()) {
@@ -128,33 +125,22 @@ class FuncFormat {
     }
 
     static JsonNode funcCycleValue(JsonNode node, String params) {
-        ArrayNode paramArray = getParamArray(params, node);
-        int size = paramArray.size();
-        if (size == 0 || node.isNull() || node.isObject()) {
-            return null;
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                JsonNode valueNode = node.get(i);
-                if (nodeHasValue(valueNode)) {
-                    int index = valueNode.asInt() % size;
-                    array.add(paramArray.get(index < 0 ? index + size : index));
-                } else {
-                    array.addNull();
+        return applyFunc(node, params,
+                JossonCore::nodeHasValue,
+                (jsonNode, paramArray) -> {
+                    int size = paramArray.size();
+                    int index = jsonNode.asInt() % size;
+                    return paramArray.get(index < 0 ? index + size : index);
                 }
-            }
-            return array;
-        }
-        int index = node.asInt() % size;
-        return paramArray.get(index < 0 ? index + size : index);
+        );
     }
 
     static JsonNode funcFormatDate(JsonNode node, String params) {
         return applyFunc(node, params, 1, 1,
                 paramList -> getNodeAsText(node, paramList.get(0)),
                 JsonNode::isTextual,
-                (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).format(DateTimeFormatter.ofPattern((String) objVar)))
+                (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode)
+                        .format(DateTimeFormatter.ofPattern((String) objVar).withLocale(locale).withZone(zoneId)))
         );
     }
 
@@ -197,28 +183,13 @@ class FuncFormat {
     }
 
     static JsonNode funcIndexedValue(JsonNode node, String params) {
-        ArrayNode paramArray = getParamArray(params, node);
-        int size = paramArray.size();
-        if (size == 0 || node.isNull() || node.isObject()) {
-            return null;
-        }
-        if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                JsonNode valueNode = node.get(i);
-                if (nodeHasValue(valueNode)) {
-                    int index = valueNode.asInt();
-                    if (index >= 0 && index < size) {
-                        array.add(paramArray.get(index));
-                    }
-                } else {
-                    array.addNull();
+        return applyFunc(node, params,
+                JossonCore::nodeHasValue,
+                (jsonNode, paramArray) -> {
+                    int index = jsonNode.asInt();
+                    return index >= 0 && index < paramArray.size() ? paramArray.get(index) : null;
                 }
-            }
-            return array;
-        }
-        int index = node.asInt();
-        return index >= 0 && index < size ? paramArray.get(index) : null;
+        );
     }
 
     static JsonNode funcToNumber(JsonNode node, String params) {

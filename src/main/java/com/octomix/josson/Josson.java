@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.Locale;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -406,6 +407,16 @@ public class Josson {
      */
     public static void setSerializationInclusion(JsonInclude.Include include) {
         MAPPER.setSerializationInclusion(include);
+    }
+
+    public static void setLocale(Locale locale) {
+        if (locale != null) {
+            JossonCore.locale = locale;
+        }
+    }
+
+    public static Locale getLocale() {
+        return JossonCore.locale;
     }
 
     public static void setZoneId(ZoneId zoneId) {

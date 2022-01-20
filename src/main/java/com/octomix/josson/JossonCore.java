@@ -46,6 +46,7 @@ class JossonCore {
     private static final String UPPER_ROMAN_INDEX = INDEX_PREFIX_SYMBOL + "R";
     private static final String LOWER_ROMAN_INDEX = INDEX_PREFIX_SYMBOL + "r";
 
+    static Locale locale = Locale.getDefault();
     static ZoneId zoneId = ZoneId.systemDefault();
 
     static String unquoteString(String quotedString) {

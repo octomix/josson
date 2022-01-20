@@ -180,4 +180,28 @@ class FuncExecutor {
         }
         return null;
     }
+
+    static JsonNode applyFunc(JsonNode node, String params, Predicate<JsonNode> isValid,
+                              BiFunction<JsonNode, ArrayNode, JsonNode> action) {
+        ArrayNode paramArray = getParamArray(params, node);
+        if (paramArray.isEmpty()) {
+            return null;
+        }
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode jsonNode = node.get(i);
+                if (isValid.test(jsonNode)) {
+                    array.add(action.apply(jsonNode, paramArray));
+                } else {
+                    array.addNull();
+                }
+            }
+            return array;
+        }
+        if (isValid.test(node)) {
+            return action.apply(node, paramArray);
+        }
+        return null;
+    }
 }
