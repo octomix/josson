@@ -22,6 +22,7 @@ import com.octomix.josson.commons.StringUtils;
 
 import java.time.chrono.IsoChronology;
 import java.time.temporal.ChronoField;
+import java.util.Iterator;
 import java.util.List;
 
 import static com.octomix.josson.FuncExecutor.*;
@@ -60,11 +61,19 @@ class FuncLogical {
                     StringUtils.contains(node.asText(), value)));
         }
         if (node.isObject()) {
+            if (ignoreCase) {
+                for (Iterator<String> it = node.fieldNames(); it.hasNext(); ) {
+                    if (value.equalsIgnoreCase(it.next())) {
+                        return BooleanNode.valueOf(!not);
+                    }
+                }
+                return BooleanNode.valueOf(not);
+            }
             return BooleanNode.valueOf(not ^ node.get(value) != null);
         }
         if (node.isArray()) {
             for (int i = 0; i < node.size(); i++) {
-                if (node.get(i).isTextual()) {
+                if (node.get(i).isTextual() || node.get(i).isNumber()) {
                     if (ignoreCase) {
                         if (value.equalsIgnoreCase(node.get(i).asText())) {
                             return BooleanNode.valueOf(!not);
@@ -116,7 +125,7 @@ class FuncLogical {
             String text = node.asText();
             for (int i = array.size() - 1; i >= 0; i--) {
                 JsonNode value = array.get(i);
-                if (value.isNumber() || value.isTextual()) {
+                if (value.isTextual() || value.isNumber()) {
                     if (ignoreCase) {
                         if (value.asText().equalsIgnoreCase(text)) {
                             return BooleanNode.valueOf(!not);
