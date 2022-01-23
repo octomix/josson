@@ -62,8 +62,8 @@ class FuncDispatcher {
                 case "avg":
                 case "count":
                     return funcAggregate(node, funcName, params);
-                case "distinctvalue":
-                    return funcDistinctValue(node, params);
+                case "distinct":
+                    return funcDistinct(node, params);
                 case "findbymax":
                     return funcFindByMaxMin(node, params, true, 0);
                 case "findbymaxornull":
@@ -313,9 +313,9 @@ class FuncDispatcher {
                 case "notstartswithignorecase":
                     return funcStartsWith(node, params, true, true);
                 case "isweekday":
-                    return funcIsWeekDay(node, params);
+                    return funcIsWeekday(node, params);
                 case "isweekend":
-                    return funcIsWeekEnd(node, params);
+                    return funcIsWeekend(node, params);
                 case "isleapyear":
                     return funcIsLeapYear(node, params);
 
@@ -354,6 +354,10 @@ class FuncDispatcher {
                     return funcLength(node, params);
                 case "lowercase":
                     return funcLowerCase(node, params);
+                case "notblank":
+                    return funcNotBlank(node, params);
+                case "notempty":
+                    return funcNotEmpty(node, params);
                 case "prependifmissing":
                     return funcPrependIfMissing(node, params, false);
                 case "prependifmissingignorecase":
@@ -402,10 +406,6 @@ class FuncDispatcher {
                     return funcJson(node, params);
                 case "map":
                     return funcMap(node, params);
-                case "notblank":
-                    return funcNotBlank(node, params);
-                case "notempty":
-                    return funcNotEmpty(node, params);
                 case "toarray":
                     return funcToArray(node, params);
             }

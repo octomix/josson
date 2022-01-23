@@ -204,7 +204,7 @@ class FuncLogical {
         );
     }
 
-    static JsonNode funcIsWeekDay(JsonNode node, String params) {
+    static JsonNode funcIsWeekday(JsonNode node, String params) {
         return applyFunc(node, params,
                 jsonNode -> jsonNode.isTextual()
                         ? BooleanNode.valueOf(toLocalDateTime(jsonNode).get(ChronoField.DAY_OF_WEEK) <= 5)
@@ -212,7 +212,7 @@ class FuncLogical {
         );
     }
 
-    static JsonNode funcIsWeekEnd(JsonNode node, String params) {
+    static JsonNode funcIsWeekend(JsonNode node, String params) {
         return applyFunc(node, params,
                 jsonNode -> jsonNode.isTextual()
                         ? BooleanNode.valueOf(toLocalDateTime(jsonNode).get(ChronoField.DAY_OF_WEEK) > 5)

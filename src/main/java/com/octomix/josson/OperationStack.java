@@ -123,13 +123,15 @@ class OperationStack {
     }
 
     private void evaluate(OperationStep step, int arrayIndex) {
-        if (step.getOperator() == Operator.NOP) {
-            if (")".equals(step.getExpression())) {
-                evaluateSteps(true, (OperationStep opStep) -> opStep.resolveFrom(arrayNode, arrayIndex));
-            } else {
-                pushStep(step);
-            }
-            return;
+        switch (step.getOperator()) {
+            case NOT:
+            case NOP:
+                if (")".equals(step.getExpression())) {
+                    evaluateSteps(true, (OperationStep opStep) -> opStep.resolveFrom(arrayNode, arrayIndex));
+                } else {
+                    pushStep(step);
+                }
+                return;
         }
         if (stack.isEmpty()) {
             throw new IllegalArgumentException();

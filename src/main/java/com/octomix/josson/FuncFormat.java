@@ -201,7 +201,7 @@ class FuncFormat {
 
     static JsonNode funcToText(JsonNode node, String params) {
         return applyFunc(node, params,
-                JossonCore::nodeHasValue,
+                JsonNode::isValueNode,
                 jsonNode -> jsonNode.isTextual() ? jsonNode : TextNode.valueOf(jsonNode.asText())
         );
     }

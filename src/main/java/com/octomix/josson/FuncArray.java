@@ -57,7 +57,7 @@ class FuncArray {
         return null;
     }
 
-    static JsonNode funcDistinctValue(JsonNode node, String params) {
+    static JsonNode funcDistinct(JsonNode node, String params) {
         ArrayNode array = getParamArrayOrItself(params, node);
         if (array == null) {
             return null;
@@ -101,7 +101,7 @@ class FuncArray {
             JsonNode tryNode = getNodeByPath(node.get(i), path);
             if (tryNode == null || tryNode.isNull()) {
                 if (nullPriority > 0) {
-                    return tryNode;
+                    return node.get(i);
                 }
                 if (nullPriority < 0 && foundIndex < 0) {
                     foundIndex = i;
@@ -161,6 +161,12 @@ class FuncArray {
                         if (tryNode.asDouble() == value) {
                             return IntNode.valueOf(i);
                         }
+                    }
+                }
+            } else if (valueNode.isNull()) {
+                for (int i = 0; i < node.size(); i++) {
+                    if (node.get(i).isNull()) {
+                        return IntNode.valueOf(i);
                     }
                 }
             } else {
@@ -230,6 +236,12 @@ class FuncArray {
                         if (tryNode.asDouble() == value) {
                             return IntNode.valueOf(i);
                         }
+                    }
+                }
+            } else if (valueNode.isNull()) {
+                for (int i = node.size() - 1; i >= 0; i--) {
+                    if (node.get(i).isNull()) {
+                        return IntNode.valueOf(i);
                     }
                 }
             } else {
