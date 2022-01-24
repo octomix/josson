@@ -45,21 +45,25 @@ class FuncLogical {
             double value = valueNode.asDouble();
             if (node.isArray()) {
                 for (int i = 0; i < node.size(); i++) {
-                    if (node.get(i).isNumber() || node.get(i).isTextual()) {
-                        if (node.get(i).asDouble() == value) {
-                            return BooleanNode.valueOf(!not);
-                        }
+                    JsonNode elem = node.get(i);
+                    if ((elem.isNumber() || elem.isTextual()) && elem.asDouble() == value) {
+                        return BooleanNode.valueOf(!not);
+                    }
+                }
+            }
+            return BooleanNode.valueOf(not);
+        }
+        if (valueNode.isNull()) {
+            if (node.isArray()) {
+                for (int i = 0; i < node.size(); i++) {
+                    if (node.get(i).isNull()) {
+                        return BooleanNode.valueOf(!not);
                     }
                 }
             }
             return BooleanNode.valueOf(not);
         }
         String value = valueNode.asText();
-        if (node.isTextual()) {
-            return BooleanNode.valueOf(not ^ (ignoreCase ?
-                    StringUtils.containsIgnoreCase(node.asText(), value) :
-                    StringUtils.contains(node.asText(), value)));
-        }
         if (node.isObject()) {
             if (ignoreCase) {
                 for (Iterator<String> it = node.fieldNames(); it.hasNext(); ) {
@@ -73,19 +77,22 @@ class FuncLogical {
         }
         if (node.isArray()) {
             for (int i = 0; i < node.size(); i++) {
-                if (node.get(i).isTextual() || node.get(i).isNumber()) {
+                JsonNode elem = node.get(i);
+                if (elem.isTextual() || elem.isNumber()) {
                     if (ignoreCase) {
-                        if (value.equalsIgnoreCase(node.get(i).asText())) {
+                        if (value.equalsIgnoreCase(elem.asText())) {
                             return BooleanNode.valueOf(!not);
                         }
-                    } else if (value.equals(node.get(i).asText())) {
+                    } else if (value.equals(elem.asText())) {
                         return BooleanNode.valueOf(!not);
                     }
                 }
             }
             return BooleanNode.valueOf(not);
         }
-        return BooleanNode.FALSE;
+        return BooleanNode.valueOf(not ^ (ignoreCase ?
+                StringUtils.containsIgnoreCase(node.asText(), value) :
+                StringUtils.contains(node.asText(), value)));
     }
 
     static JsonNode funcEndsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {

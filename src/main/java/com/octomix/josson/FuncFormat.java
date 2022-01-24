@@ -70,36 +70,32 @@ class FuncFormat {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 JsonNode valueNode = node.get(i);
-                if (valueNode.isValueNode()) {
-                    if (valueNode.isNumber()) {
-                        double key = valueNode.asDouble();
-                        Pair<JsonNode, JsonNode> casePair = casePairs.stream()
-                                .filter(pair ->
-                                        (pair.getKey().isNumber() || pair.getKey().isTextual())
-                                                && pair.getKey().asDouble() == key)
-                                .findFirst()
-                                .orElse(null);
-                        if (casePair != null) {
-                            array.add(casePair.getValue());
-                        } else if (defaultValue != null) {
-                            array.add(defaultValue);
-                        }
-                    } else if (valueNode.isValueNode()) {
-                        String key = node.asText();
-                        Pair<JsonNode, JsonNode> casePair = casePairs.stream()
-                                .filter(pair ->
-                                        (pair.getKey().isNumber() || pair.getKey().isTextual())
-                                                && pair.getKey().asText().equals(key))
-                                .findFirst()
-                                .orElse(null);
-                        if (casePair != null) {
-                            array.add(casePair.getValue());
-                        } else if (defaultValue != null) {
-                            array.add(defaultValue);
-                        }
-                    }
+                if (valueNode.isNumber()) {
+                    double key = valueNode.asDouble();
+                    array.add(casePairs.stream()
+                            .filter(pair -> {
+                                JsonNode caseKey = pair.getKey();
+                                return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asDouble() == key;
+                            })
+                            .findFirst()
+                            .map(Pair::getValue)
+                            .orElse(defaultValue));
+                } else if (valueNode.isNull()) {
+                    array.add(casePairs.stream()
+                            .filter(pair -> pair.getKey().isNull())
+                            .findFirst()
+                            .map(Pair::getValue)
+                            .orElse(defaultValue));
                 } else {
-                    array.addNull();
+                    String key = valueNode.asText();
+                    array.add(casePairs.stream()
+                            .filter(pair -> {
+                                JsonNode caseKey = pair.getKey();
+                                return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asText().equals(key);
+                            })
+                            .findFirst()
+                            .map(Pair::getValue)
+                            .orElse(defaultValue));
                 }
             }
             return array;
@@ -107,18 +103,27 @@ class FuncFormat {
         if (node.isNumber()) {
             double key = node.asDouble();
             return casePairs.stream()
-                    .filter(pair ->
-                            (pair.getKey().isNumber() || pair.getKey().isTextual())
-                                    && pair.getKey().asDouble() == key)
+                    .filter(pair -> {
+                        JsonNode caseKey = pair.getKey();
+                        return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asDouble() == key;
+                    })
+                    .findFirst()
+                    .map(Pair::getValue)
+                    .orElse(defaultValue);
+        }
+        if (node.isNull()) {
+            return casePairs.stream()
+                    .filter(pair -> pair.getKey().isNull())
                     .findFirst()
                     .map(Pair::getValue)
                     .orElse(defaultValue);
         }
         String key = node.asText();
         return casePairs.stream()
-                .filter(pair ->
-                        (pair.getKey().isNumber() || pair.getKey().isTextual())
-                                && pair.getKey().asText().equals(key))
+                .filter(pair -> {
+                    JsonNode caseKey = pair.getKey();
+                    return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asText().equals(key);
+                })
                 .findFirst()
                 .map(Pair::getValue)
                 .orElse(defaultValue);
