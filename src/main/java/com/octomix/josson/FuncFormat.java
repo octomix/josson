@@ -69,37 +69,14 @@ class FuncFormat {
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                JsonNode valueNode = node.get(i);
-                if (valueNode.isNumber()) {
-                    double key = valueNode.asDouble();
-                    array.add(casePairs.stream()
-                            .filter(pair -> {
-                                JsonNode caseKey = pair.getKey();
-                                return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asDouble() == key;
-                            })
-                            .findFirst()
-                            .map(Pair::getValue)
-                            .orElse(defaultValue));
-                } else if (valueNode.isNull()) {
-                    array.add(casePairs.stream()
-                            .filter(pair -> pair.getKey().isNull())
-                            .findFirst()
-                            .map(Pair::getValue)
-                            .orElse(defaultValue));
-                } else {
-                    String key = valueNode.asText();
-                    array.add(casePairs.stream()
-                            .filter(pair -> {
-                                JsonNode caseKey = pair.getKey();
-                                return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asText().equals(key);
-                            })
-                            .findFirst()
-                            .map(Pair::getValue)
-                            .orElse(defaultValue));
-                }
+                array.add(funcCaseValue(node.get(i), casePairs, defaultValue));
             }
             return array;
         }
+        return funcCaseValue(node, casePairs, defaultValue);
+    }
+
+    private static JsonNode funcCaseValue(JsonNode node, List<Pair<JsonNode, JsonNode>> casePairs, JsonNode defaultValue) {
         if (node.isNumber()) {
             double key = node.asDouble();
             return casePairs.stream()

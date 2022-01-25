@@ -44,7 +44,7 @@ class FuncStructural {
         return funcCoalesce(node, paramList);
     }
 
-    static JsonNode funcCoalesce(JsonNode node, List<String> paramList) {
+    private static JsonNode funcCoalesce(JsonNode node, List<String> paramList) {
         if (node.isValueNode()) {
             if (!node.isNull()) {
                 return node;
@@ -82,7 +82,7 @@ class FuncStructural {
                 .collect(Collectors.joining(",")));
     }
 
-    static void funcCsvCollectValues(List<JsonNode> values, JsonNode node) {
+    private static void funcCsvCollectValues(List<JsonNode> values, JsonNode node) {
         if (node.isObject()) {
             node.forEach(elem -> {
                 if (elem.isContainerNode()) {
@@ -103,6 +103,22 @@ class FuncStructural {
         }
     }
 
+    static JsonNode funcField(JsonNode node, String params) {
+        Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
+        if (node.isObject()) {
+            return funcMap(node.deepCopy(), node, args, -1);
+        }
+        if (node.isArray()) {
+            ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode elem = node.get(i);
+                array.add(elem.isObject() ? funcMap(elem.deepCopy(), node, args, i) : null);
+            }
+            return array;
+        }
+        return null;
+    }
+
     static JsonNode funcFlatten(JsonNode node, String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
         if (pathAndParams.hasKey()) {
@@ -116,17 +132,17 @@ class FuncStructural {
             return node;
         }
         ArrayNode array = MAPPER.createArrayNode();
-        funcFlattenElement(array, node, flattenLevels);
+        funcFlatten(array, node, flattenLevels);
         return array;
     }
 
-    private static void funcFlattenElement(ArrayNode array, JsonNode node, int level) {
+    private static void funcFlatten(ArrayNode array, JsonNode node, int level) {
         for (int i = 0; i < node.size(); i++) {
             if (node.get(i).isArray()) {
                 if (level == 1) {
                     array.addAll((ArrayNode) node.get(i));
                 } else {
-                    funcFlattenElement(array, node.get(i), level - 1);
+                    funcFlatten(array, node.get(i), level - 1);
                 }
             } else {
                 array.add(node.get(i));
@@ -150,33 +166,32 @@ class FuncStructural {
     static JsonNode funcMap(JsonNode node, String params) {
         Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
         if (!node.isArray()) {
-            return funcMapElement(node, args, -1);
+            return funcMap(MAPPER.createObjectNode(), node, args, -1);
         }
         ArrayNode array = MAPPER.createArrayNode();
         for (int i  = 0; i < node.size(); i++) {
-            array.add(funcMapElement(node, args, i));
+            array.add(funcMap(MAPPER.createObjectNode(), node, args, i));
         }
         return array;
     }
 
-    private static ObjectNode funcMapElement(JsonNode node, Map<String, String> args, int index) {
-        ObjectNode objNode = MAPPER.createObjectNode();
+    private static ObjectNode funcMap(ObjectNode base, JsonNode node, Map<String, String> args, int index) {
         for (Map.Entry<String, String> arg : args.entrySet()) {
             String name = arg.getKey();
             if (isCurrentNodePath(name)) {
                 if ((index >= 0 ? node.get(index) : node).isObject()) {
-                    objNode.setAll((ObjectNode) (index >= 0 ? node.get(index) : node));
+                    base.setAll((ObjectNode) (index >= 0 ? node.get(index) : node));
                 }
                 continue;
             }
             String path = arg.getValue();
             if (path == null) {
-                objNode.putNull(name);
+                base.remove(name);
             } else {
-                objNode.set(name, getNodeByPath(node, index, path));
+                base.set(name, getNodeByPath(node, index, path));
             }
         }
-        return objNode;
+        return base;
     }
 
     static JsonNode funcToArray(JsonNode node, String params) {

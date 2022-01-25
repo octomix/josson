@@ -49,18 +49,18 @@ class FuncArithmetic {
         if (node.isArray()) {
             ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                array.add(funcCalcElement(node, expression, args, i));
+                array.add(funcCalc(node, expression, args, i));
             }
             return array;
         }
-        Double value = funcCalcElement(node, expression, args, -1);
+        Double value = funcCalc(node, expression, args, -1);
         if (value == null) {
             return null;
         }
         return DoubleNode.valueOf(value);
     }
 
-    private static Double funcCalcElement(JsonNode node, Expression expression, Map<String, String> args, int index) {
+    private static Double funcCalc(JsonNode node, Expression expression, Map<String, String> args, int index) {
         expression.removeAllArguments();
         for (Map.Entry<String, String> arg : args.entrySet()) {
             String path = arg.getValue();

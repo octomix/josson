@@ -96,16 +96,16 @@ class FuncString {
             }
         }
         if (!node.isArray()) {
-            return TextNode.valueOf(funcConcatElement(node, args, -1));
+            return TextNode.valueOf(funcConcat(node, args, -1));
         }
         ArrayNode array = MAPPER.createArrayNode();
         for (int i  = 0; i < node.size(); i++) {
-            array.add(funcConcatElement(node, args, i));
+            array.add(funcConcat(node, args, i));
         }
         return array;
     }
 
-    private static String funcConcatElement(JsonNode node, List<Pair<Character, String>> args, int index) {
+    private static String funcConcat(JsonNode node, List<Pair<Character, String>> args, int index) {
         StringBuilder sb = new StringBuilder();
         for (Pair<Character, String> arg : args) {
             if (arg.getKey() == QUOTE_SYMBOL) {
@@ -207,7 +207,7 @@ class FuncString {
         return funcNotBlank(node, paramList);
     }
 
-    static JsonNode funcNotBlank(JsonNode node, List<String> paramList) {
+    private static JsonNode funcNotBlank(JsonNode node, List<String> paramList) {
         if (node.isValueNode()) {
             if (node.isTextual() && StringUtils.isNotBlank(node.asText())) {
                 return node;
@@ -243,7 +243,7 @@ class FuncString {
         return funcNotEmpty(node, paramList);
     }
 
-    static JsonNode funcNotEmpty(JsonNode node, List<String> paramList) {
+    private static JsonNode funcNotEmpty(JsonNode node, List<String> paramList) {
         if (node.isValueNode()) {
             if (node.isTextual() && StringUtils.isNotEmpty(node.asText())) {
                 return node;

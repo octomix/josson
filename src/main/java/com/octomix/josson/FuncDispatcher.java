@@ -400,6 +400,8 @@ class FuncDispatcher {
                     return funcCoalesce(node, params);
                 case "csv":
                     return funcCsv(node, params);
+                case "field":
+                    return funcField(node, params);
                 case "flatten":
                     return funcFlatten(node, params);
                 case "json":
