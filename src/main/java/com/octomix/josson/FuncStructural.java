@@ -127,22 +127,22 @@ class FuncStructural {
                 return null;
             }
         }
-        int flattenLevels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1;
-        if (!node.isArray() || flattenLevels < 1) {
+        int levels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1;
+        if (!node.isArray() || levels < 1) {
             return node;
         }
         ArrayNode array = MAPPER.createArrayNode();
-        funcFlatten(array, node, flattenLevels);
+        funcFlatten(array, node, levels);
         return array;
     }
 
-    private static void funcFlatten(ArrayNode array, JsonNode node, int level) {
+    private static void funcFlatten(ArrayNode array, JsonNode node, int levels) {
         for (int i = 0; i < node.size(); i++) {
             if (node.get(i).isArray()) {
-                if (level == 1) {
+                if (levels == 1) {
                     array.addAll((ArrayNode) node.get(i));
                 } else {
-                    funcFlatten(array, node.get(i), level - 1);
+                    funcFlatten(array, node.get(i), levels - 1);
                 }
             } else {
                 array.add(node.get(i));
@@ -161,6 +161,31 @@ class FuncStructural {
                     }
                 }
         );
+    }
+
+    static JsonNode funcKeys(JsonNode node, String params) {
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNodeByPath(node, pathAndParams.getKey());
+            if (node == null) {
+                return null;
+            }
+        }
+        if (!node.isObject()) {
+            return null;
+        }
+        ArrayNode array = Josson.createArrayNode();
+        funcKeys(array, node, pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1);
+        return array;
+    }
+
+    private static void funcKeys(ArrayNode array, JsonNode node, int levels) {
+        node.fields().forEachRemaining((Map.Entry<String, JsonNode> field) -> {
+            array.add(field.getKey());
+            if (levels != 1 && field.getValue().isObject()) {
+                funcKeys(array, field.getValue(), levels - 1);
+            }
+        });
     }
 
     static JsonNode funcMap(JsonNode node, String params) {

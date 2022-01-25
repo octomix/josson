@@ -406,6 +406,8 @@ class FuncDispatcher {
                     return funcFlatten(node, params);
                 case "json":
                     return funcJson(node, params);
+                case "keys":
+                    return funcKeys(node, params);
                 case "map":
                     return funcMap(node, params);
                 case "toarray":
