@@ -104,9 +104,9 @@ class FuncStructural {
     }
 
     static JsonNode funcEntries(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
+        String path = getParamPath(params);
+        if (path != null) {
+            node = getNodeByPath(node, path);
             if (node == null) {
                 return null;
             }

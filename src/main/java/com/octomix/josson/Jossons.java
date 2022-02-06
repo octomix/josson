@@ -301,9 +301,10 @@ public class Jossons {
      * to merge and fill all placeholders in a template.
      * Placeholder is start with "{{" and end with "}}" as the quote marks.</p>
      * <p>An unresolved dataset will trigger {@code dictionaryFinder} callback that shall return either:
-     * (1) a Jossons query that can retrieve data from the stored dataset mapping; or
-     * (2) a join operation query to merge two datasets from the stored dataset mapping; or
+     * (1) a value.
+     * (2) a Jossons query that retrieve data from other datasets.
      * (3) a database query statement that will further trigger {@code dataFinder} callback.</p>
+     * (4) a join operation query to merge two datasets.
      * <p>Any unresolvable placeholder will raise {@code NoValuePresentException} with the incomplete merged text content.
      * All unresolvable placeholders are quoted with "**" to replace the original "{{" and "}}".</p>
      *
@@ -422,9 +423,10 @@ public class Jossons {
     /**
      * <p>Uses the stored dataset mapping and with the help of on demand callback dataset resolver to retrieve data.</p>
      * <p>An unresolved dataset will trigger {@code dictionaryFinder} callback that shall return either:
-     * (1) a Jossons query that can retrieve data from the stored dataset mapping; or
-     * (2) a join operation query to merge two datasets from the stored dataset mapping; or
+     * (1) a value.
+     * (2) a Jossons query that retrieve data from other datasets.
      * (3) a database query statement that will further trigger {@code dataFinder} callback.</p>
+     * (4) a join operation query to merge two datasets.
      *
      * @param query the Jossons query
      * @param dictionaryFinder a callback function to return solution query statement
@@ -498,7 +500,7 @@ public class Jossons {
                 }
             }
         }
-        return StringUtils.isEmpty(ifTrueValue) ? null : TextNode.valueOf("");
+        return ifTrueValue == null ? null : TextNode.valueOf("");
     }
 
     /**
