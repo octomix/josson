@@ -181,6 +181,12 @@ class FuncFormat {
         );
     }
 
+    static JsonNode funcToString(JsonNode node, String params) {
+        return applyFunc(node, params,
+                jsonNode -> jsonNode.isTextual() ? jsonNode :
+                        TextNode.valueOf(jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString()));
+    }
+
     static JsonNode funcToText(JsonNode node, String params) {
         return applyFunc(node, params,
                 JsonNode::isValueNode,

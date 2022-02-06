@@ -240,6 +240,8 @@ class FuncDispatcher {
                     return funcIndexedValue(node, params);
                 case "tonumber":
                     return funcToNumber(node, params);
+                case "tostring":
+                    return funcToString(node, params);
                 case "totext":
                     return funcToText(node, params);
                 case "urldecode":
@@ -400,6 +402,8 @@ class FuncDispatcher {
                     return funcCoalesce(node, params);
                 case "csv":
                     return funcCsv(node, params);
+                case "entries":
+                    return funcEntries(node, params);
                 case "field":
                     return funcField(node, params);
                 case "flatten":

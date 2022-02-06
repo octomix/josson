@@ -103,6 +103,23 @@ class FuncStructural {
         }
     }
 
+    static JsonNode funcEntries(JsonNode node, String params) {
+        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNodeByPath(node, pathAndParams.getKey());
+            if (node == null) {
+                return null;
+            }
+        }
+        if (!node.isObject()) {
+            return null;
+        }
+        ArrayNode array = MAPPER.createArrayNode();
+        node.fields().forEachRemaining((Map.Entry<String, JsonNode> field) ->
+                array.add(Josson.createObjectNode().put("key", field.getKey()).set("value", field.getValue())));
+        return array;
+    }
+
     static JsonNode funcField(JsonNode node, String params) {
         Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
         if (node.isObject()) {

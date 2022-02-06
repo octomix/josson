@@ -66,7 +66,7 @@ class OperationStep {
         }
         if (leftNode.isContainerNode() || rightNode.isContainerNode()) {
             if (leftNode.getNodeType() != rightNode.getNodeType() || (operator != Operator.EQ && operator != Operator.NE)) {
-                return false;
+                return operator == Operator.NE;
             }
             int size = leftNode.size();
             if (size != rightNode.size()) {
