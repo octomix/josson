@@ -487,7 +487,7 @@ public class Jossons {
                 return node;
             }
             ifTrueValue = step.getIfTrueValue();
-            if (node != null) {
+            if (node != null && !node.isNull()) {
                 if (ifTrueValue.isEmpty()) {
                     if (!(node.isTextual() && node.textValue().isEmpty())) {
                         return node;
