@@ -1014,7 +1014,7 @@ There are over 180 functions. They are classified into categories:
 >4. floor()
 >5. mod()
 >6. round()
->
+
 >_String Functions_
 >7. abbreviate()
 >8. appendIfMissing()
@@ -1053,7 +1053,7 @@ There are over 180 functions. They are classified into categories:
 >41. trim()
 >42. uncapitalize()
 >43. upperCase()
->
+
 >_Date Functions_
 >44. amPmOfDay()
 >45. second()
@@ -1106,7 +1106,7 @@ There are over 180 functions. They are classified into categories:
 >92. lengthOfYear()
 >93. localToOffsetDate()
 >94. offsetToLocalDate()
->
+
 >_Format Functions_
 >95. b64Encode()
 >96. b64EncodeNoPadding()
@@ -1129,7 +1129,7 @@ There are over 180 functions. They are classified into categories:
 >113. toNumber()
 >114. toString()
 >115. toText()
->
+
 >_Logical Functions_
 >116. contains()
 >117. containsIgnoreCase()
@@ -1166,7 +1166,7 @@ There are over 180 functions. They are classified into categories:
 >148. isWeekday()
 >149. isWeekend()
 >150. isLeapYear()
->
+
 >_Array Functions_
 >151. size()
 >152. lastIndex()
@@ -1190,7 +1190,7 @@ There are over 180 functions. They are classified into categories:
 >170. findByNullOrMin()
 >171. findByMaxOrNull()
 >172. findByMinOrNull()
->
+
 >_Structural Functions_
 >173. json()
 >174. entries()
