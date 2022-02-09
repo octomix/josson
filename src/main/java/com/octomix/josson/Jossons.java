@@ -233,15 +233,15 @@ public class Jossons {
                 try {
                     query = StringUtils.strip(query);
                     JsonNode node = evaluateQuery(query);
-                    if (node != null && node.isValueNode()) {
-                        sb.append(node.asText());
-                        textAdded = true; // Remember even if it is an empty string
-                    } else if (node != null && node.isArray()) {
-                        sb.append(node);
-                    } else {
+                    if (node == null) {
                         unresolvedPlaceholders.add(query);
                         putDataset(query, null);
                         sb.append("**").append(query).append("**");
+                    } else if (node.isValueNode()) {
+                        sb.append(node.asText());
+                        textAdded = true; // Remember even if it is an empty string
+                    } else {
+                        sb.append(node);
                     }
                 } catch (UnresolvedDatasetException e) {
                     unresolvedDatasets.add(e.getDatasetName());

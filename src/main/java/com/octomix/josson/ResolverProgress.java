@@ -61,6 +61,12 @@ public class ResolverProgress {
         return steps;
     }
 
+    public void reset() {
+        steps.clear();
+        round = 1;
+        roundStarted = false;
+    }
+
     void nextRound() {
         if (roundStarted) {
             roundStarted = false;

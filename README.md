@@ -3,10 +3,12 @@
 - _Josson_ is a query language for JSON.
 - _Jossons_ is a template engine to generate text output.
 
+![logo](./logo.png)
+
 ### Features and Capabilities of Josson
 
-- Query data from a JSON.
-- Restructure a JSON.
+- Query a JSON dataset.
+- Restructure JSON data.
 - Has many functions to format text output.
 - Has many functions to manipulate date values.
 - Has many functions to work on array node.
@@ -2980,6 +2982,7 @@ Function `fillInPlaceholder()` uses the stored dataset mapping to merge and fill
 Any unresolvable placeholder will raise `NoValuePresentException` with the incomplete merged text content.
 All unresolvable placeholders are quoted with `**` to replace the original double curly braces.
 
+    Jossons jossons = Jossons.fromJsonString(orderJsonString);
     String output = jossons.fillInPlaceholder(template);
 
 #### Template
@@ -3123,26 +3126,6 @@ The resolution progress has three debug levels:
 
     List<String> steps = progress.getSteps();
 
-An Example of the progress output:
-
-    Round 1 : Resolving salesOrder from sales_order?{orderId:'202208172',orderSubs:{$elemMatch:{subsId:'S00000263'}}},{_id:0,'orderSubs.$':1}
-    Round 1 : Resolved salesOrder = Object with 18 elements
-    Round 1 : Resolving {offers=orderSub->offers, plan=subsDetail->planName, txnDate=salesOrder->orderPayment.txnDate.formatDate('yyyy-MM-dd'), txnId=salesOrder->orderPayment.paymentId, products=orderSub->offers.products.productName}
-    Round 1 : Resolved txnDate = "2021-08-18"
-    Round 1 : Resolved txnId = "1210818002190"
-    Round 2 : Resolving custSub from cust_subscription?{subsId:'S00000263'}
-    Round 2 : Resolved custSub = Object with 32 elements
-    Round 2 : Resolving {orderSub=salesOrder->orderSubs[subsId='S00000263'], subsDetail=custSub->subsDetails[deleteFlag!=true]*.findByMaxOrNull(startDate)}
-    Round 2 : Resolved orderSub = Object with 33 elements
-    Round 2 : Resolved subsDetail = Object with 21 elements
-    Round 3 : Resolving customer from ?{custId:'C00000045'}
-    Round 3 : Resolved customer = Object with 27 elements
-    Round 3 : Resolving {offers=orderSub->offers, plan=subsDetail->planName}
-    Round 3 : Resolved offers = Array with 2 elements
-    Round 3 : Resolved plan = "Promotion"
-    Round 3 : Resolved products = Array with 8 elements
-    Round 4 : End
-
 ### Dictionary Finder
 
 If a key cannot be found in the default dataset mapping during the placeholder resolution process,
@@ -3245,11 +3228,54 @@ If `arrayName` is not given, the last element name of the query is used.
 
         "leftQuery{arrayName:keyL1,keyL2...} >>=> rightQuery{keyR1,keyR2...}"
 
-Examples:
+#### Demonstrate _Left Join One_ with _Dictionary Finder_ and _Data Finder_
 
-    "order->offers{offerId} <=< offers->map(offerId, offerName, offerDesc){offerId}"
+    Map<String, String> dictionaryFinder = new LinkedHashMap<>();
+    dictionaryFinder.put("stocks", "[]?{ignoredQuery}");
+    dictionaryFinder.put("withStock", "order->items.map(itemCode,qty){itemCode} <=< stocks{itemCode}");
 
-    "customers{custId} <=<< followups{custId}"
+    BiFunction<String, String, Josson> dataFinder = (collectionName, ignoredQuery) -> {
+        try {
+            if (collectionName.equals("stocks[]")) {
+                // Hardcode instead of database query
+                return Josson.fromJsonString("[" +
+                        "{\"itemCode\":\"A00201\",\"onhandQty\":18}," +
+                        "{\"itemCode\":\"A00308\",\"onhandQty\":76}," +
+                        "{\"itemCode\":\"A00543\",\"onhandQty\":5}," +
+                        "{\"itemCode\":\"B00001\",\"onhandQty\":231}," +
+                        "{\"itemCode\":\"B00002\",\"onhandQty\":0}]");
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return null;
+    };
+
+    ResolverProgress progress = new ResolverProgress();
+
+    // Use the JSON data from session "Fill in"
+    Jossons jossons = Jossons.fromJsonString(orderJsonString);
+    String output = jossons.fillInPlaceholderWithResolver(
+        "Order ID : {{order->salesOrderId}}\n" +
+        "{{withStock->concat(itemCode.rightPad(10), 'Qty: ', qty, '   Onhand: ', onhandQty).join('\n')}}",
+        dictionaryFinder::get, dataFinder, progress));
+
+#### Output
+
+    Order ID : SO0001
+    B00001    Qty: 2   Onhand: 231
+    A00308    Qty: 1   Onhand: 76
+    A00201    Qty: 1   Onhand: 18
+
+#### Progress Steps
+
+    Round 1 : Resolving withStock from order->items.map(itemCode,qty){itemCode} <=< stocks{itemCode}
+    Round 1 : Resolving stocks from []?{ignoredQuery}
+    Round 1 : Resolved stocks = Array with 5 elements
+    Round 2 : Resolved withStock = Array with 3 elements
+    Round 3 : End
+
+---
 
 ## Appendix
 
