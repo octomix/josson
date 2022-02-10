@@ -5,6 +5,22 @@
 
 ![logo](./logo.png)
 
+### Installation
+
+https://mvnrepository.com/artifact/com.octomix.josson/josson
+
+#### Maven
+
+    <dependency>
+        <groupId>com.octomix.josson</groupId>
+        <artifactId>josson</artifactId>
+        <version>1.3.0</version>
+    </dependency>
+
+#### Gradle
+
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.0'
+
 ### Features and Capabilities of Josson
 
 - Query a JSON dataset.
@@ -1010,7 +1026,7 @@ Below is the JSON for this tutorial.
 
 There are over 180 functions. They are classified into categories:
 
-[_Arithmetic Functions_](#arithmetic-functions)
+Arithmetic Functions
 
 1. [abs()](#1-abs)
 2. [calc()](#2-calc)
@@ -1019,7 +1035,7 @@ There are over 180 functions. They are classified into categories:
 5. [mod()](#5-mod)
 6. [round()](#6-round)
 
-[_String Functions_](#string-functions)
+String Functions
 
 7. [abbreviate()](#7-abbreviate)
 8. [appendIfMissing()](#8-appendifmissing)
@@ -1113,7 +1129,7 @@ _Date Functions_
 93. [localToOffsetDate()](#93-localtooffsetdate)
 94. [offsetToLocalDate()](#94-offsettolocaldate)
 
-[_Format Functions_](#format-functions)
+Format Functions
 
 95. [b64Encode()](#95-b64encode)
 96. [b64EncodeNoPadding()](#96-b64encodenopadding)
@@ -1137,7 +1153,7 @@ _Date Functions_
 114. [toString()](#114-tostring)
 115. [toText()](#115-totext)
 
-[_Logical Functions_](#logical-functions)
+Logical Functions_
 
 116. [contains()](#116-contains)
 117. [containsIgnoreCase()](#117-containsignorecase)
