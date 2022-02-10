@@ -24,28 +24,29 @@
 
 ### Table of Contents
 
-- Josson Basic
-- Josson Path Chart Elements
-- Josson Query Language
-- Josson Functions
-  - Arithmetic Functions
-  - String Functions
-  - Date Functions
-  - Format Functions
-  - Logical Functions
-  - Array Functions
-  - Structural Functions
-- Jossons Basic
-- Jossons Template Language
-  - Ternary Syntax
-  - Implicit Variables
-  - Fill In
-- Jossons Resolver
-  - Dictionary Finder
-  - Data Finder
-  - Join Datasets
-- Appendix
-  - MongoDB Adapter
+- [Josson Basic](#josson-basic)
+- [Josson Path Chart Elements](#josson-path-chart-elements)
+- [Josson Query Language](#josson-query-language)
+- [Josson Functions](#josson-functions)
+  - [Arithmetic Functions](#arithmetic-functions)
+  - [String Functions](#string-functions)
+  - [Date Functions](#date-functions)
+  - [Format Functions](#format-functions)
+  - [Logical Functions](#logical-functions)
+  - [Array Functions](#array-functions)
+  - [Structural Functions](#structural-functions)
+- [Jossons Basic](#jossons-basic)
+- [Jossons Template Language](#jossons-template-language)
+  - [Ternary Syntax](#ternary-syntax)
+  - [Implicit Variables](#implicit-variables)
+  - [Fill In](#fill-in)
+- [Jossons Resolver](#jossons-resolver)
+  - [Dictionary Finder](#dictionary-finder)
+  - [Data Finder](#data-finder)
+  - [Join Datasets](#join-datasets)
+  - [Put Together](#put-together)
+- [Appendix](#appendix)
+  - [MongoDB Adapter](#mongodb-adapter)
 
 ---
 
@@ -1009,207 +1010,207 @@ Below is the JSON for this tutorial.
 
 There are over 180 functions. They are classified into categories:
 
-_Arithmetic Functions_
+[_Arithmetic Functions_](#arithmetic-functions)
 
-1. abs()
-2. calc()
-3. ceil()
-4. floor()
-5. mod()
-6. round()
+1. [abs()](#1-abs)
+2. [calc()](#2-calc)
+3. [ceil()](#3-ceil)
+4. [floor()](#4-floor)
+5. [mod()](#5-mod)
+6. [round()](#6-round)
 
-_String Functions_
+[_String Functions_](#string-functions)
 
-7. abbreviate()
-8. appendIfMissing()
-9. appendIfMissingIgnoreCase()
-10. capitalize()
-11. center()
-12. concat()
-13. keepAfter()
-14. keepAfterIgnoreCase()
-15. keepAfterLast()
-16. keepAfterLastIgnoreCase()
-17. keepBefore()
-18. keepBeforeIgnoreCase()
-19. keepBeforeLast()
-20. keepBeforeLastIgnoreCase()
-21. leftPad()
-22. length()
-23. lowerCase()
-24. notEmpty()
-25. notBlank()
-26. prependIfMissing()
-27. prependIfMissingIgnoreCase()
-28. removeEnd()
-29. removeEndIgnoreCase()
-30. removeStart()
-31. removeStartIgnoreCase()
-32. repeat()
-33. replace()
-34. replaceIgnoreCase()
-35. rightPad()
-36. split()
-37. strip()
-38. stripEnd()
-39. stripStart()
-40. substr()
-41. trim()
-42. uncapitalize()
-43. upperCase()
+7. [abbreviate()](#7-abbreviate)
+8. [appendIfMissing()](#8-appendifmissing)
+9. [appendIfMissingIgnoreCase()](#9-appendifmissingignorecase)
+10. [capitalize()](#10-capitalize)
+11. [center()](#11-center)
+12. [concat()](#12-concat)
+13. [keepAfter()](#13-keepafter)
+14. [keepAfterIgnoreCase()](#14-keepafterignorecase)
+15. [keepAfterLast()](#15-keepafterlast)
+16. [keepAfterLastIgnoreCase()](#16-keepafterlastignorecase)
+17. [keepBefore()](#17-keepbefore)
+18. [keepBeforeIgnoreCase()](#18-keepbeforeignorecase)
+19. [keepBeforeLast()](#19-keepbeforelast)
+20. [keepBeforeLastIgnoreCase()](#20-keepbeforelastignorecase)
+21. [leftPad()](#21-leftpad)
+22. [length()](#22-length)
+23. [lowerCase()](#23-lowercase)
+24. [notEmpty()](#24-notempty)
+25. [notBlank()](#25-notblank)
+26. [prependIfMissing()](#26-prependifmissing)
+27. [prependIfMissingIgnoreCase()](#27-prependifmissingignorecase)
+28. [removeEnd()](#28-removeend)
+29. [removeEndIgnoreCase()](#29-removeendignorecase)
+30. [removeStart()](#30-removestart)
+31. [removeStartIgnoreCase()](#31-removestartignorecase)
+32. [repeat()](#32-repeat)
+33. [replace()](#33-replace)
+34. [replaceIgnoreCase()](#34-replaceignorecase)
+35. [rightPad()](#35-rightpad)
+36. [split()](#36-split)
+37. [strip()](#37-strip)
+38. [stripEnd()](#38-stripend)
+39. [stripStart()](#39-stripstart)
+40. [substr()](#40-substr)
+41. [trim()](#41-trim)
+42. [uncapitalize()](#42-uncapitalize)
+43. [upperCase()](#43-uppercase)
 
 _Date Functions_
 
-44. amPmOfDay()
-45. second()
-46. secondOfDay()
-47. minute()
-48. minuteOfDay()
-49. hourOfAmPm()
-50. hour()
-51. dayOfWeek()
-52. day()
-53. dayOfYear()
-54. month()
-55. year()
-56. plusSeconds()
-57. plusMinutes()
-58. plusHours()
-59. plusDays()
-60. plusWeeks()
-61. plusMonths()
-62. plusYears()
-63. minusSeconds()
-64. minusMinutes()
-65. minusHours()
-66. minusDays()
-67. minusWeeks()
-68. minusMonths()
-69. minusYears()
-70. truncateToMicro()
-71. truncateToMilli()
-72. truncateToSecond()
-73. truncateToMinute()
-74. truncateToHour()
-75. truncateToDay()
-76. truncateToMonth()
-77. truncateToYear()
-78. withNano()
-79. withMicro()
-80. withMilli()
-81. withSecond()
-82. withMinute()
-83. withHour()
-84. withDay()
-85. withDayOfYear()
-86. withMonth()
-87. withYear()
-88. dayEnd()
-89. monthEnd()
-90. yearEnd()
-91. lengthOfMonth()
-92. lengthOfYear()
-93. localToOffsetDate()
-94. offsetToLocalDate()
+44. [amPmOfDay()](#44-ampmofday)
+45. [second()](#45-second)
+46. [secondOfDay()](#46-secondofday)
+47. [minute()](#47-minute)
+48. [minuteOfDay()](#48-minuteofday)
+49. [hourOfAmPm()](#49-hourofampm)
+50. [hour()](#50-hour)
+51. [dayOfWeek()](#51-dayofweek)
+52. [day()](#52-day)
+53. [dayOfYear()](#53-dayofyear)
+54. [month()](#54-month)
+55. [year()](#55-year)
+56. [plusSeconds()](#56-plusseconds)
+57. [plusMinutes()](#57-plusminutes)
+58. [plusHours()](#58-plushours)
+59. [plusDays()](#59-plusdays)
+60. [plusWeeks()](#60-plusweeks)
+61. [plusMonths()](#61-plusmonths)
+62. [plusYears()](#62-plusyears)
+63. [minusSeconds()](#63-minusseconds)
+64. [minusMinutes()](#64-minusminutes)
+65. [minusHours()](#65-minushours)
+66. [minusDays()](#66-minusdays)
+67. [minusWeeks()](#67-minusweeks)
+68. [minusMonths()](#68-minusmonths)
+69. [minusYears()](#69-minusyears)
+70. [truncateToMicro()](#70-truncatetomicro)
+71. [truncateToMilli()](#71-truncatetomilli)
+72. [truncateToSecond()](#72-truncatetosecond)
+73. [truncateToMinute()](#73-truncatetominute)
+74. [truncateToHour()](#74-truncatetohour)
+75. [truncateToDay()](#75-truncatetoday)
+76. [truncateToMonth()](#76-truncatetomonth)
+77. [truncateToYear()](#77-truncatetoyear)
+78. [withNano()](#78-withnano)
+79. [withMicro()](#79-withmicro)
+80. [withMilli()](#80-withmilli)
+81. [withSecond()](#81-withsecond)
+82. [withMinute()](#82-withminute)
+83. [withHour()](#83-withhour)
+84. [withDay()](#84-withday)
+85. [withDayOfYear()](#85-withdayofyear)
+86. [withMonth()](#86-withmonth)
+87. [withYear()](#87-withyear)
+88. [dayEnd()](#88-dayend)
+89. [monthEnd()](#89-monthend)
+90. [yearEnd()](#90-yearend)
+91. [lengthOfMonth()](#91-lengthofmonth)
+92. [lengthOfYear()](#92-lengthofyear)
+93. [localToOffsetDate()](#93-localtooffsetdate)
+94. [offsetToLocalDate()](#94-offsettolocaldate)
 
-_Format Functions_
+[_Format Functions_](#format-functions)
 
-95. b64Encode()
-96. b64EncodeNoPadding()
-97. b64MimeEncode()
-98. b64MimeEncodeNoPadding()
-99. b64UrlEncode()
-100. b64UrlEncodeNoPadding()
-101. b64Decode()
-102. b64MimeDecode()
-103. b64UrlDecode()
-104. urlEncode()
-105. urlDecode()
-106. caseValue()
-107. indexedValue()
-108. cycleValue()
-109. formatDate()
-110. formatNumber()
-111. formatText()
-112. formatTexts()
-113. toNumber()
-114. toString()
-115. toText()
+95. [b64Encode()](#95-b64encode)
+96. [b64EncodeNoPadding()](#96-b64encodenopadding)
+97. [b64MimeEncode()](#97-b64mimeencode)
+98. [b64MimeEncodeNoPadding()](#98-b64mimeencodenopadding)
+99. [b64UrlEncode()](#99-b64urlencode)
+100. [b64UrlEncodeNoPadding()](#100-b64urlencodenopadding)
+101. [b64Decode()](#101-b64decode)
+102. [b64MimeDecode()](#102-b64mimedecode)
+103. [b64UrlDecode()](#103-b64urldecode)
+104. [urlEncode()](#104-urlencode)
+105. [urlDecode()](#105-urldecode)
+106. [caseValue()](#106-casevalue)
+107. [indexedValue()](#107-indexedvalue)
+108. [cycleValue()](#108-cyclevalue)
+109. [formatDate()](#109-formatdate)
+110. [formatNumber()](#110-formatnumber)
+111. [formatText()](#111-formattext)
+112. [formatTexts()](#112-formattexts)
+113. [toNumber()](#113-tonumber)
+114. [toString()](#114-tostring)
+115. [toText()](#115-totext)
 
-_Logical Functions_
+[_Logical Functions_](#logical-functions)
 
-116. contains()
-117. containsIgnoreCase()
-118. notContains()
-119. notContainsIgnoreCase()
-120. startsWith()
-121. startsWithIgnoreCase()
-122. notStartsWith()
-123. notStartsWithIgnoreCase()
-124. endsWith()
-125. endsWithIgnoreCase()
-126. notEndsWith()
-127. notEndsWithIgnoreCase()
-128. equals()
-129. equalsIgnoreCase()
-130. notEquals()
-131. notEqualsIgnoreCase()
-132. in()
-133. inIgnoreCase()
-134. notIn()
-135. notInIgnoreCase()
-136. isEmpty()
-137. isNotEmpty()
-138. isBlank()
-139. isNotBlank()
-140. isNull()
-141. isNotNull()
-142. isText()
-143. isBoolean()
-144. isNumber()
-145. isEven()
-146. isOdd()
-147. not()
-148. isWeekday()
-149. isWeekend()
-150. isLeapYear()
+116. [contains()](#116-contains)
+117. [containsIgnoreCase()](#117-containsignorecase)
+118. [notContains()](#118-notcontains)
+119. [notContainsIgnoreCase()](#119-notcontainsignorecase)
+120. [startsWith()](#120-startswith)
+121. [startsWithIgnoreCase()](#121-startswithignorecase)
+122. [notStartsWith()](#122-notstartswith)
+123. [notStartsWithIgnoreCase()](#123-notstartswithignorecase])
+124. [endsWith()](#124-endswith)
+125. [endsWithIgnoreCase()](#125-endswithignorecase)
+126. [notEndsWith()](#126-notendswith)
+127. [notEndsWithIgnoreCase()](#127-notendswithignorecase)
+128. [equals()](#128-equals)
+129. [equalsIgnoreCase()](#129-equalsignorecase)
+130. [notEquals()](#130-notequals)
+131. [notEqualsIgnoreCase()](#131-notequalsignorecase)
+132. [in()](#132-in)
+133. [inIgnoreCase()](#133-inignorecase)
+134. [notIn()](#134-notin)
+135. [notInIgnoreCase()](#135-notinignorecase)
+136. [isEmpty()](#136-isempty)
+137. [isNotEmpty()](#137-isnotempty)
+138. [isBlank()](#138-isblank)
+139. [isNotBlank()](#139-isnotblank)
+140. [isNull()](#140-isnull)
+141. [isNotNull()](#141-isnotnull)
+142. [isText()](#142-istext)
+143. [isBoolean()](#143-isboolean)
+144. [isNumber()](#144-isnumber)
+145. [isEven()](#145-iseven)
+146. [isOdd()](#146-isodd)
+147. [not()](#147-not)
+148. [isWeekday()](#148-isweekday)
+149. [isWeekend()](#148-isweekday)
+150. [isLeapYear()](#150-isleapyear)
 
 _Array Functions_
 
-151. size()
-152. lastIndex()
-153. indexOf()
-154. lastIndexOf()
-155. first()
-156. last()
-157. max()
-158. min()
-159. sum()
-160. avg()
-161. count()
-162. reverse()
-163. slice()
-164. sort()
-165. distinct()
-166. join()
-167. findByMax()
-168. findByMin()
-169. findByNullOrMax()
-170. findByNullOrMin()
-171. findByMaxOrNull()
-172. findByMinOrNull()
+151. [size()](#151-size)
+152. [lastIndex()](#152-lastindex)
+153. [indexOf()](#153-indexof)
+154. [lastIndexOf()](#154-lastindexof)
+155. [first()](#155-first)
+156. [last()](#156-last)
+157. [max()](#157-max)
+158. [min()](#158-min)
+159. [sum()](#159-sum)
+160. [avg()](#160-avg)
+161. [count()](#161-count)
+162. [reverse()](#162-reverse)
+163. [slice()](#163-slice)
+164. [sort()](#164-sort)
+165. [distinct()](#165-distinct)
+166. [join()](#166-join)
+167. [findByMax()](#167-findbymax)
+168. [findByMin()](#168-findbymin)
+169. [findByNullOrMax()](#169-findbynullormax)
+170. [findByNullOrMin()](#170-findbynullormin)
+171. [findByMaxOrNull()](#171-findbymaxornull)
+172. [findByMinOrNull()](#172-findbyminornull)
 
 _Structural Functions_
 
-173. json()
-174. entries()
-175. keys()
-176. toArray()
-177. flatten()
-178. map()
-179. field()
-180. coalesce()
-181. csv()
+173. [json()](#173-json)
+174. [entries()](#174-entries)
+175. [keys()](#175-keys)
+176. [toArray()](#176-toarray)
+177. [flatten()](#177-flatten)
+178. [map()](#178-map)
+179. [field()](#179-field)
+180. [coalesce()](#180-coalesce)
+181. [csv()](#181-csv)
 
 Following are some examples of each function.
 
@@ -1365,7 +1366,7 @@ Following are some examples of each function.
 
     keepBefore('abcxmnxyz', 'mn') ==> "abcx"
 
-#### 18. eepBeforeIgnoreCase()
+#### 18. keepBeforeIgnoreCase()
 
     'abcxmnxyz'.keepBeforeIgnoreCase('x') ==> "abc"
 
@@ -1959,7 +1960,7 @@ Following are some examples of each function.
     ==>
     "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg"
 
-#### 97. b64MimiEncode() - Split lines into 76 character wide chunks
+#### 97. b64MimeEncode()
 
     'abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ'.b64MimeEncode()
     ==>
@@ -2131,7 +2132,7 @@ Following are some examples of each function.
 
     toText(json('[1,2.0,"a",true,null]')) ==> [ "1", "2.0", "a", "true", "null" ]
 
-### Logical
+### Logical Functions
 
 #### 116. contains()
 
@@ -3144,17 +3145,17 @@ the resolver will ask `Function<String, String> dictionaryFinder` for an answer.
 
         "otherKey->jossonQuery"
 
-  - A database query statement, please refer to ___Data Finder___.
+  - A database query statement, please refer to [Data Finder](#data-finder).
 
         "collectionName ? {findStatement}"
 
-  - A join operation query to merge two datasets, please refer to ___Join Datasets___.
+  - A join operation query to merge two datasets, please refer to [Join Datasets](#join-datasets).
 
         "leftQuery{keyL1,keyL2...} <=< rightQuery{keyR1,keyR2...}"
 
 ### Data Finder
 
-After _Dictionary Finder_ returned a valid database query statement,
+After [Dictionary Finder](#dictionary-finder) returned a valid database query statement,
 resolver will further trigger `BiFunction<String, String, Josson> dataFinder` callback.
 `dataFinder` takes two arguments `String collectionName` and `String query`, and returns a Josson object.
 
@@ -3189,7 +3190,7 @@ Many-documents query syntax that request for an `ArrayNode`:
 `collectionName` is optional. If not given, the resolving key will be passed to `dataFinder` in the collection name argument.
 For Many-documents query request, the collection name argument has a suffix of `[]`.
 
-___Appendix___ has an example of MongoDB adapter for this _Data Finder_.
+[Appendix](#appendix) has an example of MongoDB adapter for this _Data Finder_.
 
 ### Join Datasets
 
@@ -3228,7 +3229,9 @@ If `arrayName` is not given, the last element name of the query is used.
 
         "leftQuery{arrayName:keyL1,keyL2...} >>=> rightQuery{keyR1,keyR2...}"
 
-#### Demonstrate _Left Join One_ with _Dictionary Finder_ and _Data Finder_
+### Put Together
+
+#### An example of _Left Join One_ with _Dictionary Finder_ and _Data Finder_
 
     Map<String, String> dictionaryFinder = new LinkedHashMap<>();
     dictionaryFinder.put("stocks", "[]?{ignoredQuery}");
@@ -3253,7 +3256,7 @@ If `arrayName` is not given, the last element name of the query is used.
 
     ResolverProgress progress = new ResolverProgress();
 
-    // Use the JSON data from session "Fill in"
+    // Use the JSON data from section "Fill in"
     Jossons jossons = Jossons.fromJsonString(orderJsonString);
     String output = jossons.fillInPlaceholderWithResolver(
         "Order ID : {{order->salesOrderId}}\n" +
