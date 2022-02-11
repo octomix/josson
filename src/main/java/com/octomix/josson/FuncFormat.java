@@ -118,8 +118,7 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatDate(JsonNode node, String params) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode)
                         .format(DateTimeFormatter.ofPattern((String) objVar).withLocale(locale).withZone(zoneId)))
@@ -127,16 +126,14 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatNumber(JsonNode node, String params) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
                 (jsonNode, objVar) -> TextNode.valueOf(new DecimalFormat((String) objVar).format(jsonNode.asDouble()))
         );
     }
 
     static JsonNode funcFormatText(JsonNode node, String params) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JossonCore::nodeHasValue,
                 (jsonNode, objVar) -> TextNode.valueOf(String.format((String) objVar, valueAsObject(jsonNode)))
         );

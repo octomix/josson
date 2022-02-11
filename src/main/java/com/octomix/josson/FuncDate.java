@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 
-import static com.octomix.josson.FuncExecutor.applyFunc;
+import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 
 class FuncDate {
@@ -41,16 +41,14 @@ class FuncDate {
     }
 
     static JsonNode funcDatePlus(JsonNode node, String params, ChronoUnit unit) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsInt(node, paramList.get(0)),
+        return applyFuncWithParamAsInt(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).plus((int) objVar, unit).toString())
         );
     }
 
     static JsonNode funcDateMinus(JsonNode node, String params, ChronoUnit unit) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsInt(node, paramList.get(0)),
+        return applyFuncWithParamAsInt(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).minus((int) objVar, unit).toString())
         );
@@ -66,7 +64,7 @@ class FuncDate {
     static JsonNode funcDateTruncateToMonth(JsonNode node, String params) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
-                jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
+                jsonNode -> TextNode.valueOf(toLocalDate(jsonNode)
                         .withDayOfMonth(1).toString())
         );
     }
@@ -74,14 +72,13 @@ class FuncDate {
     static JsonNode funcDateTruncateToYear(JsonNode node, String params) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
-                jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
+                jsonNode -> TextNode.valueOf(toLocalDate(jsonNode)
                         .withDayOfYear(1).toString())
         );
     }
 
     static JsonNode funcDateWith(JsonNode node, String params, ChronoField field) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsInt(node, paramList.get(0)),
+        return applyFuncWithParamAsInt(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).with(field, (int) objVar).toString())
         );
@@ -90,7 +87,7 @@ class FuncDate {
     static JsonNode funcDayEnd(JsonNode node, String params) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
-                jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
+                jsonNode -> TextNode.valueOf(toLocalDate(jsonNode)
                         .plusDays(1).minusNanos(1).toString())
         );
     }
@@ -98,7 +95,7 @@ class FuncDate {
     static JsonNode funcMonthEnd(JsonNode node, String params) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
-                jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
+                jsonNode -> TextNode.valueOf(toLocalDate(jsonNode)
                         .withDayOfMonth(1).plusMonths(1).minusNanos(1).toString())
         );
     }
@@ -106,7 +103,7 @@ class FuncDate {
     static JsonNode funcYearEnd(JsonNode node, String params) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
-                jsonNode -> TextNode.valueOf(toLocalDateTime(jsonNode).truncatedTo(ChronoUnit.DAYS)
+                jsonNode -> TextNode.valueOf(toLocalDate(jsonNode)
                         .withDayOfYear(1).plusYears(1).minusNanos(1).toString())
         );
     }

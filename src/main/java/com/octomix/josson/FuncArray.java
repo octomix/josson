@@ -157,10 +157,8 @@ class FuncArray {
                 double value = valueNode.asDouble();
                 for (int i = 0; i < node.size(); i++) {
                     JsonNode tryNode = node.get(i);
-                    if (tryNode.isNumber() || tryNode.isTextual()) {
-                        if (tryNode.asDouble() == value) {
-                            return IntNode.valueOf(i);
-                        }
+                    if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asDouble() == value) {
+                        return IntNode.valueOf(i);
                     }
                 }
             } else if (valueNode.isNull()) {
@@ -173,10 +171,8 @@ class FuncArray {
                 String value = valueNode.asText();
                 for (int i = 0; i < node.size(); i++) {
                     JsonNode tryNode = node.get(i);
-                    if (tryNode.isNumber() || tryNode.isTextual()) {
-                        if (tryNode.asText().equals(value)) {
-                            return IntNode.valueOf(i);
-                        }
+                    if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asText().equals(value)) {
+                        return IntNode.valueOf(i);
                     }
                 }
             }
@@ -232,10 +228,8 @@ class FuncArray {
                 double value = valueNode.asDouble();
                 for (int i = node.size() - 1; i >= 0; i--) {
                     JsonNode tryNode = node.get(i);
-                    if (tryNode.isNumber() || tryNode.isTextual()) {
-                        if (tryNode.asDouble() == value) {
-                            return IntNode.valueOf(i);
-                        }
+                    if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asDouble() == value) {
+                        return IntNode.valueOf(i);
                     }
                 }
             } else if (valueNode.isNull()) {
@@ -248,10 +242,8 @@ class FuncArray {
                 String value = valueNode.asText();
                 for (int i = node.size() - 1; i >= 0; i--) {
                     JsonNode tryNode = node.get(i);
-                    if (tryNode.isNumber() || tryNode.isTextual()) {
-                        if (tryNode.asText().equals(value)) {
-                            return IntNode.valueOf(i);
-                        }
+                    if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asText().equals(value)) {
+                        return IntNode.valueOf(i);
                     }
                 }
             }
@@ -389,48 +381,48 @@ class FuncArray {
         for (int i = 0; i < node.size(); i++) {
             nodeList.add(node.get(i));
         }
-        nodeList.sort((o1, o2) -> {
-            int compare = 0;
-            if (!StringUtils.isEmpty(path)) {
-                if (o1.isObject()) {
-                    o1 = getNodeByPath(o1, path);
-                    if (o1 == null) {
-                        return 1;
-                    }
-                }
-                if (o2.isObject()) {
-                    o2 = getNodeByPath(o2, path);
-                    if (o2 == null) {
-                        return -1;
-                    }
-                }
-            }
-            if (o1.isNumber() && o2.isNumber()) {
-                double value = o1.asDouble() - o2.asDouble();
-                compare = (value > 0) ? 1 : (value < 0) ? -1 : 0;
-            } else if (o1.isTextual() && o2.isTextual()) {
-                compare = o1.asText().compareTo(o2.asText());
-            } else if (o1.isBoolean() && o2.isBoolean()) {
-                if (o1.asBoolean() != o2.asBoolean()) {
-                    compare = o1.asBoolean() ? -1 : 1;
-                }
-            } else if (!o1.isNull() || !o2.isNull()) {
-                if (o1.isNumber()) {
-                    compare = -1;
-                } else if (o1.isTextual()) {
-                    compare = o2.isNumber() ? 1 : -1;
-                } else if (o1.isBoolean()) {
-                    compare = o2.isNumber() || o2.isTextual() ? 1 : -1;
-                } else {
-                    compare = o2.isValueNode() ? 1 : -1;
-                }
-            }
-            return asc ? compare : -compare;
-        });
+        nodeList.sort((o1, o2) -> jsonNodeComparator(o1, o2, path, asc));
         ArrayNode array = MAPPER.createArrayNode();
-        for (int i  = 0; i < node.size(); i++) {
-            array.add(nodeList.get(i));
-        }
+        array.addAll(nodeList);
         return array;
+    }
+
+    private static int jsonNodeComparator(JsonNode o1, JsonNode o2, String path, boolean asc) {
+        int compare = 0;
+        if (!StringUtils.isEmpty(path)) {
+            if (o1.isObject()) {
+                o1 = getNodeByPath(o1, path);
+                if (o1 == null) {
+                    return 1;
+                }
+            }
+            if (o2.isObject()) {
+                o2 = getNodeByPath(o2, path);
+                if (o2 == null) {
+                    return -1;
+                }
+            }
+        }
+        if (o1.isNumber() && o2.isNumber()) {
+            double value = o1.asDouble() - o2.asDouble();
+            compare = (value > 0) ? 1 : (value < 0) ? -1 : 0;
+        } else if (o1.isTextual() && o2.isTextual()) {
+            compare = o1.asText().compareTo(o2.asText());
+        } else if (o1.isBoolean() && o2.isBoolean()) {
+            if (o1.asBoolean() != o2.asBoolean()) {
+                compare = o1.asBoolean() ? -1 : 1;
+            }
+        } else if (!o1.isNull() || !o2.isNull()) {
+            if (o1.isNumber()) {
+                compare = -1;
+            } else if (o1.isTextual()) {
+                compare = o2.isNumber() ? 1 : -1;
+            } else if (o1.isBoolean()) {
+                compare = o2.isNumber() || o2.isTextual() ? 1 : -1;
+            } else {
+                compare = o2.isValueNode() ? 1 : -1;
+            }
+        }
+        return asc ? compare : -compare;
     }
 }

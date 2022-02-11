@@ -96,8 +96,7 @@ class FuncLogical {
     }
 
     static JsonNode funcEndsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase ?
                         StringUtils.endsWithIgnoreCase(jsonNode.asText(), (String) objVar) :
@@ -106,8 +105,7 @@ class FuncLogical {
     }
 
     static JsonNode funcEquals(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase ?
                         StringUtils.equalsIgnoreCase(jsonNode.asText(), (String) objVar) :
@@ -202,8 +200,7 @@ class FuncLogical {
     }
 
     static JsonNode funcStartsWith(JsonNode node, String params, boolean ignoreCase, boolean not) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase ?
                         StringUtils.startsWithIgnoreCase(jsonNode.asText(), (String) objVar) :

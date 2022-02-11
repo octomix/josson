@@ -103,6 +103,12 @@ class OperationStack {
         return node;
     }
 
+    private static class IllegalStatementException extends IllegalArgumentException {
+        IllegalStatementException(String statement, IllegalArgumentException e) {
+            super(e.getMessage() == null ? statement : "\"" + e.getMessage() + "\" in " + statement);
+        }
+    }
+
     /*
         For JossonCore.evaluateFilter()
      */
@@ -113,10 +119,7 @@ class OperationStack {
             try {
                 evaluate(step, arrayIndex);
             } catch (IllegalArgumentException e) {
-                if (e.getMessage() == null) {
-                    throw new IllegalArgumentException(statement);
-                }
-                throw new IllegalArgumentException("\"" + e.getMessage() + "\" in " + statement);
+                throw new IllegalStatementException(statement, e);
             }
         }
         return evaluateSteps(false, (OperationStep opStep) -> opStep.resolveFrom(arrayNode, arrayIndex));
@@ -176,10 +179,7 @@ class OperationStack {
             try {
                 evaluate(step);
             } catch (IllegalArgumentException e) {
-                if (e.getMessage() == null) {
-                    throw new IllegalArgumentException(statement);
-                }
-                throw new IllegalArgumentException("\"" + e.getMessage() + "\" in " + statement);
+                throw new IllegalStatementException(statement, e);
             }
         }
         try {

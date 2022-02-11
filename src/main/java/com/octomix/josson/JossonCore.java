@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static com.octomix.josson.ArrayFilter.FilterMode;
@@ -92,17 +93,15 @@ class JossonCore {
     }
 
     static boolean isCurrentNodePath(String path) {
-        if (path.startsWith(CURRENT_NODE)) {
-            if (path.length() > 1) {
-                throw new IllegalArgumentException("Invalid path: " + path);
-            }
-            return true;
-        }
-        return false;
+        return isPathSymbol(path, CURRENT_NODE);
     }
 
     static boolean isParentArrayPath(String path) {
-        if (path.startsWith(PARENT_ARRAY_NODE)) {
+        return isPathSymbol(path, PARENT_ARRAY_NODE);
+    }
+
+    private static boolean isPathSymbol(String path, String pathSymbol) {
+        if (path.startsWith(pathSymbol)) {
             if (path.length() > 1) {
                 throw new IllegalArgumentException("Invalid path: " + path);
             }
@@ -139,6 +138,10 @@ class JossonCore {
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
+    }
+
+    static LocalDateTime toLocalDate(JsonNode node) {
+        return toLocalDateTime(node).truncatedTo(ChronoUnit.DAYS);
     }
 
     static LocalDateTime offsetToLocalDateTime(JsonNode node) {
@@ -269,11 +272,11 @@ class JossonCore {
             return null;
         }
         ArrayNode matchedNodes = null;
-        if (mode != FILTRATE_FIRST_FOUND) {
+        if (mode != FILTRATE_FIND_FIRST) {
             matchedNodes = MAPPER.createArrayNode();
         }
         try {
-            if (mode == FILTRATE_FIRST_FOUND) {
+            if (mode == FILTRATE_FIND_FIRST) {
                 return node.get(Integer.parseInt(statement));
             }
             matchedNodes.add(node.get(Integer.parseInt(statement)));
@@ -285,7 +288,7 @@ class JossonCore {
         for (int i = 0; i < node.size(); i++) {
             JsonNode result = opStack.evaluate(statement, i);
             if (result != null && result.asBoolean()) {
-                if (mode == FILTRATE_FIRST_FOUND) {
+                if (mode == FILTRATE_FIND_FIRST) {
                     return node.get(i);
                 }
                 matchedNodes.add(node.get(i));

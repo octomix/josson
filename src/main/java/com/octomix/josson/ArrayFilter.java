@@ -18,7 +18,7 @@ package com.octomix.josson;
 class ArrayFilter {
 
     enum FilterMode {
-        FILTRATE_FIRST_FOUND(' '),
+        FILTRATE_FIND_FIRST(' '),
         FILTRATE_COLLECT_ALL('*'),
         FILTRATE_DIVERT_ALL('@');
 

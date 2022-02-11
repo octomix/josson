@@ -204,4 +204,20 @@ class FuncExecutor {
         }
         return null;
     }
+
+    static JsonNode applyFuncWithParamAsText(JsonNode node, String params, Predicate<JsonNode> isValid,
+                                             BiFunction<JsonNode, Object, JsonNode> action) {
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsText(node, paramList.get(0)),
+                isValid, action
+        );
+    }
+
+    static JsonNode applyFuncWithParamAsInt(JsonNode node, String params, Predicate<JsonNode> isValid,
+                                            BiFunction<JsonNode, Object, JsonNode> action) {
+        return applyFunc(node, params, 1, 1,
+                paramList -> getNodeAsInt(node, paramList.get(0)),
+                isValid, action
+        );
+    }
 }

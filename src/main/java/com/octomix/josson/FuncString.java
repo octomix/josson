@@ -24,7 +24,7 @@ import com.octomix.josson.commons.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.octomix.josson.FuncExecutor.applyFunc;
+import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
@@ -50,8 +50,7 @@ class FuncString {
     }
 
     static JsonNode funcAppendIfMissing(JsonNode node, String params, boolean ignoreCase) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(ignoreCase ?
                         StringUtils.appendIfMissingIgnoreCase(jsonNode.asText(), (String) objVar) :
@@ -122,8 +121,7 @@ class FuncString {
     }
 
     static JsonNode funcKeepAfter(JsonNode node, String params, boolean ignoreCase, boolean last) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> {
                     String find = (String) objVar;
@@ -144,8 +142,7 @@ class FuncString {
     }
 
     static JsonNode funcKeepBefore(JsonNode node, String params, boolean ignoreCase, boolean last) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> {
                     String find = (String) objVar;
@@ -268,8 +265,7 @@ class FuncString {
     }
 
     static JsonNode funcPrependIfMissing(JsonNode node, String params, boolean ignoreCase) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(ignoreCase ?
                         StringUtils.prependIfMissingIgnoreCase(jsonNode.asText(), (String) objVar) :
@@ -278,8 +274,7 @@ class FuncString {
     }
 
     static JsonNode funcRemoveEnd(JsonNode node, String params, boolean ignoreCase) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(ignoreCase ?
                         StringUtils.removeEndIgnoreCase(jsonNode.asText(), (String) objVar) :
@@ -288,8 +283,7 @@ class FuncString {
     }
 
     static JsonNode funcRemoveStart(JsonNode node, String params, boolean ignoreCase) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(ignoreCase ?
                         StringUtils.removeStartIgnoreCase(jsonNode.asText(), (String) objVar) :
@@ -298,8 +292,7 @@ class FuncString {
     }
 
     static JsonNode funcRepeat(JsonNode node, String params) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsInt(node, paramList.get(0)),
+        return applyFuncWithParamAsInt(node, params,
                 JossonCore::nodeHasValue,
                 (jsonNode, objVar) -> TextNode.valueOf(StringUtils.repeat(jsonNode.asText(), (int) objVar))
         );
@@ -350,24 +343,21 @@ class FuncString {
     }
 
     static JsonNode funcStrip(JsonNode node, String params) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(StringUtils.strip(jsonNode.asText(), (String) objVar))
         );
     }
 
     static JsonNode funcStripEnd(JsonNode node, String params) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(StringUtils.stripEnd(jsonNode.asText(), (String) objVar))
         );
     }
 
     static JsonNode funcStripStart(JsonNode node, String params) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsText(node, paramList.get(0)),
+        return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(StringUtils.stripStart(jsonNode.asText(), (String) objVar))
         );

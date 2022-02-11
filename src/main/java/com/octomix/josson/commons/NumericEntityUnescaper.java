@@ -91,9 +91,9 @@ class NumericEntityUnescaper extends CharSequenceTranslator {
     @Override
     int translate(final CharSequence input, final int index, final Writer out) throws IOException {
         final int seqEnd = input.length();
-        // Uses -2 to ensure there is something after the &#
-        if (input.charAt(index) == '&' && index < seqEnd - 2 && input.charAt(index + 1) == '#') {
-            int start = index + 2;
+        // ensure there is something after the &#
+        int start = index + 2;
+        if (start < seqEnd && input.charAt(index) == '&' && input.charAt(index + 1) == '#') {
             boolean isHex = false;
 
             final char firstChar = input.charAt(start);

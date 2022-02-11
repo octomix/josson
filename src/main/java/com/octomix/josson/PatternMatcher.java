@@ -222,7 +222,7 @@ class PatternMatcher {
                 String arrayName = rightTrimOf(input, 0, pos);
                 String filter = trimOf(input, pos + 1, end);
                 pos = eatSpaces(input, end + 1, last);
-                FilterMode mode = FILTRATE_FIRST_FOUND;
+                FilterMode mode = FILTRATE_FIND_FIRST;
                 if (pos <= last) {
                     mode = FilterMode.fromSymbol(input.charAt(pos));
                     if (mode != null) {

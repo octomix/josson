@@ -39,387 +39,602 @@ class FuncDispatcher {
         this.params = params;
     }
 
+    private class UnsupportedFunctionException extends UnsupportedOperationException {
+        UnsupportedFunctionException() {
+            super("Unsupported function " + funcName + "()");
+        }
+    }
+
     JsonNode apply(JsonNode node) {
         try {
-            switch (funcName.toLowerCase()) {
-
-                // Arithmetic
-                case "abs":
-                    return funcAbs(node, params);
-                case "calc":
-                    return funcCalc(node, params);
-                case "ceil":
-                    return funcCeil(node, params);
-                case "floor":
-                    return funcFloor(node, params);
-                case "mod":
-                    return funcMod(node, params);
-                case "round":
-                    return funcRound(node, params);
-
-                // Array
-                case "sum":
-                case "avg":
-                case "count":
-                    return funcAggregate(node, funcName, params);
-                case "distinct":
-                    return funcDistinct(node, params);
-                case "findbymax":
-                    return funcFindByMaxMin(node, params, true, 0);
-                case "findbymaxornull":
-                    return funcFindByMaxMin(node, params, true, -1);
-                case "findbymin":
-                    return funcFindByMaxMin(node, params, false, 0);
-                case "findbyminornull":
-                    return funcFindByMaxMin(node, params, false, -1);
-                case "findbynullormax":
-                    return funcFindByMaxMin(node, params, true, 1);
-                case "findbynullormin":
-                    return funcFindByMaxMin(node, params, false, 1);
-                case "first":
-                    return funcFirst(node, params);
-                case "indexof":
-                    return funcIndexOf(node, params);
-                case "join":
-                    return funcJoin(node, params);
-                case "last":
-                    return funcLast(node, params);
-                case "lastindex":
-                    return funcLastIndex(node, params);
-                case "lastindexof":
-                    return funcLastIndexOf(node, params);
-                case "max":
-                    return funcMaxMin(node, params, true);
-                case "min":
-                    return funcMaxMin(node, params, false);
-                case "reverse":
-                    return funcReverse(node, params);
-                case "size":
-                    return funcSize(node, params);
-                case "slice":
-                    return funcSlice(node, params);
-                case "sort":
-                    return funcSort(node, params);
-
-                // Date
-                case "ampmofday":
-                    return funcAmPmOfDay(node, params);
-                case "second":
-                    return funcChronometry(node, params, ChronoField.SECOND_OF_MINUTE);
-                case "secondofday":
-                    return funcChronometry(node, params, ChronoField.SECOND_OF_DAY);
-                case "minute":
-                    return funcChronometry(node, params, ChronoField.MINUTE_OF_HOUR);
-                case "minuteofday":
-                    return funcChronometry(node, params, ChronoField.MINUTE_OF_DAY);
-                case "hourofampm":
-                    return funcChronometry(node, params, ChronoField.HOUR_OF_AMPM);
-                case "hour":
-                    return funcChronometry(node, params, ChronoField.HOUR_OF_DAY);
-                case "dayofweek":
-                    return funcChronometry(node, params, ChronoField.DAY_OF_WEEK);
-                case "day":
-                    return funcChronometry(node, params, ChronoField.DAY_OF_MONTH);
-                case "dayofyear":
-                    return funcChronometry(node, params, ChronoField.DAY_OF_YEAR);
-                case "month":
-                    return funcChronometry(node, params, ChronoField.MONTH_OF_YEAR);
-                case "year":
-                    return funcChronometry(node, params, ChronoField.YEAR);
-                case "plusseconds":
-                    return funcDatePlus(node, params, ChronoUnit.SECONDS);
-                case "plusminutes":
-                    return funcDatePlus(node, params, ChronoUnit.MINUTES);
-                case "plushours":
-                    return funcDatePlus(node, params, ChronoUnit.HOURS);
-                case "plusdays":
-                    return funcDatePlus(node, params, ChronoUnit.DAYS);
-                case "plusweeks":
-                    return funcDatePlus(node, params, ChronoUnit.WEEKS);
-                case "plusmonths":
-                    return funcDatePlus(node, params, ChronoUnit.MONTHS);
-                case "plusyears":
-                    return funcDatePlus(node, params, ChronoUnit.YEARS);
-                case "minusseconds":
-                    return funcDateMinus(node, params, ChronoUnit.SECONDS);
-                case "minusminutes":
-                    return funcDateMinus(node, params, ChronoUnit.MINUTES);
-                case "minushours":
-                    return funcDateMinus(node, params, ChronoUnit.HOURS);
-                case "minusdays":
-                    return funcDateMinus(node, params, ChronoUnit.DAYS);
-                case "minusweeks":
-                    return funcDateMinus(node, params, ChronoUnit.WEEKS);
-                case "minusmonths":
-                    return funcDateMinus(node, params, ChronoUnit.MONTHS);
-                case "minusyears":
-                    return funcDateMinus(node, params, ChronoUnit.YEARS);
-                case "truncatetomicro":
-                    return funcDateTruncateTo(node, params, ChronoUnit.MICROS);
-                case "truncatetomilli":
-                    return funcDateTruncateTo(node, params, ChronoUnit.MILLIS);
-                case "truncatetosecond":
-                    return funcDateTruncateTo(node, params, ChronoUnit.SECONDS);
-                case "truncatetominute":
-                    return funcDateTruncateTo(node, params, ChronoUnit.MINUTES);
-                case "truncatetohour":
-                    return funcDateTruncateTo(node, params, ChronoUnit.HOURS);
-                case "truncatetoday":
-                    return funcDateTruncateTo(node, params, ChronoUnit.DAYS);
-                case "truncatetomonth":
-                    return funcDateTruncateToMonth(node, params);
-                case "truncatetoyear":
-                    return funcDateTruncateToYear(node, params);
-                case "withnano":
-                    return funcDateWith(node, params, ChronoField.NANO_OF_SECOND);
-                case "withmicro":
-                    return funcDateWith(node, params, ChronoField.MICRO_OF_SECOND);
-                case "withmilli":
-                    return funcDateWith(node, params, ChronoField.MILLI_OF_SECOND);
-                case "withsecond":
-                    return funcDateWith(node, params, ChronoField.SECOND_OF_MINUTE);
-                case "withminute":
-                    return funcDateWith(node, params, ChronoField.MINUTE_OF_HOUR);
-                case "withhour":
-                    return funcDateWith(node, params, ChronoField.HOUR_OF_DAY);
-                case "withday":
-                    return funcDateWith(node, params, ChronoField.DAY_OF_MONTH);
-                case "withdayofyear":
-                    return funcDateWith(node, params, ChronoField.DAY_OF_YEAR);
-                case "withmonth":
-                    return funcDateWith(node, params, ChronoField.MONTH_OF_YEAR);
-                case "withyear":
-                    return funcDateWith(node, params, ChronoField.YEAR);
-                case "dayend":
-                    return funcDayEnd(node, params);
-                case "monthend":
-                    return funcMonthEnd(node, params);
-                case "yearend":
-                    return funcYearEnd(node, params);
-                case "lengthofmonth":
-                    return funcLengthOfMonth(node, params);
-                case "lengthofyear":
-                    return funcLengthOfYear(node, params);
-                case "localtooffsetdate":
-                    return funcLocalToOffsetDate(node, params);
-                case "offsettolocaldate":
-                    return funcOffsetToLocalDate(node, params);
-
-                // Format
-                case "b64decode":
-                    return funcB64Decode(node, params, Base64.getDecoder());
-                case "b64mimedecode":
-                    return funcB64Decode(node, params, Base64.getMimeDecoder());
-                case "b64urldecode":
-                    return funcB64Decode(node, params, Base64.getUrlDecoder());
-                case "b64encode":
-                    return funcB64Encode(node, params, Base64.getEncoder());
-                case "b64encodenopadding":
-                    return funcB64Encode(node, params, Base64.getEncoder().withoutPadding());
-                case "b64mimeencode":
-                    return funcB64Encode(node, params, Base64.getMimeEncoder());
-                case "b64mimeencodenopadding":
-                    return funcB64Encode(node, params, Base64.getMimeEncoder().withoutPadding());
-                case "b64urlencode":
-                    return funcB64Encode(node, params, Base64.getUrlEncoder());
-                case "b64urlencodenopadding":
-                    return funcB64Encode(node, params, Base64.getUrlEncoder().withoutPadding());
-                case "casevalue":
-                    return funcCaseValue(node, params);
-                case "cyclevalue":
-                    return funcCycleValue(node, params);
-                case "formatdate":
-                    return funcFormatDate(node, params);
-                case "formatnumber":
-                    return funcFormatNumber(node, params);
-                case "formattext":
-                    return funcFormatText(node, params);
-                case "formattexts":
-                    return funcFormatTexts(node, params);
-                case "indexedvalue":
-                    return funcIndexedValue(node, params);
-                case "tonumber":
-                    return funcToNumber(node, params);
-                case "tostring":
-                    return funcToString(node, params);
-                case "totext":
-                    return funcToText(node, params);
-                case "urldecode":
-                    return funcUrlDecode(node, params);
-                case "urlencode":
-                    return funcUrlEncode(node, params);
-
-                    // Logical
-                case "contains":
-                    return funcContains(node, params, false, false);
-                case "containsignorecase":
-                    return funcContains(node, params, true, false);
-                case "notcontains":
-                    return funcContains(node, params, false, true);
-                case "notcontainsignorecase":
-                    return funcContains(node, params, true, true);
-                case "endswith":
-                    return funcEndsWith(node, params, false, false);
-                case "endswithignorecase":
-                    return funcEndsWith(node, params, true, false);
-                case "notendswith":
-                    return funcEndsWith(node, params, false, true);
-                case "notendswithignorecase":
-                    return funcEndsWith(node, params, true, true);
-                case "equals":
-                    return funcEquals(node, params, false, false);
-                case "equalsignorecase":
-                    return funcEquals(node, params, true, false);
-                case "notequals":
-                    return funcEquals(node, params, false, true);
-                case "notequalsignorecase":
-                    return funcEquals(node, params, true, true);
-                case "in":
-                    return funcIn(node, params, false, false);
-                case "inignorecase":
-                    return funcIn(node, params, true, false);
-                case "notin":
-                    return funcIn(node, params, false, true);
-                case "notinignorecase":
-                    return funcIn(node, params, true, true);
-                case "isblank":
-                    return funcIsBlank(node, params, false);
-                case "isnotblank":
-                    return funcIsBlank(node, params, true);
-                case "isboolean":
-                    return funcIsBoolean(node, params);
-                case "isempty":
-                    return funcIsEmpty(node, params, false);
-                case "isnotempty":
-                    return funcIsEmpty(node, params, true);
-                case "iseven":
-                    return funcIsEven(node, params);
-                case "isnull":
-                    return funcIsNull(node, params, false);
-                case "isnotnull":
-                    return funcIsNull(node, params, true);
-                case "isnumber":
-                    return funcIsNumber(node, params);
-                case "isodd":
-                    return funcIsOdd(node, params);
-                case "istext":
-                    return funcIsText(node, params);
-                case "not":
-                    return funcNot(node, params);
-                case "startswith":
-                    return funcStartsWith(node, params, false, false);
-                case "startswithignorecase":
-                    return funcStartsWith(node, params, true, false);
-                case "notstartswith":
-                    return funcStartsWith(node, params, false, true);
-                case "notstartswithignorecase":
-                    return funcStartsWith(node, params, true, true);
-                case "isweekday":
-                    return funcIsWeekday(node, params);
-                case "isweekend":
-                    return funcIsWeekend(node, params);
-                case "isleapyear":
-                    return funcIsLeapYear(node, params);
-
-                // String
-                case "abbreviate":
-                    return funcAbbreviate(node, params);
-                case "appendifmissing":
-                    return funcAppendIfMissing(node, params, false);
-                case "appendifmissingignorecase":
-                    return funcAppendIfMissing(node, params, true);
-                case "capitalize":
-                    return funcCapitalize(node, params);
-                case "center":
-                    return funcCenter(node, params);
-                case "concat":
-                    return funcConcat(node, params);
-                case "keepafter":
-                    return funcKeepAfter(node, params, false, false);
-                case "keepafterignorecase":
-                    return funcKeepAfter(node, params, true, false);
-                case "keepafterlast":
-                    return funcKeepAfter(node, params, false, true);
-                case "keepafterlastignorecase":
-                    return funcKeepAfter(node, params, true, true);
-                case "keepbefore":
-                    return funcKeepBefore(node, params, false, false);
-                case "keepbeforeignorecase":
-                    return funcKeepBefore(node, params, true, false);
-                case "keepbeforelast":
-                    return funcKeepBefore(node, params, false, true);
-                case "keepbeforelastignorecase":
-                    return funcKeepBefore(node, params, true, true);
-                case "leftpad":
-                    return funcLeftPad(node, params);
-                case "length":
-                    return funcLength(node, params);
-                case "lowercase":
-                    return funcLowerCase(node, params);
-                case "notblank":
-                    return funcNotBlank(node, params);
-                case "notempty":
-                    return funcNotEmpty(node, params);
-                case "prependifmissing":
-                    return funcPrependIfMissing(node, params, false);
-                case "prependifmissingignorecase":
-                    return funcPrependIfMissing(node, params, true);
-                case "removeend":
-                    return funcRemoveEnd(node, params, false);
-                case "removeendignorecase":
-                    return funcRemoveEnd(node, params, true);
-                case "removestart":
-                    return funcRemoveStart(node, params, false);
-                case "removestartignorecase":
-                    return funcRemoveStart(node, params, true);
-                case "repeat":
-                    return funcRepeat(node, params);
-                case "replace":
-                    return funcReplace(node, params, false);
-                case "replaceignorecase":
-                    return funcReplace(node, params, true);
-                case "rightpad":
-                    return funcRightPad(node, params);
-                case "split":
-                    return funcSplit(node, params);
-                case "strip":
-                    return funcStrip(node, params);
-                case "stripend":
-                    return funcStripEnd(node, params);
-                case "stripstart":
-                    return funcStripStart(node, params);
-                case "substr":
-                    return funcSubstr(node, params);
-                case "trim":
-                    return funcTrim(node, params);
-                case "uncapitalize":
-                    return funcUncapitalize(node, params);
-                case "uppercase":
-                    return funcUpperCase(node, params);
-
-                // Structural
-                case "coalesce":
-                    return funcCoalesce(node, params);
-                case "csv":
-                    return funcCsv(node, params);
-                case "entries":
-                    return funcEntries(node, params);
-                case "field":
-                    return funcField(node, params);
-                case "flatten":
-                    return funcFlatten(node, params);
-                case "json":
-                    return funcJson(node, params);
-                case "keys":
-                    return funcKeys(node, params);
-                case "map":
-                    return funcMap(node, params);
-                case "toarray":
-                    return funcToArray(node, params);
+            String func = funcName.toLowerCase();
+            switch (func.charAt(0)) {
+                case 'a' :
+                    return applyA(node, func);
+                case 'b' :
+                    return applyB(node, func);
+                case 'c' :
+                    return applyC(node, func);
+                case 'd':
+                    return applyD(node, func);
+                case 'e':
+                    return applyE(node, func);
+                case 'f':
+                    return applyF(node, func);
+                case 'h':
+                    return applyH(node, func);
+                case 'i':
+                    return applyI(node, func);
+                case 'j':
+                    return applyJ(node, func);
+                case 'k':
+                    return applyK(node, func);
+                case 'l':
+                    return applyL(node, func);
+                case 'm':
+                    return applyM(node, func);
+                case 'n':
+                    return applyN(node, func);
+                case 'o':
+                    return applyO(node, func);
+                case 'p':
+                    return applyP(node, func);
+                case 'r':
+                    return applyR(node, func);
+                case 's':
+                    return applyS(node, func);
+                case 't':
+                    return applyT(node, func);
+                case 'u':
+                    return applyU(node, func);
+                case 'w':
+                    return applyW(node, func);
+                case 'y':
+                    return applyY(node, func);
             }
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid function call " + funcName + "() : " + e.getMessage());
         }
-        throw new UnsupportedOperationException("Unsupported function " + funcName + "()");
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyA(JsonNode node, String func) {
+        switch (func) {
+            // Arithmetic
+            case "abs":
+                return funcAbs(node, params);
+            // Array
+            case "avg":
+                return funcAggregate(node, funcName, params);
+            // Date
+            case "ampmofday":
+                return funcAmPmOfDay(node, params);
+            // String
+            case "abbreviate":
+                return funcAbbreviate(node, params);
+            case "appendifmissing":
+                return funcAppendIfMissing(node, params, false);
+            case "appendifmissingignorecase":
+                return funcAppendIfMissing(node, params, true);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyB(JsonNode node, String func) {
+        switch (func) {
+            // Format
+            case "b64decode":
+                return funcB64Decode(node, params, Base64.getDecoder());
+            case "b64mimedecode":
+                return funcB64Decode(node, params, Base64.getMimeDecoder());
+            case "b64urldecode":
+                return funcB64Decode(node, params, Base64.getUrlDecoder());
+            case "b64encode":
+                return funcB64Encode(node, params, Base64.getEncoder());
+            case "b64encodenopadding":
+                return funcB64Encode(node, params, Base64.getEncoder().withoutPadding());
+            case "b64mimeencode":
+                return funcB64Encode(node, params, Base64.getMimeEncoder());
+            case "b64mimeencodenopadding":
+                return funcB64Encode(node, params, Base64.getMimeEncoder().withoutPadding());
+            case "b64urlencode":
+                return funcB64Encode(node, params, Base64.getUrlEncoder());
+            case "b64urlencodenopadding":
+                return funcB64Encode(node, params, Base64.getUrlEncoder().withoutPadding());
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyC(JsonNode node, String func) {
+        switch (func) {
+            // Arithmetic
+            case "calc":
+                return funcCalc(node, params);
+            case "ceil":
+                return funcCeil(node, params);
+            // Array
+            case "count":
+                return funcAggregate(node, funcName, params);
+            // Format
+            case "casevalue":
+                return funcCaseValue(node, params);
+            case "cyclevalue":
+                return funcCycleValue(node, params);
+            // Logical
+            case "contains":
+                return funcContains(node, params, false, false);
+            case "containsignorecase":
+                return funcContains(node, params, true, false);
+            // String
+            case "capitalize":
+                return funcCapitalize(node, params);
+            case "center":
+                return funcCenter(node, params);
+            case "concat":
+                return funcConcat(node, params);
+            // Structural
+            case "coalesce":
+                return funcCoalesce(node, params);
+            case "csv":
+                return funcCsv(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyD(JsonNode node, String func) {
+        switch (func) {
+            // Array
+            case "distinct":
+                return funcDistinct(node, params);
+            // Date
+            case "dayofweek":
+                return funcChronometry(node, params, ChronoField.DAY_OF_WEEK);
+            case "day":
+                return funcChronometry(node, params, ChronoField.DAY_OF_MONTH);
+            case "dayofyear":
+                return funcChronometry(node, params, ChronoField.DAY_OF_YEAR);
+            case "dayend":
+                return funcDayEnd(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyE(JsonNode node, String func) {
+        switch (func) {
+            // Logical
+            case "endswith":
+                return funcEndsWith(node, params, false, false);
+            case "endswithignorecase":
+                return funcEndsWith(node, params, true, false);
+            case "equals":
+                return funcEquals(node, params, false, false);
+            case "equalsignorecase":
+                return funcEquals(node, params, true, false);
+            // Structural
+            case "entries":
+                return funcEntries(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyF(JsonNode node, String func) {
+        switch (func) {
+            // Arithmetic
+            case "floor":
+                return funcFloor(node, params);
+            // Array
+            case "findbymax":
+                return funcFindByMaxMin(node, params, true, 0);
+            case "findbymaxornull":
+                return funcFindByMaxMin(node, params, true, -1);
+            case "findbymin":
+                return funcFindByMaxMin(node, params, false, 0);
+            case "findbyminornull":
+                return funcFindByMaxMin(node, params, false, -1);
+            case "findbynullormax":
+                return funcFindByMaxMin(node, params, true, 1);
+            case "findbynullormin":
+                return funcFindByMaxMin(node, params, false, 1);
+            case "first":
+                return funcFirst(node, params);
+            // Format
+            case "formatdate":
+                return funcFormatDate(node, params);
+            case "formatnumber":
+                return funcFormatNumber(node, params);
+            case "formattext":
+                return funcFormatText(node, params);
+            case "formattexts":
+                return funcFormatTexts(node, params);
+            // Structural
+            case "field":
+                return funcField(node, params);
+            case "flatten":
+                return funcFlatten(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyH(JsonNode node, String func) {
+        switch (func) {
+            // Date
+            case "hourofampm":
+                return funcChronometry(node, params, ChronoField.HOUR_OF_AMPM);
+            case "hour":
+                return funcChronometry(node, params, ChronoField.HOUR_OF_DAY);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyI(JsonNode node, String func) {
+        switch (func) {
+            // Array
+            case "indexof":
+                return funcIndexOf(node, params);
+            // Format
+            case "indexedvalue":
+                return funcIndexedValue(node, params);
+            // Logical
+            case "in":
+                return funcIn(node, params, false, false);
+            case "inignorecase":
+                return funcIn(node, params, true, false);
+            case "isblank":
+                return funcIsBlank(node, params, false);
+            case "isnotblank":
+                return funcIsBlank(node, params, true);
+            case "isboolean":
+                return funcIsBoolean(node, params);
+            case "isempty":
+                return funcIsEmpty(node, params, false);
+            case "isnotempty":
+                return funcIsEmpty(node, params, true);
+            case "iseven":
+                return funcIsEven(node, params);
+            case "isnull":
+                return funcIsNull(node, params, false);
+            case "isnotnull":
+                return funcIsNull(node, params, true);
+            case "isnumber":
+                return funcIsNumber(node, params);
+            case "isodd":
+                return funcIsOdd(node, params);
+            case "istext":
+                return funcIsText(node, params);
+            case "isweekday":
+                return funcIsWeekday(node, params);
+            case "isweekend":
+                return funcIsWeekend(node, params);
+            case "isleapyear":
+                return funcIsLeapYear(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyJ(JsonNode node, String func) {
+        switch (func) {
+            // Array
+            case "join":
+                return funcJoin(node, params);
+            // Structural
+            case "json":
+                return funcJson(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyK(JsonNode node, String func) {
+        switch (func) {
+            // String
+            case "keepafter":
+                return funcKeepAfter(node, params, false, false);
+            case "keepafterignorecase":
+                return funcKeepAfter(node, params, true, false);
+            case "keepafterlast":
+                return funcKeepAfter(node, params, false, true);
+            case "keepafterlastignorecase":
+                return funcKeepAfter(node, params, true, true);
+            case "keepbefore":
+                return funcKeepBefore(node, params, false, false);
+            case "keepbeforeignorecase":
+                return funcKeepBefore(node, params, true, false);
+            case "keepbeforelast":
+                return funcKeepBefore(node, params, false, true);
+            case "keepbeforelastignorecase":
+                return funcKeepBefore(node, params, true, true);
+            // Structural
+            case "keys":
+                return funcKeys(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyL(JsonNode node, String func) {
+        switch (func) {
+            // Array
+            case "last":
+                return funcLast(node, params);
+            case "lastindex":
+                return funcLastIndex(node, params);
+            case "lastindexof":
+                return funcLastIndexOf(node, params);
+            // Date
+            case "lengthofmonth":
+                return funcLengthOfMonth(node, params);
+            case "lengthofyear":
+                return funcLengthOfYear(node, params);
+            case "localtooffsetdate":
+                return funcLocalToOffsetDate(node, params);
+            // String
+            case "leftpad":
+                return funcLeftPad(node, params);
+            case "length":
+                return funcLength(node, params);
+            case "lowercase":
+                return funcLowerCase(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyM(JsonNode node, String func) {
+        switch (func) {
+            // Arithmetic
+            case "max":
+                return funcMaxMin(node, params, true);
+            case "min":
+                return funcMaxMin(node, params, false);
+            case "mod":
+                return funcMod(node, params);
+            // Date
+            case "minute":
+                return funcChronometry(node, params, ChronoField.MINUTE_OF_HOUR);
+            case "minuteofday":
+                return funcChronometry(node, params, ChronoField.MINUTE_OF_DAY);
+            case "month":
+                return funcChronometry(node, params, ChronoField.MONTH_OF_YEAR);
+            case "minusseconds":
+                return funcDateMinus(node, params, ChronoUnit.SECONDS);
+            case "minusminutes":
+                return funcDateMinus(node, params, ChronoUnit.MINUTES);
+            case "minushours":
+                return funcDateMinus(node, params, ChronoUnit.HOURS);
+            case "minusdays":
+                return funcDateMinus(node, params, ChronoUnit.DAYS);
+            case "minusweeks":
+                return funcDateMinus(node, params, ChronoUnit.WEEKS);
+            case "minusmonths":
+                return funcDateMinus(node, params, ChronoUnit.MONTHS);
+            case "minusyears":
+                return funcDateMinus(node, params, ChronoUnit.YEARS);
+            case "monthend":
+                return funcMonthEnd(node, params);
+            // Structural
+            case "map":
+                return funcMap(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyN(JsonNode node, String func) {
+        switch (func) {
+            // Logical
+            case "notcontains":
+                return funcContains(node, params, false, true);
+            case "notcontainsignorecase":
+                return funcContains(node, params, true, true);
+            case "notendswith":
+                return funcEndsWith(node, params, false, true);
+            case "notendswithignorecase":
+                return funcEndsWith(node, params, true, true);
+            case "notequals":
+                return funcEquals(node, params, false, true);
+            case "notequalsignorecase":
+                return funcEquals(node, params, true, true);
+            case "notin":
+                return funcIn(node, params, false, true);
+            case "notinignorecase":
+                return funcIn(node, params, true, true);
+            case "not":
+                return funcNot(node, params);
+            case "notstartswith":
+                return funcStartsWith(node, params, false, true);
+            case "notstartswithignorecase":
+                return funcStartsWith(node, params, true, true);
+            // String
+            case "notblank":
+                return funcNotBlank(node, params);
+            case "notempty":
+                return funcNotEmpty(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyO(JsonNode node, String func) {
+        // Date
+        if ("offsettolocaldate".equals(func)) {
+            return funcOffsetToLocalDate(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyP(JsonNode node, String func) {
+        switch (func) {
+            // Date
+            case "plusseconds":
+                return funcDatePlus(node, params, ChronoUnit.SECONDS);
+            case "plusminutes":
+                return funcDatePlus(node, params, ChronoUnit.MINUTES);
+            case "plushours":
+                return funcDatePlus(node, params, ChronoUnit.HOURS);
+            case "plusdays":
+                return funcDatePlus(node, params, ChronoUnit.DAYS);
+            case "plusweeks":
+                return funcDatePlus(node, params, ChronoUnit.WEEKS);
+            case "plusmonths":
+                return funcDatePlus(node, params, ChronoUnit.MONTHS);
+            case "plusyears":
+                return funcDatePlus(node, params, ChronoUnit.YEARS);
+            // String
+            case "prependifmissing":
+                return funcPrependIfMissing(node, params, false);
+            case "prependifmissingignorecase":
+                return funcPrependIfMissing(node, params, true);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyR(JsonNode node, String func) {
+        switch (func) {
+            // Arithmetic
+            case "round":
+                return funcRound(node, params);
+            // Array
+            case "reverse":
+                return funcReverse(node, params);
+            // String
+            case "removeend":
+                return funcRemoveEnd(node, params, false);
+            case "removeendignorecase":
+                return funcRemoveEnd(node, params, true);
+            case "removestart":
+                return funcRemoveStart(node, params, false);
+            case "removestartignorecase":
+                return funcRemoveStart(node, params, true);
+            case "repeat":
+                return funcRepeat(node, params);
+            case "replace":
+                return funcReplace(node, params, false);
+            case "replaceignorecase":
+                return funcReplace(node, params, true);
+            case "rightpad":
+                return funcRightPad(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyS(JsonNode node, String func) {
+        switch (func) {
+            // Array
+            case "size":
+                return funcSize(node, params);
+            case "slice":
+                return funcSlice(node, params);
+            case "sort":
+                return funcSort(node, params);
+            case "sum":
+                return funcAggregate(node, funcName, params);
+            // Date
+            case "second":
+                return funcChronometry(node, params, ChronoField.SECOND_OF_MINUTE);
+            case "secondofday":
+                return funcChronometry(node, params, ChronoField.SECOND_OF_DAY);
+            // Logical
+            case "startswith":
+                return funcStartsWith(node, params, false, false);
+            case "startswithignorecase":
+                return funcStartsWith(node, params, true, false);
+            // String
+            case "split":
+                return funcSplit(node, params);
+            case "strip":
+                return funcStrip(node, params);
+            case "stripend":
+                return funcStripEnd(node, params);
+            case "stripstart":
+                return funcStripStart(node, params);
+            case "substr":
+                return funcSubstr(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyT(JsonNode node, String func) {
+        switch (func) {
+            // Date
+            case "truncatetomicro":
+                return funcDateTruncateTo(node, params, ChronoUnit.MICROS);
+            case "truncatetomilli":
+                return funcDateTruncateTo(node, params, ChronoUnit.MILLIS);
+            case "truncatetosecond":
+                return funcDateTruncateTo(node, params, ChronoUnit.SECONDS);
+            case "truncatetominute":
+                return funcDateTruncateTo(node, params, ChronoUnit.MINUTES);
+            case "truncatetohour":
+                return funcDateTruncateTo(node, params, ChronoUnit.HOURS);
+            case "truncatetoday":
+                return funcDateTruncateTo(node, params, ChronoUnit.DAYS);
+            case "truncatetomonth":
+                return funcDateTruncateToMonth(node, params);
+            case "truncatetoyear":
+                return funcDateTruncateToYear(node, params);
+            // Format
+            case "tonumber":
+                return funcToNumber(node, params);
+            case "tostring":
+                return funcToString(node, params);
+            case "totext":
+                return funcToText(node, params);
+            // String
+            case "trim":
+                return funcTrim(node, params);
+            // Structural
+            case "toarray":
+                return funcToArray(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyU(JsonNode node, String func) {
+        switch (func) {
+            // Format
+            case "urldecode":
+                return funcUrlDecode(node, params);
+            case "urlencode":
+                return funcUrlEncode(node, params);
+            // String
+            case "uncapitalize":
+                return funcUncapitalize(node, params);
+            case "uppercase":
+                return funcUpperCase(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyW(JsonNode node, String func) {
+        switch (func) {
+            // Date
+            case "withnano":
+                return funcDateWith(node, params, ChronoField.NANO_OF_SECOND);
+            case "withmicro":
+                return funcDateWith(node, params, ChronoField.MICRO_OF_SECOND);
+            case "withmilli":
+                return funcDateWith(node, params, ChronoField.MILLI_OF_SECOND);
+            case "withsecond":
+                return funcDateWith(node, params, ChronoField.SECOND_OF_MINUTE);
+            case "withminute":
+                return funcDateWith(node, params, ChronoField.MINUTE_OF_HOUR);
+            case "withhour":
+                return funcDateWith(node, params, ChronoField.HOUR_OF_DAY);
+            case "withday":
+                return funcDateWith(node, params, ChronoField.DAY_OF_MONTH);
+            case "withdayofyear":
+                return funcDateWith(node, params, ChronoField.DAY_OF_YEAR);
+            case "withmonth":
+                return funcDateWith(node, params, ChronoField.MONTH_OF_YEAR);
+            case "withyear":
+                return funcDateWith(node, params, ChronoField.YEAR);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyY(JsonNode node, String func) {
+        switch (func) {
+            // Date
+            case "year":
+                return funcChronometry(node, params, ChronoField.YEAR);
+            case "yearend":
+                return funcYearEnd(node, params);
+        }
+        throw new UnsupportedFunctionException();
     }
 }

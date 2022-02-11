@@ -65,47 +65,7 @@ class OperationStep {
             rightNode = NullNode.getInstance();
         }
         if (leftNode.isContainerNode() || rightNode.isContainerNode()) {
-            if (leftNode.getNodeType() != rightNode.getNodeType() || (operator != Operator.EQ && operator != Operator.NE)) {
-                return operator == Operator.NE;
-            }
-            int size = leftNode.size();
-            if (size != rightNode.size()) {
-                return operator == Operator.NE;
-            }
-            if (leftNode.isArray()) {
-                List<JsonNode> rightArray = new ArrayList<>();
-                for (int j = 0; j < size; j++) {
-                    if (!rightNode.get(j).isValueNode()) {
-                        return operator == Operator.NE;
-                    }
-                    rightArray.add(rightNode.get(j));
-                }
-                for (int i = size - 1; i >= 0; i--) {
-                    JsonNode leftElem = leftNode.get(i);
-                    if (!leftElem.isValueNode()) {
-                        return false;
-                    }
-                    int j = i;
-                    for (; j >= 0; j--) {
-                        if (relationalCompare(leftElem, Operator.EQ, rightArray.get(j))) {
-                            break;
-                        }
-                    }
-                    if (j < 0) {
-                        return operator == Operator.NE;
-                    }
-                    rightArray.remove(j);
-                }
-            } else {
-                Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
-                while (iterator.hasNext()) {
-                    Map.Entry<String, JsonNode> leftElem = iterator.next();
-                    if (!relationalCompare(leftElem.getValue(), Operator.EQ, rightNode.get(leftElem.getKey()))) {
-                        return operator == Operator.NE;
-                    }
-                }
-            }
-            return operator == Operator.EQ;
+            return relationalCompareContainer(leftNode, operator, rightNode);
         }
         if (rightNode.isTextual()) {
             if (leftNode.isTextual()) {
@@ -180,6 +140,50 @@ class OperationStep {
             }
         }
         return false;
+    }
+
+    private static boolean relationalCompareContainer(JsonNode leftNode, Operator operator, JsonNode rightNode) {
+        if (leftNode.getNodeType() != rightNode.getNodeType() || (operator != Operator.EQ && operator != Operator.NE)) {
+            return operator == Operator.NE;
+        }
+        int size = leftNode.size();
+        if (size != rightNode.size()) {
+            return operator == Operator.NE;
+        }
+        if (leftNode.isArray()) {
+            List<JsonNode> rightArray = new ArrayList<>();
+            for (int j = 0; j < size; j++) {
+                if (!rightNode.get(j).isValueNode()) {
+                    return operator == Operator.NE;
+                }
+                rightArray.add(rightNode.get(j));
+            }
+            for (int i = size - 1; i >= 0; i--) {
+                JsonNode leftElem = leftNode.get(i);
+                if (!leftElem.isValueNode()) {
+                    return false;
+                }
+                int j = i;
+                for (; j >= 0; j--) {
+                    if (relationalCompare(leftElem, Operator.EQ, rightArray.get(j))) {
+                        break;
+                    }
+                }
+                if (j < 0) {
+                    return operator == Operator.NE;
+                }
+                rightArray.remove(j);
+            }
+        } else {
+            Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
+            while (iterator.hasNext()) {
+                Map.Entry<String, JsonNode> leftElem = iterator.next();
+                if (!relationalCompare(leftElem.getValue(), Operator.EQ, rightNode.get(leftElem.getKey()))) {
+                    return operator == Operator.NE;
+                }
+            }
+        }
+        return operator == Operator.EQ;
     }
 
     private JsonNode evaluateExpression(Map<String, Josson> datasets) throws UnresolvedDatasetException {

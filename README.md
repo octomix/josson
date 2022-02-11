@@ -5,6 +5,8 @@
 
 ![logo](./logo.png)
 
+[![Known Vulnerabilities](https://snyk.io/test/github/octomix/josson/badge.svg)](https://snyk.io/test/github/octomix/josson)
+
 ### Installation
 
 https://mvnrepository.com/artifact/com.octomix.josson/josson
@@ -1075,7 +1077,7 @@ String Functions
 42. [uncapitalize()](#42-uncapitalize)
 43. [upperCase()](#43-uppercase)
 
-_Date Functions_
+Date Functions
 
 44. [amPmOfDay()](#44-ampmofday)
 45. [second()](#45-second)
@@ -1153,7 +1155,7 @@ Format Functions
 114. [toString()](#114-tostring)
 115. [toText()](#115-totext)
 
-Logical Functions_
+Logical Functions
 
 116. [contains()](#116-contains)
 117. [containsIgnoreCase()](#117-containsignorecase)
@@ -1162,7 +1164,7 @@ Logical Functions_
 120. [startsWith()](#120-startswith)
 121. [startsWithIgnoreCase()](#121-startswithignorecase)
 122. [notStartsWith()](#122-notstartswith)
-123. [notStartsWithIgnoreCase()](#123-notstartswithignorecase])
+123. [notStartsWithIgnoreCase()](#123-notstartswithignorecase)
 124. [endsWith()](#124-endswith)
 125. [endsWithIgnoreCase()](#125-endswithignorecase)
 126. [notEndsWith()](#126-notendswith)
@@ -1191,7 +1193,7 @@ Logical Functions_
 149. [isWeekend()](#148-isweekday)
 150. [isLeapYear()](#150-isleapyear)
 
-_Array Functions_
+Array Functions
 
 151. [size()](#151-size)
 152. [lastIndex()](#152-lastindex)
@@ -1216,7 +1218,7 @@ _Array Functions_
 171. [findByMaxOrNull()](#171-findbymaxornull)
 172. [findByMinOrNull()](#172-findbyminornull)
 
-_Structural Functions_
+Structural Functions
 
 173. [json()](#173-json)
 174. [entries()](#174-entries)

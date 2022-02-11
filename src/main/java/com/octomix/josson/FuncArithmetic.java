@@ -113,8 +113,7 @@ class FuncArithmetic {
     }
 
     static JsonNode funcMod(JsonNode node, String params) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsInt(node, paramList.get(0)),
+        return applyFuncWithParamAsInt(node, params,
                 jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
                 (jsonNode, objVar) -> {
                     int divisor = (int) objVar;
