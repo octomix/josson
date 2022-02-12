@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 class TernaryStep {
@@ -20,7 +21,7 @@ class TernaryStep {
     private final String statement;
     private final String ifTrueValue;
 
-    TernaryStep(String statement, String ifTrueValue) {
+    TernaryStep(final String statement, final String ifTrueValue) {
         this.statement = statement;
         this.ifTrueValue = ifTrueValue;
     }

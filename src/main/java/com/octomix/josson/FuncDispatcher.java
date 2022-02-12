@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,7 +35,7 @@ class FuncDispatcher {
     private final String funcName;
     private final String params;
 
-    FuncDispatcher(String funcName, String params) {
+    FuncDispatcher(final String funcName, final String params) {
         this.funcName = funcName;
         this.params = params;
     }
@@ -45,52 +46,31 @@ class FuncDispatcher {
         }
     }
 
-    JsonNode apply(JsonNode node) {
+    JsonNode apply(final JsonNode node) {
         try {
             String func = funcName.toLowerCase();
             switch (func.charAt(0)) {
-                case 'a' :
-                    return applyA(node, func);
-                case 'b' :
-                    return applyB(node, func);
-                case 'c' :
-                    return applyC(node, func);
-                case 'd':
-                    return applyD(node, func);
-                case 'e':
-                    return applyE(node, func);
-                case 'f':
-                    return applyF(node, func);
-                case 'h':
-                    return applyH(node, func);
-                case 'i':
-                    return applyI(node, func);
-                case 'j':
-                    return applyJ(node, func);
-                case 'k':
-                    return applyK(node, func);
-                case 'l':
-                    return applyL(node, func);
-                case 'm':
-                    return applyM(node, func);
-                case 'n':
-                    return applyN(node, func);
-                case 'o':
-                    return applyO(node, func);
-                case 'p':
-                    return applyP(node, func);
-                case 'r':
-                    return applyR(node, func);
-                case 's':
-                    return applyS(node, func);
-                case 't':
-                    return applyT(node, func);
-                case 'u':
-                    return applyU(node, func);
-                case 'w':
-                    return applyW(node, func);
-                case 'y':
-                    return applyY(node, func);
+                case 'a': return applyA(node, func);
+                case 'b': return applyB(node, func);
+                case 'c': return applyC(node, func);
+                case 'd': return applyD(node, func);
+                case 'e': return applyE(node, func);
+                case 'f': return applyF(node, func);
+                case 'h': return applyH(node, func);
+                case 'i': return applyI(node, func);
+                case 'j': return applyJ(node, func);
+                case 'k': return applyK(node, func);
+                case 'l': return applyL(node, func);
+                case 'm': return applyM(node, func);
+                case 'n': return applyN(node, func);
+                case 'o': return applyO(node, func);
+                case 'p': return applyP(node, func);
+                case 'r': return applyR(node, func);
+                case 's': return applyS(node, func);
+                case 't': return applyT(node, func);
+                case 'u': return applyU(node, func);
+                case 'w': return applyW(node, func);
+                case 'y': return applyY(node, func);
             }
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid function call " + funcName + "() : " + e.getMessage());
@@ -98,7 +78,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyA(JsonNode node, String func) {
+    private JsonNode applyA(final JsonNode node, final String func) {
         switch (func) {
             // Arithmetic
             case "abs":
@@ -120,7 +100,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyB(JsonNode node, String func) {
+    private JsonNode applyB(final JsonNode node, final String func) {
         switch (func) {
             // Format
             case "b64decode":
@@ -145,7 +125,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyC(JsonNode node, String func) {
+    private JsonNode applyC(final JsonNode node, final String func) {
         switch (func) {
             // Arithmetic
             case "calc":
@@ -181,7 +161,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyD(JsonNode node, String func) {
+    private JsonNode applyD(final JsonNode node, final String func) {
         switch (func) {
             // Array
             case "distinct":
@@ -199,7 +179,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyE(JsonNode node, String func) {
+    private JsonNode applyE(final JsonNode node, final String func) {
         switch (func) {
             // Logical
             case "endswith":
@@ -217,7 +197,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyF(JsonNode node, String func) {
+    private JsonNode applyF(final JsonNode node, final String func) {
         switch (func) {
             // Arithmetic
             case "floor":
@@ -255,7 +235,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyH(JsonNode node, String func) {
+    private JsonNode applyH(final JsonNode node, final String func) {
         switch (func) {
             // Date
             case "hourofampm":
@@ -266,7 +246,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyI(JsonNode node, String func) {
+    private JsonNode applyI(final JsonNode node, final String func) {
         switch (func) {
             // Array
             case "indexof":
@@ -311,7 +291,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyJ(JsonNode node, String func) {
+    private JsonNode applyJ(final JsonNode node, final String func) {
         switch (func) {
             // Array
             case "join":
@@ -323,7 +303,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyK(JsonNode node, String func) {
+    private JsonNode applyK(final JsonNode node, final String func) {
         switch (func) {
             // String
             case "keepafter":
@@ -349,7 +329,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyL(JsonNode node, String func) {
+    private JsonNode applyL(final JsonNode node, final String func) {
         switch (func) {
             // Array
             case "last":
@@ -376,7 +356,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyM(JsonNode node, String func) {
+    private JsonNode applyM(final JsonNode node, final String func) {
         switch (func) {
             // Arithmetic
             case "max":
@@ -415,7 +395,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyN(JsonNode node, String func) {
+    private JsonNode applyN(final JsonNode node, final String func) {
         switch (func) {
             // Logical
             case "notcontains":
@@ -449,7 +429,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyO(JsonNode node, String func) {
+    private JsonNode applyO(final JsonNode node, final String func) {
         // Date
         if ("offsettolocaldate".equals(func)) {
             return funcOffsetToLocalDate(node, params);
@@ -457,7 +437,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyP(JsonNode node, String func) {
+    private JsonNode applyP(final JsonNode node, final String func) {
         switch (func) {
             // Date
             case "plusseconds":
@@ -483,7 +463,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyR(JsonNode node, String func) {
+    private JsonNode applyR(final JsonNode node, final String func) {
         switch (func) {
             // Arithmetic
             case "round":
@@ -512,7 +492,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyS(JsonNode node, String func) {
+    private JsonNode applyS(final JsonNode node, final String func) {
         switch (func) {
             // Array
             case "size":
@@ -548,7 +528,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyT(JsonNode node, String func) {
+    private JsonNode applyT(final JsonNode node, final String func) {
         switch (func) {
             // Date
             case "truncatetomicro":
@@ -584,7 +564,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyU(JsonNode node, String func) {
+    private JsonNode applyU(final JsonNode node, final String func) {
         switch (func) {
             // Format
             case "urldecode":
@@ -600,7 +580,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyW(JsonNode node, String func) {
+    private JsonNode applyW(final JsonNode node, final String func) {
         switch (func) {
             // Date
             case "withnano":
@@ -627,7 +607,7 @@ class FuncDispatcher {
         throw new UnsupportedFunctionException();
     }
 
-    private JsonNode applyY(JsonNode node, String func) {
+    private JsonNode applyY(final JsonNode node, final String func) {
         switch (func) {
             // Date
             case "year":

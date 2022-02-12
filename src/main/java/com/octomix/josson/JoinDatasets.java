@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -40,13 +41,13 @@ class JoinDatasets {
         LEFT_JOIN_MANY("<=<<"),
         RIGHT_JOIN_MANY(">>=>");
 
-        final String symbol;
+        private final String symbol;
 
-        JoinOperator(String symbol) {
+        JoinOperator(final String symbol) {
             this.symbol = symbol;
         }
 
-        static JoinOperator fromSymbol(String symbol) {
+        static JoinOperator fromSymbol(final String symbol) {
             for (JoinOperator operator : values()) {
                 if (operator.symbol.equals(symbol)) {
                     return operator;
@@ -56,36 +57,7 @@ class JoinDatasets {
         }
     }
 
-    static class Dataset {
-        private final String query;
-        private final String[] keys;
-
-        Dataset(String query, String[] keys) {
-            this.query = query;
-            this.keys = keys;
-        }
-
-        String getQuery() {
-            return query;
-        }
-
-        String[] getKeys() {
-            return keys;
-        }
-
-        private String retrieveArrayName() {
-            int pos = keys[0].indexOf(':');
-            if (pos < 0) {
-                return getLastElementName(query);
-            }
-            String arrayName = keys[0].substring(0, pos).trim();
-            checkElementName(arrayName);
-            keys[0] = keys[0].substring(pos + 1);
-            return arrayName;
-        }
-    }
-
-    JoinDatasets(Dataset leftDataset, JoinOperator operator, Dataset rightDataset) {
+    JoinDatasets(final Dataset leftDataset, final JoinOperator operator, final Dataset rightDataset) {
         this.leftDataset = leftDataset;
         this.operator = operator;
         this.rightDataset = rightDataset;
@@ -110,22 +82,28 @@ class JoinDatasets {
     }
 
     JsonNode joinNodes(JsonNode leftNode, JsonNode rightNode) {
-        if (operator == JoinOperator.RIGHT_JOIN_ONE || operator == JoinOperator.RIGHT_JOIN_MANY
-                || (operator == JoinOperator.INNER_JOIN_ONE && !leftNode.isObject() && rightNode.isObject())) {
-            JsonNode swapNode = leftNode;
-            leftNode = rightNode;
-            rightNode = swapNode;
-            Dataset swapDataset = leftDataset;
-            leftDataset = rightDataset;
-            rightDataset = swapDataset;
-            switch (operator) {
-                case RIGHT_JOIN_ONE:
-                    operator = JoinOperator.LEFT_JOIN_ONE;
+        switch (operator) {
+            case INNER_JOIN_ONE:
+                if (leftNode.isObject() || !rightNode.isObject()) {
                     break;
-                case RIGHT_JOIN_MANY:
-                    operator = JoinOperator.LEFT_JOIN_MANY;
-                    break;
-            }
+                }
+                // fallthrough
+            case RIGHT_JOIN_ONE:
+            case RIGHT_JOIN_MANY:
+                JsonNode swapNode = leftNode;
+                leftNode = rightNode;
+                rightNode = swapNode;
+                Dataset swapDataset = leftDataset;
+                leftDataset = rightDataset;
+                rightDataset = swapDataset;
+                switch (operator) {
+                    case RIGHT_JOIN_ONE:
+                        operator = JoinOperator.LEFT_JOIN_ONE;
+                        break;
+                    case RIGHT_JOIN_MANY:
+                        operator = JoinOperator.LEFT_JOIN_MANY;
+                        break;
+                }
         }
         ArrayNode rightArray;
         if (rightNode.isArray()) {
@@ -137,7 +115,7 @@ class JoinDatasets {
         if (leftNode.isObject()) {
             return joinToObjectNode((ObjectNode) leftNode, rightArray);
         }
-        ArrayNode joinedArray = MAPPER.createArrayNode();
+        final ArrayNode joinedArray = MAPPER.createArrayNode();
         for (int i = 0; i < leftNode.size(); i++) {
             if (leftNode.get(i).isObject()) {
                 ObjectNode joinedNode = joinToObjectNode((ObjectNode) leftNode.get(i), rightArray);
@@ -149,21 +127,21 @@ class JoinDatasets {
         return joinedArray;
     }
 
-    private ObjectNode joinToObjectNode(ObjectNode leftObject, ArrayNode rightArray) {
+    private ObjectNode joinToObjectNode(final ObjectNode leftObject, final ArrayNode rightArray) {
         String[] relationalOps = new String[leftDataset.keys.length];
         for (int j = leftDataset.keys.length - 1; j >= 0; j--) {
             JsonNode leftValue = getNodeByPath(leftObject, leftDataset.keys[j]);
             if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
-            relationalOps[j] = rightDataset.keys[j] + Operator.EQ.symbol
+            relationalOps[j] = rightDataset.keys[j] + Operator.EQ.getSymbol()
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "")
                     + leftValue.asText().replace("'", "''")
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "");
         }
-        String path = "[" + StringUtils.join(relationalOps, Operator.AND.symbol) + "]";
+        String path = "[" + StringUtils.join(relationalOps, Operator.AND.getSymbol()) + "]";
         if (operator == JoinOperator.LEFT_JOIN_MANY) {
-            JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.symbol);
+            JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.getSymbol());
             if (rightToJoin != null) {
                 ObjectNode joinedNode = leftObject.deepCopy();
                 joinedNode.set(arrayName, rightToJoin);
@@ -181,5 +159,35 @@ class JoinDatasets {
             }
         }
         return leftObject;
+    }
+
+    static class Dataset {
+
+        private final String query;
+        private final String[] keys;
+
+        Dataset(final String query, final String[] keys) {
+            this.query = query;
+            this.keys = keys;
+        }
+
+        String getQuery() {
+            return query;
+        }
+
+        String[] getKeys() {
+            return keys;
+        }
+
+        private String retrieveArrayName() {
+            final int pos = keys[0].indexOf(':');
+            if (pos < 0) {
+                return getLastElementName(query);
+            }
+            final String arrayName = keys[0].substring(0, pos).trim();
+            checkElementName(arrayName);
+            keys[0] = keys[0].substring(pos + 1);
+            return arrayName;
+        }
     }
 }

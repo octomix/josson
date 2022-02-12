@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,10 +33,13 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncStructural {
 
-    static JsonNode funcCoalesce(JsonNode node, String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+    private FuncStructural() {
+    }
+
+    static JsonNode funcCoalesce(final JsonNode node, final String params) {
+        final List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
+            final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 array.add(funcCoalesce(node.get(i), paramList));
             }
@@ -44,7 +48,7 @@ class FuncStructural {
         return funcCoalesce(node, paramList);
     }
 
-    private static JsonNode funcCoalesce(JsonNode node, List<String> paramList) {
+    private static JsonNode funcCoalesce(JsonNode node, final List<String> paramList) {
         if (node.isValueNode()) {
             if (!node.isNull()) {
                 return node;
@@ -61,7 +65,7 @@ class FuncStructural {
             }
         } else if (node.isObject()) {
             for (String path : paramList) {
-                JsonNode tryNode = getNodeByPath(node, path);
+                final JsonNode tryNode = getNodeByPath(node, path);
                 if (tryNode != null && !tryNode.isNull()) {
                     return tryNode;
                 }
@@ -70,19 +74,19 @@ class FuncStructural {
         return null;
     }
 
-    static TextNode funcCsv(JsonNode node, String params) {
-        JsonNode container = getParamArrayOrItselfIsContainer(params, node);
+    static TextNode funcCsv(final JsonNode node, final String params) {
+        final JsonNode container = getParamArrayOrItselfIsContainer(params, node);
         if (container == null) {
             return null;
         }
-        List<JsonNode> values = new ArrayList<>();
+        final List<JsonNode> values = new ArrayList<>();
         funcCsvCollectValues(values, container);
         return TextNode.valueOf(values.stream()
                 .map(value -> csvQuote(value.asText()))
                 .collect(Collectors.joining(",")));
     }
 
-    private static void funcCsvCollectValues(List<JsonNode> values, JsonNode node) {
+    private static void funcCsvCollectValues(final List<JsonNode> values, final JsonNode node) {
         if (node.isObject()) {
             node.forEach(elem -> {
                 if (elem.isContainerNode()) {
@@ -94,7 +98,7 @@ class FuncStructural {
             return;
         }
         for (int i = 0; i < node.size(); i++) {
-            JsonNode tryNode = node.get(i);
+            final JsonNode tryNode = node.get(i);
             if (tryNode.isContainerNode()) {
                 funcCsvCollectValues(values, tryNode);
             } else if (!tryNode.isNull()) {
@@ -103,8 +107,8 @@ class FuncStructural {
         }
     }
 
-    static JsonNode funcEntries(JsonNode node, String params) {
-        String path = getParamPath(params);
+    static JsonNode funcEntries(JsonNode node, final String params) {
+        final String path = getParamPath(params);
         if (path != null) {
             node = getNodeByPath(node, path);
             if (node == null) {
@@ -114,21 +118,21 @@ class FuncStructural {
         if (!node.isObject()) {
             return null;
         }
-        ArrayNode array = MAPPER.createArrayNode();
+        final ArrayNode array = MAPPER.createArrayNode();
         node.fields().forEachRemaining((Map.Entry<String, JsonNode> field) ->
                 array.add(Josson.createObjectNode().put("key", field.getKey()).set("value", field.getValue())));
         return array;
     }
 
-    static JsonNode funcField(JsonNode node, String params) {
-        Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
+    static JsonNode funcField(final JsonNode node, final String params) {
+        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
         if (node.isObject()) {
             return funcMap(node.deepCopy(), node, args, -1);
         }
         if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
+            final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                JsonNode elem = node.get(i);
+                final JsonNode elem = node.get(i);
                 array.add(elem.isObject() ? funcMap(elem.deepCopy(), node, args, i) : null);
             }
             return array;
@@ -136,24 +140,24 @@ class FuncStructural {
         return null;
     }
 
-    static JsonNode funcFlatten(JsonNode node, String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+    static JsonNode funcFlatten(JsonNode node, final String params) {
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        int levels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1;
+        final int levels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1;
         if (!node.isArray() || levels < 1) {
             return node;
         }
-        ArrayNode array = MAPPER.createArrayNode();
+        final ArrayNode array = MAPPER.createArrayNode();
         funcFlatten(array, node, levels);
         return array;
     }
 
-    private static void funcFlatten(ArrayNode array, JsonNode node, int levels) {
+    private static void funcFlatten(final ArrayNode array, final JsonNode node, final int levels) {
         for (int i = 0; i < node.size(); i++) {
             if (node.get(i).isArray()) {
                 if (levels == 1) {
@@ -167,7 +171,7 @@ class FuncStructural {
         }
     }
 
-    static JsonNode funcJson(JsonNode node, String params) {
+    static JsonNode funcJson(final JsonNode node, final String params) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> {
@@ -180,7 +184,7 @@ class FuncStructural {
         );
     }
 
-    static JsonNode funcKeys(JsonNode node, String params) {
+    static JsonNode funcKeys(JsonNode node, final String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
@@ -191,12 +195,13 @@ class FuncStructural {
         if (!node.isObject()) {
             return null;
         }
-        ArrayNode array = Josson.createArrayNode();
-        funcKeys(array, node, pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1);
+        final ArrayNode array = MAPPER.createArrayNode();
+        funcKeys(array, node,
+                pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1);
         return array;
     }
 
-    private static void funcKeys(ArrayNode array, JsonNode node, int levels) {
+    private static void funcKeys(final ArrayNode array, final JsonNode node, final int levels) {
         node.fields().forEachRemaining((Map.Entry<String, JsonNode> field) -> {
             array.add(field.getKey());
             if (levels != 1 && field.getValue().isObject()) {
@@ -205,19 +210,20 @@ class FuncStructural {
         });
     }
 
-    static JsonNode funcMap(JsonNode node, String params) {
+    static JsonNode funcMap(final JsonNode node, final String params) {
         Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
         if (!node.isArray()) {
             return funcMap(MAPPER.createObjectNode(), node, args, -1);
         }
-        ArrayNode array = MAPPER.createArrayNode();
-        for (int i  = 0; i < node.size(); i++) {
+        final ArrayNode array = MAPPER.createArrayNode();
+        for (int i = 0; i < node.size(); i++) {
             array.add(funcMap(MAPPER.createObjectNode(), node, args, i));
         }
         return array;
     }
 
-    private static ObjectNode funcMap(ObjectNode base, JsonNode node, Map<String, String> args, int index) {
+    private static ObjectNode funcMap(final ObjectNode base, final JsonNode node,
+                                      final Map<String, String> args, final int index) {
         for (Map.Entry<String, String> arg : args.entrySet()) {
             String name = arg.getKey();
             if (isCurrentNodePath(name)) {
@@ -236,12 +242,12 @@ class FuncStructural {
         return base;
     }
 
-    static JsonNode funcToArray(JsonNode node, String params) {
+    static JsonNode funcToArray(final JsonNode node, final String params) {
         JsonNode container = getParamArrayOrItselfIsContainer(params, node);
         if (container == null) {
             return null;
         }
-        ArrayNode array = MAPPER.createArrayNode();
+        final ArrayNode array = MAPPER.createArrayNode();
         if (container.isArray()) {
             for (int i = 0; i < container.size(); i++) {
                 if (container.get(i).isArray()) {

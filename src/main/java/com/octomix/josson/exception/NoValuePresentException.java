@@ -13,36 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson.exception;
 
 import java.util.Set;
 
+/**
+ * Thrown to indicate that Jossons cannot resolve all the placeholders.
+ */
 public class NoValuePresentException extends Exception {
 
     private final Set<String> datasetNames;
     private final Set<String> placeholders;
     private final String content;
 
-    public NoValuePresentException(Set<String> datasetNames, Set<String> placeholders) {
+    public NoValuePresentException(final Set<String> datasetNames, final Set<String> placeholders) {
         this(datasetNames, placeholders, null);
     }
 
-    public NoValuePresentException(Set<String> datasetNames, Set<String> placeholders, String content) {
-        super((datasetNames == null ? "" : "Unresolved data set " + datasetNames + ". ")
+    public NoValuePresentException(final Set<String> datasetNames, final Set<String> placeholders,
+                                   final String content) {
+        super((datasetNames == null ? "" : "Unresolved datasets " + datasetNames + ". ")
                 + (placeholders == null ? "" : "Unresolvable placeholders " + placeholders + ". "));
         this.datasetNames = datasetNames;
         this.placeholders = placeholders;
         this.content = content;
     }
 
+    /**
+     * @return Unresolved dataset names
+     */
     public Set<String> getDatasetNames() {
         return datasetNames;
     }
 
+    /**
+     * @return Unresolvable placeholders
+     */
     public Set<String> getPlaceholders() {
         return placeholders;
     }
 
+    /**
+     * In this content, all unresolvable placeholders are quoted with `**` to replace the original double curly braces.
+     *
+     * @return Content that includes unresolvable placeholders
+     */
     public String getContent() {
         return content;
     }

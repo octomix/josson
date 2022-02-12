@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 class ArrayFilter {
@@ -22,13 +23,13 @@ class ArrayFilter {
         FILTRATE_COLLECT_ALL('*'),
         FILTRATE_DIVERT_ALL('@');
 
-        final char symbol;
+        private final char symbol;
 
-        FilterMode(char symbol) {
+        FilterMode(final char symbol) {
             this.symbol = symbol;
         }
 
-        static FilterMode fromSymbol(char symbol) {
+        static FilterMode fromSymbol(final char symbol) {
             for (FilterMode mode : values()) {
                 if (mode.symbol == symbol) {
                     return mode;
@@ -36,13 +37,17 @@ class ArrayFilter {
             }
             return null;
         }
+
+        char getSymbol() {
+            return symbol;
+        }
     }
 
     private final String nodeName;
     private final String filter;
     private final FilterMode mode;
 
-    ArrayFilter(String nodeName, String filter, FilterMode mode) {
+    ArrayFilter(final String nodeName, final String filter, final FilterMode mode) {
         this.nodeName = nodeName;
         this.filter = filter;
         this.mode = mode;

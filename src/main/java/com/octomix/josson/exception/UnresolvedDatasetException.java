@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson.exception;
 
+/**
+ * Thrown to indicate that a dataset is unresolvable during the resolution process.
+ */
 public class UnresolvedDatasetException extends Exception {
 
     private final String datasetName;
 
     public UnresolvedDatasetException(String datasetName) {
-        super("Unresolved data set " + datasetName);
+        super("Unresolved dataset " + datasetName);
         this.datasetName = datasetName;
     }
 
+    /**
+     * @return Unresolved dataset name
+     */
     public String getDatasetName() {
         return datasetName;
     }

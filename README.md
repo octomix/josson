@@ -63,6 +63,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 - [Jossons Basic](#jossons-basic)
 
 - [Jossons Template Language](#jossons-template-language)
+  - [Nested Placeholders](#nested-placeholders)
   - [Ternary Syntax](#ternary-syntax)
   - [Implicit Variables](#implicit-variables)
   - [Fill In](#fill-in)
@@ -575,8 +576,8 @@ Below is the JSON for this tutorial.
 28. The matching criteria supports logical operators and parentheses.
 
     >not `!`  
-    and `&`  
-    or `|`
+     and `&`  
+     or `|`
 
         josson.getNode("items[(unitDiscount=null | unitDiscount=0) & !(qty<=1)]*.name")
         ==>
@@ -2857,7 +2858,7 @@ To apply a Josson Query on a dataset entry's value.
 
     {{key->query}}
 
-#### Nested Placeholders
+### Nested Placeholders
 
 Placeholders can be nested and are resolved from inside to outside.
 Resolved one is replaced with text and continue for the next round.
@@ -3139,7 +3140,7 @@ dataset resolver to merge and fill all placeholders in a template.
 The last parameter `progress` is a `ResolverProgress` which record all the resolution progress steps.
 By default, the last step "End" is added automatically.
 
-The resolution progress has three debug levels:
+The resolution process has three debug levels:
 
   1. `ResolverDebugLevel.SHOW_CONTENT_OF_VALUE_NODE_ONLY` (default)
   2. `ResolverDebugLevel.SHOW_CONTENT_UP_TO_OBJECT_NODE`
@@ -3161,25 +3162,25 @@ If a key cannot be found in the default dataset mapping during the placeholder r
 the resolver will ask `Function<String, String> dictionaryFinder` for an answer.
 `dictionaryFinder` takes an argument `String key` and returns either:
 
-  - A statement that represent a value.
+- A statement that represent a value.
 
-        "1"      // IntNode
-        "2.3"    // DoubleNode
-        "'Text'" // TextNode
-        "true"   // BooleanNode
-        "null"   // NullNode
+      "1"      // IntNode
+      "2.3"    // DoubleNode
+      "'Text'" // TextNode
+      "true"   // BooleanNode
+      "null"   // NullNode
 
-  - A Jossons query that retrieve data from other datasets.
+- A Jossons query that retrieve data from other datasets.
 
-        "otherKey->jossonQuery"
+      "otherKey->jossonQuery"
 
-  - A database query statement, please refer to [Data Finder](#data-finder).
+- A database query statement, please refer to [Data Finder](#data-finder).
 
-        "collectionName ? {findStatement}"
+      "collectionName ? {findStatement}"
 
-  - A join operation query to merge two datasets, please refer to [Join Datasets](#join-datasets).
+- A join operation query to merge two datasets, please refer to [Join Datasets](#join-datasets).
 
-        "leftQuery{keyL1,keyL2...} <=< rightQuery{keyR1,keyR2...}"
+      "leftQuery{keyL1,keyL2...} <=< rightQuery{keyR1,keyR2...}"
 
 ### Data Finder
 
@@ -3237,25 +3238,25 @@ Join operations match `keyL1` with `keyR1`, `keyL2` with `keyR2` and so on.
 For Join Many operations, the `arrayName:` is optional.
 If `arrayName` is not given, the last element name of the query is used.
 
-  - _Inner Join One_ `>=<`
+- _Inner Join One_ `>=<`
 
-        "leftQuery{keyL1,keyL2...} >=< rightQuery{keyR1,keyR2...}"
+      "leftQuery{keyL1,keyL2...} >=< rightQuery{keyR1,keyR2...}"
 
-  - _Left Join One_ `<=<`
+- _Left Join One_ `<=<`
 
-        "leftQuery{keyL1,keyL2...} <=< rightQuery{keyR1,keyR2...}"
+      "leftQuery{keyL1,keyL2...} <=< rightQuery{keyR1,keyR2...}"
 
-  - _Right Join One_ `>=>`
+- _Right Join One_ `>=>`
 
-        "leftQuery{keyL1,keyL2...} >=> rightQuery{keyR1,keyR2...}"
+      "leftQuery{keyL1,keyL2...} >=> rightQuery{keyR1,keyR2...}"
 
-  - _Left Join Many_ `<=<<`
+- _Left Join Many_ `<=<<`
 
-        "leftQuery{keyL1,keyL2...} <=<< rightQuery{arrayName:keyR1,keyR2...}"
+      "leftQuery{keyL1,keyL2...} <=<< rightQuery{arrayName:keyR1,keyR2...}"
 
-  - _Right Join Many_ `>>=>`
+- _Right Join Many_ `>>=>`
 
-        "leftQuery{arrayName:keyL1,keyL2...} >>=> rightQuery{keyR1,keyR2...}"
+      "leftQuery{arrayName:keyL1,keyL2...} >>=> rightQuery{keyR1,keyR2...}"
 
 ### Put Together
 

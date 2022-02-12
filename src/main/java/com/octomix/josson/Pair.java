@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 class Pair<K, V> {
-    private final K key;
-    private final V value;
 
-    static <K, V> Pair<K, V> of(K key, V value) {
+    static <K, V> Pair<K, V> of(final K key, final V value) {
         return new Pair<>(key, value);
     }
 
-    Pair(K key, V value) {
+    private final K key;
+    private final V value;
+
+    Pair(final K key, final V value) {
         this.key = key;
         this.value = value;
     }

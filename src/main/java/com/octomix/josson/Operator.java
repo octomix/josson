@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 enum Operator {
+
     EQ("="),
     NE("!="),
     GT(">"),
@@ -27,18 +29,22 @@ enum Operator {
     OR("|"),
     NOP("");
 
-    final String symbol;
+    private final String symbol;
 
-    Operator(String symbol) {
+    Operator(final String symbol) {
         this.symbol = symbol;
     }
 
-    static Operator fromSymbol(String symbol) {
+    static Operator fromSymbol(final String symbol) {
         for (Operator operator : values()) {
             if (operator.symbol.equals(symbol)) {
                 return operator;
             }
         }
         return null;
+    }
+
+    String getSymbol() {
+        return symbol;
     }
 }

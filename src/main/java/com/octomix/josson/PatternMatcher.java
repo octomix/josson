@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 import com.octomix.josson.commons.StringUtils;
@@ -37,14 +38,11 @@ class PatternMatcher {
         };
     }
 
-    private static class AtPositionException extends IllegalArgumentException {
-        AtPositionException(String input, String message, int pos) {
-            super(message + (pos == -1 ? " at the end" : " at position " + pos) + ": " + input);
-        }
+    private PatternMatcher() {
     }
-    
-    private static int eatSpaces(String input, int beg, int last) {
-        for (;beg <= last; beg++) {
+
+    private static int eatSpaces(final String input, int beg, final int last) {
+        for (; beg <= last; beg++) {
             if (input.charAt(beg) != ' ') {
                 break;
             }
@@ -52,12 +50,12 @@ class PatternMatcher {
         return beg;
     }
 
-    private static String trimOf(String input, int beg, int end) {
+    private static String trimOf(final String input, final int beg, final int end) {
         return rightTrimOf(input, eatSpaces(input, beg, end - 1), end);
     }
 
-    private static String rightTrimOf(String input, int beg, int end) {
-        for (;end > beg; end--) {
+    private static String rightTrimOf(final String input, final int beg, int end) {
+        for (; end > beg; end--) {
             if (input.charAt(end - 1) != ' ') {
                 break;
             }
@@ -65,31 +63,28 @@ class PatternMatcher {
         return input.substring(beg, end);
     }
 
-    private static int skipEnclosure(String input, int pos, int last, Enclosure... enclosures) {
+    private static int skipEnclosure(final String input, final int pos, final int last, final Enclosure... enclosures) {
         for (Enclosure enclosure : enclosures) {
-            int end;
+            int end = 0;
             switch (enclosure) {
                 case STRING_LITERAL:
-                    if ((end = matchStringLiteral(input, pos, last)) > 0) {
-                        return end;
-                    }
+                    end = matchStringLiteral(input, pos, last);
                     break;
                 case SQUARE_BRACKETS:
-                    if ((end = matchSquareBrackets(input, pos, last)) > 0) {
-                        return end;
-                    }
+                    end = matchSquareBrackets(input, pos, last);
                     break;
                 case PARENTHESES:
-                    if ((end = matchParentheses(input, pos, last)) > 0) {
-                        return end;
-                    }
+                    end = matchParentheses(input, pos, last);
                     break;
+            }
+            if (end > 0) {
+                return end;
             }
         }
         return pos;
     }
 
-    private static int matchStringLiteral(String input, int pos, int last) {
+    private static int matchStringLiteral(final String input, int pos, final int last) {
         if (input.charAt(pos) != QUOTE_SYMBOL) {
             return 0;
         }
@@ -107,21 +102,21 @@ class PatternMatcher {
         throw new AtPositionException(input, "Expected quote symbol (" + QUOTE_SYMBOL + ")", pos);
     }
 
-    private static int matchSquareBrackets(String input, int pos, int last) {
+    private static int matchSquareBrackets(final String input, final int pos,final  int last) {
         if (input.charAt(pos) != '[') {
             return 0;
         }
         return findBracketEnd(input, pos, last, ']');
     }
 
-    private static int matchParentheses(String input, int pos, int last) {
+    private static int matchParentheses(final String input, final int pos, final int last) {
         if (input.charAt(pos) != '(') {
             return 0;
         }
         return findBracketEnd(input, pos, last, ')');
     }
 
-    private static int findBracketEnd(String input, int pos, int last, char expectedEnd) {
+    private static int findBracketEnd(final String input, int pos,final  int last, final char expectedEnd) {
         while (++pos <= last) {
             switch (input.charAt(pos)) {
                 case ')':
@@ -146,8 +141,8 @@ class PatternMatcher {
         throw new AtPositionException(input, "Missing '" + expectedEnd + "'", -1);
     }
 
-    private static int skipDatasetQuery(String input, int pos, int last) {
-        for (;pos <= last && "=!<>&|)".indexOf(input.charAt(pos)) < 0; pos++) {
+    private static int skipDatasetQuery(final String input, int pos, final int last) {
+        for (; pos <= last && "=!<>&|)".indexOf(input.charAt(pos)) < 0; pos++) {
             if (input.charAt(pos) == '-' && pos++ == last) {
                 // skip "->"
                 break;
@@ -157,7 +152,7 @@ class PatternMatcher {
         return pos;
     }
 
-    static String[] matchDatasetQuery(String input) {
+    static String[] matchDatasetQuery(final String input) {
         int last = input.length() - 1;
         int pos = eatSpaces(input, 0, last);
         for (int beg = pos; pos < last; pos++) {
@@ -173,12 +168,12 @@ class PatternMatcher {
         return null;
     }
 
-    static String[] matchDbQuery(String input) {
+    static String[] matchDbQuery(final String input) {
         int last = input.length() - 1;
         int pos = 0;
         int arrayEnd = 0;
         String name = null;
-        for (;pos < last; pos++) {
+        for (; pos < last; pos++) {
             if (input.charAt(pos) == '?') {
                 if (arrayEnd > 0) {
                     if (eatSpaces(input, arrayEnd + 1, pos) != pos) {
@@ -212,7 +207,7 @@ class PatternMatcher {
         return null;
     }
 
-    static ArrayFilter matchFilterQuery(String input) {
+    static ArrayFilter matchFilterQuery(final String input) {
         int last = input.length() - 1;
         for (int pos = 0; pos <= last; pos++) {
             int end = matchSquareBrackets(input, pos, last);
@@ -244,7 +239,7 @@ class PatternMatcher {
         return new ArrayFilter(input, null, FILTRATE_COLLECT_ALL);
     }
 
-    static FuncDispatcher matchFunctionAndArgument(String input) {
+    static FuncDispatcher matchFunctionAndArgument(final String input) {
         int last = input.length() - 1;
         for (int pos = 0; pos <= last; pos++) {
             int end = matchParentheses(input, pos, last);
@@ -265,12 +260,12 @@ class PatternMatcher {
         return null;
     }
 
-    static JoinDatasets matchJoinDatasetOperation(String input) {
+    static JoinDatasets matchJoinDatasetOperation(final String input) {
         int last = input.length() - 1;
         int pos = skipDatasetQuery(input, 0, last);
         String leftQuery = trimOf(input, 0, pos);
         int beg = pos;
-        for (;pos <= last; pos++) {
+        for (; pos <= last; pos++) {
             if ("<=>".indexOf(input.charAt(pos)) < 0) {
                 break;
             }
@@ -293,7 +288,7 @@ class PatternMatcher {
         return new JoinDatasets(leftDataset, operator, rightDataset);
     }
 
-    private static JoinDatasets.Dataset matchJoinDatasetQuery(String input) {
+    private static JoinDatasets.Dataset matchJoinDatasetQuery(final String input) {
         int last = input.length() - 1;
         String query = null;
         for (int pos = 0, beg = 0; pos <= last; pos++) {
@@ -327,7 +322,7 @@ class PatternMatcher {
         throw new IllegalArgumentException("Invalid join dataset query: " + input);
     }
 
-    static List<String> decomposePaths(String input) {
+    static List<String> decomposePaths(final String input) {
         List<String> paths = new ArrayList<>();
         int last = input.length() - 1;
         String isInt = null;
@@ -371,7 +366,7 @@ class PatternMatcher {
         return paths;
     }
 
-    static List<OperationStep> decomposeStatement(String input) {
+    static List<OperationStep> decomposeStatement(final String input) {
         List<OperationStep> steps = new ArrayList<>();
         int last = input.length() - 1;
         int pos = 0;
@@ -403,7 +398,7 @@ class PatternMatcher {
         return steps;
     }
 
-    static List<String> decomposeFunctionParameters(String input, int minCount, int maxCount) {
+    static List<String> decomposeFunctionParameters(final String input, final int minCount, final int maxCount) {
         List<String> params = new ArrayList<>();
         int last = input.length() - 1;
         for (int pos = 0; pos <= last; pos++) {
@@ -441,7 +436,7 @@ class PatternMatcher {
         return params;
     }
 
-    static List<TernaryStep> decomposeTernarySteps(String input) {
+    static List<TernaryStep> decomposeTernarySteps(final String input) {
         List<TernaryStep> steps = new ArrayList<>();
         int len = input.length();
         int last = len - 1;
@@ -470,7 +465,7 @@ class PatternMatcher {
         return steps;
     }
 
-    static List<String> separateXmlTags(String input) {
+    static List<String> separateXmlTags(final String input) {
         List<String> tokens = new ArrayList<>();
         int len = input.length();
         int text = 0;
@@ -504,7 +499,7 @@ class PatternMatcher {
         return tokens;
     }
 
-    static String getLastElementName(String path) {
+    static String getLastElementName(final String path) {
         List<String> paths = decomposePaths(path);
         for (int i = paths.size() - 1; i >= 0 ; i--) {
             if (matchFunctionAndArgument(paths.get(i)) == null) {
@@ -514,9 +509,15 @@ class PatternMatcher {
         return "undefined";
     }
 
-    static void checkElementName(String name) {
+    static void checkElementName(final String name) {
         if (name.contains(".")) {
             throw new IllegalArgumentException("Illegal '.' in element name '" + name + "'");
+        }
+    }
+
+    private static class AtPositionException extends IllegalArgumentException {
+        AtPositionException(String input, String message, int pos) {
+            super(message + (pos == -1 ? " at the end" : " at position " + pos) + ": " + input);
         }
     }
 }

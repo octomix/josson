@@ -13,10 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
+/**
+ * Debug levels for resolution progress
+ * {@link #SHOW_CONTENT_OF_VALUE_NODE_ONLY}
+ * {@link #SHOW_CONTENT_UP_TO_OBJECT_NODE}
+ * {@link #SHOW_CONTENT_UP_TO_ARRAY_NODE}
+ */
 public enum ResolverDebugLevel {
+
+    /**
+     * Level 1: Show content of value node only
+     */
     SHOW_CONTENT_OF_VALUE_NODE_ONLY,
+
+    /**
+     * Level 2: Show content up to object node
+     */
     SHOW_CONTENT_UP_TO_OBJECT_NODE,
+
+    /**
+     * Level 3: Show content up to array node
+     */
     SHOW_CONTENT_UP_TO_ARRAY_NODE
 }

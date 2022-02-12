@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,21 +32,26 @@ import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
 
 class FuncExecutor {
-    static String getParamPath(String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 0, 1);
+
+    private FuncExecutor() {
+    }
+
+    static String getParamPath(final String params) {
+        final List<String> paramList = decomposeFunctionParameters(params, 0, 1);
         return paramList.isEmpty() ? null : paramList.get(0);
     }
 
-    static Pair<String, List<String>> getParamPathAndStrings(String params, int minCount, int maxCount) {
-        List<String> paramList = decomposeFunctionParameters(params, minCount, maxCount + 1);
-        String path = paramList.size() > maxCount ? paramList.remove(0) : null;
+    static Pair<String, List<String>> getParamPathAndStrings(final String params, final int minCount,
+                                                             final int maxCount) {
+        final List<String> paramList = decomposeFunctionParameters(params, minCount, maxCount + 1);
+        final String path = paramList.size() > maxCount ? paramList.remove(0) : null;
         return Pair.of(path, paramList);
     }
 
-    static Map<String, String> getParamNamePath(List<String> paramList) {
-        Map<String, String> elements = new LinkedHashMap<>();
+    static Map<String, String> getParamNamePath(final List<String> paramList) {
+        final Map<String, String> elements = new LinkedHashMap<>();
         for (String param : paramList) {
-            String[] values = param.split(":", 2);
+            final String[] values = param.split(":", 2);
             String name = values[0].trim();
             String path = null;
             if (!isCurrentNodePath(name)) {
@@ -64,8 +70,8 @@ class FuncExecutor {
         return elements;
     }
 
-    static JsonNode getParamArrayOrItselfIsContainer(String params, JsonNode node) {
-        List<String> paramList = decomposeFunctionParameters(params, 0, -1);
+    static JsonNode getParamArrayOrItselfIsContainer(final String params, final JsonNode node) {
+        final List<String> paramList = decomposeFunctionParameters(params, 0, -1);
         if (paramList.isEmpty()) {
             if (node.isContainerNode()) {
                 return node;
@@ -75,8 +81,8 @@ class FuncExecutor {
         return getParamArray(paramList, node);
     }
 
-    static ArrayNode getParamArrayOrItself(String params, JsonNode node) {
-        List<String> paramList = decomposeFunctionParameters(params, 0, -1);
+    static ArrayNode getParamArrayOrItself(final String params, final JsonNode node) {
+        final List<String> paramList = decomposeFunctionParameters(params, 0, -1);
         if (paramList.isEmpty()) {
             if (node.isArray()) {
                 return (ArrayNode) node;
@@ -86,22 +92,22 @@ class FuncExecutor {
         return getParamArray(paramList, node);
     }
 
-    static ArrayNode getParamArray(String params, JsonNode node) {
+    static ArrayNode getParamArray(final String params, final JsonNode node) {
         return getParamArray(decomposeFunctionParameters(params, 1, -1), node);
     }
 
-    static ArrayNode getParamArray(List<String> paramList, JsonNode node) {
-        ArrayNode array = Josson.createArrayNode();
+    static ArrayNode getParamArray(final List<String> paramList, final JsonNode node) {
+        final ArrayNode array = MAPPER.createArrayNode();
         for (String param : paramList) {
             if (node.isArray()) {
                 for (int i = 0; i < node.size(); i++) {
-                    JsonNode tryNode = getNodeByPath(node, i, param);
+                    final JsonNode tryNode = getNodeByPath(node, i, param);
                     if (tryNode != null) {
                         array.add(tryNode);
                     }
                 }
             } else {
-                JsonNode tryNode = getNodeByPath(node, param);
+                final JsonNode tryNode = getNodeByPath(node, param);
                 if (tryNode != null) {
                     if (tryNode.isArray()) {
                         array.addAll((ArrayNode) tryNode);
@@ -114,8 +120,8 @@ class FuncExecutor {
         return array;
     }
 
-    static JsonNode applyFunc(JsonNode node, String params, Function<JsonNode, JsonNode> action) {
-        String path = getParamPath(params);
+    static JsonNode applyFunc(JsonNode node, final String params, final Function<JsonNode, JsonNode> action) {
+        final String path = getParamPath(params);
         if (path != null) {
             node = getNodeByPath(node, path);
             if (node == null) {
@@ -125,8 +131,8 @@ class FuncExecutor {
         return action.apply(node);
     }
 
-    static JsonNode applyFunc(JsonNode node, String params, Predicate<JsonNode> isValid,
-                              Function<JsonNode, JsonNode> action) {
+    static JsonNode applyFunc(JsonNode node, final String params, final Predicate<JsonNode> isValid,
+                              final Function<JsonNode, JsonNode> action) {
         String path = getParamPath(params);
         if (path != null) {
             node = getNodeByPath(node, path);
@@ -135,9 +141,9 @@ class FuncExecutor {
             }
         }
         if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
-                JsonNode jsonNode = node.get(i);
+            final ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                final JsonNode jsonNode = node.get(i);
                 if (isValid.test(jsonNode)) {
                     array.add(action.apply(jsonNode));
                 } else {
@@ -152,9 +158,9 @@ class FuncExecutor {
         return null;
     }
 
-    static JsonNode applyFunc(JsonNode node, String params, int minCount, int maxCount,
-                              Function<List<String>, Object> prepare, Predicate<JsonNode> isValid,
-                              BiFunction<JsonNode, Object, JsonNode> action) {
+    static JsonNode applyFunc(JsonNode node, final String params, final int minCount, final int maxCount,
+                              final Function<List<String>, Object> prepare, final Predicate<JsonNode> isValid,
+                              final BiFunction<JsonNode, Object, JsonNode> action) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, minCount, maxCount);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
@@ -164,8 +170,8 @@ class FuncExecutor {
         }
         Object variables = prepare.apply(pathAndParams.getValue());
         if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
-            for (int i  = 0; i < node.size(); i++) {
+            final ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
                 JsonNode jsonNode = node.get(i);
                 if (isValid.test(jsonNode)) {
                     array.add(action.apply(jsonNode, variables));
@@ -181,14 +187,14 @@ class FuncExecutor {
         return null;
     }
 
-    static JsonNode applyFunc(JsonNode node, String params, Predicate<JsonNode> isValid,
-                              BiFunction<JsonNode, ArrayNode, JsonNode> action) {
+    static JsonNode applyFunc(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
+                              final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
         ArrayNode paramArray = getParamArray(params, node);
         if (paramArray.isEmpty()) {
             return null;
         }
         if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
+            final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 JsonNode jsonNode = node.get(i);
                 if (isValid.test(jsonNode)) {
@@ -205,16 +211,18 @@ class FuncExecutor {
         return null;
     }
 
-    static JsonNode applyFuncWithParamAsText(JsonNode node, String params, Predicate<JsonNode> isValid,
-                                             BiFunction<JsonNode, Object, JsonNode> action) {
+    static JsonNode applyFuncWithParamAsText(final JsonNode node, final String params,
+                                             final Predicate<JsonNode> isValid,
+                                             final BiFunction<JsonNode, Object, JsonNode> action) {
         return applyFunc(node, params, 1, 1,
                 paramList -> getNodeAsText(node, paramList.get(0)),
                 isValid, action
         );
     }
 
-    static JsonNode applyFuncWithParamAsInt(JsonNode node, String params, Predicate<JsonNode> isValid,
-                                            BiFunction<JsonNode, Object, JsonNode> action) {
+    static JsonNode applyFuncWithParamAsInt(final JsonNode node, final String params,
+                                            final Predicate<JsonNode> isValid,
+                                            final BiFunction<JsonNode, Object, JsonNode> action) {
         return applyFunc(node, params, 1, 1,
                 paramList -> getNodeAsInt(node, paramList.get(0)),
                 isValid, action

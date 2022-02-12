@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,31 +35,35 @@ import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 class FuncFormat {
-    static JsonNode funcB64Decode(JsonNode node, String params, Base64.Decoder decoder) {
+
+    private FuncFormat() {
+    }
+
+    static JsonNode funcB64Decode(final JsonNode node, final String params, final Base64.Decoder decoder) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(new String(decoder.decode(jsonNode.asText())))
         );
     }
 
-    static JsonNode funcB64Encode(JsonNode node, String params, Base64.Encoder encoder) {
+    static JsonNode funcB64Encode(final JsonNode node, final String params, final Base64.Encoder encoder) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> TextNode.valueOf(encoder.encodeToString(jsonNode.asText().getBytes()))
         );
     }
 
-    static JsonNode funcCaseValue(JsonNode node, String params) {
-        List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+    static JsonNode funcCaseValue(final JsonNode node, final String params) {
+        final List<String> paramList = decomposeFunctionParameters(params, 1, -1);
         if (node.isObject()) {
             return null;
         }
-        int last = paramList.size() - 1;
-        List<Pair<JsonNode, JsonNode>> casePairs = new ArrayList<>();
+        final int last = paramList.size() - 1;
+        final List<Pair<JsonNode, JsonNode>> casePairs = new ArrayList<>();
         JsonNode defaultValue = null;
         for (int i = 0; i <= last; i++) {
-            JsonNode caseKey;
-            if ((caseKey = getNodeByPath(node, paramList.get(i++))) != null) {
+            final JsonNode caseKey = getNodeByPath(node, paramList.get(i++));
+            if (caseKey != null) {
                 if (i > last) {
                     defaultValue = caseKey;
                 } else {
@@ -67,7 +72,7 @@ class FuncFormat {
             }
         }
         if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
+            final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 array.add(funcCaseValue(node.get(i), casePairs, defaultValue));
             }
@@ -76,12 +81,13 @@ class FuncFormat {
         return funcCaseValue(node, casePairs, defaultValue);
     }
 
-    private static JsonNode funcCaseValue(JsonNode node, List<Pair<JsonNode, JsonNode>> casePairs, JsonNode defaultValue) {
+    private static JsonNode funcCaseValue(final JsonNode node, final List<Pair<JsonNode, JsonNode>> casePairs,
+                                          final JsonNode defaultValue) {
         if (node.isNumber()) {
-            double key = node.asDouble();
+            final double key = node.asDouble();
             return casePairs.stream()
                     .filter(pair -> {
-                        JsonNode caseKey = pair.getKey();
+                        final JsonNode caseKey = pair.getKey();
                         return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asDouble() == key;
                     })
                     .findFirst()
@@ -95,7 +101,7 @@ class FuncFormat {
                     .map(Pair::getValue)
                     .orElse(defaultValue);
         }
-        String key = node.asText();
+        final String key = node.asText();
         return casePairs.stream()
                 .filter(pair -> {
                     JsonNode caseKey = pair.getKey();
@@ -106,44 +112,44 @@ class FuncFormat {
                 .orElse(defaultValue);
     }
 
-    static JsonNode funcCycleValue(JsonNode node, String params) {
+    static JsonNode funcCycleValue(final JsonNode node, final String params) {
         return applyFunc(node, params,
                 JossonCore::nodeHasValue,
                 (jsonNode, paramArray) -> {
-                    int size = paramArray.size();
-                    int index = jsonNode.asInt() % size;
+                    final int size = paramArray.size();
+                    final int index = jsonNode.asInt() % size;
                     return paramArray.get(index < 0 ? index + size : index);
                 }
         );
     }
 
-    static JsonNode funcFormatDate(JsonNode node, String params) {
+    static JsonNode funcFormatDate(final JsonNode node, final String params) {
         return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode)
-                        .format(DateTimeFormatter.ofPattern((String) objVar).withLocale(locale).withZone(zoneId)))
+                        .format(DateTimeFormatter.ofPattern((String) objVar).withLocale(getLocale()).withZone(getZoneId())))
         );
     }
 
-    static JsonNode funcFormatNumber(JsonNode node, String params) {
+    static JsonNode funcFormatNumber(final JsonNode node, final String params) {
         return applyFuncWithParamAsText(node, params,
                 jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
                 (jsonNode, objVar) -> TextNode.valueOf(new DecimalFormat((String) objVar).format(jsonNode.asDouble()))
         );
     }
 
-    static JsonNode funcFormatText(JsonNode node, String params) {
+    static JsonNode funcFormatText(final JsonNode node, final String params) {
         return applyFuncWithParamAsText(node, params,
                 JossonCore::nodeHasValue,
                 (jsonNode, objVar) -> TextNode.valueOf(String.format((String) objVar, valueAsObject(jsonNode)))
         );
     }
 
-    static JsonNode funcFormatTexts(JsonNode node, String params) {
+    static JsonNode funcFormatTexts(final JsonNode node, final String params) {
         Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 2, -2);
         String pattern = getNodeAsText(node, pathAndParams.getKey());
         if (node.isArray()) {
-            ArrayNode array = MAPPER.createArrayNode();
+            final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 Object[] valueObjects = valuesAsObjects(node, i, pathAndParams.getValue());
                 if (valueObjects != null) {
@@ -161,7 +167,7 @@ class FuncFormat {
         return TextNode.valueOf(String.format(pattern, valueObjects));
     }
 
-    static JsonNode funcIndexedValue(JsonNode node, String params) {
+    static JsonNode funcIndexedValue(final JsonNode node, final String params) {
         return applyFunc(node, params,
                 JossonCore::nodeHasValue,
                 (jsonNode, paramArray) -> {
@@ -171,27 +177,27 @@ class FuncFormat {
         );
     }
 
-    static JsonNode funcToNumber(JsonNode node, String params) {
+    static JsonNode funcToNumber(final JsonNode node, final String params) {
         return applyFunc(node, params,
                 JossonCore::nodeHasValue,
                 jsonNode -> jsonNode.isNumber() ? jsonNode : DoubleNode.valueOf(jsonNode.asDouble())
         );
     }
 
-    static JsonNode funcToString(JsonNode node, String params) {
+    static JsonNode funcToString(final JsonNode node, final String params) {
         return applyFunc(node, params,
                 jsonNode -> jsonNode.isTextual() ? jsonNode :
                         TextNode.valueOf(jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString()));
     }
 
-    static JsonNode funcToText(JsonNode node, String params) {
+    static JsonNode funcToText(final JsonNode node, final String params) {
         return applyFunc(node, params,
                 JsonNode::isValueNode,
                 jsonNode -> jsonNode.isTextual() ? jsonNode : TextNode.valueOf(jsonNode.asText())
         );
     }
 
-    static JsonNode funcUrlDecode(JsonNode node, String params) {
+    static JsonNode funcUrlDecode(final JsonNode node, final String params) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> {
@@ -204,7 +210,7 @@ class FuncFormat {
         );
     }
 
-    static JsonNode funcUrlEncode(JsonNode node, String params) {
+    static JsonNode funcUrlEncode(final JsonNode node, final String params) {
         return applyFunc(node, params,
                 JsonNode::isTextual,
                 jsonNode -> {

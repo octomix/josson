@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,33 +33,32 @@ class OperationStack {
     private final Josson arrayNode;
     private final Map<String, Josson> datasets;
     private final LinkedList<OperationStep> stack = new LinkedList<>();
-    private OperationStep lastStep = null;
+    private OperationStep lastStep;
 
-    OperationStack(JsonNode node) {
-        this.arrayNode = node.isArray() ?
-                Josson.create(node) :
-                Josson.create(MAPPER.createArrayNode().add(node));
+    OperationStack(final JsonNode node) {
+        this.arrayNode = node.isArray()
+                ? Josson.create(node)
+                : Josson.create(MAPPER.createArrayNode().add(node));
         this.datasets = null;
     }
 
-    OperationStack(Map<String, Josson> datasets) {
+    OperationStack(final Map<String, Josson> datasets) {
         this.arrayNode = null;
         this.datasets = datasets;
     }
-
-    private void pushStep(OperationStep step) {
+    private void pushStep(final OperationStep step) {
         stack.addLast(step);
         lastStep = step;
     }
 
     private OperationStep popStep() {
-        OperationStep step = stack.removeLast();
+        final OperationStep step = stack.removeLast();
         lastStep = stack.peekLast();
         return step;
     }
 
-    private JsonNode evaluateSteps(boolean inParentheses, Function<OperationStep, JsonNode> resolver) {
-        LinkedList<OperationStep> iterator;
+    private JsonNode evaluateSteps(final boolean inParentheses, final Function<OperationStep, JsonNode> resolver) {
+        final LinkedList<OperationStep> iterator;
         if (inParentheses) {
             iterator = new LinkedList<>();
             while (!stack.isEmpty()) {
@@ -103,18 +103,12 @@ class OperationStack {
         return node;
     }
 
-    private static class IllegalStatementException extends IllegalArgumentException {
-        IllegalStatementException(String statement, IllegalArgumentException e) {
-            super(e.getMessage() == null ? statement : "\"" + e.getMessage() + "\" in " + statement);
-        }
-    }
-
     /*
         For JossonCore.evaluateFilter()
      */
-    JsonNode evaluate(String statement, int arrayIndex) {
+    JsonNode evaluate(final String statement, final int arrayIndex) {
         stack.clear();
-        List<OperationStep> steps = decomposeStatement(statement);
+        final List<OperationStep> steps = decomposeStatement(statement);
         for (OperationStep step : steps) {
             try {
                 evaluate(step, arrayIndex);
@@ -125,7 +119,7 @@ class OperationStack {
         return evaluateSteps(false, (OperationStep opStep) -> opStep.resolveFrom(arrayNode, arrayIndex));
     }
 
-    private void evaluate(OperationStep step, int arrayIndex) {
+    private void evaluate(final OperationStep step, final int arrayIndex) {
         switch (step.getOperator()) {
             case NOT:
             case NOP:
@@ -147,7 +141,7 @@ class OperationStack {
             case AND:
             case OR:
                 if (lastStep.getOperator() == Operator.AND) {
-                    OperationStep thisStep = popStep();
+                    final OperationStep thisStep = popStep();
                     if (lastStep.isResolveToTrueFrom(arrayNode, arrayIndex)) {
                         lastStep.setResolved(thisStep.resolveFrom(arrayNode, arrayIndex));
                     }
@@ -173,7 +167,7 @@ class OperationStack {
     /*
         For Jossons.evaluateStatement()
      */
-    JsonNode evaluate(String statement) throws UnresolvedDatasetException {
+    JsonNode evaluate(final String statement) throws UnresolvedDatasetException {
         List<OperationStep> steps = decomposeStatement(statement);
         for (OperationStep step : steps) {
             try {
@@ -198,7 +192,7 @@ class OperationStack {
         }
     }
 
-    private void evaluate(OperationStep step) throws UnresolvedDatasetException {
+    private void evaluate(final OperationStep step) throws UnresolvedDatasetException {
         switch (step.getOperator()) {
             case NOT:
             case NOP:
@@ -253,6 +247,12 @@ class OperationStack {
             }
         } else {
             lastStep.setResolved(lastStep.relationalCompare(step, datasets));
+        }
+    }
+
+    private static class IllegalStatementException extends IllegalArgumentException {
+        IllegalStatementException(String statement, IllegalArgumentException e) {
+            super(e.getMessage() == null ? statement : "\"" + e.getMessage() + "\" in " + statement);
         }
     }
 }

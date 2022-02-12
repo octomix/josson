@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,7 +35,7 @@ class OperationStep {
     private String expression;
     private JsonNode resolved;
 
-    OperationStep(Operator operator, String expression) {
+    OperationStep(final Operator operator, final String expression) {
         this.operator = operator;
         this.expression = expression;
         this.resolved = null;
@@ -52,7 +53,7 @@ class OperationStep {
         return expression;
     }
 
-    void setResolved(JsonNode resolved) {
+    void setResolved(final JsonNode resolved) {
         this.expression = null;
         this.resolved = resolved;
     }
@@ -69,7 +70,7 @@ class OperationStep {
         }
         if (rightNode.isTextual()) {
             if (leftNode.isTextual()) {
-                int compareResult = leftNode.asText().compareTo(rightNode.asText());
+                final int compareResult = leftNode.asText().compareTo(rightNode.asText());
                 switch (operator) {
                     case EQ:
                         return compareResult == 0;
@@ -85,7 +86,7 @@ class OperationStep {
                         return compareResult <= 0;
                 }
             }
-            JsonNode swap = leftNode;
+            final JsonNode swap = leftNode;
             leftNode = rightNode;
             rightNode = swap;
             switch (operator) {
@@ -105,7 +106,7 @@ class OperationStep {
         }
         if (rightNode.isNumber()) {
             try {
-                double value = leftNode.isNumber() ? leftNode.asDouble() : Double.parseDouble(leftNode.asText());
+                final double value = leftNode.isNumber() ? leftNode.asDouble() : Double.parseDouble(leftNode.asText());
                 switch (operator) {
                     case EQ:
                         return value == rightNode.asDouble();
@@ -142,16 +143,17 @@ class OperationStep {
         return false;
     }
 
-    private static boolean relationalCompareContainer(JsonNode leftNode, Operator operator, JsonNode rightNode) {
+    private static boolean relationalCompareContainer(final JsonNode leftNode, final Operator operator,
+                                                      final JsonNode rightNode) {
         if (leftNode.getNodeType() != rightNode.getNodeType() || (operator != Operator.EQ && operator != Operator.NE)) {
             return operator == Operator.NE;
         }
-        int size = leftNode.size();
+        final int size = leftNode.size();
         if (size != rightNode.size()) {
             return operator == Operator.NE;
         }
         if (leftNode.isArray()) {
-            List<JsonNode> rightArray = new ArrayList<>();
+            final List<JsonNode> rightArray = new ArrayList<>();
             for (int j = 0; j < size; j++) {
                 if (!rightNode.get(j).isValueNode()) {
                     return operator == Operator.NE;
@@ -159,12 +161,12 @@ class OperationStep {
                 rightArray.add(rightNode.get(j));
             }
             for (int i = size - 1; i >= 0; i--) {
-                JsonNode leftElem = leftNode.get(i);
+                final JsonNode leftElem = leftNode.get(i);
                 if (!leftElem.isValueNode()) {
                     return false;
                 }
                 int j = i;
-                for (; j >= 0; j--) {
+                for (;  j >= 0; j--) {
                     if (relationalCompare(leftElem, Operator.EQ, rightArray.get(j))) {
                         break;
                     }
@@ -175,9 +177,9 @@ class OperationStep {
                 rightArray.remove(j);
             }
         } else {
-            Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
+            final Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
             while (iterator.hasNext()) {
-                Map.Entry<String, JsonNode> leftElem = iterator.next();
+                final Map.Entry<String, JsonNode> leftElem = iterator.next();
                 if (!relationalCompare(leftElem.getValue(), Operator.EQ, rightNode.get(leftElem.getKey()))) {
                     return operator == Operator.NE;
                 }
@@ -186,14 +188,14 @@ class OperationStep {
         return operator == Operator.EQ;
     }
 
-    private JsonNode evaluateExpression(Map<String, Josson> datasets) throws UnresolvedDatasetException {
+    private JsonNode evaluateExpression(final Map<String, Josson> datasets) throws UnresolvedDatasetException {
         try {
             return toValueNode(expression);
         } catch (NumberFormatException e) {
             // continue
         }
         if (datasets.containsKey(expression)) {
-            Josson josson = datasets.get(expression);
+            final Josson josson = datasets.get(expression);
             if (josson == null) {
                 return null;
             }
@@ -203,11 +205,11 @@ class OperationStep {
         if (implicitVariable != null) {
             return implicitVariable;
         }
-        String[] tokens = matchDatasetQuery(expression);
+        final String[] tokens = matchDatasetQuery(expression);
         if (tokens == null) {
             throw new UnresolvedDatasetException(expression);
         }
-        Josson josson;
+        final Josson josson;
         if (datasets.containsKey(tokens[0])) {
             josson = datasets.get(tokens[0]);
             if (josson == null) {
@@ -220,7 +222,7 @@ class OperationStep {
             }
             josson = Josson.create(implicitVariable);
         }
-        JsonNode node = josson.getNode(tokens[1]);
+        final JsonNode node = josson.getNode(tokens[1]);
         datasets.put(expression, node == null ? null : Josson.create(node));
         return node;
     }
@@ -228,50 +230,53 @@ class OperationStep {
     /*
         For JossonCore.evaluateFilter()
      */
-    JsonNode resolveFrom(Josson arrayNode, int arrayIndex) {
+    JsonNode resolveFrom(final Josson arrayNode, final int arrayIndex) {
         if (expression != null) {
             setResolved(arrayNode.getNode(arrayIndex, expression));
         }
         return resolved;
     }
 
-    boolean isResolveToTrueFrom(Josson arrayNode, int arrayIndex) {
+    boolean isResolveToTrueFrom(final Josson arrayNode, final int arrayIndex) {
         JsonNode node = resolveFrom(arrayNode, arrayIndex);
         return node != null && node.asBoolean();
     }
 
-    boolean isResolveToFalseFrom(Josson arrayNode, int arrayIndex) {
+    boolean isResolveToFalseFrom(final Josson arrayNode, final int arrayIndex) {
         JsonNode node = resolveFrom(arrayNode, arrayIndex);
         return node != null && !node.asBoolean();
     }
 
-    JsonNode relationalCompare(OperationStep step, Josson arrayNode, int arrayIndex) {
+    JsonNode relationalCompare(final OperationStep step, final Josson arrayNode, final int arrayIndex) {
         resolved = BooleanNode.valueOf(relationalCompare(
-                resolveFrom(arrayNode, arrayIndex), step.getOperator(), arrayNode.getNode(arrayIndex, step.getExpression())));
+                resolveFrom(arrayNode, arrayIndex),
+                step.getOperator(),
+                arrayNode.getNode(arrayIndex, step.getExpression())));
         return resolved;
     }
 
     /*
         For Jossons.evaluateStatement()
      */
-    JsonNode resolveFrom(Map<String, Josson> datasets) throws UnresolvedDatasetException {
+    JsonNode resolveFrom(final Map<String, Josson> datasets) throws UnresolvedDatasetException {
         if (expression != null) {
             setResolved(evaluateExpression(datasets));
         }
         return resolved;
     }
 
-    boolean isResolveToTrueFrom(Map<String, Josson> datasets) throws UnresolvedDatasetException {
+    boolean isResolveToTrueFrom(final Map<String, Josson> datasets) throws UnresolvedDatasetException {
         JsonNode node = resolveFrom(datasets);
         return node != null && node.asBoolean();
     }
 
-    boolean isResolveToFalseFrom(Map<String, Josson> datasets) throws UnresolvedDatasetException {
+    boolean isResolveToFalseFrom(final Map<String, Josson> datasets) throws UnresolvedDatasetException {
         JsonNode node = resolveFrom(datasets);
         return node != null && !node.asBoolean();
     }
 
-    JsonNode relationalCompare(OperationStep step, Map<String, Josson> datasets) throws UnresolvedDatasetException {
+    JsonNode relationalCompare(final OperationStep step,
+                               final Map<String, Josson> datasets) throws UnresolvedDatasetException {
         resolved = BooleanNode.valueOf(relationalCompare(
                 resolveFrom(datasets), step.getOperator(), step.evaluateExpression(datasets)));
         return resolved;

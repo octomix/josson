@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,11 +36,12 @@ import static com.octomix.josson.PatternMatcher.*;
 class JossonCore {
 
     static final char QUOTE_SYMBOL = '\'';
-    private static final char INDEX_PREFIX_SYMBOL = '#';
+    static final String CURRENT_NODE = "?";
+
+    private static final String PARENT_ARRAY_NODE = "@";
     private static final char COLLECT_BRANCHES_SYMBOL = '@';
 
-    static final String CURRENT_NODE = "?";
-    private static final String PARENT_ARRAY_NODE = "@";
+    private static final char INDEX_PREFIX_SYMBOL = '#';
     private static final String ZERO_BASED_INDEX = INDEX_PREFIX_SYMBOL + "";
     private static final String ONE_BASED_INDEX = INDEX_PREFIX_SYMBOL + "#";
     private static final String UPPERCASE_INDEX = INDEX_PREFIX_SYMBOL + "A";
@@ -47,18 +49,41 @@ class JossonCore {
     private static final String UPPER_ROMAN_INDEX = INDEX_PREFIX_SYMBOL + "R";
     private static final String LOWER_ROMAN_INDEX = INDEX_PREFIX_SYMBOL + "r";
 
-    static Locale locale = Locale.getDefault();
-    static ZoneId zoneId = ZoneId.systemDefault();
+    private static Locale locale = Locale.getDefault();
+    private static ZoneId zoneId = ZoneId.systemDefault();
 
-    static String unquoteString(String quotedString) {
-        int last = quotedString.length() - 1;
+    private JossonCore() {
+    }
+
+    static void setLocale(final Locale locale) {
+        if (locale != null) {
+            JossonCore.locale = locale;
+        }
+    }
+
+    static Locale getLocale() {
+        return JossonCore.locale;
+    }
+
+    static void setZoneId(final ZoneId zoneId) {
+        if (zoneId != null) {
+            JossonCore.zoneId = zoneId;
+        }
+    }
+
+    static ZoneId getZoneId() {
+        return zoneId;
+    }
+
+    static String unquoteString(final String quotedString) {
+        final int last = quotedString.length() - 1;
         if (last < 1 || quotedString.charAt(0) != QUOTE_SYMBOL || quotedString.charAt(last) != QUOTE_SYMBOL) {
             throw new IllegalArgumentException("Argument is not a valid string literal: " + quotedString);
         }
         return quotedString.substring(1, last).replace("''", "'");
     }
 
-    static String csvQuote(String input) {
+    static String csvQuote(final String input) {
         String result;
         boolean needQuote;
         if (input.contains("\"")) {
@@ -74,7 +99,7 @@ class JossonCore {
         return result;
     }
 
-    static JsonNode getImplicitVariable(String name) {
+    static JsonNode getImplicitVariable(final String name) {
         if (name.charAt(0) == '$') {
             switch (StringUtils.stripStart(name.substring(1), null).toLowerCase()) {
                 case "":
@@ -92,15 +117,15 @@ class JossonCore {
         return null;
     }
 
-    static boolean isCurrentNodePath(String path) {
+    static boolean isCurrentNodePath(final String path) {
         return isPathSymbol(path, CURRENT_NODE);
     }
 
-    static boolean isParentArrayPath(String path) {
+    static boolean isParentArrayPath(final String path) {
         return isPathSymbol(path, PARENT_ARRAY_NODE);
     }
 
-    private static boolean isPathSymbol(String path, String pathSymbol) {
+    private static boolean isPathSymbol(final String path, final String pathSymbol) {
         if (path.startsWith(pathSymbol)) {
             if (path.length() > 1) {
                 throw new IllegalArgumentException("Invalid path: " + path);
@@ -110,7 +135,7 @@ class JossonCore {
         return false;
     }
 
-    static ValueNode toValueNode(String literal) throws NumberFormatException {
+    static ValueNode toValueNode(final String literal) throws NumberFormatException {
         if (StringUtils.isEmpty(literal)) {
             return null;
         }
@@ -132,7 +157,7 @@ class JossonCore {
         return DoubleNode.valueOf(Double.parseDouble(literal));
     }
 
-    static LocalDateTime toLocalDateTime(JsonNode node) {
+    static LocalDateTime toLocalDateTime(final JsonNode node) {
         try {
             return LocalDateTime.parse(node.asText());
         } catch (DateTimeParseException e) {
@@ -140,15 +165,15 @@ class JossonCore {
         }
     }
 
-    static LocalDateTime toLocalDate(JsonNode node) {
+    static LocalDateTime toLocalDate(final JsonNode node) {
         return toLocalDateTime(node).truncatedTo(ChronoUnit.DAYS);
     }
 
-    static LocalDateTime offsetToLocalDateTime(JsonNode node) {
+    static LocalDateTime offsetToLocalDateTime(final JsonNode node) {
         return toOffsetDateTime(node).atZoneSameInstant(zoneId).toLocalDateTime();
     }
 
-    static OffsetDateTime toOffsetDateTime(JsonNode node) {
+    static OffsetDateTime toOffsetDateTime(final JsonNode node) {
         try {
             return OffsetDateTime.parse(node.asText());
         } catch (DateTimeParseException e) {
@@ -156,7 +181,7 @@ class JossonCore {
         }
     }
 
-    static OffsetDateTime localToOffsetDateTime(JsonNode node) {
+    static OffsetDateTime localToOffsetDateTime(final JsonNode node) {
         LocalDateTime dateTime = toLocalDateTime(node);
         return dateTime.atOffset(zoneId.getRules().getOffset(dateTime));
     }
@@ -181,11 +206,11 @@ class JossonCore {
         return 0;
     }
 
-    static boolean nodeHasValue(JsonNode node) {
+    static boolean nodeHasValue(final JsonNode node) {
         return node != null && !node.isNull() && node.isValueNode();
     }
 
-    static Object valueAsObject(JsonNode node) {
+    static Object valueAsObject(final JsonNode node) {
         if (node.isIntegralNumber()) {
             return node.asInt();
         }
@@ -218,7 +243,7 @@ class JossonCore {
         return objects;
     }
 
-    private static String toAlphabetIndex(int number, int base) {
+    private static String toAlphabetIndex(final int number, final int base) {
         if (number < 0) {
             return "-" + toAlphabetIndex(-number - 1, base);
         }
@@ -226,7 +251,7 @@ class JossonCore {
         return (quot == 0 ? "" : toAlphabetIndex(quot - 1, base)) + (char)(base + number % 26);
     }
 
-    static String toRomanIndex(int number, boolean isUpper) {
+    static String toRomanIndex(int number, final boolean isUpper) {
         if (number < 0) {
             return "-" + toRomanIndex(-number - 1, isUpper);
         }
@@ -253,7 +278,7 @@ class JossonCore {
      * @return The 1st matched element for {@code FILTRATE_FIRST_FOUND} or
      * all matched elements in an array node for {@code FILTRATE_COLLECT_ALL} and {@code FILTRATE_DIVERT_ALL}
      */
-    private static JsonNode evaluateFilter(JsonNode node, String statement, FilterMode mode) {
+    private static JsonNode evaluateFilter(final JsonNode node, final String statement, final FilterMode mode) {
         if (node == null) {
             return null;
         }
@@ -297,11 +322,11 @@ class JossonCore {
         return matchedNodes;
     }
 
-    static JsonNode getNodeByPath(JsonNode node, String jossonPath) {
+    static JsonNode getNodeByPath(final JsonNode node, final String jossonPath) {
         return getNodeByPath(node, -1, jossonPath);
     }
 
-    static JsonNode getNodeByPath(JsonNode node, int index, String jossonPath) {
+    static JsonNode getNodeByPath(JsonNode node, final int index, final String jossonPath) {
         if (node == null) {
             return null;
         }
@@ -358,7 +383,7 @@ class JossonCore {
         return node;
     }
 
-    private static JsonNode getNodeByKeys(JsonNode node, List<String> keys, List<String> nextKeys) {
+    private static JsonNode getNodeByKeys(JsonNode node, final List<String> keys, final List<String> nextKeys) {
         if (keys == null || keys.isEmpty()) {
             return node;
         }
@@ -412,8 +437,9 @@ class JossonCore {
         return getNodeByKeys(node, keys, nextKeys);
     }
 
-    private static JsonNode forEachElement(ArrayNode node, String elem, FilterMode mode, List<String> keys, List<String> nextKeys) {
-        ArrayNode array = MAPPER.createArrayNode();
+    private static JsonNode forEachElement(final ArrayNode node, final String elem, final FilterMode mode,
+                                           final List<String> keys, final List<String> nextKeys) {
+        final ArrayNode array = MAPPER.createArrayNode();
         if (mode == FILTRATE_DIVERT_ALL) {
             for (int i = 0; i < node.size(); i++) {
                 List<String> nextNextKeys = new ArrayList<>();
