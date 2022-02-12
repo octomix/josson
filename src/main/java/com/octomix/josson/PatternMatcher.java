@@ -148,11 +148,9 @@ class PatternMatcher {
 
     private static int skipDatasetQuery(String input, int pos, int last) {
         for (;pos <= last && "=!<>&|)".indexOf(input.charAt(pos)) < 0; pos++) {
-            if (input.charAt(pos) == '-') {
+            if (input.charAt(pos) == '-' && pos++ == last) {
                 // skip "->"
-                if (pos++ == last) {
-                    break;
-                }
+                break;
             }
             pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
         }
@@ -224,7 +222,7 @@ class PatternMatcher {
                 pos = eatSpaces(input, end + 1, last);
                 FilterMode mode = FILTRATE_FIND_FIRST;
                 if (pos <= last) {
-                    mode = FilterMode.fromSymbol(input.charAt(pos));
+                    mode = fromSymbol(input.charAt(pos));
                     if (mode != null) {
                         pos = eatSpaces(input, ++pos, last);
                     }
@@ -239,7 +237,7 @@ class PatternMatcher {
             }
             pos = skipEnclosure(input, pos, last, Enclosure.STRING_LITERAL, Enclosure.PARENTHESES);
         }
-        FilterMode mode = FilterMode.fromSymbol(input.charAt(last));
+        FilterMode mode = fromSymbol(input.charAt(last));
         if (mode == FILTRATE_COLLECT_ALL || mode == FILTRATE_DIVERT_ALL) {
             return new ArrayFilter(rightTrimOf(input, 0, last), null, mode);
         }

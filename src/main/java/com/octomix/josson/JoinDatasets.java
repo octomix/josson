@@ -28,6 +28,11 @@ import static com.octomix.josson.PatternMatcher.*;
 
 class JoinDatasets {
 
+    private Dataset leftDataset;
+    private JoinOperator operator;
+    private Dataset rightDataset;
+    private final String arrayName;
+
     enum JoinOperator {
         INNER_JOIN_ONE(">=<"),
         LEFT_JOIN_ONE("<=<"),
@@ -79,11 +84,6 @@ class JoinDatasets {
             return arrayName;
         }
     }
-
-    private Dataset leftDataset;
-    private JoinOperator operator;
-    private Dataset rightDataset;
-    private final String arrayName;
 
     JoinDatasets(Dataset leftDataset, JoinOperator operator, Dataset rightDataset) {
         this.leftDataset = leftDataset;

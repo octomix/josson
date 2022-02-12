@@ -416,7 +416,7 @@ public class Josson {
     }
 
     public static Locale getLocale() {
-        return JossonCore.locale;
+        return locale;
     }
 
     public static void setZoneId(ZoneId zoneId) {
@@ -426,7 +426,7 @@ public class Josson {
     }
 
     public static ZoneId getZoneId() {
-        return JossonCore.zoneId;
+        return zoneId;
     }
 
     /**

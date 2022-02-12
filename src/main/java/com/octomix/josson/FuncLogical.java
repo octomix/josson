@@ -119,10 +119,8 @@ class FuncLogical {
             double num = node.asDouble();
             for (int i = array.size() - 1; i >= 0; i--) {
                 JsonNode value = array.get(i);
-                if (value.isNumber() || value.isTextual()) {
-                    if (value.asDouble() == num) {
-                        return BooleanNode.valueOf(!not);
-                    }
+                if ((value.isNumber() || value.isTextual()) && value.asDouble() == num) {
+                    return BooleanNode.valueOf(!not);
                 }
             }
             return BooleanNode.valueOf(not);

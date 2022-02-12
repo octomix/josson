@@ -5,6 +5,9 @@
 
 ![logo](./logo.png)
 
+![Java](https://img.shields.io/badge/java-ED8B00?logo=java)
+![License](https://badgen.net/github/license/octomix/josson)
+![Maven Central](https://badgen.net/maven/v/maven-central/com.octomix.josson/josson)
 [![Known Vulnerabilities](https://snyk.io/test/github/octomix/josson/badge.svg)](https://snyk.io/test/github/octomix/josson)
 
 ### Installation
@@ -43,8 +46,11 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 ### Table of Contents
 
 - [Josson Basic](#josson-basic)
+
 - [Josson Path Chart Elements](#josson-path-chart-elements)
+
 - [Josson Query Language](#josson-query-language)
+
 - [Josson Functions](#josson-functions)
   - [Arithmetic Functions](#arithmetic-functions)
   - [String Functions](#string-functions)
@@ -53,16 +59,20 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
   - [Logical Functions](#logical-functions)
   - [Array Functions](#array-functions)
   - [Structural Functions](#structural-functions)
+
 - [Jossons Basic](#jossons-basic)
+
 - [Jossons Template Language](#jossons-template-language)
   - [Ternary Syntax](#ternary-syntax)
   - [Implicit Variables](#implicit-variables)
   - [Fill In](#fill-in)
+
 - [Jossons Resolver](#jossons-resolver)
   - [Dictionary Finder](#dictionary-finder)
   - [Data Finder](#data-finder)
   - [Join Datasets](#join-datasets)
   - [Put Together](#put-together)
+
 - [Appendix](#appendix)
   - [MongoDB Adapter](#mongodb-adapter)
 
