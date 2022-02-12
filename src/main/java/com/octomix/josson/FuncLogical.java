@@ -82,7 +82,7 @@ class FuncLogical {
         }
         if (node.isArray()) {
             for (int i = 0; i < node.size(); i++) {
-                JsonNode elem = node.get(i);
+                final JsonNode elem = node.get(i);
                 if (elem.isTextual() || elem.isNumber()) {
                     if (ignoreCase) {
                         if (value.equalsIgnoreCase(elem.asText())) {
@@ -120,20 +120,20 @@ class FuncLogical {
     }
 
     static BooleanNode funcIn(final JsonNode node, final String params, final boolean ignoreCase, final boolean not) {
-        ArrayNode array = getParamArray(params, node);
+        final ArrayNode array = getParamArray(params, node);
         if (node.isNumber()) {
-            double num = node.asDouble();
+            final double num = node.asDouble();
             for (int i = array.size() - 1; i >= 0; i--) {
-                JsonNode value = array.get(i);
+                final JsonNode value = array.get(i);
                 if ((value.isNumber() || value.isTextual()) && value.asDouble() == num) {
                     return BooleanNode.valueOf(!not);
                 }
             }
             return BooleanNode.valueOf(not);
         } else if (node.isTextual()) {
-            String text = node.asText();
+            final String text = node.asText();
             for (int i = array.size() - 1; i >= 0; i--) {
-                JsonNode value = array.get(i);
+                final JsonNode value = array.get(i);
                 if (value.isTextual() || value.isNumber()) {
                     if (ignoreCase) {
                         if (value.asText().equalsIgnoreCase(text)) {

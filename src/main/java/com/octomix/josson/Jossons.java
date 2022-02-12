@@ -81,7 +81,7 @@ public class Jossons {
      * @return The new Jossons object
      */
     public static Jossons fromMap(final Map<String, String> mapping) {
-        Jossons jossons = new Jossons();
+        final Jossons jossons = new Jossons();
         if (mapping != null) {
             mapping.forEach((key, value) ->
                     jossons.datasets.put(key, Josson.create(TextNode.valueOf(value))));
@@ -97,7 +97,7 @@ public class Jossons {
      * @return The new Jossons object
      */
     public static Jossons fromMapOfInt(final Map<String, Integer> mapping) {
-        Jossons jossons = new Jossons();
+        final Jossons jossons = new Jossons();
         if (mapping != null) {
             mapping.forEach((key, value) ->
                     jossons.datasets.put(key, Josson.create(IntNode.valueOf(value))));
@@ -161,7 +161,7 @@ public class Jossons {
         if (!leftNode.isContainerNode()) {
             throw new IllegalArgumentException("left side is not a container node");
         }
-        JsonNode rightNode = evaluateQueryWithResolverLoop(
+        final JsonNode rightNode = evaluateQueryWithResolverLoop(
                 datasets.getRightDataset().getQuery(), dictionaryFinder, dataFinder, progress);
         if (rightNode == null) {
             throw new IllegalArgumentException("unresolvable right side");
@@ -169,7 +169,7 @@ public class Jossons {
         if (!rightNode.isContainerNode()) {
             throw new IllegalArgumentException("right side is not a container node");
         }
-        JsonNode joinedNode = datasets.joinNodes(leftNode, rightNode);
+        final JsonNode joinedNode = datasets.joinNodes(leftNode, rightNode);
         if (joinedNode == null) {
             throw new IllegalArgumentException("invalid data");
         }
@@ -183,8 +183,8 @@ public class Jossons {
      *
      * @param template the XML template to be executed
      * @return The merged text content
-     * @throws NoValuePresentException if any placeholder was unable to resolve
      * @see #fillInPlaceholder
+     * @throws NoValuePresentException if any placeholder was unable to resolve
      */
     public String fillInXmlPlaceholder(final String template) throws NoValuePresentException {
         if (StringUtils.isBlank(template)) {
@@ -211,10 +211,10 @@ public class Jossons {
     }
 
     private String fillInPlaceholderLoop(String template, final boolean isXml) throws NoValuePresentException {
-        Set<String> unresolvedDatasets = new HashSet<>();
-        Set<String> unresolvedPlaceholders = new HashSet<>();
-        StringBuilder sb = new StringBuilder();
-        int last = template.length() - 1;
+        final Set<String> unresolvedDatasets = new HashSet<>();
+        final Set<String> unresolvedPlaceholders = new HashSet<>();
+        final StringBuilder sb = new StringBuilder();
+        final int last = template.length() - 1;
         int offset = 0;
         int placeholderAt = -1;
         boolean textAdded = false;
@@ -232,7 +232,7 @@ public class Jossons {
             } else if (placeholderAt >= 0 && template.charAt(i) == '}' && template.charAt(i + 1) == '}') {
                 String query = template.substring(placeholderAt + 2, i);
                 if (isXml) {
-                    StringBuilder rebuild = new StringBuilder();
+                    final StringBuilder rebuild = new StringBuilder();
                     for (String token : separateXmlTags(query)) {
                         if (token.charAt(0) == '<') {
                             sb.append(token);
@@ -244,14 +244,15 @@ public class Jossons {
                 }
                 try {
                     query = StringUtils.strip(query);
-                    JsonNode node = evaluateQuery(query);
+                    final JsonNode node = evaluateQuery(query);
                     if (node == null) {
                         unresolvedPlaceholders.add(query);
                         putDataset(query, null);
                         sb.append("**").append(query).append("**");
                     } else if (node.isValueNode()) {
                         sb.append(node.asText());
-                        textAdded = true; // Remember even if it is an empty string
+                        // Remember even if it is an empty string
+                        textAdded = true;
                     } else {
                         sb.append(node);
                     }
@@ -290,8 +291,8 @@ public class Jossons {
      * @param dataFinder a callback function to process database query statement
      * @param progress a {@code ResolverProgress} object to log the resolver progress steps
      * @return The merged text content
-     * @throws NoValuePresentException if any placeholder was unable to resolve
      * @see #fillInPlaceholderWithResolver
+     * @throws NoValuePresentException if any placeholder was unable to resolve
      */
     public String fillInXmlPlaceholderWithResolver(final String template,
                                                    final Function<String, String> dictionaryFinder,
@@ -347,9 +348,9 @@ public class Jossons {
                                                  final BiFunction<String, String, Josson> dataFinder,
                                                  final boolean isXml,
                                                  final ResolverProgress progress) throws NoValuePresentException {
-        Set<String> unresolvablePlaceholders = new HashSet<>();
-        Set<String> unresolvedDatasetNames = new HashSet<>();
-        List<String> checkInfiniteLoop = new ArrayList<>();
+        final Set<String> unresolvablePlaceholders = new HashSet<>();
+        final Set<String> unresolvedDatasetNames = new HashSet<>();
+        final List<String> checkInfiniteLoop = new ArrayList<>();
         for (; ; progress.nextRound()) {
             try {
                 if (!unresolvedDatasetNames.isEmpty()) {
@@ -364,10 +365,10 @@ public class Jossons {
                     unresolvablePlaceholders.addAll(e.getPlaceholders());
                     template = e.getContent();
                 }
-                Map<String, String> namedQueries = new HashMap<>();
+                final Map<String, String> namedQueries = new HashMap<>();
                 e.getDatasetNames().forEach(name -> {
                     checkInfiniteLoop.add(name);
-                    int half = checkInfiniteLoop.size() / 2;
+                    final int half = checkInfiniteLoop.size() / 2;
                     int i = checkInfiniteLoop.size() - 2;
                     for (int j = i; j >= half; j--) {
                         if (checkInfiniteLoop.get(j).equals(name)) {
@@ -411,7 +412,7 @@ public class Jossons {
                     progress.addStep("Resolving " + namedQueries);
                     namedQueries.forEach((name, findQuery) -> {
                         try {
-                            JsonNode node = evaluateQuery(findQuery);
+                            final JsonNode node = evaluateQuery(findQuery);
                             if (node == null) {
                                 unresolvablePlaceholders.add(name);
                                 putDataset(name, null);
@@ -451,7 +452,7 @@ public class Jossons {
     public JsonNode evaluateQueryWithResolver(final String query, final Function<String, String> dictionaryFinder,
                                               final BiFunction<String, String, Josson> dataFinder,
                                               final ResolverProgress progress) {
-        JsonNode node = evaluateQueryWithResolverLoop(query, dictionaryFinder, dataFinder, progress);
+        final JsonNode node = evaluateQueryWithResolverLoop(query, dictionaryFinder, dataFinder, progress);
         progress.addQueryResult(node);
         return node;
     }
@@ -463,7 +464,7 @@ public class Jossons {
             try {
                 return evaluateQuery(query);
             } catch (UnresolvedDatasetException e) {
-                String name = e.getDatasetName();
+                final String name = e.getDatasetName();
                 JsonNode node = null;
                 String findQuery = dictionaryFinder.apply(name);
                 if (findQuery != null) {
@@ -494,7 +495,7 @@ public class Jossons {
      */
     public JsonNode evaluateQuery(final String query) throws UnresolvedDatasetException {
         String ifTrueValue = null;
-        List<TernaryStep> steps = decomposeTernarySteps(query);
+        final List<TernaryStep> steps = decomposeTernarySteps(query);
         for (TernaryStep step : steps) {
             JsonNode node = evaluateStatement(step.getStatement());
             if (step.getIfTrueValue() == null) {

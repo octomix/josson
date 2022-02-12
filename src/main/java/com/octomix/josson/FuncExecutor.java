@@ -133,7 +133,7 @@ class FuncExecutor {
 
     static JsonNode applyFunc(JsonNode node, final String params, final Predicate<JsonNode> isValid,
                               final Function<JsonNode, JsonNode> action) {
-        String path = getParamPath(params);
+        final String path = getParamPath(params);
         if (path != null) {
             node = getNodeByPath(node, path);
             if (node == null) {
@@ -161,18 +161,18 @@ class FuncExecutor {
     static JsonNode applyFunc(JsonNode node, final String params, final int minCount, final int maxCount,
                               final Function<List<String>, Object> prepare, final Predicate<JsonNode> isValid,
                               final BiFunction<JsonNode, Object, JsonNode> action) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, minCount, maxCount);
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, minCount, maxCount);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        Object variables = prepare.apply(pathAndParams.getValue());
+        final Object variables = prepare.apply(pathAndParams.getValue());
         if (node.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                JsonNode jsonNode = node.get(i);
+                final JsonNode jsonNode = node.get(i);
                 if (isValid.test(jsonNode)) {
                     array.add(action.apply(jsonNode, variables));
                 } else {
@@ -189,14 +189,14 @@ class FuncExecutor {
 
     static JsonNode applyFunc(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
                               final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
-        ArrayNode paramArray = getParamArray(params, node);
+        final ArrayNode paramArray = getParamArray(params, node);
         if (paramArray.isEmpty()) {
             return null;
         }
         if (node.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                JsonNode jsonNode = node.get(i);
+                final JsonNode jsonNode = node.get(i);
                 if (isValid.test(jsonNode)) {
                     array.add(action.apply(jsonNode, paramArray));
                 } else {

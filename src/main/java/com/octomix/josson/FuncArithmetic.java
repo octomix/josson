@@ -66,7 +66,7 @@ class FuncArithmetic {
     }
 
     private static Double funcCalc(final JsonNode node, final Expression expression,
-                                   Map<String, String> args, final int index) {
+                                   final Map<String, String> args, final int index) {
         expression.removeAllArguments();
         for (Map.Entry<String, String> arg : args.entrySet()) {
             final String path = arg.getValue();

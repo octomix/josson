@@ -27,10 +27,23 @@ public class NoValuePresentException extends Exception {
     private final Set<String> placeholders;
     private final String content;
 
+    /**
+     * Thrown to indicate that Jossons cannot resolve all the placeholders.
+     *
+     * @param datasetNames unresolved dataset names
+     * @param placeholders unresolvable placeholders
+     */
     public NoValuePresentException(final Set<String> datasetNames, final Set<String> placeholders) {
         this(datasetNames, placeholders, null);
     }
 
+    /**
+     * Thrown to indicate that Jossons cannot resolve all the placeholders.
+     *
+     * @param datasetNames unresolved dataset names
+     * @param placeholders unresolvable placeholders
+     * @param content template content that includes unresolvable placeholders
+     */
     public NoValuePresentException(final Set<String> datasetNames, final Set<String> placeholders,
                                    final String content) {
         super((datasetNames == null ? "" : "Unresolved datasets " + datasetNames + ". ")
@@ -57,7 +70,7 @@ public class NoValuePresentException extends Exception {
     /**
      * In this content, all unresolvable placeholders are quoted with `**` to replace the original double curly braces.
      *
-     * @return Content that includes unresolvable placeholders
+     * @return Template content that includes unresolvable placeholders
      */
     public String getContent() {
         return content;

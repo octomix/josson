@@ -146,7 +146,7 @@ class OperationStack {
                         lastStep.setResolved(thisStep.resolveFrom(arrayNode, arrayIndex));
                     }
                 } else if (lastStep.getOperator() == Operator.OR && step.getOperator() == Operator.OR) {
-                    OperationStep thisStep = popStep();
+                    final OperationStep thisStep = popStep();
                     if (lastStep.isResolveToFalseFrom(arrayNode, arrayIndex)) {
                         lastStep.setResolved(thisStep.resolveFrom(arrayNode, arrayIndex));
                     }
@@ -155,7 +155,7 @@ class OperationStack {
                 return;
         }
         if (lastStep.getOperator() == Operator.AND) {
-            OperationStep thisStep = popStep();
+            final OperationStep thisStep = popStep();
             if (lastStep.isResolveToTrueFrom(arrayNode, arrayIndex)) {
                 lastStep.setResolved(thisStep.relationalCompare(step, arrayNode, arrayIndex));
             }
@@ -168,7 +168,7 @@ class OperationStack {
         For Jossons.evaluateStatement()
      */
     JsonNode evaluate(final String statement) throws UnresolvedDatasetException {
-        List<OperationStep> steps = decomposeStatement(statement);
+        final List<OperationStep> steps = decomposeStatement(statement);
         for (OperationStep step : steps) {
             try {
                 evaluate(step);
@@ -181,10 +181,10 @@ class OperationStack {
                 try {
                     return opStep.resolveFrom(datasets);
                 } catch (UnresolvedDatasetException e) {
-                    throw new RuntimeException(e);
+                    throw new UnsupportedOperationException(e);
                 }
             });
-        } catch (RuntimeException e) {
+        } catch (UnsupportedOperationException e) {
             if (e.getCause() instanceof UnresolvedDatasetException) {
                 throw (UnresolvedDatasetException) e.getCause();
             }
@@ -202,10 +202,10 @@ class OperationStack {
                             try {
                                 return opStep.resolveFrom(datasets);
                             } catch (UnresolvedDatasetException e) {
-                                throw new RuntimeException(e);
+                                throw new UnsupportedOperationException(e);
                             }
                         });
-                    } catch (RuntimeException e) {
+                    } catch (UnsupportedOperationException e) {
                         if (e.getCause() instanceof UnresolvedDatasetException) {
                             throw (UnresolvedDatasetException) e.getCause();
                         }
@@ -241,7 +241,7 @@ class OperationStack {
                 return;
         }
         if (lastStep.getOperator() == Operator.AND) {
-            OperationStep thisStep = popStep();
+            final OperationStep thisStep = popStep();
             if (lastStep.isResolveToTrueFrom(datasets)) {
                 lastStep.setResolved(thisStep.relationalCompare(step, datasets));
             }
@@ -251,7 +251,7 @@ class OperationStack {
     }
 
     private static class IllegalStatementException extends IllegalArgumentException {
-        IllegalStatementException(String statement, IllegalArgumentException e) {
+        IllegalStatementException(final String statement, final IllegalArgumentException e) {
             super(e.getMessage() == null ? statement : "\"" + e.getMessage() + "\" in " + statement);
         }
     }

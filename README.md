@@ -3015,7 +3015,7 @@ All unresolvable placeholders are quoted with `**` to replace the original doubl
     Jossons jossons = Jossons.fromJsonString(orderJsonString);
     String output = jossons.fillInPlaceholder(template);
 
-#### Template
+__Template__
 
     "{{company->name.rightPad(65)}}INVOICE\n\n" +
     "{{company->address[0].rightPad(56) ?: $->repeat(' ',56)}}Issue Date: {{order->salesDate.formatDate('dd/MM/yyyy')}}\n" +
@@ -3048,59 +3048,59 @@ All unresolvable placeholders are quoted with `**` to replace the original doubl
 
 1. If `company->address[0]` is unresolvable, 56 spaces are printed.
 
-        {{company->address[0].rightPad(56) ?: $->repeat(' ',56)}}
+       {{company->address[0].rightPad(56) ?: $->repeat(' ',56)}}
 
 2. Due date is calculated from one month after the `salesDate`.
 
-        {{order->salesDate.plusMonths(1).formatDate('dd/MM/yyyy')}}
+       {{order->salesDate.plusMonths(1).formatDate('dd/MM/yyyy')}}
 
 3. "SHIP TO" is not printed if `order->delivery` does not exists.
 
-        {{order->delivery!=null ? 'SHIP TO'}}
+       {{order->delivery!=null ? 'SHIP TO'}}
 
 4. Delivery contact person is printed only if `order->delivery` is defined.
    If `order->delivery.contactPerson` does not exists, `order->customer.name` is printed instead.
 
-        {{order->delivery!=null ? order->coalesce(delivery.contactPerson,customer.name)}}
+       {{order->delivery!=null ? order->coalesce(delivery.contactPerson,customer.name)}}
 
 5. If `order->delivery.address` exists, split it with delimiter `\n`.
    Then add 31 spaces in front of each line and join them together with `\n`.
    At last, add an extra `\n` at the end.
 
-        {{order->delivery.address!=null ? order->delivery.address.split('\n').concat(repeat(' ',31),?).join('\n').concat(?,'\n')}}
-
-    _Path chart_
-
-        order->delivery.address->split()->[""->concat()]->join() ==>""
-
-6. Construct two lines for each item. Each item amount is calculated from `qty`, `unitPrice` and `unitDiscount`. 
-
-        {{
-            order->items.concat(
-                ##.center(5), ' ',
-                name.rightPad(35), ' ',
-                concat(qty,' ',unit).center(8), ' ',
-                unitPrice.formatNumber('#,##0.0').leftPad(9), ' ',
-                coalesce(unitDiscount,0).formatNumber('#,##0.0').leftPad(8), ' ',
-                calc(qty * (unitPrice-d), d:coalesce(unitDiscount,0)).formatNumber('#,##0.0').leftPad(9),
-                '\n      ', itemCode, ' ',
-                property.entries().concat(key,':',value.toString()).join(' ')
-            ).join('\n')
-        }}
+       {{order->delivery.address!=null ? order->delivery.address.split('\n').concat(repeat(' ',31),?).join('\n').concat(?,'\n')}}
 
    _Path chart_
 
-        order->items*->[{}->concat(##, $V...)]->join() ==>""
+       order->delivery.address->split()->[""->concat()]->join() ==>""
+
+6. Construct two lines for each item. Each item amount is calculated from `qty`, `unitPrice` and `unitDiscount`. 
+
+       {{
+           order->items.concat(
+               ##.center(5), ' ',
+               name.rightPad(35), ' ',
+               concat(qty,' ',unit).center(8), ' ',
+               unitPrice.formatNumber('#,##0.0').leftPad(9), ' ',
+               coalesce(unitDiscount,0).formatNumber('#,##0.0').leftPad(8), ' ',
+               calc(qty * (unitPrice-d), d:coalesce(unitDiscount,0)).formatNumber('#,##0.0').leftPad(9),
+               '\n      ', itemCode, ' ',
+               property.entries().concat(key,':',value.toString()).join(' ')
+           ).join('\n')
+       }}
+
+   _Path chart_
+
+       order->items*->[{}->concat(##, $V...)]->join() ==>""
 
 7. If `order->discountPct` is not > 0, the discount line is not printed.
 
-        {{order->discountPct > 0 ? order->discountPct.formatNumber('0.0').leftPad(11).concat('Discount:',?,'%\n').leftPad(80)}}
+       {{order->discountPct > 0 ? order->discountPct.formatNumber('0.0').leftPad(11).concat('Discount:',?,'%\n').leftPad(80)}}
 
 8. Order total amount is calculated by adding `netAmount` and `delivery.handlingFee`.
 
-        {{order->calc(netAmount+fee, fee:coalesce(delivery.handlingFee,0)).formatNumber('US$#,##0.0').leftPad(12).concat('Total:',?,'\n').leftPad(80)}}
+       {{order->calc(netAmount+fee, fee:coalesce(delivery.handlingFee,0)).formatNumber('US$#,##0.0').leftPad(12).concat('Total:',?,'\n').leftPad(80)}}
 
-#### Output
+__Output__
 
     Octomix Limited                                                  INVOICE
     
@@ -3142,9 +3142,11 @@ By default, the last step "End" is added automatically.
 
 The resolution process has three debug levels:
 
-  1. `ResolverDebugLevel.SHOW_CONTENT_OF_VALUE_NODE_ONLY` (default)
-  2. `ResolverDebugLevel.SHOW_CONTENT_UP_TO_OBJECT_NODE`
-  3. `ResolverDebugLevel.SHOW_CONTENT_UP_TO_ARRAY_NODE`
+1. `ResolverDebugLevel.SHOW_CONTENT_OF_VALUE_NODE_ONLY` (default)
+2. `ResolverDebugLevel.SHOW_CONTENT_UP_TO_OBJECT_NODE`
+3. `ResolverDebugLevel.SHOW_CONTENT_UP_TO_ARRAY_NODE`
+
+Basic constructors and methods:
 
     ResolverProgress progress = new ResolverProgress();
 
@@ -3292,14 +3294,14 @@ If `arrayName` is not given, the last element name of the query is used.
         "{{withStock->concat(itemCode.rightPad(10), 'Qty: ', qty, '   Onhand: ', onhandQty).join('\n')}}",
         dictionaryFinder::get, dataFinder, progress));
 
-#### Output
+___Output___
 
     Order ID : SO0001
     B00001    Qty: 2   Onhand: 231
     A00308    Qty: 1   Onhand: 76
     A00201    Qty: 1   Onhand: 18
 
-#### Progress Steps
+___Progress Steps___
 
     Round 1 : Resolving withStock from order->items.map(itemCode,qty){itemCode} <=< stocks{itemCode}
     Round 1 : Resolving stocks from []?{ignoredQuery}

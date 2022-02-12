@@ -104,7 +104,7 @@ class FuncFormat {
         final String key = node.asText();
         return casePairs.stream()
                 .filter(pair -> {
-                    JsonNode caseKey = pair.getKey();
+                    final JsonNode caseKey = pair.getKey();
                     return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asText().equals(key);
                 })
                 .findFirst()
@@ -146,12 +146,12 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatTexts(final JsonNode node, final String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 2, -2);
-        String pattern = getNodeAsText(node, pathAndParams.getKey());
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 2, -2);
+        final String pattern = getNodeAsText(node, pathAndParams.getKey());
         if (node.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
-                Object[] valueObjects = valuesAsObjects(node, i, pathAndParams.getValue());
+                final Object[] valueObjects = valuesAsObjects(node, i, pathAndParams.getValue());
                 if (valueObjects != null) {
                     array.add(TextNode.valueOf(String.format(pattern, valueObjects)));
                 } else {
@@ -160,7 +160,7 @@ class FuncFormat {
             }
             return array;
         }
-        Object[] valueObjects = valuesAsObjects(node, -1, pathAndParams.getValue());
+        final Object[] valueObjects = valuesAsObjects(node, -1, pathAndParams.getValue());
         if (valueObjects == null) {
             return null;
         }
@@ -171,7 +171,7 @@ class FuncFormat {
         return applyFunc(node, params,
                 JossonCore::nodeHasValue,
                 (jsonNode, paramArray) -> {
-                    int index = jsonNode.asInt();
+                    final int index = jsonNode.asInt();
                     return index >= 0 && index < paramArray.size() ? paramArray.get(index) : null;
                 }
         );

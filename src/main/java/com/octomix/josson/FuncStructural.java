@@ -185,7 +185,7 @@ class FuncStructural {
     }
 
     static JsonNode funcKeys(JsonNode node, final String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
@@ -211,7 +211,7 @@ class FuncStructural {
     }
 
     static JsonNode funcMap(final JsonNode node, final String params) {
-        Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
+        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
         if (!node.isArray()) {
             return funcMap(MAPPER.createObjectNode(), node, args, -1);
         }
@@ -225,14 +225,14 @@ class FuncStructural {
     private static ObjectNode funcMap(final ObjectNode base, final JsonNode node,
                                       final Map<String, String> args, final int index) {
         for (Map.Entry<String, String> arg : args.entrySet()) {
-            String name = arg.getKey();
+            final String name = arg.getKey();
             if (isCurrentNodePath(name)) {
                 if ((index >= 0 ? node.get(index) : node).isObject()) {
                     base.setAll((ObjectNode) (index >= 0 ? node.get(index) : node));
                 }
                 continue;
             }
-            String path = arg.getValue();
+            final String path = arg.getValue();
             if (path == null) {
                 base.remove(name);
             } else {
@@ -243,7 +243,7 @@ class FuncStructural {
     }
 
     static JsonNode funcToArray(final JsonNode node, final String params) {
-        JsonNode container = getParamArrayOrItselfIsContainer(params, node);
+        final JsonNode container = getParamArrayOrItselfIsContainer(params, node);
         if (container == null) {
             return null;
         }

@@ -18,16 +18,16 @@ package com.octomix.josson;
 
 class Pair<K, V> {
 
-    static <K, V> Pair<K, V> of(final K key, final V value) {
-        return new Pair<>(key, value);
-    }
-
     private final K key;
     private final V value;
 
     Pair(final K key, final V value) {
         this.key = key;
         this.value = value;
+    }
+
+    static <K, V> Pair<K, V> of(final K key, final V value) {
+        return new Pair<>(key, value);
     }
 
     K getKey() {

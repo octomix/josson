@@ -166,7 +166,7 @@ class OperationStep {
                     return false;
                 }
                 int j = i;
-                for (;  j >= 0; j--) {
+                for (; j >= 0; j--) {
                     if (relationalCompare(leftElem, Operator.EQ, rightArray.get(j))) {
                         break;
                     }
@@ -238,12 +238,12 @@ class OperationStep {
     }
 
     boolean isResolveToTrueFrom(final Josson arrayNode, final int arrayIndex) {
-        JsonNode node = resolveFrom(arrayNode, arrayIndex);
+        final JsonNode node = resolveFrom(arrayNode, arrayIndex);
         return node != null && node.asBoolean();
     }
 
     boolean isResolveToFalseFrom(final Josson arrayNode, final int arrayIndex) {
-        JsonNode node = resolveFrom(arrayNode, arrayIndex);
+        final JsonNode node = resolveFrom(arrayNode, arrayIndex);
         return node != null && !node.asBoolean();
     }
 
@@ -266,12 +266,12 @@ class OperationStep {
     }
 
     boolean isResolveToTrueFrom(final Map<String, Josson> datasets) throws UnresolvedDatasetException {
-        JsonNode node = resolveFrom(datasets);
+        final JsonNode node = resolveFrom(datasets);
         return node != null && node.asBoolean();
     }
 
     boolean isResolveToFalseFrom(final Map<String, Josson> datasets) throws UnresolvedDatasetException {
-        JsonNode node = resolveFrom(datasets);
+        final JsonNode node = resolveFrom(datasets);
         return node != null && !node.asBoolean();
     }
 

@@ -70,6 +70,7 @@ class JoinDatasets {
                 break;
             default:
                 this.arrayName = null;
+                break;
         }
     }
 
@@ -90,10 +91,10 @@ class JoinDatasets {
                 // fallthrough
             case RIGHT_JOIN_ONE:
             case RIGHT_JOIN_MANY:
-                JsonNode swapNode = leftNode;
+                final JsonNode swapNode = leftNode;
                 leftNode = rightNode;
                 rightNode = swapNode;
-                Dataset swapDataset = leftDataset;
+                final Dataset swapDataset = leftDataset;
                 leftDataset = rightDataset;
                 rightDataset = swapDataset;
                 switch (operator) {
@@ -105,7 +106,7 @@ class JoinDatasets {
                         break;
                 }
         }
-        ArrayNode rightArray;
+        final ArrayNode rightArray;
         if (rightNode.isArray()) {
             rightArray = (ArrayNode) rightNode;
         } else {
@@ -118,7 +119,7 @@ class JoinDatasets {
         final ArrayNode joinedArray = MAPPER.createArrayNode();
         for (int i = 0; i < leftNode.size(); i++) {
             if (leftNode.get(i).isObject()) {
-                ObjectNode joinedNode = joinToObjectNode((ObjectNode) leftNode.get(i), rightArray);
+                final ObjectNode joinedNode = joinToObjectNode((ObjectNode) leftNode.get(i), rightArray);
                 if (joinedNode != null) {
                     joinedArray.add(joinedNode);
                 }
@@ -128,9 +129,9 @@ class JoinDatasets {
     }
 
     private ObjectNode joinToObjectNode(final ObjectNode leftObject, final ArrayNode rightArray) {
-        String[] relationalOps = new String[leftDataset.keys.length];
+        final String[] relationalOps = new String[leftDataset.keys.length];
         for (int j = leftDataset.keys.length - 1; j >= 0; j--) {
-            JsonNode leftValue = getNodeByPath(leftObject, leftDataset.keys[j]);
+            final JsonNode leftValue = getNodeByPath(leftObject, leftDataset.keys[j]);
             if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
@@ -139,18 +140,18 @@ class JoinDatasets {
                     + leftValue.asText().replace("'", "''")
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "");
         }
-        String path = "[" + StringUtils.join(relationalOps, Operator.AND.getSymbol()) + "]";
+        final String path = "[" + StringUtils.join(relationalOps, Operator.AND.getSymbol()) + "]";
         if (operator == JoinOperator.LEFT_JOIN_MANY) {
-            JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.getSymbol());
+            final JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.getSymbol());
             if (rightToJoin != null) {
-                ObjectNode joinedNode = leftObject.deepCopy();
+                final ObjectNode joinedNode = leftObject.deepCopy();
                 joinedNode.set(arrayName, rightToJoin);
                 return joinedNode;
             }
         } else {
-            JsonNode rightToJoin = getNodeByPath(rightArray, path);
+            final JsonNode rightToJoin = getNodeByPath(rightArray, path);
             if (rightToJoin != null && rightToJoin.isObject()) {
-                ObjectNode joinedNode = leftObject.deepCopy();
+                final ObjectNode joinedNode = leftObject.deepCopy();
                 joinedNode.setAll((ObjectNode) rightToJoin);
                 return joinedNode;
             }

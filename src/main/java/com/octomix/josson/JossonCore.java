@@ -84,8 +84,8 @@ class JossonCore {
     }
 
     static String csvQuote(final String input) {
-        String result;
-        boolean needQuote;
+        final String result;
+        final boolean needQuote;
         if (input.contains("\"")) {
             needQuote = true;
             result = input.replace("\"", "\"\"");
@@ -139,13 +139,13 @@ class JossonCore {
         if (StringUtils.isEmpty(literal)) {
             return null;
         }
-        if (literal.equalsIgnoreCase("null")) {
+        if ("null".equalsIgnoreCase(literal)) {
             return NullNode.getInstance();
         }
-        if (literal.equalsIgnoreCase("true")) {
+        if ("true".equalsIgnoreCase(literal)) {
             return BooleanNode.TRUE;
         }
-        if (literal.equalsIgnoreCase("false")) {
+        if ("false".equalsIgnoreCase(literal)) {
             return BooleanNode.FALSE;
         }
         if (literal.charAt(0) == QUOTE_SYMBOL) {
@@ -182,16 +182,16 @@ class JossonCore {
     }
 
     static OffsetDateTime localToOffsetDateTime(final JsonNode node) {
-        LocalDateTime dateTime = toLocalDateTime(node);
+        final LocalDateTime dateTime = toLocalDateTime(node);
         return dateTime.atOffset(zoneId.getRules().getOffset(dateTime));
     }
 
-    static String getNodeAsText(JsonNode node, String jossonPath) {
+    static String getNodeAsText(JsonNode node, final String jossonPath) {
         node = getNodeByPath(node, jossonPath);
         return node == null ? "" : node.asText();
     }
 
-    static int getNodeAsInt(JsonNode node, String jossonPath) {
+    static int getNodeAsInt(JsonNode node, final String jossonPath) {
         node = getNodeByPath(node, jossonPath);
         if (node != null && node.isValueNode()) {
             if (node.isTextual()) {
@@ -220,9 +220,9 @@ class JossonCore {
         return node.asText();
     }
 
-    static Object[] valuesAsObjects(JsonNode node, int index, List<String> paramList) {
+    static Object[] valuesAsObjects(JsonNode node, final int index, final List<String> paramList) {
         Object[] objects = null;
-        int size = paramList.size();
+        final int size = paramList.size();
         if (size == 0) {
             if (index >= 0) {
                 node = node.get(index);
@@ -233,7 +233,7 @@ class JossonCore {
         } else {
             objects = new Object[size];
             for (int i = 0; i < size; i++) {
-                JsonNode tryNode = getNodeByPath(node, index, paramList.get(i));
+                final JsonNode tryNode = getNodeByPath(node, index, paramList.get(i));
                 if (!nodeHasValue(tryNode)) {
                     return null;
                 }
@@ -247,8 +247,8 @@ class JossonCore {
         if (number < 0) {
             return "-" + toAlphabetIndex(-number - 1, base);
         }
-        int quot = number / 26;
-        return (quot == 0 ? "" : toAlphabetIndex(quot - 1, base)) + (char)(base + number % 26);
+        final int quot = number / 26;
+        return (quot == 0 ? "" : toAlphabetIndex(quot - 1, base)) + (char) (base + number % 26);
     }
 
     static String toRomanIndex(int number, final boolean isUpper) {
@@ -256,10 +256,10 @@ class JossonCore {
             return "-" + toRomanIndex(-number - 1, isUpper);
         }
         number++;
-        int[] numbers = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
-        String[] uppers = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
-        String[] lowers = {"m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"};
-        StringBuilder result = new StringBuilder();
+        final int[] numbers = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
+        final String[] uppers = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+        final String[] lowers = {"m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"};
+        final StringBuilder result = new StringBuilder();
         for (int i = 0; i < numbers.length && number > 0; i++) {
             while (number >= numbers[i]) {
                 number -= numbers[i];
@@ -270,13 +270,13 @@ class JossonCore {
     }
 
     /**
-     * Find an element or filter an array node
+     * Find an element or filter an array node.
      *
      * @param node      the Jackson JsonNode to be processed
      * @param statement multiple relational operations combined with logical operators
      * @param mode      {@code FILTRATE_FIRST_FOUND} | {@code FILTRATE_COLLECT_ALL} | {@code FILTRATE_DIVERT_ALL}
      * @return The 1st matched element for {@code FILTRATE_FIRST_FOUND} or
-     * all matched elements in an array node for {@code FILTRATE_COLLECT_ALL} and {@code FILTRATE_DIVERT_ALL}
+     *         all matched elements in an array node for {@code FILTRATE_COLLECT_ALL} and {@code FILTRATE_DIVERT_ALL}
      */
     private static JsonNode evaluateFilter(final JsonNode node, final String statement, final FilterMode mode) {
         if (node == null) {
@@ -290,7 +290,7 @@ class JossonCore {
                 return null;
             }
         } else {
-            JsonNode result = new OperationStack(node).evaluate(statement, 0);
+            final JsonNode result = new OperationStack(node).evaluate(statement, 0);
             if (result != null && result.asBoolean()) {
                 return node;
             }
@@ -309,9 +309,9 @@ class JossonCore {
         } catch (NumberFormatException e) {
             // continue
         }
-        OperationStack opStack = new OperationStack(node);
+        final OperationStack opStack = new OperationStack(node);
         for (int i = 0; i < node.size(); i++) {
-            JsonNode result = opStack.evaluate(statement, i);
+            final JsonNode result = opStack.evaluate(statement, i);
             if (result != null && result.asBoolean()) {
                 if (mode == FILTRATE_FIND_FIRST) {
                     return node.get(i);
@@ -330,13 +330,13 @@ class JossonCore {
         if (node == null) {
             return null;
         }
-        List<String> keys = decomposePaths(jossonPath);
+        final List<String> keys = decomposePaths(jossonPath);
         if (keys.isEmpty()) {
             return index >= 0 ? node.get(index) : node;
         }
-        String key = keys.get(0);
+        final String key = keys.get(0);
         if (key.charAt(0) == INDEX_PREFIX_SYMBOL) {
-            String indexType = keys.remove(0);
+            final String indexType = keys.remove(0);
             switch (indexType) {
                 case ZERO_BASED_INDEX:
                     return getNodeByKeys(IntNode.valueOf(index), keys);
@@ -375,7 +375,7 @@ class JossonCore {
                 // continue
             }
             while (node != null && !keys.isEmpty()) {
-                List<String> nextKeys = new ArrayList<>();
+                final List<String> nextKeys = new ArrayList<>();
                 node = getNodeByKeys(node, keys, nextKeys);
                 keys = nextKeys;
             }
@@ -409,14 +409,14 @@ class JossonCore {
             throw new IllegalArgumentException("Invalid path: " + key);
         }
         keys.remove(0);
-        FuncDispatcher funcDispatcher = matchFunctionAndArgument(key);
+        final FuncDispatcher funcDispatcher = matchFunctionAndArgument(key);
         if (funcDispatcher != null) {
             return getNodeByKeys(funcDispatcher.apply(node), keys, nextKeys);
         }
         if (node.isValueNode()) {
             return null;
         }
-        ArrayFilter filter = matchFilterQuery(key);
+        final ArrayFilter filter = matchFilterQuery(key);
         if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
             if (node.isArray()) {
                 return forEachElement((ArrayNode) node, filter.getNodeName(), filter.getMode(), keys, nextKeys);
@@ -442,8 +442,8 @@ class JossonCore {
         final ArrayNode array = MAPPER.createArrayNode();
         if (mode == FILTRATE_DIVERT_ALL) {
             for (int i = 0; i < node.size(); i++) {
-                List<String> nextNextKeys = new ArrayList<>();
-                JsonNode addNode = getNodeByKeys(
+                final List<String> nextNextKeys = new ArrayList<>();
+                final JsonNode addNode = getNodeByKeys(
                         elem == null ? node.get(i) : node.get(i).get(elem), new ArrayList<>(keys), nextNextKeys);
                 if (addNode != null) {
                     array.add(addNode);
@@ -457,7 +457,7 @@ class JossonCore {
             nextKeys.clear();
         } else {
             for (int i = 0; i < node.size(); i++) {
-                JsonNode addNode = elem == null ? node.get(i) : node.get(i).get(elem);
+                final JsonNode addNode = elem == null ? node.get(i) : node.get(i).get(elem);
                 if (addNode != null) {
                     if (mode == FILTRATE_COLLECT_ALL && addNode.isArray()) {
                         array.addAll((ArrayNode) addNode);

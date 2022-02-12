@@ -23,7 +23,12 @@ public class UnresolvedDatasetException extends Exception {
 
     private final String datasetName;
 
-    public UnresolvedDatasetException(String datasetName) {
+    /**
+     * Thrown to indicate that a dataset is unresolvable during the resolution process.
+     *
+     * @param datasetName unresolved dataset name
+     */
+    public UnresolvedDatasetException(final String datasetName) {
         super("Unresolved dataset " + datasetName);
         this.datasetName = datasetName;
     }

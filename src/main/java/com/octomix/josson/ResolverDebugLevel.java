@@ -17,7 +17,7 @@
 package com.octomix.josson;
 
 /**
- * Debug levels for resolution progress
+ * Debug levels for resolution progress.
  * {@link #SHOW_CONTENT_OF_VALUE_NODE_ONLY}
  * {@link #SHOW_CONTENT_UP_TO_OBJECT_NODE}
  * {@link #SHOW_CONTENT_UP_TO_ARRAY_NODE}

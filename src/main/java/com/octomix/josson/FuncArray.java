@@ -71,7 +71,7 @@ class FuncArray {
         final Set<Double> doubles = new HashSet<>();
         final Set<Boolean> booleans = new HashSet<>();
         for (int i = 0; i < array.size(); i++) {
-            JsonNode tryNode = array.get(i);
+            final JsonNode tryNode = array.get(i);
             if (tryNode.isTextual()) {
                 texts.add(tryNode.asText());
             } else if (tryNode.isNumber()) {
@@ -143,8 +143,8 @@ class FuncArray {
     }
 
     static IntNode funcIndexOf(JsonNode node, final String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        final JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
         if (valueNode == null || !valueNode.isValueNode()) {
             return null;
         }
@@ -156,9 +156,9 @@ class FuncArray {
         }
         if (node.isArray()) {
             if (valueNode.isNumber()) {
-                double value = valueNode.asDouble();
+                final double value = valueNode.asDouble();
                 for (int i = 0; i < node.size(); i++) {
-                    JsonNode tryNode = node.get(i);
+                    final JsonNode tryNode = node.get(i);
                     if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asDouble() == value) {
                         return IntNode.valueOf(i);
                     }
@@ -170,9 +170,9 @@ class FuncArray {
                     }
                 }
             } else {
-                String value = valueNode.asText();
+                final String value = valueNode.asText();
                 for (int i = 0; i < node.size(); i++) {
-                    JsonNode tryNode = node.get(i);
+                    final JsonNode tryNode = node.get(i);
                     if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asText().equals(value)) {
                         return IntNode.valueOf(i);
                     }
@@ -183,18 +183,18 @@ class FuncArray {
     }
 
     static TextNode funcJoin(JsonNode node, final String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
                 return null;
             }
         }
-        String delimiter = pathAndParams.getValue().size() > 0
+        final String delimiter = pathAndParams.getValue().size() > 0
                 ? getNodeAsText(node, pathAndParams.getValue().get(0)) : "";
-        List<String> texts = new ArrayList<>();
+        final List<String> texts = new ArrayList<>();
         for (int i = 0; i < node.size(); i++) {
-            JsonNode valueNode = node.get(i);
+            final JsonNode valueNode = node.get(i);
             if (nodeHasValue(valueNode)) {
                 texts.add(valueNode.asText());
             }
@@ -230,9 +230,9 @@ class FuncArray {
         }
         if (node.isArray()) {
             if (valueNode.isNumber()) {
-                double value = valueNode.asDouble();
+                final double value = valueNode.asDouble();
                 for (int i = node.size() - 1; i >= 0; i--) {
-                    JsonNode tryNode = node.get(i);
+                    final JsonNode tryNode = node.get(i);
                     if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asDouble() == value) {
                         return IntNode.valueOf(i);
                     }
@@ -244,9 +244,9 @@ class FuncArray {
                     }
                 }
             } else {
-                String value = valueNode.asText();
+                final String value = valueNode.asText();
                 for (int i = node.size() - 1; i >= 0; i--) {
-                    JsonNode tryNode = node.get(i);
+                    final JsonNode tryNode = node.get(i);
                     if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asText().equals(value)) {
                         return IntNode.valueOf(i);
                     }
@@ -257,7 +257,7 @@ class FuncArray {
     }
 
     static ValueNode funcMaxMin(final JsonNode node, final String params, final boolean isMax) {
-        ArrayNode array = getParamArrayOrItself(params, node);
+        final ArrayNode array = getParamArrayOrItself(params, node);
         if (array == null) {
             return null;
         }
@@ -265,25 +265,22 @@ class FuncArray {
         ValueNode maxMinNumber = null;
         String maxMinString = null;
         for (int i = array.size() - 1; i >= 0; i--) {
-            JsonNode tryNode = array.get(i);
+            final JsonNode tryNode = array.get(i);
             if (!nodeHasValue(tryNode)) {
                 continue;
             }
             if (maxMinNumber != null || tryNode.isNumber()) {
                 if (tryNode.isNumber()) {
-                    double tryValue = tryNode.asDouble();
-                    if (maxMinNumber == null
-                            || (isMax && tryValue > maxMinDouble)
-                            || (!isMax && tryValue < maxMinDouble)) {
+                    final double tryValue = tryNode.asDouble();
+                    if (maxMinNumber == null || (isMax ? tryValue > maxMinDouble : tryValue < maxMinDouble)) {
                         maxMinNumber = (ValueNode) tryNode;
                         maxMinDouble = tryValue;
                     }
                 }
             } else {
-                String tryValue = tryNode.asText();
+                final String tryValue = tryNode.asText();
                 if (maxMinString == null
-                        || (isMax && tryValue.compareTo(maxMinString) > 0)
-                        || (!isMax && tryValue.compareTo(maxMinString) < 0)) {
+                        || (isMax ? tryValue.compareTo(maxMinString) > 0 : tryValue.compareTo(maxMinString) < 0)) {
                     maxMinString = tryValue;
                 }
             }
@@ -296,14 +293,14 @@ class FuncArray {
         return applyFunc(node, params,
                 jsonNode -> {
                     if (jsonNode.isTextual()) {
-                        StringBuilder sb = new StringBuilder(jsonNode.asText());
+                        final StringBuilder sb = new StringBuilder(jsonNode.asText());
                         return TextNode.valueOf(sb.reverse().toString());
                     }
                     if (!jsonNode.isArray()) {
                         return null;
                     }
                     final ArrayNode array = MAPPER.createArrayNode();
-                    int len = jsonNode.size();
+                    final int len = jsonNode.size();
                     for (int i = len - 1; i >= 0; i--) {
                         array.add(jsonNode.get(i));
                     }
@@ -319,7 +316,7 @@ class FuncArray {
     }
 
     static JsonNode funcSlice(JsonNode node, final String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 3);
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 3);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
@@ -329,12 +326,12 @@ class FuncArray {
         if (!node.isArray()) {
             return node;
         }
+        final int size = node.size();
         int start = pathAndParams.getValue().size() > 0 && !pathAndParams.getValue().get(0).isEmpty() ?
                 getNodeAsInt(node, pathAndParams.getValue().get(0)) : 0;
         int end = pathAndParams.getValue().size() > 1 && !pathAndParams.getValue().get(1).isEmpty() ?
                 getNodeAsInt(node, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
         int step = pathAndParams.getValue().size() > 2 ? getNodeAsInt(node, pathAndParams.getValue().get(2)) : 1;
-        int size = node.size();
         start = start >= 0 ? start : size + start;
         start = start < 0 ? 0 : Math.min(start, size);
         end = end >= 0 ? end : size + end;
@@ -354,7 +351,7 @@ class FuncArray {
     }
 
     static JsonNode funcSort(JsonNode node, final String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 2);
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 2);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
             if (node == null) {
@@ -380,9 +377,9 @@ class FuncArray {
                 }
             }
         }
-        String path = param;
-        boolean asc = ordering >= 0;
-        List<JsonNode> nodeList = new ArrayList<>();
+        final String path = param;
+        final boolean asc = ordering >= 0;
+        final List<JsonNode> nodeList = new ArrayList<>();
         for (int i = 0; i < node.size(); i++) {
             nodeList.add(node.get(i));
         }
@@ -409,7 +406,7 @@ class FuncArray {
             }
         }
         if (o1.isNumber() && o2.isNumber()) {
-            double value = o1.asDouble() - o2.asDouble();
+            final double value = o1.asDouble() - o2.asDouble();
             compare = (value > 0) ? 1 : (value < 0) ? -1 : 0;
         } else if (o1.isTextual() && o2.isTextual()) {
             compare = o1.asText().compareTo(o2.asText());

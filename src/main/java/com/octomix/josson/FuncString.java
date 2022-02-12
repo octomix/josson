@@ -126,12 +126,12 @@ class FuncString {
         return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> {
-                    String find = (String) objVar;
+                    final String find = (String) objVar;
                     if (find.isEmpty()) {
                         return jsonNode;
                     }
-                    String text = jsonNode.asText();
-                    int pos = last ?
+                    final String text = jsonNode.asText();
+                    final int pos = last ?
                             (ignoreCase ?
                                     StringUtils.lastIndexOfIgnoreCase(text, find) :
                                     StringUtils.lastIndexOf(text, find)) :
@@ -148,12 +148,12 @@ class FuncString {
         return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> {
-                    String find = (String) objVar;
+                    final String find = (String) objVar;
                     if (find.isEmpty()) {
                         return jsonNode;
                     }
-                    String text = jsonNode.asText();
-                    int pos = last ?
+                    final String text = jsonNode.asText();
+                    final int pos = last ?
                             (ignoreCase ?
                                     StringUtils.lastIndexOfIgnoreCase(text, find) :
                                     StringUtils.lastIndexOf(text, find)) :
@@ -168,14 +168,14 @@ class FuncString {
     static JsonNode funcLeftPad(final JsonNode node, final String params) {
         return applyFunc(node, params, 1, 2,
                 paramList -> {
-                    int size = getNodeAsInt(node, paramList.get(0));
-                    String padStr = paramList.size() > 1 ? getNodeAsText(node, paramList.get(1)) : null;
+                    final int size = getNodeAsInt(node, paramList.get(0));
+                    final String padStr = paramList.size() > 1 ? getNodeAsText(node, paramList.get(1)) : null;
                     return Pair.of(size, padStr);
                 },
                 JossonCore::nodeHasValue,
                 (jsonNode, objVar) -> {
-                    int size = (int) ((Pair<?, ?>) objVar).getKey();
-                    String padStr = (String) ((Pair<?, ?>) objVar).getValue();
+                    final int size = (int) ((Pair<?, ?>) objVar).getKey();
+                    final String padStr = (String) ((Pair<?, ?>) objVar).getValue();
                     return TextNode.valueOf(StringUtils.leftPad(jsonNode.asText(), size, padStr));
                 }
         );
@@ -214,7 +214,7 @@ class FuncString {
             }
             for (String path : paramList) {
                 if (path.charAt(0) == QUOTE_SYMBOL) {
-                    String text = unquoteString(path);
+                    final String text = unquoteString(path);
                     if (StringUtils.isNotBlank(text)) {
                         return TextNode.valueOf(text);
                     }
@@ -222,7 +222,7 @@ class FuncString {
             }
         } else if (node.isObject()) {
             for (String path : paramList) {
-                JsonNode tryNode = getNodeByPath(node, path);
+                final JsonNode tryNode = getNodeByPath(node, path);
                 if (tryNode != null && tryNode.isTextual() && StringUtils.isNotBlank(tryNode.asText())) {
                     return tryNode;
                 }
@@ -250,7 +250,7 @@ class FuncString {
             }
             for (String path : paramList) {
                 if (path.charAt(0) == QUOTE_SYMBOL) {
-                    String text = unquoteString(path);
+                    final String text = unquoteString(path);
                     if (StringUtils.isNotEmpty(text)) {
                         return TextNode.valueOf(text);
                     }
@@ -258,7 +258,7 @@ class FuncString {
             }
         } else if (node.isObject()) {
             for (String path : paramList) {
-                JsonNode tryNode = getNodeByPath(node, path);
+                final JsonNode tryNode = getNodeByPath(node, path);
                 if (tryNode != null && tryNode.isTextual() && StringUtils.isNotEmpty(tryNode.asText())) {
                     return tryNode;
                 }
@@ -308,8 +308,8 @@ class FuncString {
                         paramList.size() > 2 ? getNodeAsInt(node, paramList.get(2)) : -1),
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> {
-                    String[] texts = (String[]) ((Pair<?, ?>) objVar).getKey();
-                    int max = (int) ((Pair<?, ?>) objVar).getValue();
+                    final String[] texts = (String[]) ((Pair<?, ?>) objVar).getKey();
+                    final int max = (int) ((Pair<?, ?>) objVar).getValue();
                     return TextNode.valueOf(StringUtils.replace(jsonNode.asText(), texts[0], texts[1], max, ignoreCase));
                 }
         );
@@ -318,14 +318,14 @@ class FuncString {
     static JsonNode funcRightPad(final JsonNode node, final String params) {
         return applyFunc(node, params, 1, 2,
                 paramList -> {
-                    int size = getNodeAsInt(node, paramList.get(0));
-                    String padStr = paramList.size() > 1 ? getNodeAsText(node, paramList.get(1)) : null;
+                    final int size = getNodeAsInt(node, paramList.get(0));
+                    final String padStr = paramList.size() > 1 ? getNodeAsText(node, paramList.get(1)) : null;
                     return Pair.of(size, padStr);
                 },
                 JossonCore::nodeHasValue,
                 (jsonNode, objVar) -> {
-                    int size = (int) ((Pair<?, ?>) objVar).getKey();
-                    String padStr = (String) ((Pair<?, ?>) objVar).getValue();
+                    final int size = (int) ((Pair<?, ?>) objVar).getKey();
+                    final String padStr = (String) ((Pair<?, ?>) objVar).getValue();
                     return TextNode.valueOf(StringUtils.rightPad(jsonNode.asText(), size, padStr));
                 }
         );
@@ -369,8 +369,8 @@ class FuncString {
     static JsonNode funcSubstr(final JsonNode node, final String params) {
         return applyFunc(node, params, 1, 2,
                 paramList -> {
-                    int int1 = paramList.get(0).isEmpty() ? 0 : getNodeAsInt(node, paramList.get(0));
-                    int int2 = paramList.size() > 1 ? getNodeAsInt(node, paramList.get(1)) : Integer.MAX_VALUE;
+                    final int int1 = paramList.get(0).isEmpty() ? 0 : getNodeAsInt(node, paramList.get(0));
+                    final int int2 = paramList.size() > 1 ? getNodeAsInt(node, paramList.get(1)) : Integer.MAX_VALUE;
                     return new Integer[]{int1, int2};
                 },
                 JsonNode::isTextual,
