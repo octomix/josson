@@ -36,10 +36,30 @@ class JoinDatasets {
      * Dataset join operators.
      */
     enum JoinOperator {
+
+        /**
+         * Inner join one.
+         */
         INNER_JOIN_ONE(">=<"),
+
+        /**
+         * Left join one.
+         */
         LEFT_JOIN_ONE("<=<"),
+
+        /**
+         * Right join one.
+         */
         RIGHT_JOIN_ONE(">=>"),
+
+        /**
+         * Left join many.
+         */
         LEFT_JOIN_MANY("<=<<"),
+
+        /**
+         * Right join many.
+         */
         RIGHT_JOIN_MANY(">>=>");
 
         private final String symbol;

@@ -21,15 +21,54 @@ package com.octomix.josson;
  */
 enum Operator {
 
+    /**
+     * Equal.
+     */
     EQ("="),
+
+    /**
+     * Not equal.
+     */
     NE("!="),
+
+    /**
+     * Greater than.
+     */
     GT(">"),
+
+    /**
+     * Greater than or equal.
+     */
     GTE(">="),
+
+    /**
+     * Less than.
+     */
     LT("<"),
+
+    /**
+     * Less than or equal.
+     */
     LTE("<="),
+
+    /**
+     * Not.
+     */
     NOT("!"),
+
+    /**
+     * And.
+     */
     AND("&"),
+
+    /**
+     * Or.
+     */
     OR("|"),
+
+    /**
+     * No operation.
+     */
     NOP("");
 
     private final String symbol;

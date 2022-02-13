@@ -173,7 +173,7 @@ class FuncExecutor {
 
     private static JsonNode applyAction(final JsonNode node, final Predicate<JsonNode> isValid,
                                         final Function<JsonNode, JsonNode> action1,
-                                        final BiFunction<JsonNode, Object, JsonNode> action2, Object variables) {
+                                        final BiFunction<JsonNode, Object, JsonNode> action2, final Object variables) {
         if (node.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {

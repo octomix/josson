@@ -25,8 +25,20 @@ class ArrayFilter {
      * Filter modes.
      */
     enum FilterMode {
+
+        /**
+         * Query first matching element.
+         */
         FILTRATE_FIND_FIRST(' '),
+
+        /**
+         * Query all matching elements and output them inside an array node.
+         */
         FILTRATE_COLLECT_ALL('*'),
+
+        /**
+         * Query all matching elements and divert each element to separate branch for upcoming manipulation.
+         */
         FILTRATE_DIVERT_ALL('@');
 
         private final char symbol;

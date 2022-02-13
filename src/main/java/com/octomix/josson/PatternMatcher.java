@@ -34,8 +34,20 @@ class PatternMatcher {
      * Pattern enclosure types.
      */
     private enum Enclosure {
+
+        /**
+         * Enclosed by ''.
+         */
         STRING_LITERAL,
+
+        /**
+         * Enclosed by [].
+         */
         SQUARE_BRACKETS,
+
+        /**
+         * Enclosed by ().
+         */
         PARENTHESES;
 
         static final Enclosure[] ALL_KINDS = new Enclosure[]{
