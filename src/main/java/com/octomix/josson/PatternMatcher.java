@@ -259,7 +259,7 @@ class PatternMatcher {
             if (end > 0) {
                 final String ending = rightTrimOf(input, end + 1, last + 1);
                 if (!ending.isEmpty()) {
-                    throw new SyntaxErrorException(input, String.format("Invalid '%s'", ending), end);
+                    throw new SyntaxErrorException(input, String.format("Invalid '%s' after function", ending), end);
                 }
                 final String name = rightTrimOf(input, 0, pos);
                 if (name.isEmpty()) {

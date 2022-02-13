@@ -126,7 +126,7 @@ class FuncArithmetic {
     }
 
     static JsonNode funcRound(final JsonNode node, final String params) {
-        return apply(node, params, 1, 1,
+        return applyWithParams(node, params, 1, 1,
                 paramList -> {
                     final int precision = getNodeAsInt(node, paramList.get(0));
                     final double magnitude = Math.pow(10, precision);

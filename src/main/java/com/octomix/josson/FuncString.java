@@ -24,6 +24,7 @@ import com.octomix.josson.commons.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static com.octomix.josson.FuncExecutor.*;
@@ -40,7 +41,7 @@ class FuncString {
     }
 
     static JsonNode funcAbbreviate(final JsonNode node, final String params) {
-        return apply(node, params, 1, 2,
+        return applyWithParams(node, params, 1, 2,
                 paramList -> {
                     final int offset = paramList.get(0).isEmpty() ? 0 : getNodeAsInt(node, paramList.get(0));
                     if (paramList.size() <= 1) {
@@ -64,16 +65,6 @@ class FuncString {
 
     static JsonNode funcCapitalize(final JsonNode node, final String params) {
         return applyTextNode(node, params, jsonNode -> StringUtils.capitalize(jsonNode.asText()));
-    }
-
-    static JsonNode funcCenter(final JsonNode node, final String params) {
-        return applyTextAlignment(node, params,
-                (jsonNode, objVar) -> {
-                    final int size = (int) ((Pair<?, ?>) objVar).getKey();
-                    final String padStr = (String) ((Pair<?, ?>) objVar).getValue();
-                    return TextNode.valueOf(StringUtils.center(jsonNode.asText(), size, padStr));
-                }
-        );
     }
 
     static JsonNode funcConcat(final JsonNode node, final String params) {
@@ -131,16 +122,6 @@ class FuncString {
         );
     }
 
-    static JsonNode funcLeftPad(final JsonNode node, final String params) {
-        return applyTextAlignment(node, params,
-                (jsonNode, objVar) -> {
-                    final int size = (int) ((Pair<?, ?>) objVar).getKey();
-                    final String padStr = (String) ((Pair<?, ?>) objVar).getValue();
-                    return TextNode.valueOf(StringUtils.leftPad(jsonNode.asText(), size, padStr));
-                }
-        );
-    }
-
     static JsonNode funcLength(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, JossonCore::nodeHasValue,
                 jsonNode -> IntNode.valueOf(jsonNode.asText().length()));
@@ -188,6 +169,26 @@ class FuncString {
         return null;
     }
 
+    static JsonNode funcPadding(final JsonNode node, final String params, final int alignment) {
+        return applyWithParams(node, params, 1, 2,
+                paramList -> {
+                    final int size = getNodeAsInt(node, paramList.get(0));
+                    final String padStr = paramList.size() > 1 ? getNodeAsText(node, paramList.get(1)) : null;
+                    return Pair.of(size, padStr);
+                },
+                JossonCore::nodeHasValue,
+                (jsonNode, objVar) -> {
+                    final int size = (int) ((Pair<?, ?>) objVar).getKey();
+                    final String padStr = (String) ((Pair<?, ?>) objVar).getValue();
+                    return TextNode.valueOf(
+                            alignment < 0 ? StringUtils.leftPad(jsonNode.asText(), size, padStr)
+                            : alignment > 0 ? StringUtils.rightPad(jsonNode.asText(), size, padStr)
+                            : StringUtils.center(jsonNode.asText(), size, padStr)
+                    );
+                }
+        );
+    }
+
     static JsonNode funcPrependIfMissing(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyTextNodeWithParamAsText(node, params,
                 (str, param) -> ignoreCase
@@ -218,7 +219,7 @@ class FuncString {
     }
 
     static JsonNode funcReplace(final JsonNode node, final String params, final boolean ignoreCase) {
-        return apply(node, params, 2, 3,
+        return applyWithParams(node, params, 2, 3,
                 paramList -> Pair.of(
                         new String[]{getNodeAsText(node, paramList.get(0)), getNodeAsText(node, paramList.get(1))},
                         paramList.size() > 2 ? getNodeAsInt(node, paramList.get(2)) : -1),
@@ -231,18 +232,8 @@ class FuncString {
         );
     }
 
-    static JsonNode funcRightPad(final JsonNode node, final String params) {
-        return applyTextAlignment(node, params,
-                (jsonNode, objVar) -> {
-                    final int size = (int) ((Pair<?, ?>) objVar).getKey();
-                    final String padStr = (String) ((Pair<?, ?>) objVar).getValue();
-                    return TextNode.valueOf(StringUtils.rightPad(jsonNode.asText(), size, padStr));
-                }
-        );
-    }
-
     static JsonNode funcSplit(final JsonNode node, final String params) {
-        return apply(node, params, 0, 1,
+        return applyWithParams(node, params, 0, 1,
                 paramList -> paramList.size() > 0 ? getNodeAsText(node, paramList.get(0)) : null,
                 JsonNode::isTextual,
                 (jsonNode, objVar) -> {
@@ -268,7 +259,7 @@ class FuncString {
     }
 
     static JsonNode funcSubstr(final JsonNode node, final String params) {
-        return apply(node, params, 1, 2,
+        return applyWithParams(node, params, 1, 2,
                 paramList -> {
                     final int int1 = paramList.get(0).isEmpty() ? 0 : getNodeAsInt(node, paramList.get(0));
                     final int int2 = paramList.size() > 1 ? getNodeAsInt(node, paramList.get(1)) : Integer.MAX_VALUE;
@@ -289,6 +280,6 @@ class FuncString {
     }
 
     static JsonNode funcUpperCase(final JsonNode node, final String params) {
-        return applyTextNode(node, params,jsonNode -> StringUtils.upperCase(jsonNode.asText()));
+        return applyTextNode(node, params, jsonNode -> StringUtils.upperCase(jsonNode.asText()));
     }
 }

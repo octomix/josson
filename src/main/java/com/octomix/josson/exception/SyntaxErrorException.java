@@ -32,7 +32,7 @@ public class SyntaxErrorException extends IllegalArgumentException {
      * @param pos the position where the error occur
      */
     public SyntaxErrorException(final String statement, final String message, final int pos) {
-        super(String.format("%s %s: %s", message, pos == -1 ? " at the end" : " at position " + pos, statement));
+        super(String.format("%s %s: %s", message, pos == -1 ? "at the end" : "at position " + pos, statement));
     }
 
     /**

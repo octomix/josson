@@ -155,7 +155,7 @@ class FuncDispatcher {
             case "capitalize":
                 return funcCapitalize(node, params);
             case "center":
-                return funcCenter(node, params);
+                return funcPadding(node, params, 0);
             case "concat":
                 return funcConcat(node, params);
             // Structural
@@ -353,7 +353,7 @@ class FuncDispatcher {
                 return funcLocalToOffsetDate(node, params);
             // String
             case "leftpad":
-                return funcLeftPad(node, params);
+                return funcPadding(node, params, -1);
             case "length":
                 return funcLength(node, params);
             case "lowercase":
@@ -493,7 +493,7 @@ class FuncDispatcher {
             case "replaceignorecase":
                 return funcReplace(node, params, true);
             case "rightpad":
-                return funcRightPad(node, params);
+                return funcPadding(node, params, 1);
         }
         throw new UnsupportedFunctionException();
     }

@@ -110,8 +110,9 @@ class FuncFormat {
     }
 
     static JsonNode funcCycleValue(final JsonNode node, final String params) {
-        return applyArrayNode(node, params, JossonCore::nodeHasValue,
-                (jsonNode, paramArray) -> {
+        return applyWithArrayNode(node, params, JossonCore::nodeHasValue,
+                (jsonNode, objVar) -> {
+                    final ArrayNode paramArray = (ArrayNode) objVar;
                     final int size = paramArray.size();
                     final int index = jsonNode.asInt() % size;
                     return paramArray.get(index < 0 ? index + size : index);
@@ -159,8 +160,9 @@ class FuncFormat {
     }
 
     static JsonNode funcIndexedValue(final JsonNode node, final String params) {
-        return applyArrayNode(node, params, JossonCore::nodeHasValue,
-                (jsonNode, paramArray) -> {
+        return applyWithArrayNode(node, params, JossonCore::nodeHasValue,
+                (jsonNode, objVar) -> {
+                    final ArrayNode paramArray = (ArrayNode) objVar;
                     final int index = jsonNode.asInt();
                     return index >= 0 && index < paramArray.size() ? paramArray.get(index) : null;
                 }
