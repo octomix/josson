@@ -16,9 +16,16 @@
 
 package com.octomix.josson;
 
+/**
+ * A key-value map entry.
+ *
+ * @param <K> key
+ * @param <V> value
+ */
 class Pair<K, V> {
 
     private final K key;
+
     private final V value;
 
     Pair(final K key, final V value) {

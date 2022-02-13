@@ -24,7 +24,9 @@ import java.util.Set;
 public class NoValuePresentException extends Exception {
 
     private final Set<String> datasetNames;
+
     private final Set<String> placeholders;
+
     private final String content;
 
     /**
@@ -54,6 +56,8 @@ public class NoValuePresentException extends Exception {
     }
 
     /**
+     * Get the unresolved dataset names.
+     *
      * @return Unresolved dataset names
      */
     public Set<String> getDatasetNames() {
@@ -61,6 +65,8 @@ public class NoValuePresentException extends Exception {
     }
 
     /**
+     * Get the unresolvable placeholders.
+     *
      * @return Unresolvable placeholders
      */
     public Set<String> getPlaceholders() {

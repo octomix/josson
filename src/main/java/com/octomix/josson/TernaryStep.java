@@ -16,9 +16,13 @@
 
 package com.octomix.josson;
 
+/**
+ * Stores a ternary syntax element.
+ */
 class TernaryStep {
 
     private final String statement;
+
     private final String ifTrueValue;
 
     TernaryStep(final String statement, final String ifTrueValue) {

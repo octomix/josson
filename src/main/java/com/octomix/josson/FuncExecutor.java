@@ -31,6 +31,9 @@ import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
 
+/**
+ * Common logic to execute functions.
+ */
 class FuncExecutor {
 
     private FuncExecutor() {

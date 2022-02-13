@@ -34,6 +34,8 @@ public class UnresolvedDatasetException extends Exception {
     }
 
     /**
+     * Get the unresolved dataset name
+     *
      * @return Unresolved dataset name
      */
     public String getDatasetName() {

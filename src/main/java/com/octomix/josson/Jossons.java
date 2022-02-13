@@ -36,6 +36,8 @@ import static com.octomix.josson.commons.StringEscapeUtils.unescapeXml;
  */
 public class Jossons {
 
+    private final static String UNRESOLVABLE_PLACEHOLDER_MARK = "**";
+
     private final Map<String, Josson> datasets = new HashMap<>();
 
     private Jossons() {
@@ -248,7 +250,7 @@ public class Jossons {
                     if (node == null) {
                         unresolvedPlaceholders.add(query);
                         putDataset(query, null);
-                        sb.append("**").append(query).append("**");
+                        sb.append(UNRESOLVABLE_PLACEHOLDER_MARK).append(query).append(UNRESOLVABLE_PLACEHOLDER_MARK);
                     } else if (node.isValueNode()) {
                         sb.append(node.asText());
                         // Remember even if it is an empty string
@@ -268,9 +270,9 @@ public class Jossons {
             return template;
         }
         if (placeholderAt >= 0) {
-            unresolvedPlaceholders.add("Lack of closing tag: " +
-                    StringUtils.abbreviate(template.substring(placeholderAt), 0, 20));
-            sb.append("**").append(template, placeholderAt + 2, template.length());
+            unresolvedPlaceholders.add("Lack of closing tag: "
+                    + StringUtils.abbreviate(template.substring(placeholderAt), 0, 20));
+            sb.append(UNRESOLVABLE_PLACEHOLDER_MARK).append(template, placeholderAt + 2, template.length());
         } else {
             sb.append(template, offset, template.length());
         }

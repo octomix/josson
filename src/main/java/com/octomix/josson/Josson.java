@@ -31,8 +31,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
-import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 
 /**
@@ -60,12 +60,10 @@ public class Josson {
      *
      * @param node the Jackson JsonNode to store
      * @return The new Josson object
-     * @throws IllegalArgumentException if {@code node} is null
+     * @throws NullPointerException if {@code node} is null
      */
     public static Josson create(final JsonNode node) {
-        if (node == null) {
-            throw new IllegalNullArgumentException();
-        }
+        Objects.requireNonNull(node, "node must not be null");
         return new Josson(node);
     }
 
@@ -83,12 +81,10 @@ public class Josson {
      *
      * @param object the object to convert
      * @return The new Josson object
-     * @throws IllegalArgumentException if {@code object} is null
+     * @throws NullPointerException if {@code object} is null
      */
     public static Josson from(final Object object) {
-        if (object == null) {
-            throw new IllegalNullArgumentException();
-        }
+        Objects.requireNonNull(object, "object must not be null");
         return new Josson(readJsonNode(object));
     }
 
@@ -97,12 +93,11 @@ public class Josson {
      *
      * @param json the string content for building the JSON tree
      * @return The new Josson object
-     * @throws JsonProcessingException if {@code json} is null or the underlying input contains invalid content
+     * @throws NullPointerException if {@code json} is null,
+     *         JsonProcessingException if the underlying input contains invalid content
      */
     public static Josson fromJsonString(final String json) throws JsonProcessingException {
-        if (json == null) {
-            throw new IllegalNullArgumentException();
-        }
+        Objects.requireNonNull(json, "json string must not be null");
         return new Josson(readJsonNode(json));
     }
 
@@ -110,12 +105,10 @@ public class Josson {
      * Set the Josson content with given Jackson JsonNode.
      *
      * @param node the Jackson JsonNode to store
-     * @throws IllegalArgumentException if {@code node} is null
+     * @throws NullPointerException if {@code node} is null
      */
     public void setNode(final JsonNode node) {
-        if (node == null) {
-            throw new IllegalNullArgumentException();
-        }
+        Objects.requireNonNull(node, "node must not be null");
         this.jsonNode = node;
     }
 
@@ -123,12 +116,11 @@ public class Josson {
      * Set the Josson content with given JSON content string that deserialized to a Jackson JsonNode.
      *
      * @param json the string content for building the JSON tree
-     * @throws JsonProcessingException if {@code json} is null or the underlying input contains invalid content
+     * @throws NullPointerException if {@code json} is null,
+     *         JsonProcessingException if the underlying input contains invalid content
      */
     public void setJsonString(final String json) throws JsonProcessingException {
-        if (json == null) {
-            throw new IllegalNullArgumentException();
-        }
+        Objects.requireNonNull(json, "json string must not be null");
         jsonNode = readJsonNode(json);
     }
 
@@ -283,7 +275,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final String jossonPath) {
-        return getNodeByPath(jsonNode, jossonPath);
+        return JossonCore.getNodeByPath(jsonNode, jossonPath);
     }
 
     /**
@@ -295,7 +287,32 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final int index, final String jossonPath) {
-        return getNodeByPath(jsonNode, index, jossonPath);
+        return JossonCore.getNodeByPath(jsonNode, index, jossonPath);
+    }
+
+    /**
+     * Query data from a Jackson JsonNode by Josson query language.
+     *
+     * @param node the Jackson JsonNode that retrieve data from
+     * @param jossonPath the Josson query path
+     * @return The resulting Jackson JsonNode
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public static JsonNode getNode(final JsonNode node, final String jossonPath) {
+        return JossonCore.getNodeByPath(node, jossonPath);
+    }
+
+    /**
+     * Query data on an element of ArrayNode by Josson query language.
+     *
+     * @param node the Jackson JsonNode that retrieve data from
+     * @param index index of the specific ArrayNode element
+     * @param jossonPath the Josson query path
+     * @return The resulting Jackson JsonNode. {@code null} if the root is not an ArrayNode.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public static JsonNode getNode(final JsonNode node, final int index, final String jossonPath) {
+        return JossonCore.getNodeByPath(node, index, jossonPath);
     }
 
     /**
@@ -491,7 +508,7 @@ public class Josson {
      */
     public LocalDateTime getIsoLocalDateTime(final String jossonPath) {
         final ValueNode node = getValueNode(jossonPath);
-        return node == null || !node.isTextual() ? null : toLocalDateTime(node);
+        return node == null || !node.isTextual() ? null : JossonCore.toLocalDateTime(node);
     }
 
     /**
@@ -504,7 +521,7 @@ public class Josson {
      */
     public LocalDateTime getRequiredIsoLocalDateTime(final String jossonPath) {
         final ValueNode node = getRequiredValueNode(jossonPath);
-        return !node.isTextual() ? null : toLocalDateTime(node);
+        return !node.isTextual() ? null : JossonCore.toLocalDateTime(node);
     }
 
     /**
@@ -541,7 +558,7 @@ public class Josson {
      */
     public OffsetDateTime getOffsetDateTime(final String jossonPath) {
         final ValueNode node = getValueNode(jossonPath);
-        return node == null || !node.isTextual() ? null : toOffsetDateTime(node);
+        return node == null || !node.isTextual() ? null : JossonCore.toOffsetDateTime(node);
     }
 
     /**
@@ -554,18 +571,7 @@ public class Josson {
      */
     public OffsetDateTime getRequiredOffsetDateTime(final String jossonPath) {
         final ValueNode node = getRequiredValueNode(jossonPath);
-        return !node.isTextual() ? null : toOffsetDateTime(node);
-    }
-
-    /**
-     * Convert the content into instance of given value type.
-     *
-     * @param <T> the specific type of the result
-     * @return The generated JSON that converted to the result type
-     * @throws IllegalArgumentException if conversion fails due to incompatible type
-     */
-    public <T> T convertValue() {
-        return convertValue(jsonNode);
+        return !node.isTextual() ? null : JossonCore.toOffsetDateTime(node);
     }
 
     /**
@@ -587,6 +593,29 @@ public class Josson {
     }
 
     /**
+     * Convert the content into instance of given value type.
+     *
+     * @param <T> the specific type of the result
+     * @return The generated JSON that converted to the result type
+     * @throws IllegalArgumentException if conversion fails due to incompatible type
+     */
+    public <T> T convertValue() {
+        return convertValue(jsonNode);
+    }
+
+    /**
+     * Convenience method for doing two-step conversion from given value, into instance of given value type.
+     *
+     * @param node the Jackson JsonNode to convert
+     * @param <T> the specific type of the result
+     * @return The generated JSON that converted to the result type
+     * @throws IllegalArgumentException if conversion fails due to incompatible type
+     */
+    public static <T> T convertValue(final JsonNode node) {
+        return MAPPER.convertValue(node, new TypeReference<T>(){ });
+    }
+
+    /**
      * Set serializing inclusion options.
      *
      * @param include JsonInclude.Include e.g. NON_NULL
@@ -595,18 +624,42 @@ public class Josson {
         MAPPER.setSerializationInclusion(include);
     }
 
+    /**
+     * To tailor the output of the function formatDate().
+     * Default value is Locale.getDefault().
+     *
+     * @param locale a geographical, political, or cultural region.
+     */
     public static void setLocale(final Locale locale) {
         JossonCore.setLocale(locale);
     }
 
+    /**
+     * Get the current locale setting.
+     * Default value is Locale.getDefault().
+     *
+     * @return The current {@code Local} setting.
+     */
     public static Locale getLocale() {
         return JossonCore.getLocale();
     }
 
+    /**
+     * To identify the rules used to convert between an OffsetDateTime and a LocalDateTime.
+     * Default value is ZoneId.systemDefault().
+     *
+     * @param zoneId a time-zone ID
+     */
     public static void setZoneId(final ZoneId zoneId) {
         JossonCore.setZoneId(zoneId);
     }
 
+    /**
+     * Get the current time-zone setting.
+     * Default value is ZoneId.systemDefault().
+     *
+     * @return The current {@code ZoneId} setting
+     */
     public static ZoneId getZoneId() {
         return JossonCore.getZoneId();
     }
@@ -640,6 +693,20 @@ public class Josson {
     }
 
     /**
+     * Deserialize JSON content string to a Jackson JsonNode.
+     *
+     * @param json the string content for building the JSON tree
+     * @return A JsonNode, if valid JSON content found
+     * @throws JsonProcessingException if underlying input contains invalid content
+     */
+    public static JsonNode readJsonNode(final String json) throws JsonProcessingException {
+        if (json == null) {
+            return null;
+        }
+        return MAPPER.readTree(json);
+    }
+
+    /**
      * Convert an object to a Jackson {@code ObjectNode}.
      *
      * @param object the object to convert
@@ -667,20 +734,6 @@ public class Josson {
             return (ArrayNode) node;
         }
         throw new IllegalArgumentException("The provided object is not an array node");
-    }
-
-    /**
-     * Deserialize JSON content string to a Jackson JsonNode.
-     *
-     * @param json the string content for building the JSON tree
-     * @return A JsonNode, if valid JSON content found
-     * @throws JsonProcessingException if underlying input contains invalid content
-     */
-    public static JsonNode readJsonNode(final String json) throws JsonProcessingException {
-        if (json == null) {
-            return null;
-        }
-        return MAPPER.readTree(json);
     }
 
     /**
@@ -712,18 +765,6 @@ public class Josson {
     }
 
     /**
-     * Convenience method for doing two-step conversion from given value, into instance of given value type.
-     *
-     * @param node the Jackson JsonNode to convert
-     * @param <T> the specific type of the result
-     * @return The generated JSON that converted to the result type
-     * @throws IllegalArgumentException if conversion fails due to incompatible type
-     */
-    public static <T> T convertValue(final JsonNode node) {
-        return MAPPER.convertValue(node, new TypeReference<T>(){} );
-    }
-
-    /**
      * Serializing an object to a JSON as a string.
      *
      * @param object the object to convert
@@ -748,37 +789,6 @@ public class Josson {
             return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(object);
         } catch (JsonProcessingException e) {
             return MAPPER.valueToTree(object).toPrettyString();
-        }
-    }
-
-    /**
-     * Query data from a Jackson JsonNode by Josson query language.
-     *
-     * @param node the Jackson JsonNode that retrieve data from
-     * @param jossonPath the Josson query path
-     * @return The resulting Jackson JsonNode
-     * @throws IllegalArgumentException if the query path is invalid
-     */
-    public static JsonNode getNode(final JsonNode node, final String jossonPath) {
-        return getNodeByPath(node, jossonPath);
-    }
-
-    /**
-     * Query data on an element of ArrayNode by Josson query language.
-     *
-     * @param node the Jackson JsonNode that retrieve data from
-     * @param index index of the specific ArrayNode element
-     * @param jossonPath the Josson query path
-     * @return The resulting Jackson JsonNode. {@code null} if the root is not an ArrayNode.
-     * @throws IllegalArgumentException if the query path is invalid
-     */
-    public static JsonNode getNode(final JsonNode node, final int index, final String jossonPath) {
-        return getNodeByPath(node, index, jossonPath);
-    }
-
-    private static class IllegalNullArgumentException extends IllegalArgumentException {
-        IllegalNullArgumentException() {
-            super("Argument cannot be null");
         }
     }
 }

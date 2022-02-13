@@ -25,17 +25,17 @@ package com.octomix.josson;
 public enum ResolverDebugLevel {
 
     /**
-     * Level 1: Show content of value node only
+     * Level 1: Show content of value node only.
      */
     SHOW_CONTENT_OF_VALUE_NODE_ONLY,
 
     /**
-     * Level 2: Show content up to object node
+     * Level 2: Show content up to object node.
      */
     SHOW_CONTENT_UP_TO_OBJECT_NODE,
 
     /**
-     * Level 3: Show content up to array node
+     * Level 3: Show content up to array node.
      */
     SHOW_CONTENT_UP_TO_ARRAY_NODE
 }

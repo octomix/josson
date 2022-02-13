@@ -29,6 +29,9 @@ import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 
+/**
+ * Array functions.
+ */
 class FuncArray {
 
     private FuncArray() {
@@ -217,8 +220,8 @@ class FuncArray {
     }
 
     static IntNode funcLastIndexOf(JsonNode node, final String params) {
-        Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        final JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
         if (valueNode == null || !valueNode.isValueNode()) {
             return null;
         }
@@ -285,8 +288,7 @@ class FuncArray {
                 }
             }
         }
-        return maxMinNumber != null ? maxMinNumber :
-                maxMinString != null ? TextNode.valueOf(maxMinString) : null;
+        return maxMinNumber != null ? maxMinNumber : maxMinString != null ? TextNode.valueOf(maxMinString) : null;
     }
 
     static JsonNode funcReverse(final JsonNode node, final String params) {
@@ -327,10 +329,10 @@ class FuncArray {
             return node;
         }
         final int size = node.size();
-        int start = pathAndParams.getValue().size() > 0 && !pathAndParams.getValue().get(0).isEmpty() ?
-                getNodeAsInt(node, pathAndParams.getValue().get(0)) : 0;
-        int end = pathAndParams.getValue().size() > 1 && !pathAndParams.getValue().get(1).isEmpty() ?
-                getNodeAsInt(node, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
+        int start = pathAndParams.getValue().size() > 0 && !pathAndParams.getValue().get(0).isEmpty()
+                ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 0;
+        int end = pathAndParams.getValue().size() > 1 && !pathAndParams.getValue().get(1).isEmpty()
+                ? getNodeAsInt(node, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
         int step = pathAndParams.getValue().size() > 2 ? getNodeAsInt(node, pathAndParams.getValue().get(2)) : 1;
         start = start >= 0 ? start : size + start;
         start = start < 0 ? 0 : Math.min(start, size);

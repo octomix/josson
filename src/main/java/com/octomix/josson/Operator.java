@@ -16,6 +16,9 @@
 
 package com.octomix.josson;
 
+/**
+ * Defines relational and logical operators.
+ */
 enum Operator {
 
     EQ("="),

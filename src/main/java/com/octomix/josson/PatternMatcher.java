@@ -17,6 +17,7 @@
 package com.octomix.josson;
 
 import com.octomix.josson.commons.StringUtils;
+import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.util.*;
 
@@ -24,6 +25,9 @@ import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.JossonCore.*;
 
+/**
+ * A syntax analyser.
+ */
 class PatternMatcher {
 
     private enum Enclosure {
@@ -34,7 +38,7 @@ class PatternMatcher {
         static final Enclosure[] ALL_KINDS = new Enclosure[]{
             STRING_LITERAL,
             SQUARE_BRACKETS,
-            PARENTHESES
+            PARENTHESES,
         };
     }
 
@@ -99,10 +103,10 @@ class PatternMatcher {
         if (pos == last && input.charAt(pos) == QUOTE_SYMBOL) {
             return pos;
         }
-        throw new AtPositionException(input, "Expected quote symbol (" + QUOTE_SYMBOL + ")", pos);
+        throw new SyntaxErrorException(input, "Expected quote symbol (" + QUOTE_SYMBOL + ")", pos);
     }
 
-    private static int matchSquareBrackets(final String input, final int pos,final  int last) {
+    private static int matchSquareBrackets(final String input, final int pos, final int last) {
         if (input.charAt(pos) != '[') {
             return 0;
         }
@@ -116,17 +120,17 @@ class PatternMatcher {
         return findBracketEnd(input, pos, last, ')');
     }
 
-    private static int findBracketEnd(final String input, int pos,final  int last, final char expectedEnd) {
+    private static int findBracketEnd(final String input, int pos, final int last, final char expectedEnd) {
         while (++pos <= last) {
             switch (input.charAt(pos)) {
                 case ')':
                     if (expectedEnd == ']') {
-                        throw new AtPositionException(input, "Invalid ')'", pos);
+                        throw new SyntaxErrorException(input, "Invalid ')'", pos);
                     }
                     return pos;
                 case ']':
                     if (expectedEnd == ')') {
-                        throw new AtPositionException(input, "Invalid ']'", pos);
+                        throw new SyntaxErrorException(input, "Invalid ']'", pos);
                     }
                     return pos;
                 case '(':
@@ -138,7 +142,7 @@ class PatternMatcher {
             }
             pos = skipEnclosure(input, pos, last, Enclosure.STRING_LITERAL);
         }
-        throw new AtPositionException(input, "Missing '" + expectedEnd + "'", -1);
+        throw new SyntaxErrorException(input, "Missing '" + expectedEnd + "'", -1);
     }
 
     private static int skipDatasetQuery(final String input, int pos, final int last) {
@@ -161,8 +165,8 @@ class PatternMatcher {
                 case '<':
                     return null;
                 case '-':
-                    return input.charAt(pos + 1) != '>' ? null :
-                            new String[]{rightTrimOf(input, beg, pos), trimOf(input, pos + 2, last + 1)};
+                    return input.charAt(pos + 1) != '>' ? null
+                            : new String[]{rightTrimOf(input, beg, pos), trimOf(input, pos + 2, last + 1)};
             }
         }
         return null;
@@ -205,7 +209,7 @@ class PatternMatcher {
                 case '{':
                 case '[':
                     final char lastChar = query.charAt(query.length() - 1);
-                    if ((firstChar == '{' && lastChar == '}') || (firstChar == '[' && lastChar == ']')) {
+                    if (firstChar == '{' && lastChar == '}' || firstChar == '[' && lastChar == ']') {
                         return new String[]{name, arrayEnd == 0 ? "" : "[]", query};
                     }
             }
@@ -228,11 +232,11 @@ class PatternMatcher {
                         pos = eatSpaces(input, ++pos, last);
                     }
                     if (pos <= last) {
-                        throw new AtPositionException(input, "Invalid filter expression", pos);
+                        throw new SyntaxErrorException(input, "Invalid filter expression", pos);
                     }
                 }
                 if (mode != FILTRATE_DIVERT_ALL && filter.isEmpty()) {
-                    throw new AtPositionException(input, "Missing filter expression", end);
+                    throw new SyntaxErrorException(input, "Missing filter expression", end);
                 }
                 return new ArrayFilter(arrayName, filter, mode);
             }
@@ -252,11 +256,11 @@ class PatternMatcher {
             if (end > 0) {
                 final String ending = rightTrimOf(input, end + 1, last + 1);
                 if (!ending.isEmpty()) {
-                    throw new AtPositionException(input, "Invalid '" + ending + "'", end);
+                    throw new SyntaxErrorException(input, "Invalid '" + ending + "'", end);
                 }
                 final String name = rightTrimOf(input, 0, pos);
                 if (name.isEmpty()) {
-                    throw new IllegalArgumentException("Missing function name: " + input);
+                    throw new SyntaxErrorException(input, "Missing function name");
                 }
                 return new FuncDispatcher(name, trimOf(input, pos + 1, end));
             } else if (matchStringLiteral(input, pos, last) > 0 || matchSquareBrackets(input, pos, last) > 0) {
@@ -284,12 +288,12 @@ class PatternMatcher {
         final String rightQuery = trimOf(input, pos, last + 1);
         pos = eatSpaces(input, end, last);
         if (pos <= last) {
-            throw new AtPositionException(input, "Too many arguments for join operation", pos);
+            throw new SyntaxErrorException(input, "Too many arguments for join operation", pos);
         }
         final JoinDatasets.Dataset leftDataset = matchJoinDatasetQuery(leftQuery);
         final JoinDatasets.Dataset rightDataset = matchJoinDatasetQuery(rightQuery);
         if (leftDataset.getKeys().length != rightDataset.getKeys().length) {
-            throw new IllegalArgumentException("Mismatch key count: " + input);
+            throw new SyntaxErrorException(input, "Mismatch key count");
         }
         return new JoinDatasets(leftDataset, operator, rightDataset);
     }
@@ -301,31 +305,31 @@ class PatternMatcher {
             switch (input.charAt(pos)) {
                 case '{':
                     if (query != null || pos == 0) {
-                        throw new AtPositionException(input, "Invalid '{'", pos);
+                        throw new SyntaxErrorException(input, "Invalid '{'", pos);
                     }
                     query = rightTrimOf(input, beg, pos);
                     beg = pos + 1;
                     continue;
                 case '}':
                     if (query == null) {
-                        throw new AtPositionException(input, "Invalid '}'", pos);
+                        throw new SyntaxErrorException(input, "Invalid '}'", pos);
                     }
                     final String ending = rightTrimOf(input, pos + 1, last + 1);
                     if (!ending.isEmpty()) {
-                        throw new AtPositionException(input, "Invalid '" + ending + "'", pos + 1);
+                        throw new SyntaxErrorException(input, "Invalid '" + ending + "'", pos + 1);
                     }
                     final String[] keys = trimOf(input, beg, pos).split(",");
                     if (Arrays.stream(keys).anyMatch(StringUtils::isBlank)) {
-                        throw new IllegalArgumentException("Missing join key: " + input);
+                        throw new SyntaxErrorException(input, "Missing join key");
                     }
                     return new JoinDatasets.Dataset(query, keys);
             }
             pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
         }
         if (query != null) {
-            throw new AtPositionException(input, "Missing '}'", -1);
+            throw new SyntaxErrorException(input, "Missing '}'", -1);
         }
-        throw new IllegalArgumentException("Invalid join dataset query: " + input);
+        throw new SyntaxErrorException(input, "Invalid join dataset query");
     }
 
     static List<String> decomposePaths(final String input) {
@@ -342,7 +346,7 @@ class PatternMatcher {
             } while (++pos <= last);
             final String path = trimOf(input, beg, pos);
             if (path.isEmpty()) {
-                throw new AtPositionException(input, "Invalid '.'", pos);
+                throw new SyntaxErrorException(input, "Invalid '.'", pos);
             }
             try {
                 if (isInt == null) {
@@ -366,7 +370,7 @@ class PatternMatcher {
                     isInt = null;
                 }
             } catch (IllegalArgumentException e) {
-                throw new AtPositionException(input, e.getMessage(), beg);
+                throw new SyntaxErrorException(input, e.getMessage(), beg);
             }
         }
         return paths;
@@ -380,13 +384,13 @@ class PatternMatcher {
             int beg = pos;
             while ("=!<>&|".indexOf(input.charAt(pos)) >= 0) {
                 if (pos++ == last) {
-                    throw new AtPositionException(input, "Invalid syntax", -1);
+                    throw new SyntaxErrorException(input, "Invalid syntax", -1);
                 }
             }
             final String token = input.substring(beg, pos);
             final Operator operator = Operator.fromSymbol(token);
             if (operator == null) {
-                throw new AtPositionException(input, "Invalid operator: " + token, beg);
+                throw new SyntaxErrorException(input, "Invalid operator: " + token, beg);
             }
             beg = eatSpaces(input, pos, last);
             switch (input.charAt(beg)) {
@@ -419,19 +423,19 @@ class PatternMatcher {
             final String param = trimOf(input, beg, pos);
             if (param.isEmpty()) {
                 if (maxCount < 0) {
-                    throw new AtPositionException(input, "Argument cannot be empty", beg);
+                    throw new SyntaxErrorException(input, "Argument cannot be empty", beg);
                 }
                 if (params.size() < minCount) {
                     break;
                 }
             } else if (params.size() == maxCount) {
-                throw new IllegalArgumentException("Exceeded maximum of " + maxCount + " arguments: " + input);
+                throw new SyntaxErrorException(input, "Exceeded maximum of " + maxCount + " arguments");
             }
             params.add(param);
         }
         if (minCount > 0 && params.size() < minCount) {
-            throw new IllegalArgumentException(
-                    "Expected" + ((minCount == maxCount) ? "" : " at least ") + minCount + " arguments: " + input);
+            throw new SyntaxErrorException(input,
+                    "Expected" + ((minCount == maxCount) ? "" : " at least ") + minCount + " arguments");
         }
         for (int i = params.size() - 1; i >= 0; i--) {
             if (params.get(i).isEmpty()) {
@@ -459,7 +463,7 @@ class PatternMatcher {
                     endIf = -1;
                 }
                 if (condition.isEmpty()) {
-                    throw new AtPositionException(input, "Missing argument", beg);
+                    throw new SyntaxErrorException(input, "Missing argument", beg);
                 }
                 steps.add(new TernaryStep(condition, value));
                 beg = pos + 1;
@@ -518,13 +522,7 @@ class PatternMatcher {
 
     static void checkElementName(final String name) {
         if (name.contains(".")) {
-            throw new IllegalArgumentException("Illegal '.' in element name '" + name + "'");
-        }
-    }
-
-    private static class AtPositionException extends IllegalArgumentException {
-        AtPositionException(final String input, final String message, final int pos) {
-            super(message + (pos == -1 ? " at the end" : " at position " + pos) + ": " + input);
+            throw new SyntaxErrorException(name, "Illegal '.' in element name");
         }
     }
 }

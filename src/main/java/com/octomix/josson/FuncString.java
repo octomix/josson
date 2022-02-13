@@ -30,6 +30,9 @@ import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
+/**
+ * String functions.
+ */
 class FuncString {
 
     private FuncString() {
@@ -131,13 +134,13 @@ class FuncString {
                         return jsonNode;
                     }
                     final String text = jsonNode.asText();
-                    final int pos = last ?
-                            (ignoreCase ?
-                                    StringUtils.lastIndexOfIgnoreCase(text, find) :
-                                    StringUtils.lastIndexOf(text, find)) :
-                            (ignoreCase ?
-                                    StringUtils.indexOfIgnoreCase(text, find) :
-                                    StringUtils.indexOf(text, find));
+                    final int pos = last
+                            ? (ignoreCase
+                                ? StringUtils.lastIndexOfIgnoreCase(text, find)
+                                : StringUtils.lastIndexOf(text, find))
+                            : (ignoreCase
+                                ? StringUtils.indexOfIgnoreCase(text, find)
+                                : StringUtils.indexOf(text, find));
                     return TextNode.valueOf(pos < 0 ? "" : text.substring(pos + find.length()));
                 }
         );
@@ -153,13 +156,13 @@ class FuncString {
                         return jsonNode;
                     }
                     final String text = jsonNode.asText();
-                    final int pos = last ?
-                            (ignoreCase ?
-                                    StringUtils.lastIndexOfIgnoreCase(text, find) :
-                                    StringUtils.lastIndexOf(text, find)) :
-                            (ignoreCase ?
-                                    StringUtils.indexOfIgnoreCase(text, find) :
-                                    StringUtils.indexOf(text, find));
+                    final int pos = last
+                            ? (ignoreCase
+                                ? StringUtils.lastIndexOfIgnoreCase(text, find)
+                                : StringUtils.lastIndexOf(text, find))
+                            : (ignoreCase
+                                ? StringUtils.indexOfIgnoreCase(text, find)
+                                : StringUtils.indexOf(text, find));
                     return TextNode.valueOf(pos < 0 ? "" : text.substring(0, pos));
                 }
         );
@@ -270,27 +273,27 @@ class FuncString {
     static JsonNode funcPrependIfMissing(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
-                (jsonNode, objVar) -> TextNode.valueOf(ignoreCase ?
-                        StringUtils.prependIfMissingIgnoreCase(jsonNode.asText(), (String) objVar) :
-                        StringUtils.prependIfMissing(jsonNode.asText(), (String) objVar))
+                (jsonNode, objVar) -> TextNode.valueOf(ignoreCase
+                        ? StringUtils.prependIfMissingIgnoreCase(jsonNode.asText(), (String) objVar)
+                        : StringUtils.prependIfMissing(jsonNode.asText(), (String) objVar))
         );
     }
 
     static JsonNode funcRemoveEnd(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
-                (jsonNode, objVar) -> TextNode.valueOf(ignoreCase ?
-                        StringUtils.removeEndIgnoreCase(jsonNode.asText(), (String) objVar) :
-                        StringUtils.removeEnd(jsonNode.asText(), (String) objVar))
+                (jsonNode, objVar) -> TextNode.valueOf(ignoreCase
+                        ? StringUtils.removeEndIgnoreCase(jsonNode.asText(), (String) objVar)
+                        : StringUtils.removeEnd(jsonNode.asText(), (String) objVar))
         );
     }
 
     static JsonNode funcRemoveStart(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
-                (jsonNode, objVar) -> TextNode.valueOf(ignoreCase ?
-                        StringUtils.removeStartIgnoreCase(jsonNode.asText(), (String) objVar) :
-                        StringUtils.removeStart(jsonNode.asText(), (String) objVar))
+                (jsonNode, objVar) -> TextNode.valueOf(ignoreCase
+                        ? StringUtils.removeStartIgnoreCase(jsonNode.asText(), (String) objVar)
+                        : StringUtils.removeStart(jsonNode.asText(), (String) objVar))
         );
     }
 

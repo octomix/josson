@@ -27,9 +27,13 @@ import java.util.List;
 public class ResolverProgress {
 
     private ResolverDebugLevel debugLevel = ResolverDebugLevel.SHOW_CONTENT_OF_VALUE_NODE_ONLY;
+
     private boolean autoMarkEnd = true;
+
     private int round = 1;
+
     private boolean roundStarted;
+
     private final List<String> steps = new ArrayList<>();
 
     /**
@@ -61,6 +65,9 @@ public class ResolverProgress {
     }
 
     /**
+     * Get the current resolver debug level
+     * Default value is {@code SHOW_CONTENT_OF_VALUE_NODE_ONLY}
+     *
      * @return Current resolver debug level
      */
     public ResolverDebugLevel getDebugLevel() {
@@ -80,7 +87,10 @@ public class ResolverProgress {
     }
 
     /**
-     * @return Current status of the auto-add "End" flag
+     * Ge the current status of the auto-add "End" flag
+     * By default, the last step "End" is added automatically.
+     *
+     * @return Current auto-add "End" flag
      */
     public boolean isAutoMarkEnd() {
         return autoMarkEnd;
@@ -94,6 +104,8 @@ public class ResolverProgress {
     }
 
     /**
+     * Get the progress steps after a resolution process.
+     *
      * @return The resolution progress steps
      */
     public List<String> getSteps() {

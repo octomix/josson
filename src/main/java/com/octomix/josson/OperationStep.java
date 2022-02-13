@@ -29,10 +29,15 @@ import java.util.Map;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.matchDatasetQuery;
 
+/**
+ * Relational operation.
+ */
 class OperationStep {
 
     private Operator operator;
+
     private String expression;
+
     private JsonNode resolved;
 
     OperationStep(final Operator operator, final String expression) {
@@ -145,7 +150,7 @@ class OperationStep {
 
     private static boolean relationalCompareContainer(final JsonNode leftNode, final Operator operator,
                                                       final JsonNode rightNode) {
-        if (leftNode.getNodeType() != rightNode.getNodeType() || (operator != Operator.EQ && operator != Operator.NE)) {
+        if (leftNode.getNodeType() != rightNode.getNodeType() || operator != Operator.EQ && operator != Operator.NE) {
             return operator == Operator.NE;
         }
         final int size = leftNode.size();

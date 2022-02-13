@@ -26,6 +26,9 @@ import java.time.temporal.ChronoUnit;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 
+/**
+ * Date functions.
+ */
 class FuncDate {
 
     private FuncDate() {

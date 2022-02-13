@@ -19,6 +19,7 @@ package com.octomix.josson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
+import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,23 +34,35 @@ import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
 
+/**
+ * Static core functions for Josson.
+ */
 class JossonCore {
 
     static final char QUOTE_SYMBOL = '\'';
+
     static final String CURRENT_NODE = "?";
 
     private static final String PARENT_ARRAY_NODE = "@";
+
     private static final char COLLECT_BRANCHES_SYMBOL = '@';
 
     private static final char INDEX_PREFIX_SYMBOL = '#';
+
     private static final String ZERO_BASED_INDEX = INDEX_PREFIX_SYMBOL + "";
+
     private static final String ONE_BASED_INDEX = INDEX_PREFIX_SYMBOL + "#";
+
     private static final String UPPERCASE_INDEX = INDEX_PREFIX_SYMBOL + "A";
+
     private static final String LOWERCASE_INDEX = INDEX_PREFIX_SYMBOL + "a";
+
     private static final String UPPER_ROMAN_INDEX = INDEX_PREFIX_SYMBOL + "R";
+
     private static final String LOWER_ROMAN_INDEX = INDEX_PREFIX_SYMBOL + "r";
 
     private static Locale locale = Locale.getDefault();
+
     private static ZoneId zoneId = ZoneId.systemDefault();
 
     private JossonCore() {
@@ -84,17 +97,18 @@ class JossonCore {
     }
 
     static String csvQuote(final String input) {
+        final String quote = "\"";
         final String result;
         final boolean needQuote;
-        if (input.contains("\"")) {
+        if (input.contains(quote)) {
             needQuote = true;
-            result = input.replace("\"", "\"\"");
+            result = input.replace(quote, "\"\"");
         } else {
             needQuote = input.contains(",");
             result = input;
         }
         if (needQuote) {
-            return "\"" + result + "\"";
+            return quote + result + quote;
         }
         return result;
     }
@@ -128,7 +142,7 @@ class JossonCore {
     private static boolean isPathSymbol(final String path, final String pathSymbol) {
         if (path.startsWith(pathSymbol)) {
             if (path.length() > 1) {
-                throw new IllegalArgumentException("Invalid path: " + path);
+                throw new SyntaxErrorException(path);
             }
             return true;
         }
@@ -393,7 +407,7 @@ class JossonCore {
         String key = keys.get(0);
         switch (key.charAt(0)) {
             case INDEX_PREFIX_SYMBOL:
-                throw new IllegalArgumentException("Invalid path: " + key);
+                throw new SyntaxErrorException(key);
             case COLLECT_BRANCHES_SYMBOL:
                 key = key.substring(1).trim();
                 nextKeys.addAll(keys);
@@ -406,7 +420,7 @@ class JossonCore {
                 return node;
         }
         if (isCurrentNodePath(key)) {
-            throw new IllegalArgumentException("Invalid path: " + key);
+            throw new SyntaxErrorException(key);
         }
         keys.remove(0);
         final FuncDispatcher funcDispatcher = matchFunctionAndArgument(key);

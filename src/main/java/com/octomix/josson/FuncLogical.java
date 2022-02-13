@@ -29,6 +29,9 @@ import java.util.List;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 
+/**
+ * Logical functions.
+ */
 class FuncLogical {
 
     private FuncLogical() {
@@ -209,9 +212,9 @@ class FuncLogical {
                                    final boolean ignoreCase, final boolean not) {
         return applyFuncWithParamAsText(node, params,
                 JsonNode::isTextual,
-                (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase ?
-                        StringUtils.startsWithIgnoreCase(jsonNode.asText(), (String) objVar) :
-                        StringUtils.startsWith(jsonNode.asText(), (String) objVar)))
+                (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase
+                        ? StringUtils.startsWithIgnoreCase(jsonNode.asText(), (String) objVar)
+                        : StringUtils.startsWith(jsonNode.asText(), (String) objVar)))
         );
     }
 

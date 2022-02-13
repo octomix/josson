@@ -21,6 +21,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.text.DateFormat;
 
+/**
+ * Extends Jackson object mapper.
+ */
 class Mapper extends ObjectMapper {
 
     static final Mapper MAPPER = new Mapper();

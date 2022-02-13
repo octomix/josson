@@ -18,6 +18,7 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.octomix.josson.exception.SyntaxErrorException;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
 import java.util.LinkedList;
@@ -28,11 +29,17 @@ import java.util.function.Function;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeStatement;
 
+/**
+ * Logical operations on a stack of OperationStep.
+ */
 class OperationStack {
 
     private final Josson arrayNode;
+
     private final Map<String, Josson> datasets;
+
     private final LinkedList<OperationStep> stack = new LinkedList<>();
+
     private OperationStep lastStep;
 
     OperationStack(final JsonNode node) {
@@ -86,7 +93,7 @@ class OperationStack {
             if (result && !"".equals(step.getExpression())) {
                 node = resolver.apply(step);
                 if (step.getOperator() == Operator.NOT) {
-                    result = node == null || node.isNull() || (node.isValueNode() && !node.asBoolean());
+                    result = node == null || node.isNull() || node.isValueNode() && !node.asBoolean();
                     node = BooleanNode.valueOf(result);
                 } else {
                     result = node != null && node.asBoolean();
@@ -113,7 +120,7 @@ class OperationStack {
             try {
                 evaluate(step, arrayIndex);
             } catch (IllegalArgumentException e) {
-                throw new IllegalStatementException(statement, e);
+                throw new SyntaxErrorException(statement, e);
             }
         }
         return evaluateSteps(false, (OperationStep opStep) -> opStep.resolveFrom(arrayNode, arrayIndex));
@@ -173,7 +180,7 @@ class OperationStack {
             try {
                 evaluate(step);
             } catch (IllegalArgumentException e) {
-                throw new IllegalStatementException(statement, e);
+                throw new SyntaxErrorException(statement, e);
             }
         }
         try {
@@ -227,12 +234,12 @@ class OperationStack {
             case AND:
             case OR:
                 if (lastStep.getOperator() == Operator.AND) {
-                    OperationStep thisStep = popStep();
+                    final OperationStep thisStep = popStep();
                     if (lastStep.isResolveToTrueFrom(datasets)) {
                         lastStep.setResolved(thisStep.resolveFrom(datasets));
                     }
                 } else if (lastStep.getOperator() == Operator.OR && step.getOperator() == Operator.OR) {
-                    OperationStep thisStep = popStep();
+                    final OperationStep thisStep = popStep();
                     if (lastStep.isResolveToFalseFrom(datasets)) {
                         lastStep.setResolved(thisStep.resolveFrom(datasets));
                     }
@@ -247,12 +254,6 @@ class OperationStack {
             }
         } else {
             lastStep.setResolved(lastStep.relationalCompare(step, datasets));
-        }
-    }
-
-    private static class IllegalStatementException extends IllegalArgumentException {
-        IllegalStatementException(final String statement, final IllegalArgumentException e) {
-            super(e.getMessage() == null ? statement : "\"" + e.getMessage() + "\" in " + statement);
         }
     }
 }

@@ -10,11 +10,11 @@
 ![Maven Central](https://badgen.net/maven/v/maven-central/com.octomix.josson/josson)
 [![Known Vulnerabilities](https://snyk.io/test/github/octomix/josson/badge.svg)](https://snyk.io/test/github/octomix/josson)
 
-### Installation
+## Installation
 
 https://mvnrepository.com/artifact/com.octomix.josson/josson
 
-#### Maven
+### Maven
 
     <dependency>
         <groupId>com.octomix.josson</groupId>
@@ -22,11 +22,13 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
         <version>1.3.0</version>
     </dependency>
 
-#### Gradle
+### Gradle
 
     implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.0'
 
-### Features and Capabilities of Josson
+## Features and Capabilities
+
+### Josson
 
 - Query a JSON dataset.
 - Restructure JSON data.
@@ -35,7 +37,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 - Has many functions to work on array node.
 - Can be used as an API parameter to trim down the response JSON result.
 
-### Features and Capabilities of Jossons
+### Jossons
 
 - Query data from multiple JSON datasets.
 - Join two JSON datasets to build a new dataset.
@@ -43,7 +45,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 - I used Jossons to generate millions of SMS/Email notifications during the first year.
 - I used Jossons to generate reports that retrieve data from MongoDB directly without writing a line of code.
 
-### Table of Contents
+## Table of Contents
 
 - [Josson Basic](#josson-basic)
 

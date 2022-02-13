@@ -34,6 +34,9 @@ import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
+/**
+ * Format functions.
+ */
 class FuncFormat {
 
     private FuncFormat() {
@@ -186,8 +189,8 @@ class FuncFormat {
 
     static JsonNode funcToString(final JsonNode node, final String params) {
         return applyFunc(node, params,
-                jsonNode -> jsonNode.isTextual() ? jsonNode :
-                        TextNode.valueOf(jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString()));
+                jsonNode -> jsonNode.isTextual() ? jsonNode
+                        : TextNode.valueOf(jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString()));
     }
 
     static JsonNode funcToText(final JsonNode node, final String params) {

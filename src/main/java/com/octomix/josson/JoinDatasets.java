@@ -27,12 +27,10 @@ import static com.octomix.josson.JossonCore.getNodeByPath;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
 
+/**
+ * Join datasets operations.
+ */
 class JoinDatasets {
-
-    private Dataset leftDataset;
-    private JoinOperator operator;
-    private Dataset rightDataset;
-    private final String arrayName;
 
     enum JoinOperator {
         INNER_JOIN_ONE(">=<"),
@@ -56,6 +54,14 @@ class JoinDatasets {
             return null;
         }
     }
+
+    private Dataset leftDataset;
+
+    private JoinOperator operator;
+
+    private Dataset rightDataset;
+
+    private final String arrayName;
 
     JoinDatasets(final Dataset leftDataset, final JoinOperator operator, final Dataset rightDataset) {
         this.leftDataset = leftDataset;

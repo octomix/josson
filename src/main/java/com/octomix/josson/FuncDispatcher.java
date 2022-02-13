@@ -30,9 +30,13 @@ import static com.octomix.josson.FuncLogical.*;
 import static com.octomix.josson.FuncString.*;
 import static com.octomix.josson.FuncStructural.*;
 
+/**
+ * Function dispatcher.
+ */
 class FuncDispatcher {
 
     private final String funcName;
+
     private final String params;
 
     FuncDispatcher(final String funcName, final String params) {

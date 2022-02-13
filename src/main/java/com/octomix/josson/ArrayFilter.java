@@ -16,6 +16,9 @@
 
 package com.octomix.josson;
 
+/**
+ * Stores an array filter details.
+ */
 class ArrayFilter {
 
     enum FilterMode {
@@ -44,7 +47,9 @@ class ArrayFilter {
     }
 
     private final String nodeName;
+
     private final String filter;
+
     private final FilterMode mode;
 
     ArrayFilter(final String nodeName, final String filter, final FilterMode mode) {
