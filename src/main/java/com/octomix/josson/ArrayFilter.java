@@ -21,6 +21,9 @@ package com.octomix.josson;
  */
 class ArrayFilter {
 
+    /**
+     * Filter modes.
+     */
     enum FilterMode {
         FILTRATE_FIND_FIRST(' '),
         FILTRATE_COLLECT_ALL('*'),

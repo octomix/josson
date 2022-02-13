@@ -17,6 +17,7 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.octomix.josson.commons.StringUtils;
 
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
@@ -46,7 +47,7 @@ class FuncDispatcher {
 
     private class UnsupportedFunctionException extends UnsupportedOperationException {
         UnsupportedFunctionException() {
-            super("Unsupported function " + funcName + "()");
+            super(String.format("Unsupported function %s()", funcName));
         }
     }
 
@@ -77,7 +78,8 @@ class FuncDispatcher {
                 case 'y': return applyY(node, func);
             }
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid function call " + funcName + "() : " + e.getMessage());
+            throw new IllegalArgumentException(
+                    String.format("Invalid function call %s() : %s", funcName, e.getMessage()));
         }
         throw new UnsupportedFunctionException();
     }
@@ -254,7 +256,7 @@ class FuncDispatcher {
         switch (func) {
             // Array
             case "indexof":
-                return funcIndexOf(node, params);
+                return funcIndexOf(node, params, true);
             // Format
             case "indexedvalue":
                 return funcIndexedValue(node, params);
@@ -311,21 +313,21 @@ class FuncDispatcher {
         switch (func) {
             // String
             case "keepafter":
-                return funcKeepAfter(node, params, false, false);
+                return funcKeep(node, params, false, true, false);
             case "keepafterignorecase":
-                return funcKeepAfter(node, params, true, false);
+                return funcKeep(node, params, true, true, false);
             case "keepafterlast":
-                return funcKeepAfter(node, params, false, true);
+                return funcKeep(node, params, false, true, true);
             case "keepafterlastignorecase":
-                return funcKeepAfter(node, params, true, true);
+                return funcKeep(node, params, true, true, true);
             case "keepbefore":
-                return funcKeepBefore(node, params, false, false);
+                return funcKeep(node, params, false, false, false);
             case "keepbeforeignorecase":
-                return funcKeepBefore(node, params, true, false);
+                return funcKeep(node, params, true, false, false);
             case "keepbeforelast":
-                return funcKeepBefore(node, params, false, true);
+                return funcKeep(node, params, false, false, true);
             case "keepbeforelastignorecase":
-                return funcKeepBefore(node, params, true, true);
+                return funcKeep(node, params, true, false, true);
             // Structural
             case "keys":
                 return funcKeys(node, params);
@@ -341,7 +343,7 @@ class FuncDispatcher {
             case "lastindex":
                 return funcLastIndex(node, params);
             case "lastindexof":
-                return funcLastIndexOf(node, params);
+                return funcIndexOf(node, params, false);
             // Date
             case "lengthofmonth":
                 return funcLengthOfMonth(node, params);
@@ -426,9 +428,9 @@ class FuncDispatcher {
                 return funcStartsWith(node, params, true, true);
             // String
             case "notblank":
-                return funcNotBlank(node, params);
+                return funcNotBlankOrEmpty(node, params, StringUtils::isNotBlank);
             case "notempty":
-                return funcNotEmpty(node, params);
+                return funcNotBlankOrEmpty(node, params, StringUtils::isNotEmpty);
         }
         throw new UnsupportedFunctionException();
     }

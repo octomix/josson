@@ -105,20 +105,18 @@ class FuncLogical {
 
     static JsonNode funcEndsWith(final JsonNode node, final String params,
                                  final boolean ignoreCase, final boolean not) {
-        return applyFuncWithParamAsText(node, params,
-                JsonNode::isTextual,
-                (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase
-                        ? StringUtils.endsWithIgnoreCase(jsonNode.asText(), (String) objVar)
-                        : StringUtils.endsWith(jsonNode.asText(), (String) objVar)))
+        return applyTextNodeWithParamAsText(node, params, not,
+                (str, param) -> ignoreCase
+                        ? StringUtils.endsWithIgnoreCase(str, param)
+                        : StringUtils.endsWith(str, param)
         );
     }
 
     static JsonNode funcEquals(final JsonNode node, final String params, final boolean ignoreCase, final boolean not) {
-        return applyFuncWithParamAsText(node, params,
-                JsonNode::isTextual,
-                (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase
-                        ? StringUtils.equalsIgnoreCase(jsonNode.asText(), (String) objVar)
-                        : StringUtils.equals(jsonNode.asText(), (String) objVar)))
+        return applyTextNodeWithParamAsText(node, params, not,
+                (str, param) -> ignoreCase
+                        ? StringUtils.equalsIgnoreCase(str, param)
+                        : StringUtils.equals(str, param)
         );
     }
 
@@ -153,73 +151,57 @@ class FuncLogical {
     }
 
     static JsonNode funcIsBlank(final JsonNode node, final String params, final boolean not) {
-        return applyFunc(node, params,
-                jsonNode -> BooleanNode.valueOf(jsonNode.isTextual() && (not ^ StringUtils.isBlank(jsonNode.asText())))
-        );
+        return applyWithoutParam(node, params,
+            jsonNode -> BooleanNode.valueOf(jsonNode.isTextual() && (not ^ StringUtils.isBlank(jsonNode.asText()))));
     }
 
     static JsonNode funcIsBoolean(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                jsonNode -> BooleanNode.valueOf(jsonNode.isBoolean())
-        );
+        return applyWithoutParam(node, params, jsonNode -> BooleanNode.valueOf(jsonNode.isBoolean()));
     }
 
     static JsonNode funcIsEmpty(final JsonNode node, final String params, final boolean not) {
-        return applyFunc(node, params,
-                jsonNode -> BooleanNode.valueOf(jsonNode.isTextual() && (not ^ jsonNode.asText().isEmpty()))
-        );
+        return applyWithoutParam(node, params,
+                jsonNode -> BooleanNode.valueOf(jsonNode.isTextual() && (not ^ jsonNode.asText().isEmpty())));
     }
 
     static JsonNode funcIsEven(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                jsonNode -> nodeHasValue(jsonNode)
-                        ? BooleanNode.valueOf((jsonNode.asInt() & 1) == 0) : BooleanNode.FALSE
-        );
+        return applyWithoutParam(node, params, jsonNode -> nodeHasValue(jsonNode)
+                ? BooleanNode.valueOf((jsonNode.asInt() & 1) == 0) : BooleanNode.FALSE);
     }
 
     static JsonNode funcIsNull(final JsonNode node, final String params, final boolean not) {
-        return applyFunc(node, params,
-                jsonNode -> BooleanNode.valueOf(not ^ jsonNode.isNull())
-        );
+        return applyWithoutParam(node, params, jsonNode -> BooleanNode.valueOf(not ^ jsonNode.isNull()));
     }
 
     static JsonNode funcIsNumber(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                jsonNode -> BooleanNode.valueOf(jsonNode.isNumber())
-        );
+        return applyWithoutParam(node, params, jsonNode -> BooleanNode.valueOf(jsonNode.isNumber()));
     }
 
     static JsonNode funcIsOdd(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                jsonNode -> nodeHasValue(jsonNode)
-                        ? BooleanNode.valueOf((jsonNode.asInt() & 1) != 0) : BooleanNode.FALSE
-        );
+        return applyWithoutParam(node, params,
+            jsonNode -> nodeHasValue(jsonNode) ? BooleanNode.valueOf((jsonNode.asInt() & 1) != 0) : BooleanNode.FALSE);
     }
 
     static JsonNode funcIsText(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                jsonNode -> BooleanNode.valueOf(jsonNode.isTextual())
-        );
+        return applyWithoutParam(node, params, jsonNode -> BooleanNode.valueOf(jsonNode.isTextual()));
     }
 
     static JsonNode funcNot(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                jsonNode -> jsonNode.isBoolean() ? BooleanNode.valueOf(!jsonNode.asBoolean()) : BooleanNode.FALSE
-        );
+        return applyWithoutParam(node, params,
+                jsonNode -> jsonNode.isBoolean() ? BooleanNode.valueOf(!jsonNode.asBoolean()) : BooleanNode.FALSE);
     }
 
     static JsonNode funcStartsWith(final JsonNode node, final String params,
                                    final boolean ignoreCase, final boolean not) {
-        return applyFuncWithParamAsText(node, params,
-                JsonNode::isTextual,
-                (jsonNode, objVar) -> BooleanNode.valueOf(not ^ (ignoreCase
-                        ? StringUtils.startsWithIgnoreCase(jsonNode.asText(), (String) objVar)
-                        : StringUtils.startsWith(jsonNode.asText(), (String) objVar)))
+        return applyTextNodeWithParamAsText(node, params, not,
+                (str, param) -> ignoreCase
+                        ? StringUtils.startsWithIgnoreCase(str, param)
+                        : StringUtils.startsWith(str, param)
         );
     }
 
     static JsonNode funcIsWeekday(final JsonNode node, final String params) {
-        return applyFunc(node, params,
+        return applyWithoutParam(node, params,
                 jsonNode -> jsonNode.isTextual()
                         ? BooleanNode.valueOf(toLocalDateTime(jsonNode).get(ChronoField.DAY_OF_WEEK) <= 5)
                         : null
@@ -227,7 +209,7 @@ class FuncLogical {
     }
 
     static JsonNode funcIsWeekend(final JsonNode node, final String params) {
-        return applyFunc(node, params,
+        return applyWithoutParam(node, params,
                 jsonNode -> jsonNode.isTextual()
                         ? BooleanNode.valueOf(toLocalDateTime(jsonNode).get(ChronoField.DAY_OF_WEEK) > 5)
                         : null
@@ -235,7 +217,7 @@ class FuncLogical {
     }
 
     static JsonNode funcIsLeapYear(final JsonNode node, final String params) {
-        return applyFunc(node, params,
+        return applyWithoutParam(node, params,
                 jsonNode -> jsonNode.isTextual()
                         ? BooleanNode.valueOf(IsoChronology.INSTANCE.isLeapYear(toLocalDateTime(jsonNode).getYear()))
                         : null

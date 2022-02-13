@@ -53,6 +53,7 @@ class OperationStack {
         this.arrayNode = null;
         this.datasets = datasets;
     }
+
     private void pushStep(final OperationStep step) {
         stack.addLast(step);
         lastStep = step;

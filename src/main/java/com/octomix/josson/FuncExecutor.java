@@ -18,6 +18,9 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.octomix.josson.commons.StringUtils;
 
 import java.util.LinkedHashMap;
@@ -123,7 +126,7 @@ class FuncExecutor {
         return array;
     }
 
-    static JsonNode applyFunc(JsonNode node, final String params, final Function<JsonNode, JsonNode> action) {
+    static JsonNode applyWithoutParam(JsonNode node, final String params, final Function<JsonNode, JsonNode> action) {
         final String path = getParamPath(params);
         if (path != null) {
             node = getNodeByPath(node, path);
@@ -134,8 +137,8 @@ class FuncExecutor {
         return action.apply(node);
     }
 
-    static JsonNode applyFunc(JsonNode node, final String params, final Predicate<JsonNode> isValid,
-                              final Function<JsonNode, JsonNode> action) {
+    static JsonNode applyWithoutParam(JsonNode node, final String params, final Predicate<JsonNode> isValid,
+                                      final Function<JsonNode, JsonNode> action) {
         final String path = getParamPath(params);
         if (path != null) {
             node = getNodeByPath(node, path);
@@ -161,9 +164,9 @@ class FuncExecutor {
         return null;
     }
 
-    static JsonNode applyFunc(JsonNode node, final String params, final int minCount, final int maxCount,
-                              final Function<List<String>, Object> prepare, final Predicate<JsonNode> isValid,
-                              final BiFunction<JsonNode, Object, JsonNode> action) {
+    static JsonNode apply(JsonNode node, final String params, final int minCount, final int maxCount,
+                          final Function<List<String>, Object> prepare, final Predicate<JsonNode> isValid,
+                          final BiFunction<JsonNode, Object, JsonNode> action) {
         final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, minCount, maxCount);
         if (pathAndParams.hasKey()) {
             node = getNodeByPath(node, pathAndParams.getKey());
@@ -190,8 +193,8 @@ class FuncExecutor {
         return null;
     }
 
-    static JsonNode applyFunc(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
-                              final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
+    static JsonNode applyArrayNode(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
+                                   final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
         final ArrayNode paramArray = getParamArray(params, node);
         if (paramArray.isEmpty()) {
             return null;
@@ -214,21 +217,58 @@ class FuncExecutor {
         return null;
     }
 
-    static JsonNode applyFuncWithParamAsText(final JsonNode node, final String params,
-                                             final Predicate<JsonNode> isValid,
-                                             final BiFunction<JsonNode, Object, JsonNode> action) {
-        return applyFunc(node, params, 1, 1,
+    static JsonNode applyTextNode(final JsonNode node, final String params,
+                                  final Function<JsonNode, String> transform) {
+        return applyWithoutParam(node, params, JsonNode::isTextual,
+                jsonNode -> TextNode.valueOf(transform.apply(jsonNode)));
+    }
+
+    static JsonNode applyTextNodeToInt(final JsonNode node, final String params,
+                                       final Function<JsonNode, Integer> transform) {
+        return applyWithoutParam(node, params, JsonNode::isTextual,
+                jsonNode -> IntNode.valueOf(transform.apply(jsonNode)));
+    }
+
+    static JsonNode applyWithParamAsInt(final JsonNode node, final String params,
+                                        final Predicate<JsonNode> isValid,
+                                        final BiFunction<JsonNode, Object, JsonNode> action) {
+        return apply(node, params, 1, 1,
+                paramList -> getNodeAsInt(node, paramList.get(0)),
+                isValid, action
+        );
+    }
+
+    static JsonNode applyWithParamAsText(final JsonNode node, final String params,
+                                         final Predicate<JsonNode> isValid,
+                                         final BiFunction<JsonNode, Object, JsonNode> action) {
+        return apply(node, params, 1, 1,
                 paramList -> getNodeAsText(node, paramList.get(0)),
                 isValid, action
         );
     }
 
-    static JsonNode applyFuncWithParamAsInt(final JsonNode node, final String params,
-                                            final Predicate<JsonNode> isValid,
-                                            final BiFunction<JsonNode, Object, JsonNode> action) {
-        return applyFunc(node, params, 1, 1,
-                paramList -> getNodeAsInt(node, paramList.get(0)),
-                isValid, action
+    static JsonNode applyTextNodeWithParamAsText(final JsonNode node, final String params,
+                                                 final BiFunction<String, String, String> transform) {
+        return applyWithParamAsText(node, params, JsonNode::isTextual,
+                (jsonNode, objVar) -> TextNode.valueOf(transform.apply(jsonNode.asText(), (String) objVar)));
+    }
+
+    static JsonNode applyTextNodeWithParamAsText(final JsonNode node, final String params, final boolean not,
+                                                 final BiFunction<String, String, Boolean> transform) {
+        return applyWithParamAsText(node, params, JsonNode::isTextual,
+                (jsonNode, objVar) -> BooleanNode.valueOf(not ^ transform.apply(jsonNode.asText(), (String) objVar)));
+    }
+
+    static JsonNode applyTextAlignment(final JsonNode node, final String params,
+                                       final BiFunction<JsonNode, Object, JsonNode> action) {
+        return apply(node, params, 1, 2,
+                paramList -> {
+                    final int size = getNodeAsInt(node, paramList.get(0));
+                    final String padStr = paramList.size() > 1 ? getNodeAsText(node, paramList.get(1)) : null;
+                    return Pair.of(size, padStr);
+                },
+                JossonCore::nodeHasValue,
+                action
         );
     }
 }

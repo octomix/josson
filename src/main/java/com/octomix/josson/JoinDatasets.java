@@ -32,6 +32,9 @@ import static com.octomix.josson.PatternMatcher.*;
  */
 class JoinDatasets {
 
+    /**
+     * Dataset join operators.
+     */
     enum JoinOperator {
         INNER_JOIN_ONE(">=<"),
         LEFT_JOIN_ONE("<=<"),
@@ -146,7 +149,7 @@ class JoinDatasets {
                     + leftValue.asText().replace("'", "''")
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : "");
         }
-        final String path = "[" + StringUtils.join(relationalOps, Operator.AND.getSymbol()) + "]";
+        final String path = String.format("[%s]", StringUtils.join(relationalOps, Operator.AND.getSymbol()));
         if (operator == JoinOperator.LEFT_JOIN_MANY) {
             final JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.getSymbol());
             if (rightToJoin != null) {
@@ -168,9 +171,13 @@ class JoinDatasets {
         return leftObject;
     }
 
+    /**
+     * Defines left or right dataset for join operation.
+     */
     static class Dataset {
 
         private final String query;
+
         private final String[] keys;
 
         Dataset(final String query, final String[] keys) {

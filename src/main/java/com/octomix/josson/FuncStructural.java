@@ -175,8 +175,7 @@ class FuncStructural {
     }
 
     static JsonNode funcJson(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                JsonNode::isTextual,
+        return applyWithoutParam(node, params, JsonNode::isTextual,
                 jsonNode -> {
                     try {
                         return readJsonNode(jsonNode.asText());

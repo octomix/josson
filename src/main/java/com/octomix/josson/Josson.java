@@ -85,7 +85,7 @@ public class Josson {
      */
     public static Josson from(final Object object) {
         Objects.requireNonNull(object, "object must not be null");
-        return new Josson(readJsonNode(object));
+        return new Josson(MAPPER.valueToTree(object));
     }
 
     /**
@@ -93,12 +93,22 @@ public class Josson {
      *
      * @param json the string content for building the JSON tree
      * @return The new Josson object
-     * @throws NullPointerException if {@code json} is null,
+     * @throws IllegalArgumentException if {@code json} is null,
      *         JsonProcessingException if the underlying input contains invalid content
      */
     public static Josson fromJsonString(final String json) throws JsonProcessingException {
-        Objects.requireNonNull(json, "json string must not be null");
-        return new Josson(readJsonNode(json));
+        return new Josson(MAPPER.readTree(json));
+    }
+
+    /**
+     * Set the Josson content with given JSON content string that deserialized to a Jackson JsonNode.
+     *
+     * @param json the string content for building the JSON tree
+     * @throws IllegalArgumentException if {@code json} is null,
+     *         JsonProcessingException if the underlying input contains invalid content
+     */
+    public void setJsonString(final String json) throws JsonProcessingException {
+        jsonNode = MAPPER.readTree(json);
     }
 
     /**
@@ -110,18 +120,6 @@ public class Josson {
     public void setNode(final JsonNode node) {
         Objects.requireNonNull(node, "node must not be null");
         this.jsonNode = node;
-    }
-
-    /**
-     * Set the Josson content with given JSON content string that deserialized to a Jackson JsonNode.
-     *
-     * @param json the string content for building the JSON tree
-     * @throws NullPointerException if {@code json} is null,
-     *         JsonProcessingException if the underlying input contains invalid content
-     */
-    public void setJsonString(final String json) throws JsonProcessingException {
-        Objects.requireNonNull(json, "json string must not be null");
-        jsonNode = readJsonNode(json);
     }
 
     /**
@@ -612,7 +610,7 @@ public class Josson {
      * @throws IllegalArgumentException if conversion fails due to incompatible type
      */
     public static <T> T convertValue(final JsonNode node) {
-        return MAPPER.convertValue(node, new TypeReference<T>(){ });
+        return MAPPER.convertValue(node, new TypeReference<T>(){});
     }
 
     /**

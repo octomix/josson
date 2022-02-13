@@ -65,7 +65,7 @@ public class ResolverProgress {
     }
 
     /**
-     * Get the current resolver debug level
+     * Get the current resolver debug level.
      * Default value is {@code SHOW_CONTENT_OF_VALUE_NODE_ONLY}
      *
      * @return Current resolver debug level
@@ -121,6 +121,9 @@ public class ResolverProgress {
         roundStarted = false;
     }
 
+    /**
+     * Goto next round.
+     */
     void nextRound() {
         if (roundStarted) {
             roundStarted = false;
@@ -128,32 +131,79 @@ public class ResolverProgress {
         }
     }
 
+    /**
+     * Add a resolution step.
+     *
+     * @param name the resolving dataset name
+     * @param query the query statement
+     */
     void addResolvingFrom(final String name, final String query) {
-        addStep("Resolving " + name + " from " + query);
+        addStep(String.format("Resolving %s from %s", name, query));
     }
 
+    /**
+     * Add a resolution step.
+     *
+     * @param name the related dataset name
+     * @param node the resolved {@code JsonNode}, {@code null} means the dataset is unresolvable.
+     */
     void addResolvedNode(final String name, final JsonNode node) {
         if (node == null) {
-            addStep("Unresolvable " + name);
+            addUnresolvableStep(name);
         } else {
-            addStep("Resolved " + name + " = " + resolvedValue(node));
+            addResolvedStep(name, resolvedValue(node));
         }
     }
 
+    /**
+     * Add a resolution step.
+     *
+     * @param name the related dataset name
+     * @param dataset the resolved {@code Josson}, {@code null} means the dataset is unresolvable.
+     */
     void addResolvedDataset(final String name, final Josson dataset) {
         if (dataset == null || dataset.getNode() == null) {
-            addStep("Unresolvable " + name);
+            addUnresolvableStep(name);
         } else {
-            addStep("Resolved " + name + " = " + simplifyResolvedValue(dataset.getNode()));
+            addResolvedStep(name, simplifyResolvedValue(dataset.getNode()));
         }
     }
 
+    /**
+     * Add a query result to the resolution steps.
+     *
+     * @param node the resolved {@code JsonNode}
+     */
     void addQueryResult(final JsonNode node) {
         addStep("Query result = " + (node == null ? "null" : resolvedValue(node)));
     }
 
+    /**
+     * Add a unresolvable resolution step.
+     *
+     * @param name the unresolvable dataset name
+     */
+    void addUnresolvableStep(final String name) {
+        addStep("Unresolvable " + name);
+    }
+
+    /**
+     * Add a resolved resolution step.
+     *
+     * @param name the resolved dataset name
+     * @param value the resolved value
+     */
+    void addResolvedStep(final String name, final String value) {
+        addStep(String.format("Resolved %s=%s", name, value));
+    }
+
+    /**
+     * Add a resolution step.
+     *
+     * @param step the resolution step detail
+     */
     void addStep(final String step) {
-        steps.add("Round " + round + " : " + step);
+        steps.add(String.format("Round %d : %s", round, step));
         roundStarted = true;
     }
 
@@ -175,10 +225,10 @@ public class ResolverProgress {
 
     private String simplifyResolvedValue(final JsonNode node) {
         if (node.isObject()) {
-            return "Object with " + node.size() + " elements";
+            return String.format("Object with %d elements", node.size());
         }
         if (node.isArray()) {
-            return "Array with " + node.size() + " elements";
+            return String.format("Array with %d elements", node.size());
         }
         return node.toString();
     }

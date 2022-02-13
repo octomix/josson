@@ -36,7 +36,7 @@ import static com.octomix.josson.commons.StringEscapeUtils.unescapeXml;
  */
 public class Jossons {
 
-    private final static String UNRESOLVABLE_PLACEHOLDER_MARK = "**";
+    private static final String UNRESOLVABLE_PLACEHOLDER_MARK = "**";
 
     private final Map<String, Josson> datasets = new HashMap<>();
 
@@ -198,8 +198,8 @@ public class Jossons {
     /**
      * <p>Uses the stored dataset mapping to merge and fill all placeholders in a template.
      * Placeholder is start with "{{" and end with "}}" as the quote marks.</p>
-     * <p>Any unresolvable placeholder will raise {@code NoValuePresentException} with the incomplete merged text content.
-     * All unresolvable placeholders are quoted with "**" to replace the original "{{" and "}}".</p>
+     * <p>Any unresolvable placeholder will raise {@code NoValuePresentException} with the incomplete merged text
+     * content. All unresolvable placeholders are quoted with "**" to replace the original "{{" and "}}".</p>
      *
      * @param template the template to be executed
      * @return The merged text content
@@ -321,8 +321,8 @@ public class Jossons {
      * (2) a Jossons query that retrieve data from other datasets.
      * (3) a database query statement that will further trigger {@code dataFinder} callback.</p>
      * (4) a join operation query to merge two datasets.
-     * <p>Any unresolvable placeholder will raise {@code NoValuePresentException} with the incomplete merged text content.
-     * All unresolvable placeholders are quoted with "**" to replace the original "{{" and "}}".</p>
+     * <p>Any unresolvable placeholder will raise {@code NoValuePresentException} with the incomplete merged text
+     * content. All unresolvable placeholders are quoted with "**" to replace the original "{{" and "}}".</p>
      *
      * @param template the template to be executed
      * @param dictionaryFinder a callback function to return solution query statement
@@ -431,7 +431,7 @@ public class Jossons {
             }
         }
         if (!unresolvablePlaceholders.isEmpty()) {
-            progress.addStep("Unresolvable placeholders " + unresolvablePlaceholders);
+            progress.addUnresolvableStep("placeholders " + unresolvablePlaceholders);
             throw new NoValuePresentException(null, unresolvablePlaceholders, template);
         }
         return template;

@@ -43,17 +43,11 @@ class FuncFormat {
     }
 
     static JsonNode funcB64Decode(final JsonNode node, final String params, final Base64.Decoder decoder) {
-        return applyFunc(node, params,
-                JsonNode::isTextual,
-                jsonNode -> TextNode.valueOf(new String(decoder.decode(jsonNode.asText())))
-        );
+        return applyTextNode(node, params, jsonNode -> new String(decoder.decode(jsonNode.asText())));
     }
 
     static JsonNode funcB64Encode(final JsonNode node, final String params, final Base64.Encoder encoder) {
-        return applyFunc(node, params,
-                JsonNode::isTextual,
-                jsonNode -> TextNode.valueOf(encoder.encodeToString(jsonNode.asText().getBytes()))
-        );
+        return applyTextNode(node, params, jsonNode -> encoder.encodeToString(jsonNode.asText().getBytes()));
     }
 
     static JsonNode funcCaseValue(final JsonNode node, final String params) {
@@ -116,8 +110,7 @@ class FuncFormat {
     }
 
     static JsonNode funcCycleValue(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                JossonCore::nodeHasValue,
+        return applyArrayNode(node, params, JossonCore::nodeHasValue,
                 (jsonNode, paramArray) -> {
                     final int size = paramArray.size();
                     final int index = jsonNode.asInt() % size;
@@ -127,25 +120,20 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatDate(final JsonNode node, final String params) {
-        return applyFuncWithParamAsText(node, params,
-                JsonNode::isTextual,
+        return applyWithParamAsText(node, params, JsonNode::isTextual,
                 (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode)
-                        .format(DateTimeFormatter.ofPattern((String) objVar).withLocale(getLocale()).withZone(getZoneId())))
+                    .format(DateTimeFormatter.ofPattern((String) objVar).withLocale(getLocale()).withZone(getZoneId())))
         );
     }
 
     static JsonNode funcFormatNumber(final JsonNode node, final String params) {
-        return applyFuncWithParamAsText(node, params,
-                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (jsonNode, objVar) -> TextNode.valueOf(new DecimalFormat((String) objVar).format(jsonNode.asDouble()))
-        );
+        return applyWithParamAsText(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                (jsonNode, objVar) -> TextNode.valueOf(new DecimalFormat((String) objVar).format(jsonNode.asDouble())));
     }
 
     static JsonNode funcFormatText(final JsonNode node, final String params) {
-        return applyFuncWithParamAsText(node, params,
-                JossonCore::nodeHasValue,
-                (jsonNode, objVar) -> TextNode.valueOf(String.format((String) objVar, valueAsObject(jsonNode)))
-        );
+        return applyWithParamAsText(node, params, JossonCore::nodeHasValue,
+                (jsonNode, objVar) -> TextNode.valueOf(String.format((String) objVar, valueAsObject(jsonNode))));
     }
 
     static JsonNode funcFormatTexts(final JsonNode node, final String params) {
@@ -171,8 +159,7 @@ class FuncFormat {
     }
 
     static JsonNode funcIndexedValue(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                JossonCore::nodeHasValue,
+        return applyArrayNode(node, params, JossonCore::nodeHasValue,
                 (jsonNode, paramArray) -> {
                     final int index = jsonNode.asInt();
                     return index >= 0 && index < paramArray.size() ? paramArray.get(index) : null;
@@ -181,31 +168,26 @@ class FuncFormat {
     }
 
     static JsonNode funcToNumber(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                JossonCore::nodeHasValue,
-                jsonNode -> jsonNode.isNumber() ? jsonNode : DoubleNode.valueOf(jsonNode.asDouble())
-        );
+        return applyWithoutParam(node, params, JossonCore::nodeHasValue,
+                jsonNode -> jsonNode.isNumber() ? jsonNode : DoubleNode.valueOf(jsonNode.asDouble()));
     }
 
     static JsonNode funcToString(final JsonNode node, final String params) {
-        return applyFunc(node, params,
+        return applyWithoutParam(node, params,
                 jsonNode -> jsonNode.isTextual() ? jsonNode
                         : TextNode.valueOf(jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString()));
     }
 
     static JsonNode funcToText(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                JsonNode::isValueNode,
-                jsonNode -> jsonNode.isTextual() ? jsonNode : TextNode.valueOf(jsonNode.asText())
-        );
+        return applyWithoutParam(node, params, JsonNode::isValueNode,
+                jsonNode -> jsonNode.isTextual() ? jsonNode : TextNode.valueOf(jsonNode.asText()));
     }
 
     static JsonNode funcUrlDecode(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                JsonNode::isTextual,
+        return applyTextNode(node, params,
                 jsonNode -> {
                     try {
-                        return TextNode.valueOf(URLDecoder.decode(jsonNode.asText(), StandardCharsets.UTF_8.toString()));
+                        return URLDecoder.decode(jsonNode.asText(), StandardCharsets.UTF_8.toString());
                     } catch (UnsupportedEncodingException e) {
                         throw new IllegalArgumentException(e.getMessage());
                     }
@@ -214,11 +196,10 @@ class FuncFormat {
     }
 
     static JsonNode funcUrlEncode(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                JsonNode::isTextual,
+        return applyTextNode(node, params,
                 jsonNode -> {
                     try {
-                        return TextNode.valueOf(URLEncoder.encode(jsonNode.asText(), StandardCharsets.UTF_8.toString()));
+                        return URLEncoder.encode(jsonNode.asText(), StandardCharsets.UTF_8.toString());
                     } catch (UnsupportedEncodingException e) {
                         throw new IllegalArgumentException(e.getMessage());
                     }

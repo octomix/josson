@@ -39,10 +39,8 @@ class FuncArithmetic {
     }
 
     static JsonNode funcAbs(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                jsonNode -> DoubleNode.valueOf(Math.abs(jsonNode.asDouble()))
-        );
+        return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                jsonNode -> DoubleNode.valueOf(Math.abs(jsonNode.asDouble())));
     }
 
     static JsonNode funcCalc(final JsonNode node, final String params) {
@@ -108,22 +106,17 @@ class FuncArithmetic {
     }
 
     static JsonNode funcCeil(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                jsonNode -> IntNode.valueOf((int) Math.ceil(jsonNode.asDouble()))
-        );
+        return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                jsonNode -> IntNode.valueOf((int) Math.ceil(jsonNode.asDouble())));
     }
 
     static JsonNode funcFloor(final JsonNode node, final String params) {
-        return applyFunc(node, params,
-                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                jsonNode -> IntNode.valueOf((int) Math.floor(jsonNode.asDouble()))
-        );
+        return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                jsonNode -> IntNode.valueOf((int) Math.floor(jsonNode.asDouble())));
     }
 
     static JsonNode funcMod(final JsonNode node, final String params) {
-        return applyFuncWithParamAsInt(node, params,
-                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+        return applyWithParamAsInt(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
                 (jsonNode, objVar) -> {
                     final int divisor = (int) objVar;
                     final int result = jsonNode.asInt() % divisor;
@@ -133,7 +126,7 @@ class FuncArithmetic {
     }
 
     static JsonNode funcRound(final JsonNode node, final String params) {
-        return applyFunc(node, params, 1, 1,
+        return apply(node, params, 1, 1,
                 paramList -> {
                     final int precision = getNodeAsInt(node, paramList.get(0));
                     final double magnitude = Math.pow(10, precision);

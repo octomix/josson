@@ -30,6 +30,9 @@ import static com.octomix.josson.JossonCore.*;
  */
 class PatternMatcher {
 
+    /**
+     * Pattern enclosure types.
+     */
     private enum Enclosure {
         STRING_LITERAL,
         SQUARE_BRACKETS,
@@ -38,7 +41,7 @@ class PatternMatcher {
         static final Enclosure[] ALL_KINDS = new Enclosure[]{
             STRING_LITERAL,
             SQUARE_BRACKETS,
-            PARENTHESES,
+            PARENTHESES
         };
     }
 
@@ -103,7 +106,7 @@ class PatternMatcher {
         if (pos == last && input.charAt(pos) == QUOTE_SYMBOL) {
             return pos;
         }
-        throw new SyntaxErrorException(input, "Expected quote symbol (" + QUOTE_SYMBOL + ")", pos);
+        throw new SyntaxErrorException(input, String.format("Expected quote symbol (%c)", QUOTE_SYMBOL), pos);
     }
 
     private static int matchSquareBrackets(final String input, final int pos, final int last) {
@@ -142,7 +145,7 @@ class PatternMatcher {
             }
             pos = skipEnclosure(input, pos, last, Enclosure.STRING_LITERAL);
         }
-        throw new SyntaxErrorException(input, "Missing '" + expectedEnd + "'", -1);
+        throw new SyntaxErrorException(input, String.format("Missing '%c'", expectedEnd), -1);
     }
 
     private static int skipDatasetQuery(final String input, int pos, final int last) {
@@ -256,7 +259,7 @@ class PatternMatcher {
             if (end > 0) {
                 final String ending = rightTrimOf(input, end + 1, last + 1);
                 if (!ending.isEmpty()) {
-                    throw new SyntaxErrorException(input, "Invalid '" + ending + "'", end);
+                    throw new SyntaxErrorException(input, String.format("Invalid '%s'", ending), end);
                 }
                 final String name = rightTrimOf(input, 0, pos);
                 if (name.isEmpty()) {
@@ -316,7 +319,7 @@ class PatternMatcher {
                     }
                     final String ending = rightTrimOf(input, pos + 1, last + 1);
                     if (!ending.isEmpty()) {
-                        throw new SyntaxErrorException(input, "Invalid '" + ending + "'", pos + 1);
+                        throw new SyntaxErrorException(input, String.format("Invalid '%s'", ending), pos + 1);
                     }
                     final String[] keys = trimOf(input, beg, pos).split(",");
                     if (Arrays.stream(keys).anyMatch(StringUtils::isBlank)) {
@@ -362,7 +365,7 @@ class PatternMatcher {
                     }
                 } else {
                     if (StringUtils.isNumeric(path)) {
-                        paths.add(isInt + "." + path);
+                        paths.add(String.format("%s.%s", isInt, path));
                     } else {
                         paths.add(isInt);
                         paths.add(path);
@@ -429,13 +432,13 @@ class PatternMatcher {
                     break;
                 }
             } else if (params.size() == maxCount) {
-                throw new SyntaxErrorException(input, "Exceeded maximum of " + maxCount + " arguments");
+                throw new SyntaxErrorException(input, String.format("Exceeded maximum of %d arguments", maxCount));
             }
             params.add(param);
         }
         if (minCount > 0 && params.size() < minCount) {
             throw new SyntaxErrorException(input,
-                    "Expected" + ((minCount == maxCount) ? "" : " at least ") + minCount + " arguments");
+                    String.format("Expected %s%d arguments", minCount == maxCount ? "" : " at least ", minCount));
         }
         for (int i = params.size() - 1; i >= 0; i--) {
             if (params.get(i).isEmpty()) {

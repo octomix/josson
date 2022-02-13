@@ -34,7 +34,7 @@ public class UnresolvedDatasetException extends Exception {
     }
 
     /**
-     * Get the unresolved dataset name
+     * Get the unresolved dataset name.
      *
      * @return Unresolved dataset name
      */
