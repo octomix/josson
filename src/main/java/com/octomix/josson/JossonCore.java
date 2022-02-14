@@ -220,6 +220,50 @@ class JossonCore {
         return 0;
     }
 
+    static JsonNode getNodeByPath(final JsonNode node, final String jossonPath) {
+        return getNodeByPath(node, -1, jossonPath);
+    }
+
+    static JsonNode getNodeByPath(JsonNode node, final int index, final String jossonPath) {
+        if (node == null) {
+            return null;
+        }
+        final List<String> keys = decomposePaths(jossonPath);
+        if (keys.isEmpty()) {
+            return index >= 0 ? node.get(index) : node;
+        }
+        final String key = keys.get(0);
+        if (key.charAt(0) == INDEX_PREFIX_SYMBOL) {
+            final String indexType = keys.remove(0);
+            switch (indexType) {
+                case ZERO_BASED_INDEX:
+                    return getNodeByKeys(IntNode.valueOf(index), keys);
+                case ONE_BASED_INDEX:
+                    return getNodeByKeys(IntNode.valueOf(index + 1), keys);
+                case UPPERCASE_INDEX:
+                    return getNodeByKeys(TextNode.valueOf(toAlphabetIndex(index, 'A')), keys);
+                case LOWERCASE_INDEX:
+                    return getNodeByKeys(TextNode.valueOf(toAlphabetIndex(index, 'a')), keys);
+                case UPPER_ROMAN_INDEX:
+                    return getNodeByKeys(TextNode.valueOf(toRomanIndex(index, true)), keys);
+                case LOWER_ROMAN_INDEX:
+                    return getNodeByKeys(TextNode.valueOf(toRomanIndex(index, false)), keys);
+            }
+            throw new IllegalArgumentException("Invalid index type: " + indexType);
+        }
+        if (isParentArrayPath(key)) {
+            keys.remove(0);
+        } else {
+            if (isCurrentNodePath(key)) {
+                keys.remove(0);
+            }
+            if (index >= 0) {
+                node = node.get(index);
+            }
+        }
+        return getNodeByKeys(node, keys);
+    }
+
     static boolean nodeHasValue(final JsonNode node) {
         return node != null && !node.isNull() && node.isValueNode();
     }
@@ -265,7 +309,7 @@ class JossonCore {
         return (quot == 0 ? "" : toAlphabetIndex(quot - 1, base)) + (char) (base + number % 26);
     }
 
-    static String toRomanIndex(int number, final boolean isUpper) {
+    private static String toRomanIndex(int number, final boolean isUpper) {
         if (number < 0) {
             return "-" + toRomanIndex(-number - 1, isUpper);
         }
@@ -336,51 +380,7 @@ class JossonCore {
         return matchedNodes;
     }
 
-    static JsonNode getNodeByPath(final JsonNode node, final String jossonPath) {
-        return getNodeByPath(node, -1, jossonPath);
-    }
-
-    static JsonNode getNodeByPath(JsonNode node, final int index, final String jossonPath) {
-        if (node == null) {
-            return null;
-        }
-        final List<String> keys = decomposePaths(jossonPath);
-        if (keys.isEmpty()) {
-            return index >= 0 ? node.get(index) : node;
-        }
-        final String key = keys.get(0);
-        if (key.charAt(0) == INDEX_PREFIX_SYMBOL) {
-            final String indexType = keys.remove(0);
-            switch (indexType) {
-                case ZERO_BASED_INDEX:
-                    return getNodeByKeys(IntNode.valueOf(index), keys);
-                case ONE_BASED_INDEX:
-                    return getNodeByKeys(IntNode.valueOf(index + 1), keys);
-                case UPPERCASE_INDEX:
-                    return getNodeByKeys(TextNode.valueOf(toAlphabetIndex(index, 'A')), keys);
-                case LOWERCASE_INDEX:
-                    return getNodeByKeys(TextNode.valueOf(toAlphabetIndex(index, 'a')), keys);
-                case UPPER_ROMAN_INDEX:
-                    return getNodeByKeys(TextNode.valueOf(toRomanIndex(index, true)), keys);
-                case LOWER_ROMAN_INDEX:
-                    return getNodeByKeys(TextNode.valueOf(toRomanIndex(index, false)), keys);
-            }
-            throw new IllegalArgumentException("Invalid index type: " + indexType);
-        }
-        if (isParentArrayPath(key)) {
-            keys.remove(0);
-        } else {
-            if (isCurrentNodePath(key)) {
-                keys.remove(0);
-            }
-            if (index >= 0) {
-                node = node.get(index);
-            }
-        }
-        return getNodeByKeys(node, keys);
-    }
-
-    static JsonNode getNodeByKeys(JsonNode node, List<String> keys) {
+    private static JsonNode getNodeByKeys(JsonNode node, List<String> keys) {
         if (node != null && !keys.isEmpty()) {
             try {
                 node = toValueNode(keys.get(0));

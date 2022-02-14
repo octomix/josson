@@ -93,8 +93,8 @@ public class Josson {
      *
      * @param json the string content for building the JSON tree
      * @return The new Josson object
-     * @throws IllegalArgumentException if {@code json} is null,
-     *         JsonProcessingException if the underlying input contains invalid content
+     * @throws JsonProcessingException if the underlying input contains invalid content,
+     *         IllegalArgumentException if {@code json} is null
      */
     public static Josson fromJsonString(final String json) throws JsonProcessingException {
         return new Josson(MAPPER.readTree(json));
@@ -104,8 +104,8 @@ public class Josson {
      * Set the Josson content with given JSON content string that deserialized to a Jackson JsonNode.
      *
      * @param json the string content for building the JSON tree
-     * @throws IllegalArgumentException if {@code json} is null,
-     *         JsonProcessingException if the underlying input contains invalid content
+     * @throws JsonProcessingException if the underlying input contains invalid content,
+     *         IllegalArgumentException if {@code json} is null
      */
     public void setJsonString(final String json) throws JsonProcessingException {
         jsonNode = MAPPER.readTree(json);

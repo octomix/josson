@@ -9,6 +9,7 @@
 ![License](https://badgen.net/github/license/octomix/josson)
 ![Maven Central](https://badgen.net/maven/v/maven-central/com.octomix.josson/josson)
 [![Known Vulnerabilities](https://snyk.io/test/github/octomix/josson/badge.svg)](https://snyk.io/test/github/octomix/josson)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b1340711f3734ef7955c2f3073fd3ee9)](https://www.codacy.com/gh/octomix/josson/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=octomix/josson&amp;utm_campaign=Badge_Grade)
 
 ## Installation
 
@@ -19,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.0'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.1'
 
 ## Features and Capabilities
 
