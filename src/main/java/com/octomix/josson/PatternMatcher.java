@@ -402,6 +402,10 @@ class PatternMatcher {
                     throw new SyntaxErrorException(input, "Invalid syntax", -1);
                 }
             }
+            final int end = pos - 1;
+            if (end > beg && input.charAt(end) == '!') {
+                pos = end;
+            }
             final String token = input.substring(beg, pos);
             final Operator operator = Operator.fromSymbol(token);
             if (operator == null) {

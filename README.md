@@ -1159,8 +1159,8 @@ Format Functions
 104. [urlEncode()](#104-urlencode)
 105. [urlDecode()](#105-urldecode)
 106. [caseValue()](#106-casevalue)
-107. [indexedValue()](#107-indexedvalue)
-108. [cycleValue()](#108-cyclevalue)
+107. [cycleValue()](#107-cyclevalue)
+108. [indexedValue()](#108-indexedvalue)
 109. [formatDate()](#109-formatdate)
 110. [formatNumber()](#110-formatnumber)
 111. [formatText()](#111-formattext)
@@ -2068,19 +2068,7 @@ Following are some examples of each function.
 
     json('[{"s":1},{"s":null},{"s":3}]').s.caseValue(1,'A',null,'B') ==> [ "A", "B", null ]
 
-#### 107. indexedValue()
-
-    0.indexedValue('a','b','c','d') ==> "a"
-
-    1.indexedValue(json('["a","b","c","d"]')) ==> "b"
-
-    '3'.indexedValue('a','b','c','d') ==> "d"
-
-    4.indexedValue('a','b','c','d') ==> !unresolvable!
-
-    -1.indexedValue('a','b','c','d') ==> !unresolvable!
-
-#### 108. cycleValue()
+#### 107. cycleValue()
 
     0.cycleValue('a','b','c','d') ==> "a"
 
@@ -2093,6 +2081,18 @@ Following are some examples of each function.
     -1.cycleValue('a','b','c','d') ==> "d"
 
     -6.cycleValue('a','b','c','d') ==> "c"
+
+#### 108. indexedValue()
+
+    0.indexedValue('a','b','c','d') ==> "a"
+
+    1.indexedValue(json('["a","b","c","d"]')) ==> "b"
+
+    '3'.indexedValue('a','b','c','d') ==> "d"
+
+    4.indexedValue('a','b','c','d') ==> !unresolvable!
+
+    -1.indexedValue('a','b','c','d') ==> !unresolvable!
 
 #### 109. formatDate()
 
@@ -3018,7 +3018,7 @@ All unresolvable placeholders are quoted with `**` to replace the original doubl
     Jossons jossons = Jossons.fromJsonString(orderJsonString);
     String output = jossons.fillInPlaceholder(template);
 
-__Template__
+___Template___
 
     "{{company->name.rightPad(65)}}INVOICE\n\n" +
     "{{company->address[0].rightPad(56) ?: $->repeat(' ',56)}}Issue Date: {{order->salesDate.formatDate('dd/MM/yyyy')}}\n" +
@@ -3103,7 +3103,7 @@ __Template__
 
        {{order->calc(netAmount+fee, fee:coalesce(delivery.handlingFee,0)).formatNumber('US$#,##0.0').leftPad(12).concat('Total:',?,'\n').leftPad(80)}}
 
-__Output__
+___Output___
 
     Octomix Limited                                                  INVOICE
     
