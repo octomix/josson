@@ -3197,13 +3197,9 @@ One-document query syntax that request for an `ObjectNode`:
 
     "collectionName ? {findStatement}"
 
-    "collectionName ? {findStatement},{projectStatment}"
-
     "collectionName ? [aggregateStatements]"
 
     "? {findStatement}"
-
-    "? {findStatement},{projectStatment}"
 
     "? [aggregateStatements]"
 
@@ -3211,13 +3207,9 @@ Many-documents query syntax that request for an `ArrayNode`:
 
     "collectionName[] ? {findStatement}"
 
-    "collectionName[] ? {findStatement},{projectStatment}"
-
     "collectionName[] ? [aggregateStatements]"
 
     "[] ? {findStatement}"
-
-    "[] ? {findStatement},{projectStatment}"
 
     "[] ? [aggregateStatements]"
 

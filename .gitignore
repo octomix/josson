@@ -90,7 +90,6 @@ Desktop.ini
 *.*~
 *~
 .merge_file*
-/src/test/
 
 ######################
 # Gradle Wrapper
