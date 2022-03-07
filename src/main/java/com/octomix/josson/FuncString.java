@@ -105,6 +105,13 @@ class FuncString {
         return sb.toString();
     }
 
+    static JsonNode funcDoubleQuote(final JsonNode node, final String params) {
+        return applyWithoutParam(node, params, JossonCore::nodeHasValue,
+                jsonNode -> TextNode.valueOf(String.format("\"%s\"",
+                        StringUtils.replace(jsonNode.asText(), "\"", "\\\"", -1, false)))
+        );
+    }
+
     static JsonNode funcKeep(final JsonNode node, final String params,
                              final boolean ignoreCase, final boolean after, final boolean last) {
         return applyTextNodeWithParamAsText(node, params,
@@ -228,6 +235,13 @@ class FuncString {
                     final int max = (int) ((Pair<?, ?>) objVar).getValue();
                     return TextNode.valueOf(StringUtils.replace(jsonNode.asText(), texts[0], texts[1], max, ignoreCase));
                 }
+        );
+    }
+
+    static JsonNode funcSingleQuote(final JsonNode node, final String params) {
+        return applyWithoutParam(node, params, JossonCore::nodeHasValue,
+                jsonNode -> TextNode.valueOf(String.format("'%s'",
+                        StringUtils.replace(jsonNode.asText(), "'", "''", -1, false)))
         );
     }
 

@@ -181,6 +181,9 @@ class FuncDispatcher {
                 return funcChronometry(node, params, ChronoField.DAY_OF_YEAR);
             case "dayend":
                 return funcDayEnd(node, params);
+            // String
+            case "doublequote":
+                return funcDoubleQuote(node, params);
         }
         throw new UnsupportedFunctionException();
     }
@@ -520,6 +523,8 @@ class FuncDispatcher {
             case "startswithignorecase":
                 return funcStartsWith(node, params, true, false);
             // String
+            case "singlequote":
+                return funcSingleQuote(node, params);
             case "split":
                 return funcSplit(node, params);
             case "strip":

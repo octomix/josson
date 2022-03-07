@@ -60,9 +60,21 @@ class PatternMatcher {
     private PatternMatcher() {
     }
 
+    private static boolean isNotSpace(char ch) {
+        switch (ch) {
+            case ' ':
+            case '\n':
+            case '\r':
+            case '\t':
+            case '\f':
+                return false;
+        }
+        return true;
+    }
+
     private static int eatSpaces(final String input, int beg, final int last) {
         for (; beg <= last; beg++) {
-            if (input.charAt(beg) != ' ') {
+            if (isNotSpace(input.charAt(beg))) {
                 break;
             }
         }
@@ -75,7 +87,7 @@ class PatternMatcher {
 
     private static String rightTrimOf(final String input, final int beg, int end) {
         for (; end > beg; end--) {
-            if (input.charAt(end - 1) != ' ') {
+            if (isNotSpace(input.charAt(end - 1))) {
                 break;
             }
         }

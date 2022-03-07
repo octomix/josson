@@ -893,6 +893,16 @@ public class UnitTest {
         // upperCase()
         evaluate.accept("'Cat'.upperCase()", "CAT");
         evaluate.accept("upperCase('cAt')", "CAT");
+        // singleQuote()
+        evaluate.accept("'Peggy''s cat'.singleQuote()", "'Peggy''s cat'");
+        evaluate.accept("123.singleQuote()", "'123'");
+        evaluate.accept("singleQuote('Raymond''s dog')", "'Raymond''s dog'");
+        evaluate.accept("singleQuote(True)", "'true'");
+        // doubleQuote()
+        evaluate.accept("'Peggy\"s cat'.doubleQuote()", "\"Peggy\\\"s cat\"");
+        evaluate.accept("12.3.doubleQuote()", "\"12.3\"");
+        evaluate.accept("doubleQuote('Raymond\"s dog')", "\"Raymond\\\"s dog\"");
+        evaluate.accept("doubleQuote(False)", "\"false\"");
 
         // Date functions
         // amPmOfDay()
