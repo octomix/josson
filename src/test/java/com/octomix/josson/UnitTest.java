@@ -1675,16 +1675,16 @@ public class UnitTest {
                         "{{order->delivery.address!=null ? order->delivery.address.split('\n').concat(repeat(' ',31),?).join('\n').concat(?,'\n')}}\n" +
                         "Item# Description                         Quantity Unit Price Discount    Total\n" +
                         "----- ----------------------------------- -------- ---------- -------- --------\n" +
-                        "{{order->items.concat(" +
-                        "    ##.center(5),' '," +
-                        "    name.rightPad(35),' '," +
-                        "    concat(qty,' ',unit).center(8),' '," +
-                        "    unitPrice.formatNumber('#,##0.0').leftPad(9),' '," +
-                        "    coalesce(unitDiscount,0).formatNumber('#,##0.0').leftPad(8),' '," +
-                        "    calc(qty * (unitPrice-d), d:coalesce(unitDiscount,0)).formatNumber('#,##0.0').leftPad(9)," +
-                        "    '\n      ',itemCode,' '," +
-                        "    property.entries().concat(key,':',value.toString()).join(' ')" +
-                        "  ).join('\n')" +
+                        "{{order->items.concat(\n" +
+                        "    ##.center(5),' ',\n" +
+                        "    name.rightPad(35),' ',\n" +
+                        "    concat(qty,' ',unit).center(8),' ',\n" +
+                        "    unitPrice.formatNumber('#,##0.0').leftPad(9),' ',\n" +
+                        "    coalesce(unitDiscount,0).formatNumber('#,##0.0').leftPad(8),' ',\n" +
+                        "    calc(qty * (unitPrice-d), d:coalesce(unitDiscount,0)).formatNumber('#,##0.0').leftPad(9),\n" +
+                        "    '\n      ',itemCode,' ',\n" +
+                        "    property.entries().concat(key,':',value.toString()).join(' ')\n" +
+                        "  ).join('\n')\n" +
                         "}}\n" +
                         "----- ----------------------------------- -------- ---------- -------- --------\n" +
                         "{{order->totalAmount.formatNumber('US$#,##0.0').leftPad(12).concat('Subtotal:',?,'\n').leftPad(80)}}" +
@@ -1693,6 +1693,7 @@ public class UnitTest {
                         "{{order->calc(netAmount+fee, fee:coalesce(delivery.handlingFee,0)).formatNumber('US$#,##0.0').leftPad(12).concat('Total:',?,'\n').leftPad(80)}}" +
                         ""));
 
+        // Test join datasets
         Map<String, String> dictionaryFinder = new LinkedHashMap<>();
         dictionaryFinder.put("stocks", "[]?{ignoredQuery}");
         dictionaryFinder.put("withStock",
