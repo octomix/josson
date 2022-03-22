@@ -348,7 +348,7 @@ class JossonCore {
                 return null;
             }
         } else {
-            final JsonNode result = new OperationStack(node).evaluate(statement, 0);
+            final JsonNode result = new OperationStackForJsonNode(node).evaluate(statement);
             if (result != null && result.asBoolean()) {
                 return node;
             }
@@ -367,8 +367,9 @@ class JossonCore {
         } catch (NumberFormatException e) {
             // continue
         }
-        final OperationStack opStack = new OperationStack(node);
+        final OperationStack opStack = new OperationStackForJsonNode(node);
         for (int i = 0; i < node.size(); i++) {
+            opStack.clear();
             final JsonNode result = opStack.evaluate(statement, i);
             if (result != null && result.asBoolean()) {
                 if (mode == FILTRATE_FIND_FIRST) {

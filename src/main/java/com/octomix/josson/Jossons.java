@@ -533,6 +533,13 @@ public class Jossons {
         } catch (NumberFormatException e) {
             // continue
         }
-        return new OperationStack(datasets).evaluate(statement);
+        try {
+            return new OperationStackForDatasets(datasets).evaluate(statement);
+        } catch (UnsupportedOperationException e) {
+            if (e.getCause() instanceof UnresolvedDatasetException) {
+                throw (UnresolvedDatasetException) e.getCause();
+            }
+            throw e;
+        }
     }
 }
