@@ -162,7 +162,9 @@ class FuncDispatcher {
             case "coalesce":
                 return funcCoalesce(node, params);
             case "csv":
-                return funcCsv(node, params);
+                return funcCsv(node, params, false);
+            case "csvshownull":
+                return funcCsv(node, params, true);
         }
         throw new UnsupportedFunctionException();
     }

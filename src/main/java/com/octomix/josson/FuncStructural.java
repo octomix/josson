@@ -77,25 +77,25 @@ class FuncStructural {
         return null;
     }
 
-    static TextNode funcCsv(final JsonNode node, final String params) {
+    static TextNode funcCsv(final JsonNode node, final String params, final boolean showNull) {
         final JsonNode container = getParamArrayOrItselfIsContainer(params, node);
         if (container == null) {
             return null;
         }
         final List<JsonNode> values = new ArrayList<>();
-        funcCsvCollectValues(values, container);
+        funcCsvCollectValues(values, container, showNull);
         return TextNode.valueOf(values.stream()
                 .map(value -> csvQuote(value.asText()))
                 .collect(Collectors.joining(",")));
     }
 
-    private static void funcCsvCollectValues(final List<JsonNode> values, final JsonNode node) {
+    private static void funcCsvCollectValues(final List<JsonNode> values, final JsonNode node, final boolean showNull) {
         if (node.isObject()) {
             node.forEach(elem -> {
                 if (elem.isContainerNode()) {
-                    funcCsvCollectValues(values, elem);
-                } else if (!elem.isNull()) {
-                    values.add(elem);
+                    funcCsvCollectValues(values, elem, showNull);
+                } else {
+                    values.add(showNull || !elem.isNull() ? elem : TextNode.valueOf(""));
                 }
             });
             return;
@@ -103,9 +103,9 @@ class FuncStructural {
         for (int i = 0; i < node.size(); i++) {
             final JsonNode tryNode = node.get(i);
             if (tryNode.isContainerNode()) {
-                funcCsvCollectValues(values, tryNode);
-            } else if (!tryNode.isNull()) {
-                values.add(tryNode);
+                funcCsvCollectValues(values, tryNode, showNull);
+            } else {
+                values.add(showNull || !tryNode.isNull() ? tryNode : TextNode.valueOf(""));
             }
         }
     }

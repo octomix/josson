@@ -1246,6 +1246,7 @@ Structural Functions
 181. [field()](#181-field)
 182. [coalesce()](#182-coalesce)
 183. [csv()](#183-csv)
+184. [csvShowNull()](#184-csvshownull)
 
 Following are some examples of each function.
 
@@ -2832,9 +2833,15 @@ Following are some examples of each function.
 
 #### 183. csv()
 
-    json('{"len1":"12.3\\"","len2":"26.1\\"","len3":"64.0\\""}').csv() ==> "12.3""","26.1""","64.0"""
+    json('{"len1":"12.3\\"","len2":null,"len3":"64.0\\""}').csv() ==> "12.3""",,"64.0"""
 
-    csv(json('[[[[1,2],["3","4\\""]]],{"a":1,"b":[2.0,8.888],"c":{"d":true,"e":null}}]')) ==> 1,2,3,"4""",1,2.0,8.888,true
+    csv(json('[[[[1,2],["3","4\\""]]],{"a":1,"b":[2.0,8.888],"c":{"d":true,"e":null}}]')) ==> 1,2,3,"4""",1,2.0,8.888,true,
+
+#### 184. csvShowNull()
+
+    json('{"len1":"12.3\\"","len2":null,"len3":"64.0\\""}').csvShowNull() ==> "12.3""",null,"64.0"""
+
+    csvShowNull(json('[[[[1,2],["3","4\\""]]],{"a":1,"b":[2.0,8.888],"c":{"d":true,"e":null}}]')) ==> 1,2,3,"4""",1,2.0,8.888,true,null
 
 ---
 

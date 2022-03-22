@@ -1561,10 +1561,15 @@ public class UnitTest {
         evaluate.accept("json('[\"abc\",\"\",123,false,null]').coalesce('xyz')", "[ \"abc\", \"\", 123, false, \"xyz\" ]");
         evaluate.accept("json('{\"a\":null,\"c\":\"abc\"}').coalesce(a,b,c,'xyz')", "abc");
         // csv()
-        evaluate.accept("json('{\"len1\":\"12.3\\\"\",\"len2\":\"26.1\\\"\",\"len3\":\"64.0\\\"\"}').csv()",
-                "\"12.3\"\"\",\"26.1\"\"\",\"64.0\"\"\"");
+        evaluate.accept("json('{\"len1\":\"12.3\\\"\",\"len2\":null,\"len3\":\"64.0\\\"\"}').csv()",
+                "\"12.3\"\"\",,\"64.0\"\"\"");
         evaluate.accept("csv(json('[[[[1,2],[\"3\",\"4\\\"\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
-                "1,2,3,\"4\"\"\",1,2.0,8.888,true");
+                "1,2,3,\"4\"\"\",1,2.0,8.888,true,");
+        // csvShowNull()
+        evaluate.accept("json('{\"len1\":\"12.3\\\"\",\"len2\":null,\"len3\":\"64.0\\\"\"}').csvShowNull()",
+                "\"12.3\"\"\",null,\"64.0\"\"\"");
+        evaluate.accept("csvShowNull(json('[[[[1,2],[\"3\",\"4\\\"\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
+                "1,2,3,\"4\"\"\",1,2.0,8.888,true,null");
     }
 
     @Test
