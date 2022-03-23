@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.PatternMatcher.matchDatasetQuery;
@@ -72,6 +73,12 @@ class OperationStep {
         }
         if (rightNode == null) {
             rightNode = NullNode.getInstance();
+        }
+        if (operator == Operator.MATCH) {
+            if (!leftNode.isValueNode() || !rightNode.isTextual()) {
+                return false;
+            }
+            return Pattern.compile(rightNode.asText()).matcher(leftNode.asText()).matches();
         }
         if (leftNode.isContainerNode() || rightNode.isContainerNode()) {
             return relationalCompareContainer(leftNode, operator, rightNode);

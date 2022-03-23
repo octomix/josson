@@ -334,6 +334,14 @@ public class UnitTest {
         evaluate.accept("items.tags",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
+        // "?" represents the current node in filter.
+        // "=~" matches a regular expression.
+        //
+        // {}->items*->[tags[]*->[""]] ==>[""]
+        //
+        evaluate.accept("items.tags[? =~ '^S.*O.+']*",
+                "[ \"SPORT\", \"SHOE\", \"SPORT\" ]");
+
         // The matching criteria supports logical operators and parentheses.
         // "!" = not, "&" = and, "|" = or
         //
@@ -1268,9 +1276,27 @@ public class UnitTest {
         // isEmpty()
         evaluate.accept("''.isEmpty()", "true");
         evaluate.accept("isEmpty(' ')", "false");
+        evaluate.accept("isEmpty(1)", "false");
+        evaluate.accept("isEmpty(0)", "false");
+        evaluate.accept("isEmpty(true)", "false");
+        evaluate.accept("isEmpty(false)", "false");
+        evaluate.accept("isEmpty(null)", "true");
+        evaluate.accept("json('[]').isEmpty()", "true");
+        evaluate.accept("isEmpty(json('[0]'))", "false");
+        evaluate.accept("json('{}').isEmpty()", "true");
+        evaluate.accept("isEmpty(json('{\"a\":1}'))", "false");
         // isNotEmpty()
         evaluate.accept("''.isNotEmpty()", "false");
         evaluate.accept("isNotEmpty(' ')", "true");
+        evaluate.accept("isNotEmpty(1)", "true");
+        evaluate.accept("isNotEmpty(0)", "true");
+        evaluate.accept("isNotEmpty(true)", "true");
+        evaluate.accept("isNotEmpty(false)", "true");
+        evaluate.accept("isNotEmpty(null)", "false");
+        evaluate.accept("json('[]').isNotEmpty()", "false");
+        evaluate.accept("isNotEmpty(json('[0]'))", "true");
+        evaluate.accept("json('{}').isNotEmpty()", "false");
+        evaluate.accept("isNotEmpty(json('{\"a\":1}'))", "true");
         // isBlank()
         evaluate.accept("''.isBlank()", "true");
         evaluate.accept("isBlank(' ')", "true");

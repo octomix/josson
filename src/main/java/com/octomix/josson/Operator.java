@@ -52,6 +52,11 @@ enum Operator {
     LTE("<="),
 
     /**
+     * Matches regular expression.
+     */
+    MATCH("=~"),
+
+    /**
      * Not.
      */
     NOT("!"),

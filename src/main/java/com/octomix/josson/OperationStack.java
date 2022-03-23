@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.util.LinkedList;
-import java.util.List;
 
 import static com.octomix.josson.PatternMatcher.decomposeStatement;
 
@@ -121,8 +120,7 @@ abstract class OperationStack {
     }
 
     JsonNode evaluate(final String statement, final int arrayIndex) {
-        final List<OperationStep> steps = decomposeStatement(statement);
-        for (OperationStep step : steps) {
+        for (OperationStep step : decomposeStatement(statement)) {
             try {
                 evaluate(step, arrayIndex);
             } catch (IllegalArgumentException e) {

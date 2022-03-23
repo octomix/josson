@@ -409,7 +409,7 @@ class PatternMatcher {
         int pos = 0;
         while (pos <= last) {
             int beg = pos;
-            while ("=!<>&|".indexOf(input.charAt(pos)) >= 0) {
+            while ("=!<>&|~".indexOf(input.charAt(pos)) >= 0) {
                 if (pos++ == last) {
                     throw new SyntaxErrorException(input, "Invalid syntax", -1);
                 }

@@ -161,7 +161,10 @@ class FuncLogical {
 
     static JsonNode funcIsEmpty(final JsonNode node, final String params, final boolean not) {
         return applyWithoutParam(node, params,
-                jsonNode -> BooleanNode.valueOf(jsonNode.isTextual() && (not ^ jsonNode.asText().isEmpty())));
+                jsonNode -> BooleanNode.valueOf(
+                        jsonNode.isContainerNode() ? not ^ jsonNode.isEmpty()
+                        : jsonNode.isTextual() ? not ^ jsonNode.asText().isEmpty()
+                        : jsonNode.isNull() != not));
     }
 
     static JsonNode funcIsEven(final JsonNode node, final String params) {
