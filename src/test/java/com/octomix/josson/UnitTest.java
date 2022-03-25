@@ -113,7 +113,7 @@ public class UnitTest {
                         "  \"phone\" : \"+852 62000610\"\n" +
                         "}");
 
-        // Object parent-child relation is connected by a ".".
+        // Parent node and child node are connected by a ".".
         //
         // {}->customer.name ==>""
         //
@@ -129,7 +129,7 @@ public class UnitTest {
                 "PEGGY");
 
         // Function name is case-insensitive.
-        // A path argument takes the function's current node as its parent.
+        // Function parameter can refer to a child node of the step.
         //
         // {}->customer{}->UPPERCase($V) ==>""
         //
@@ -143,7 +143,7 @@ public class UnitTest {
         evaluate.accept("upperCase(customer.name)",
                 "PEGGY");
 
-        // Functions can be nested and the parameters have the same parent node.
+        // Functions can be nested and the parameters can refer to those child nodes of the same step.
         //
         // {}->customer{}->concat($V...) ==>""
         //
@@ -224,7 +224,7 @@ public class UnitTest {
                         "} ]");
 
         // An array filter is enclosed by square brackets.
-        // To query an array element by index value.
+        // Directly query an array element by zero-based index value.
         //
         // {}->items[0] ==>{}
         //
@@ -243,14 +243,14 @@ public class UnitTest {
                         "  \"tags\" : [ \"SHIRT\", \"WOMEN\" ]\n" +
                         "}");
 
-        // To query a value node in an array element.
+        // To query a child value node in an array element.
         //
         // {}->items[1].name ==>""
         //
         evaluate.accept("items[1].name",
                 "OctoPlus Tennis Racket - Star");
 
-        // To query an object node in an array element.
+        // To query a child object node in an array element.
         //
         // {}->items[2].property{} ==>{}
         //
@@ -274,7 +274,7 @@ public class UnitTest {
         evaluate.accept("items.concat('Qty=',qty)",
                 "[ \"Qty=2\", \"Qty=1\", \"Qty=1\" ]");
 
-        // For function argument, a path step "?" represents the current node.
+        // If a step is working on an object or value node, "?" represents that node.
         //
         // {}->items*->[qty]->[$I->concat(?)] ==>[""]
         //
@@ -320,6 +320,12 @@ public class UnitTest {
         evaluate.accept("items[unitDiscount > 0]*.name",
                 "[ \"OctoPlus Tennis Racket - Star\", \"WinWin Sport Shoe - Super\" ]");
 
+        // If a step is working on an array node, "#" denotes the zero-based index of an array element.
+        //
+        // {}->items[]*->[itemCode] ==>[""]
+        //
+        evaluate.accept("items[#.isEven()]*.itemCode", "[ \"B00001\", \"A00201\" ]");
+
         // For each path step, a nested array is flattened once.
         //
         // {}->items[]*->[tags[]*->[""]] ==>[""]
@@ -334,7 +340,7 @@ public class UnitTest {
         evaluate.accept("items.tags",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
-        // "?" represents the current node in filter.
+        // If a step is working on an array node, "?" represents an array element.
         // "=~" matches a regular expression.
         //
         // {}->items*->[tags[]*->[""]] ==>[""]
@@ -420,7 +426,7 @@ public class UnitTest {
         evaluate.accept("'1+2 | 3+4 | 5+6'.split('|').[]@.split('+').calc(?*2).round(0).join('+').concat('(',?,')/2').@join(' | ')",
                 "(2+4)/2 | (6+8)/2 | (10+12)/2");
 
-        // Function parameter can be a value node of parent.
+        // All function parameters can refer to a child node of the step.
         //
         //            {}->repeat($V...)->""
         //           /                     \
@@ -434,8 +440,7 @@ public class UnitTest {
                         "[OctoPlus] OctoPlus Tennis Racket - Star\n" +
                         "[WinWin] WinWin Sport Shoe - Super\n");
 
-        // Functions work on array and produce an array, such as "concat()", manipulate on each element.
-        // An argument "#" denotes the zero-based array index.
+        // Some functions work on array and produce an array, such as "concat()", manipulate on each element.
         //
         // {}->items*->[{}->concat(#, $V...)]->join() ==>""
         //
@@ -444,8 +449,8 @@ public class UnitTest {
                         "Item 1: [A00308] 1Pcs x OctoPlus Tennis Racket - Star <BLACK>\n" +
                         "Item 2: [A00201] 1Pair x WinWin Sport Shoe - Super <RED>");
 
-        // An argument "##" denotes the one-based array index.
-        // A function argument path step start with "@" represents the parent array node.
+        // If a step is working on an array node, "@" represents that array node.
+        // "##" denotes the one-based index of an array element.
         //                            .----->----.
         //                           /            \
         // {}->items*->[{}]->sort($V)->[{}->concat(@, ##, $V...)]->join() ==>""
@@ -748,6 +753,11 @@ public class UnitTest {
         evaluate.accept("abbreviate('abcdefghijkl', 6, 9)", "...ghijkl");
         evaluate.accept("abbreviate('abcdefghijkl', 10, 9)", "...ghijkl");
         evaluate.accept("abbreviate('abcdefghijkl', 11, 9)", "...ghijkl");
+        // append()
+        evaluate.accept("'abc'.append('xyz')", "abcxyz");
+        evaluate.accept("'abc'.append(?, 'xyz')", "abcxyz");
+        evaluate.accept("append('abcxyz', 'xyz')", "abcxyzxyz");
+        evaluate.accept("'xyz'.append('abcXYZ', ?)", "abcXYZxyz");
         // appendIfMissing()
         evaluate.accept("'abc'.appendIfMissing('xyz')", "abcxyz");
         evaluate.accept("'abc'.appendIfMissing(?, 'xyz')", "abcxyz");
@@ -821,6 +831,11 @@ public class UnitTest {
         evaluate.accept("'abc'.notBlank('xyz')", "abc");
         evaluate.accept("' '.notBlank(null, '  ', 'xyz')", "xyz");
         evaluate.accept("json('{\"a\":\" \",\"b\":\" \",\"c\":\"abc\"}').notBlank(a,b,c,'xyz')", "abc");
+        // prepend()
+        evaluate.accept("'abc'.prepend('xyz')", "xyzabc");
+        evaluate.accept("'abc'.prepend(?, 'xyz')", "xyzabc");
+        evaluate.accept("prepend('xyzabc', 'xyz')", "xyzxyzabc");
+        evaluate.accept("'xyz'.prepend('XYZabc', ?)", "xyzXYZabc");
         // prependIfMissing()
         evaluate.accept("'abc'.prependIfMissing('xyz')", "xyzabc");
         evaluate.accept("'abc'.prependIfMissing(?, 'xyz')", "xyzabc");

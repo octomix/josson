@@ -98,6 +98,8 @@ class FuncDispatcher {
             // String
             case "abbreviate":
                 return funcAbbreviate(node, params);
+            case "append":
+                return funcAppend(node, params);
             case "appendifmissing":
                 return funcAppendIfMissing(node, params, false);
             case "appendifmissingignorecase":
@@ -466,6 +468,8 @@ class FuncDispatcher {
             case "plusyears":
                 return funcDatePlus(node, params, ChronoUnit.YEARS);
             // String
+            case "prepend":
+                return funcPrepend(node, params);
             case "prependifmissing":
                 return funcPrependIfMissing(node, params, false);
             case "prependifmissingignorecase":

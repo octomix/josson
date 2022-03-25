@@ -54,6 +54,10 @@ class FuncString {
         );
     }
 
+    static JsonNode funcAppend(final JsonNode node, final String params) {
+        return applyTextNodeWithParamAsText(node, params, (str, param) -> str + param);
+    }
+
     static JsonNode funcAppendIfMissing(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyTextNodeWithParamAsText(node, params,
                 (str, param) -> ignoreCase
@@ -193,6 +197,10 @@ class FuncString {
                     );
                 }
         );
+    }
+
+    static JsonNode funcPrepend(final JsonNode node, final String params) {
+        return applyTextNodeWithParamAsText(node, params, (str, param) -> param + str);
     }
 
     static JsonNode funcPrependIfMissing(final JsonNode node, final String params, final boolean ignoreCase) {
