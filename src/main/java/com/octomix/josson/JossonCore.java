@@ -348,7 +348,7 @@ class JossonCore {
                 return null;
             }
         } else {
-            final JsonNode result = new OperationStackForJsonNode(node).evaluate(statement);
+            final JsonNode result = new OperationStackForJsonNode(node).evaluateStatement(statement);
             if (result != null && result.asBoolean()) {
                 return node;
             }

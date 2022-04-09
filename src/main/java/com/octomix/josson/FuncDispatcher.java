@@ -146,6 +146,10 @@ class FuncDispatcher {
             // Format
             case "casevalue":
                 return funcCaseValue(node, params);
+            case "csv":
+                return funcCsv(node, params, false);
+            case "csvshownull":
+                return funcCsv(node, params, true);
             case "cyclevalue":
                 return funcCycleValue(node, params);
             // Logical
@@ -163,10 +167,6 @@ class FuncDispatcher {
             // Structural
             case "coalesce":
                 return funcCoalesce(node, params);
-            case "csv":
-                return funcCsv(node, params, false);
-            case "csvshownull":
-                return funcCsv(node, params, true);
         }
         throw new UnsupportedFunctionException();
     }
@@ -263,7 +263,7 @@ class FuncDispatcher {
         switch (func) {
             // Array
             case "indexof":
-                return funcIndexOf(node, params, true);
+                return funcIndexOf(node, params, 1);
             // Format
             case "indexedvalue":
                 return funcIndexedValue(node, params);
@@ -350,7 +350,7 @@ class FuncDispatcher {
             case "lastindex":
                 return funcLastIndex(node, params);
             case "lastindexof":
-                return funcIndexOf(node, params, false);
+                return funcIndexOf(node, params, -1);
             // Date
             case "lengthofmonth":
                 return funcLengthOfMonth(node, params);

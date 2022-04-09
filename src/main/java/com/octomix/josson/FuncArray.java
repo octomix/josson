@@ -144,7 +144,7 @@ class FuncArray {
                 jsonNode -> !jsonNode.isArray() ? jsonNode : jsonNode.size() == 0 ? null : jsonNode.get(0));
     }
 
-    static IntNode funcIndexOf(JsonNode node, final String params, boolean isForward) {
+    static IntNode funcIndexOf(JsonNode node, final String params, final int step) {
         final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
         final JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
         if (valueNode == null || !valueNode.isValueNode()) {
@@ -159,52 +159,28 @@ class FuncArray {
         if (!node.isArray()) {
             return null;
         }
-        if (isForward) {
-            if (valueNode.isNumber()) {
-                final double value = valueNode.asDouble();
-                for (int i = 0; i < node.size(); i++) {
-                    final JsonNode tryNode = node.get(i);
-                    if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asDouble() == value) {
-                        return IntNode.valueOf(i);
-                    }
+        int i = step > 0 ? 0 : node.size() - 1;
+        final int end = step > 0 ? node.size() : -1;
+        if (valueNode.isNumber()) {
+            final double value = valueNode.asDouble();
+            for (; i != end; i += step) {
+                final JsonNode tryNode = node.get(i);
+                if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asDouble() == value) {
+                    return IntNode.valueOf(i);
                 }
-            } else if (valueNode.isNull()) {
-                for (int i = 0; i < node.size(); i++) {
-                    if (node.get(i).isNull()) {
-                        return IntNode.valueOf(i);
-                    }
-                }
-            } else {
-                final String value = valueNode.asText();
-                for (int i = 0; i < node.size(); i++) {
-                    final JsonNode tryNode = node.get(i);
-                    if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asText().equals(value)) {
-                        return IntNode.valueOf(i);
-                    }
+            }
+        } else if (valueNode.isNull()) {
+            for (; i != end; i += step) {
+                if (node.get(i).isNull()) {
+                    return IntNode.valueOf(i);
                 }
             }
         } else {
-            if (valueNode.isNumber()) {
-                final double value = valueNode.asDouble();
-                for (int i = node.size() - 1; i >= 0; i--) {
-                    final JsonNode tryNode = node.get(i);
-                    if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asDouble() == value) {
-                        return IntNode.valueOf(i);
-                    }
-                }
-            } else if (valueNode.isNull()) {
-                for (int i = node.size() - 1; i >= 0; i--) {
-                    if (node.get(i).isNull()) {
-                        return IntNode.valueOf(i);
-                    }
-                }
-            } else {
-                final String value = valueNode.asText();
-                for (int i = node.size() - 1; i >= 0; i--) {
-                    final JsonNode tryNode = node.get(i);
-                    if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asText().equals(value)) {
-                        return IntNode.valueOf(i);
-                    }
+            final String value = valueNode.asText();
+            for (; i != end; i += step) {
+                final JsonNode tryNode = node.get(i);
+                if ((tryNode.isNumber() || tryNode.isTextual()) && tryNode.asText().equals(value)) {
+                    return IntNode.valueOf(i);
                 }
             }
         }

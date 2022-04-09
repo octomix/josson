@@ -17,9 +17,14 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
+import java.util.List;
 import java.util.Map;
+
+import static com.octomix.josson.JossonCore.toValueNode;
+import static com.octomix.josson.PatternMatcher.decomposeTernarySteps;
 
 /**
  * Logical operations on a stack of OperationStep for datasets.
@@ -38,5 +43,47 @@ class OperationStackForDatasets extends OperationStack {
         } catch (UnresolvedDatasetException e) {
             throw new UnsupportedOperationException(e);
         }
+    }
+
+    JsonNode evaluateStatement(final String statement) throws UnresolvedDatasetException {
+        try {
+            return toValueNode(statement);
+        } catch (NumberFormatException e) {
+            // continue
+        }
+        clear();
+        try {
+            return evaluate(statement, 0);
+        } catch (UnsupportedOperationException e) {
+            if (e.getCause() instanceof UnresolvedDatasetException) {
+                throw (UnresolvedDatasetException) e.getCause();
+            }
+            throw e;
+        }
+    }
+
+    JsonNode evaluateQuery(final String query) throws UnresolvedDatasetException {
+        String ifTrueValue = null;
+        final List<TernaryStep> steps = decomposeTernarySteps(query);
+        for (TernaryStep step : steps) {
+            JsonNode node = evaluateStatement(step.getStatement());
+            if (step.getIfTrueValue() == null) {
+                return node;
+            }
+            ifTrueValue = step.getIfTrueValue();
+            if (node != null && !node.isNull()) {
+                if (ifTrueValue.isEmpty()) {
+                    if (!(node.isTextual() && node.textValue().isEmpty())) {
+                        return node;
+                    }
+                } else if (node.asBoolean()) {
+                    node = evaluateStatement(ifTrueValue);
+                    if (node != null) {
+                        return node;
+                    }
+                }
+            }
+        }
+        return ifTrueValue == null ? null : TextNode.valueOf("");
     }
 }

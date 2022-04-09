@@ -20,10 +20,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.Josson.readJsonNode;
@@ -75,39 +73,6 @@ class FuncStructural {
             }
         }
         return null;
-    }
-
-    static TextNode funcCsv(final JsonNode node, final String params, final boolean showNull) {
-        final JsonNode container = getParamArrayOrItselfIsContainer(params, node);
-        if (container == null) {
-            return null;
-        }
-        final List<JsonNode> values = new ArrayList<>();
-        funcCsvCollectValues(values, container, showNull);
-        return TextNode.valueOf(values.stream()
-                .map(value -> csvQuote(value.asText()))
-                .collect(Collectors.joining(",")));
-    }
-
-    private static void funcCsvCollectValues(final List<JsonNode> values, final JsonNode node, final boolean showNull) {
-        if (node.isObject()) {
-            node.forEach(elem -> {
-                if (elem.isContainerNode()) {
-                    funcCsvCollectValues(values, elem, showNull);
-                } else {
-                    values.add(showNull || !elem.isNull() ? elem : TextNode.valueOf(""));
-                }
-            });
-            return;
-        }
-        for (int i = 0; i < node.size(); i++) {
-            final JsonNode tryNode = node.get(i);
-            if (tryNode.isContainerNode()) {
-                funcCsvCollectValues(values, tryNode, showNull);
-            } else {
-                values.add(showNull || !tryNode.isNull() ? tryNode : TextNode.valueOf(""));
-            }
-        }
     }
 
     static JsonNode funcEntries(JsonNode node, final String params) {

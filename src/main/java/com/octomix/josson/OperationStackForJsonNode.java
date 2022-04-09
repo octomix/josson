@@ -36,4 +36,8 @@ class OperationStackForJsonNode extends OperationStack {
     protected JsonNode evaluateExpression(final OperationStep step, final int arrayIndex) {
         return arrayNode.getNode(arrayIndex, step.getExpression());
     }
+
+    JsonNode evaluateStatement(final String statement) {
+        return evaluate(statement, 0);
+    }
 }

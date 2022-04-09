@@ -115,10 +115,6 @@ abstract class OperationStack {
                 evaluateExpression(step, arrayIndex)));
     }
 
-    JsonNode evaluate(final String statement) {
-        return evaluate(statement, 0);
-    }
-
     JsonNode evaluate(final String statement, final int arrayIndex) {
         for (OperationStep step : decomposeStatement(statement)) {
             try {
