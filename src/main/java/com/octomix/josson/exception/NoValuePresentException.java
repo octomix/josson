@@ -29,6 +29,8 @@ public class NoValuePresentException extends Exception {
 
     private final String content;
 
+    private boolean isAntiInject = false;
+
     /**
      * Thrown to indicate that Jossons cannot resolve all the placeholders.
      *
@@ -80,5 +82,25 @@ public class NoValuePresentException extends Exception {
      */
     public String getContent() {
         return content;
+    }
+
+    /**
+     * To set whether {@code content} contains anti-injection markers.
+     *
+     * @param isAntiInject Indicate whether {@code content} contains anti-injection markers
+     * @return {@code this}
+     */
+    public NoValuePresentException isAntiInject(final boolean isAntiInject) {
+        this.isAntiInject = isAntiInject;
+        return this;
+    }
+
+    /**
+     * Get whether {@code content} contains anti-injection markers
+     *
+     * @return is {@code content} contains anti-injection markers
+     */
+    public boolean isAntiInject() {
+        return isAntiInject;
     }
 }

@@ -369,7 +369,6 @@ class JossonCore {
         }
         final OperationStack opStack = new OperationStackForJsonNode(node);
         for (int i = 0; i < node.size(); i++) {
-            opStack.clear();
             final JsonNode result = opStack.evaluate(statement, i);
             if (result != null && result.asBoolean()) {
                 if (mode == FILTRATE_FIND_FIRST) {

@@ -28,6 +28,7 @@ class OperationStackForJsonNode extends OperationStack {
     private final Josson arrayNode;
 
     OperationStackForJsonNode(final JsonNode node) {
+        super(false);
         this.arrayNode = node.isArray()
                 ? Josson.create(node)
                 : Josson.create(MAPPER.createArrayNode().add(node));

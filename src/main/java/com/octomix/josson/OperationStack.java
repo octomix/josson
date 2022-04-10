@@ -22,6 +22,7 @@ import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.util.LinkedList;
 
+import static com.octomix.josson.JossonsCore.antiInjectionDecode;
 import static com.octomix.josson.PatternMatcher.decomposeStatement;
 
 /**
@@ -31,12 +32,14 @@ abstract class OperationStack {
 
     private final LinkedList<OperationStep> stack = new LinkedList<>();
 
+    protected final boolean isAntiInject;
+
     private OperationStep lastStep;
 
     abstract protected JsonNode evaluateExpression(final OperationStep step, final int arrayIndex);
 
-    void clear() {
-        stack.clear();
+    protected OperationStack(final boolean isAntiInject) {
+        this.isAntiInject = isAntiInject;
     }
 
     private void pushStep(final OperationStep step) {
@@ -116,7 +119,8 @@ abstract class OperationStack {
     }
 
     JsonNode evaluate(final String statement, final int arrayIndex) {
-        for (OperationStep step : decomposeStatement(statement)) {
+        stack.clear();
+        for (OperationStep step : decomposeStatement(isAntiInject ? antiInjectionDecode(statement) : statement)) {
             try {
                 evaluate(step, arrayIndex);
             } catch (IllegalArgumentException e) {

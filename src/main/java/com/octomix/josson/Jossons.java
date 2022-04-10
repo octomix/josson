@@ -134,7 +134,7 @@ public class Jossons extends JossonsCore {
         if (StringUtils.isBlank(template)) {
             return template;
         }
-        return fillInPlaceholderLoop(template, true);
+        return fillInPlaceholderLoop(template, true, false);
     }
 
     /**
@@ -151,7 +151,7 @@ public class Jossons extends JossonsCore {
         if (StringUtils.isBlank(template)) {
             return template;
         }
-        return fillInPlaceholderLoop(template, false);
+        return fillInPlaceholderLoop(template, false, false);
     }
 
     /**

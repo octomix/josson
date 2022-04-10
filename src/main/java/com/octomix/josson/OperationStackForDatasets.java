@@ -23,7 +23,6 @@ import com.octomix.josson.exception.UnresolvedDatasetException;
 import java.util.List;
 import java.util.Map;
 
-import static com.octomix.josson.JossonCore.toValueNode;
 import static com.octomix.josson.PatternMatcher.decomposeTernarySteps;
 
 /**
@@ -34,6 +33,11 @@ class OperationStackForDatasets extends OperationStack {
     private final Map<String, Josson> datasets;
 
     OperationStackForDatasets(final Map<String, Josson> datasets) {
+        this(datasets, false);
+    }
+
+    OperationStackForDatasets(final Map<String, Josson> datasets, final boolean isAntiInject) {
+        super(isAntiInject);
         this.datasets = datasets;
     }
 
@@ -46,12 +50,6 @@ class OperationStackForDatasets extends OperationStack {
     }
 
     JsonNode evaluateStatement(final String statement) throws UnresolvedDatasetException {
-        try {
-            return toValueNode(statement);
-        } catch (NumberFormatException e) {
-            // continue
-        }
-        clear();
         try {
             return evaluate(statement, 0);
         } catch (UnsupportedOperationException e) {

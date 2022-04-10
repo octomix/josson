@@ -3009,7 +3009,7 @@ To apply a Josson Query on a dataset entry's value.
 ### Nested Placeholders
 
 Placeholders can be nested and are resolved from inside to outside.
-Resolved one is replaced with text and continue for the next round.
+Resolved placeholder is replaced with text and continue for the next round.
 
 Example:
 
@@ -3018,6 +3018,10 @@ Example:
 1. `{{qrCode.singleQuote()}}` is resolved to `'1234567890'`
 2. `{{order->items[qrCode='1234567890'].itemCode.singleQuote()}}` is resolved to `'ABCDE'`
 3. `{{stock->[itemCode='ABCDE'].qty}}` is resolved to `100`
+
+The resolved text value is allowed to contain `{` and `}`.
+Any combination of these symbols in the text will not influence the next round of template placeholder resolution.
+This mechanism can prevent injection attack.
 
 ### Ternary Syntax
 

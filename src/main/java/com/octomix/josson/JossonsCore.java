@@ -21,6 +21,12 @@ class JossonsCore {
 
     private static final char PLACEHOLDER_CLOSE = '}';
 
+    private static final char ANTI_INJECTION_SYMBOL = '\u001B';
+
+    private static final char ANTI_INJECTION_OPEN = '(';
+
+    private static final char ANTI_INJECTION_CLOSE = ')';
+
     private static final String UNRESOLVABLE_PLACEHOLDER_MARK = "**";
 
     protected final Map<String, Josson> datasets = new HashMap<>();
@@ -113,14 +119,16 @@ class JossonsCore {
         final Set<String> unresolvablePlaceholders = new HashSet<>();
         final Set<String> unresolvedDatasetNames = new HashSet<>();
         final List<String> checkInfiniteLoop = new ArrayList<>();
+        boolean isAntiInject = false;
         for (; ; progress.nextRound()) {
             try {
                 if (!unresolvedDatasetNames.isEmpty()) {
                     throw new NoValuePresentException(new HashSet<>(unresolvedDatasetNames), null);
                 }
-                template = fillInPlaceholderLoop(template, isXml);
+                template = fillInPlaceholderLoop(template, isXml, isAntiInject);
                 break;
             } catch (NoValuePresentException e) {
+                isAntiInject = e.isAntiInject();
                 if (e.getPlaceholders() == null) {
                     unresolvedDatasetNames.clear();
                 } else {
@@ -153,7 +161,7 @@ class JossonsCore {
                         return;
                     }
                     try {
-                        findQuery = fillInPlaceholderLoop(findQuery, false);
+                        findQuery = fillInPlaceholderLoop(findQuery, false, e.isAntiInject());
                         if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
                             namedQueries.put(name, findQuery);
                             unresolvedDatasetNames.remove(name);
@@ -197,7 +205,8 @@ class JossonsCore {
         return template;
     }
 
-    protected String fillInPlaceholderLoop(String template, final boolean isXml) throws NoValuePresentException {
+    protected String fillInPlaceholderLoop(final String template, final boolean isXml,
+                                           final boolean inIsAntiInject) throws NoValuePresentException {
         final Set<String> unresolvedDatasets = new HashSet<>();
         final Set<String> unresolvedPlaceholders = new HashSet<>();
         final StringBuilder sb = new StringBuilder();
@@ -205,6 +214,7 @@ class JossonsCore {
         int offset = 0;
         int placeholderAt = -1;
         boolean textAdded = false;
+        boolean outIsAntiInject = false;
         for (int i = 0; i < last; i++) {
             if (template.charAt(i) == PLACEHOLDER_OPEN) {
                 if (template.charAt(i + 1) == PLACEHOLDER_OPEN) {
@@ -233,17 +243,17 @@ class JossonsCore {
                 }
                 try {
                     query = StringUtils.strip(query);
-                    final JsonNode node = new OperationStackForDatasets(datasets).evaluateQuery(query);
+                    final JsonNode node = new OperationStackForDatasets(datasets, inIsAntiInject).evaluateQuery(query);
                     if (node == null) {
                         unresolvedPlaceholders.add(query);
                         datasets.put(query, null);
                         sb.append(UNRESOLVABLE_PLACEHOLDER_MARK).append(query).append(UNRESOLVABLE_PLACEHOLDER_MARK);
                     } else if (node.isValueNode()) {
-                        sb.append(node.asText());
+                        outIsAntiInject = antiInjectionEncode(sb, node.asText()) || outIsAntiInject;
                         // Remember even if it is an empty string
                         textAdded = true;
                     } else {
-                        sb.append(node);
+                        outIsAntiInject = antiInjectionEncode(sb, node.toString()) || outIsAntiInject;
                     }
                 } catch (UnresolvedDatasetException e) {
                     unresolvedDatasets.add(e.getDatasetName());
@@ -255,7 +265,7 @@ class JossonsCore {
             }
         }
         if (sb.length() == 0 && !textAdded) {
-            return template;
+            return inIsAntiInject ? antiInjectionDecode(template) : template;
         }
         if (placeholderAt >= 0) {
             unresolvedPlaceholders.add("Lack of closing tag: "
@@ -264,10 +274,54 @@ class JossonsCore {
         } else {
             sb.append(template, offset, template.length());
         }
-        template = sb.toString();
+        String filled = sb.toString();
         if (!unresolvedDatasets.isEmpty() || !unresolvedPlaceholders.isEmpty()) {
-            throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, template);
+            throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, filled).isAntiInject(outIsAntiInject);
         }
-        return fillInPlaceholderLoop(template, isXml);
+        return fillInPlaceholderLoop(filled, isXml, outIsAntiInject);
+    }
+
+    private static boolean antiInjectionEncode(final StringBuilder sb, final String s) {
+        final int len = s.length();
+        int offset = 0;
+        for (int i = 0; i < len; i++) {
+            switch (s.charAt(i)) {
+                case PLACEHOLDER_OPEN:
+                    sb.append(s, offset, i).append(ANTI_INJECTION_SYMBOL).append(ANTI_INJECTION_OPEN);
+                    offset = i + 1;
+                    break;
+                case PLACEHOLDER_CLOSE:
+                    sb.append(s, offset, i).append(ANTI_INJECTION_SYMBOL).append(ANTI_INJECTION_CLOSE);
+                    offset = i + 1;
+                    break;
+            }
+        }
+        if (offset == 0) {
+            sb.append(s);
+            return false;
+        }
+        sb.append(s, offset, len);
+        return true;
+    }
+
+    static String antiInjectionDecode(final String s) {
+        final StringBuilder sb = new StringBuilder();
+        final int len = s.length();
+        int offset = 0;
+        for (int i = 0, last = len - 1; i < last; i++) {
+            if (s.charAt(i) == ANTI_INJECTION_SYMBOL) {
+                switch (s.charAt(i + 1)) {
+                    case ANTI_INJECTION_OPEN:
+                        sb.append(s, offset, i).append(PLACEHOLDER_OPEN);
+                        offset = ++i + 1;
+                        break;
+                    case ANTI_INJECTION_CLOSE:
+                        sb.append(s, offset, i).append(PLACEHOLDER_CLOSE);
+                        offset = ++i + 1;
+                        break;
+                }
+            }
+        }
+        return offset == 0 ? s : sb.append(s, offset, len).toString();
     }
 }
