@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.4</version>
+        <version>1.3.5</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.4'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.5'
 
 ## Features and Capabilities
 
@@ -3013,6 +3013,10 @@ Resolved placeholder is replaced with text and continue for the next round.
 
 Example:
 
+    |<-------------------------------------------------- 3 ----------------------------------------->|
+    |                  |<------------------------------- 2 ---------------------------------->|      |
+    |                  |                     |<--------- 1 -------->|                         |      |
+    |                  |                     |                      |                         |      |
     {{stock->[itemCode={{order->items[qrCode={{qrCode.singleQuote()}}].itemCode.singleQuote()}}].qty}}
 
 1. `{{qrCode.singleQuote()}}` is resolved to `'1234567890'`
