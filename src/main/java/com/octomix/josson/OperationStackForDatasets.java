@@ -20,9 +20,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
-import java.util.List;
 import java.util.Map;
 
+import static com.octomix.josson.JossonCore.asBoolean;
 import static com.octomix.josson.PatternMatcher.decomposeTernarySteps;
 
 /**
@@ -61,27 +61,29 @@ class OperationStackForDatasets extends OperationStack {
     }
 
     JsonNode evaluateQuery(final String query) throws UnresolvedDatasetException {
-        String ifTrueValue = null;
-        final List<TernaryStep> steps = decomposeTernarySteps(query);
-        for (TernaryStep step : steps) {
-            JsonNode node = evaluateStatement(step.getStatement());
+        for (TernaryStep step : decomposeTernarySteps(query)) {
+            final JsonNode node;
+            try {
+                node = evaluateStatement(step.getStatement());
+            } catch (UnresolvedDatasetException e) {
+                if (step.getIfTrueValue() == null) {
+                    throw e;
+                }
+                continue;
+            }
             if (step.getIfTrueValue() == null) {
                 return node;
             }
-            ifTrueValue = step.getIfTrueValue();
             if (node != null && !node.isNull()) {
-                if (ifTrueValue.isEmpty()) {
+                if (step.getIfTrueValue().isEmpty()) {
                     if (!(node.isTextual() && node.textValue().isEmpty())) {
                         return node;
                     }
-                } else if (node.asBoolean()) {
-                    node = evaluateStatement(ifTrueValue);
-                    if (node != null) {
-                        return node;
-                    }
+                } else if (asBoolean(node)) {
+                    return evaluateStatement(step.getIfTrueValue());
                 }
             }
         }
-        return ifTrueValue == null ? null : TextNode.valueOf("");
+        return TextNode.valueOf("");
     }
 }

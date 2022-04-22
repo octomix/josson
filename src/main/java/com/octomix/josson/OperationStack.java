@@ -22,6 +22,7 @@ import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.util.LinkedList;
 
+import static com.octomix.josson.JossonCore.asBoolean;
 import static com.octomix.josson.JossonsCore.antiInjectionDecode;
 import static com.octomix.josson.PatternMatcher.decomposeStatement;
 
@@ -82,10 +83,10 @@ abstract class OperationStack {
             if (result && !"".equals(step.getExpression())) {
                 node = resolveFrom(step, arrayIndex);
                 if (step.getOperator() == Operator.NOT) {
-                    result = node == null || node.isNull() || node.isValueNode() && !node.asBoolean();
+                    result = !asBoolean(node);
                     node = BooleanNode.valueOf(result);
                 } else {
-                    result = node != null && node.asBoolean();
+                    result = asBoolean(node);
                 }
             }
         }
@@ -107,8 +108,7 @@ abstract class OperationStack {
     }
 
     private boolean isResolvedTo(final boolean expected, final int arrayIndex) {
-        final JsonNode node = resolveFrom(lastStep, arrayIndex);
-        return node != null && (node.asBoolean() == expected);
+        return asBoolean(resolveFrom(lastStep, arrayIndex)) == expected;
     }
 
     private JsonNode relationalCompare(final OperationStep prevStep, final OperationStep step, final int arrayIndex) {

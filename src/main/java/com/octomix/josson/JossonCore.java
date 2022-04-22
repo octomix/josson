@@ -171,6 +171,10 @@ class JossonCore {
         return DoubleNode.valueOf(Double.parseDouble(literal));
     }
 
+    static boolean asBoolean(final JsonNode node) {
+        return node != null && (node.isContainerNode() ? node.size() > 0 : node.asBoolean());
+    }
+
     static LocalDateTime toLocalDateTime(final JsonNode node) {
         try {
             return LocalDateTime.parse(node.asText());
@@ -343,15 +347,10 @@ class JossonCore {
         if (StringUtils.isEmpty(statement)) {
             return node;
         }
-        if (node.isArray()) {
-            if (node.size() == 0) {
-                return null;
-            }
-        } else {
-            final JsonNode result = new OperationStackForJsonNode(node).evaluateStatement(statement);
-            if (result != null && result.asBoolean()) {
-                return node;
-            }
+        if (!node.isArray()) {
+            return asBoolean(new OperationStackForJsonNode(node).evaluateStatement(statement)) ? node : null;
+        }
+        if (node.size() == 0) {
             return null;
         }
         ArrayNode matchedNodes = null;
@@ -369,8 +368,7 @@ class JossonCore {
         }
         final OperationStack opStack = new OperationStackForJsonNode(node);
         for (int i = 0; i < node.size(); i++) {
-            final JsonNode result = opStack.evaluate(statement, i);
-            if (result != null && result.asBoolean()) {
+            if (asBoolean(opStack.evaluate(statement, i))) {
                 if (mode == FILTRATE_FIND_FIRST) {
                     return node.get(i);
                 }
