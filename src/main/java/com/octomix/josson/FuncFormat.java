@@ -17,7 +17,6 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
@@ -32,8 +31,6 @@ import java.util.stream.Collectors;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
-import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 
 /**
  * Format functions.
@@ -52,62 +49,21 @@ class FuncFormat {
     }
 
     static JsonNode funcCaseValue(final JsonNode node, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 1, -1);
-        if (node.isObject()) {
-            return null;
-        }
-        final int last = paramList.size() - 1;
-        final List<Pair<JsonNode, JsonNode>> casePairs = new ArrayList<>();
-        JsonNode defaultValue = null;
-        for (int i = 0; i <= last; i++) {
-            final JsonNode caseKey = getNodeByPath(node, paramList.get(i++));
-            if (caseKey != null) {
-                if (i > last) {
-                    defaultValue = caseKey;
-                } else {
-                    casePairs.add(Pair.of(caseKey, getNodeByPath(node, paramList.get(i))));
-                }
-            }
-        }
-        if (node.isArray()) {
-            final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                array.add(funcCaseValue(node.get(i), casePairs, defaultValue));
-            }
-            return array;
-        }
-        return funcCaseValue(node, casePairs, defaultValue);
-    }
-
-    private static JsonNode funcCaseValue(final JsonNode node, final List<Pair<JsonNode, JsonNode>> casePairs,
-                                          final JsonNode defaultValue) {
-        if (node.isNumber()) {
-            final double key = node.asDouble();
-            return casePairs.stream()
-                    .filter(pair -> {
-                        final JsonNode caseKey = pair.getKey();
-                        return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asDouble() == key;
-                    })
-                    .findFirst()
-                    .map(Pair::getValue)
-                    .orElse(defaultValue);
-        }
-        if (node.isNull()) {
-            return casePairs.stream()
-                    .filter(pair -> pair.getKey().isNull())
-                    .findFirst()
-                    .map(Pair::getValue)
-                    .orElse(defaultValue);
-        }
-        final String key = node.asText();
-        return casePairs.stream()
-                .filter(pair -> {
-                    final JsonNode caseKey = pair.getKey();
-                    return (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asText().equals(key);
-                })
-                .findFirst()
-                .map(Pair::getValue)
-                .orElse(defaultValue);
+        return applyWithParams(node, params, 2, -3, JsonNode::isValueNode,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final int last = paramList.size() - 1;
+                    int i = 0;
+                    for (; i < last; i += 2) {
+                        final JsonNode caseKey = getNodeByPath(node, data.getValue(), paramList.get(i));
+                        if (dataNode.isNumber() && (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asDouble() == dataNode.asDouble()
+                                || dataNode.isNull() && caseKey.isNull()
+                                || caseKey.asText().equals(dataNode.asText())) {
+                            return getNodeByPath(node, data.getValue(), paramList.get(i + 1));
+                        }
+                    }
+                    return i == last ? getNodeByPath(node, data.getValue(), paramList.get(i)) : null;
+                });
     }
 
     static TextNode funcCsv(final JsonNode node, final String params, final boolean showNull) {
@@ -145,67 +101,81 @@ class FuncFormat {
 
     static JsonNode funcCycleValue(final JsonNode node, final String params) {
         return applyWithArrayNode(node, params, JossonCore::nodeHasValue,
-                (jsonNode, objVar) -> {
-                    final ArrayNode paramArray = (ArrayNode) objVar;
+                (jsonNode, paramArray) -> {
                     final int size = paramArray.size();
                     final int index = jsonNode.asInt() % size;
                     return paramArray.get(index < 0 ? index + size : index);
-                }
-        );
+                });
     }
 
     static JsonNode funcFormatDate(final JsonNode node, final String params) {
-        return applyWithParamAsText(node, params, JsonNode::isTextual,
-                (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode)
-                    .format(DateTimeFormatter.ofPattern((String) objVar).withLocale(getLocale()).withZone(getZoneId())))
-        );
+        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final String pattern = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
+                    return TextNode.valueOf(toLocalDateTime(dataNode)
+                            .format(DateTimeFormatter.ofPattern(pattern).withLocale(getLocale()).withZone(getZoneId())));
+                });
     }
 
     static JsonNode funcFormatNumber(final JsonNode node, final String params) {
-        return applyWithParamAsText(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (jsonNode, objVar) -> TextNode.valueOf(new DecimalFormat((String) objVar).format(jsonNode.asDouble())));
+        return applyWithParams(node, params, 1, 1, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final String pattern = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
+                    return TextNode.valueOf(new DecimalFormat(pattern).format(dataNode.asDouble()));
+                });
     }
 
     static JsonNode funcFormatText(final JsonNode node, final String params) {
-        return applyWithParamAsText(node, params, JossonCore::nodeHasValue,
-                (jsonNode, objVar) -> TextNode.valueOf(String.format((String) objVar, valueAsObject(jsonNode))));
+        return applyWithParams(node, params, 1, 1, JossonCore::nodeHasValue,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final String format = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
+                    return TextNode.valueOf(String.format(format, valueAsObject(dataNode)));
+                });
     }
 
     static JsonNode funcFormatTexts(final JsonNode node, final String params) {
-        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 2, -2);
-        final String pattern = getNodeAsText(node, pathAndParams.getKey());
-        if (node.isArray()) {
-            final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                final Object[] valueObjects = valuesAsObjects(node, i, pathAndParams.getValue());
-                if (valueObjects != null) {
-                    array.add(TextNode.valueOf(String.format(pattern, valueObjects)));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        final Object[] valueObjects = valuesAsObjects(node, -1, pathAndParams.getValue());
-        if (valueObjects == null) {
-            return null;
-        }
-        return TextNode.valueOf(String.format(pattern, valueObjects));
+        return applyWithParams(node, params, 2, -2, JsonNode::isTextual,
+                (data, paramList) -> {
+                    final Object[] valueObjects = valuesAsObjects(node, data.getValue(), paramList);
+                    if (valueObjects == null) {
+                        return null;
+                    }
+                    return TextNode.valueOf(String.format(data.getKey().asText(), valueObjects));
+                });
+    }
+
+    static JsonNode funcIf(final JsonNode node, final String params) {
+        return applyWithParams(node, params, 2, 3, null,
+                (data, paramList) -> {
+                    final JsonNode paramNode = data.getValue() < 0 ? data.getKey() : node;
+                    final String query =
+                            asBoolean(getNodeByPath(paramNode, data.getValue(), paramList.get(0))) ? paramList.get(1)
+                            : paramList.size() > 2 ? paramList.get(2)
+                            : null;
+                    return query == null ? null : getNodeByPath(paramNode, data.getValue(), query);
+                });
     }
 
     static JsonNode funcIndexedValue(final JsonNode node, final String params) {
         return applyWithArrayNode(node, params, JossonCore::nodeHasValue,
-                (jsonNode, objVar) -> {
-                    final ArrayNode paramArray = (ArrayNode) objVar;
+                (jsonNode, paramArray) -> {
                     final int index = jsonNode.asInt();
                     return index >= 0 && index < paramArray.size() ? paramArray.get(index) : null;
-                }
-        );
+                });
     }
 
     static JsonNode funcToNumber(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, JossonCore::nodeHasValue,
-                jsonNode -> jsonNode.isNumber() ? jsonNode : DoubleNode.valueOf(jsonNode.asDouble()));
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    return dataNode.isNumber() ? dataNode : DoubleNode.valueOf(dataNode.asDouble());
+                });
     }
 
     static JsonNode funcToString(final JsonNode node, final String params) {
@@ -216,7 +186,10 @@ class FuncFormat {
 
     static JsonNode funcToText(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, JsonNode::isValueNode,
-                jsonNode -> jsonNode.isTextual() ? jsonNode : TextNode.valueOf(jsonNode.asText()));
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    return dataNode.isTextual() ? dataNode : TextNode.valueOf(dataNode.asText());
+                });
     }
 
     static JsonNode funcUrlDecode(final JsonNode node, final String params) {
@@ -227,8 +200,7 @@ class FuncFormat {
                     } catch (UnsupportedEncodingException e) {
                         throw new IllegalArgumentException(e.getMessage());
                     }
-                }
-        );
+                });
     }
 
     static JsonNode funcUrlEncode(final JsonNode node, final String params) {
@@ -239,7 +211,6 @@ class FuncFormat {
                     } catch (UnsupportedEncodingException e) {
                         throw new IllegalArgumentException(e.getMessage());
                     }
-                }
-        );
+                });
     }
 }

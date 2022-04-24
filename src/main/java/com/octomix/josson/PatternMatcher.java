@@ -440,7 +440,7 @@ class PatternMatcher {
         return steps;
     }
 
-    static List<String> decomposeFunctionParameters(final String input, final int minCount, final int maxCount) {
+    static List<String> decomposeFunctionParameters(final String input, final int min, final int max) {
         final List<String> params = new ArrayList<>();
         final int last = input.length() - 1;
         for (int pos = 0; pos <= last; pos++) {
@@ -453,20 +453,20 @@ class PatternMatcher {
             } while (++pos <= last);
             final String param = trimOf(input, beg, pos);
             if (param.isEmpty()) {
-                if (maxCount < 0) {
+                if (max < 0) {
                     throw new SyntaxErrorException(input, "Argument cannot be empty", beg);
                 }
-                if (params.size() < minCount) {
+                if (params.size() < min) {
                     break;
                 }
-            } else if (params.size() == maxCount) {
-                throw new SyntaxErrorException(input, String.format("Exceeded maximum of %d arguments", maxCount));
+            } else if (params.size() == max) {
+                throw new SyntaxErrorException(input, String.format("Exceeded maximum of %d arguments", max));
             }
             params.add(param);
         }
-        if (minCount > 0 && params.size() < minCount) {
+        if (min > 0 && params.size() < min) {
             throw new SyntaxErrorException(input,
-                    String.format("Expected %s%d arguments", minCount == maxCount ? "" : " at least ", minCount));
+                    String.format("Expected %s%d arguments", min == max ? "" : " at least ", min));
         }
         for (int i = params.size() - 1; i >= 0; i--) {
             if (params.get(i).isEmpty()) {

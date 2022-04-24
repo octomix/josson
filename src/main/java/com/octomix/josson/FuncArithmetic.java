@@ -40,7 +40,7 @@ class FuncArithmetic {
 
     static JsonNode funcAbs(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                jsonNode -> DoubleNode.valueOf(Math.abs(jsonNode.asDouble())));
+                (data, paramList) -> DoubleNode.valueOf(Math.abs(data.getKey().asDouble())));
     }
 
     static JsonNode funcCalc(final JsonNode node, final String params) {
@@ -59,15 +59,11 @@ class FuncArithmetic {
             }
             return array;
         }
-        final Double value = funcCalc(node, expression, args, -1);
-        if (value == null) {
-            return null;
-        }
-        return DoubleNode.valueOf(value);
+        return funcCalc(node, expression, args, -1);
     }
 
-    private static Double funcCalc(final JsonNode node, final Expression expression,
-                                   final Map<String, String> args, final int index) {
+    private static DoubleNode funcCalc(final JsonNode node, final Expression expression,
+                                       final Map<String, String> args, final int index) {
         expression.removeAllArguments();
         for (Map.Entry<String, String> arg : args.entrySet()) {
             final String path = arg.getValue();
@@ -90,7 +86,7 @@ class FuncArithmetic {
             }
         }
         if (expression.checkSyntax()) {
-            return expression.calculate();
+            return DoubleNode.valueOf(expression.calculate());
         }
         final StringBuilder sb = new StringBuilder("Calc syntax error.");
         if (expression.getMissingUserDefinedArguments().length > 0) {
@@ -107,38 +103,34 @@ class FuncArithmetic {
 
     static JsonNode funcCeil(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                jsonNode -> IntNode.valueOf((int) Math.ceil(jsonNode.asDouble())));
+                (data, paramList) -> IntNode.valueOf((int) Math.ceil(data.getKey().asDouble())));
     }
 
     static JsonNode funcFloor(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                jsonNode -> IntNode.valueOf((int) Math.floor(jsonNode.asDouble())));
+                (data, paramList) -> IntNode.valueOf((int) Math.floor(data.getKey().asDouble())));
     }
 
     static JsonNode funcMod(final JsonNode node, final String params) {
-        return applyWithParamAsInt(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (jsonNode, objVar) -> {
-                    final int divisor = (int) objVar;
-                    final int result = jsonNode.asInt() % divisor;
+        return applyWithParams(node, params, 1, 1, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final int divisor = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
+                    final int result = dataNode.asInt() % divisor;
                     return IntNode.valueOf(result < 0 ? result + divisor : result);
-                }
-        );
+                });
     }
 
     static JsonNode funcRound(final JsonNode node, final String params) {
-        return applyWithParams(node, params, 1, 1,
-                paramList -> {
-                    final int precision = getNodeAsInt(node, paramList.get(0));
+        return applyWithParams(node, params, 1, 1, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final int precision = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
                     final double magnitude = Math.pow(10, precision);
-                    return Pair.of(precision, magnitude);
-                },
-                jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (jsonNode, objVar) -> {
-                    final int precision = (int) ((Pair<?, ?>) objVar).getKey();
-                    final double magnitude = (double) ((Pair<?, ?>) objVar).getValue();
-                    final double result = Math.round(jsonNode.asDouble() * magnitude) / magnitude;
+                    final double result = Math.round(dataNode.asDouble() * magnitude) / magnitude;
                     return precision > 0 ? DoubleNode.valueOf(result) : IntNode.valueOf((int) result);
-                }
-        );
+                });
     }
 }

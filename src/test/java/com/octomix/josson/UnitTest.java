@@ -919,8 +919,8 @@ public class UnitTest {
         // singleQuote()
         evaluate.accept("'Peggy''s cat'.singleQuote()", "'Peggy''s cat'");
         evaluate.accept("123.singleQuote()", "'123'");
-        evaluate.accept("singleQuote('Raymond''s dog')", "'Raymond''s dog'");
-        evaluate.accept("singleQuote(True)", "'true'");
+        evaluate.accept("quote('Raymond''s dog')", "'Raymond''s dog'");
+        evaluate.accept("quote(True)", "'true'");
         // doubleQuote()
         evaluate.accept("'Peggy\"s cat'.doubleQuote()", "\"Peggy\\\"s cat\"");
         evaluate.accept("12.3.doubleQuote()", "\"12.3\"");
@@ -1146,6 +1146,13 @@ public class UnitTest {
         // urlDecode()
         evaluate.accept("'www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4'.urlDecode()", "www.domain.com?a=1+2&b=3+4");
         evaluate.accept("urlDecode('www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4')", "www.domain.com?a=1+2&b=3+4");
+        // if()
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if(a.isEven(), 'T', 'F')", "F");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1], 'T', 'F')", "T");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1 & b=3], 'T', 'F')", "F");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1 & b=3], 'T')", "!unresolvable!");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=b], 'T', if([c=3], 'C', 'F'))", "C");
+        evaluate.accept("json('[1,2,3,4,5]').if(?.isOdd(), calc(?*2), ?)", "[ 2.0, 2, 6.0, 4, 10.0 ]");
         // caseValue()
         evaluate.accept("'a'.caseValue('c',1,'b',2,'a',3,4)", "3");
         evaluate.accept("'z'.caseValue('c',1,'b',2,'a',3,4)", "4");

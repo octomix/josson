@@ -204,13 +204,13 @@ class JossonCore {
         return dateTime.atOffset(zoneId.getRules().getOffset(dateTime));
     }
 
-    static String getNodeAsText(JsonNode node, final String jossonPath) {
-        node = getNodeByPath(node, jossonPath);
+    static String getNodeAsText(JsonNode node, final int index, final String jossonPath) {
+        node = getNodeByPath(node, index, jossonPath);
         return node == null ? "" : node.asText();
     }
 
-    static int getNodeAsInt(JsonNode node, final String jossonPath) {
-        node = getNodeByPath(node, jossonPath);
+    static int getNodeAsInt(JsonNode node, final int index, final String jossonPath) {
+        node = getNodeByPath(node, index, jossonPath);
         if (node != null && node.isValueNode()) {
             if (node.isTextual()) {
                 try {
@@ -234,7 +234,7 @@ class JossonCore {
         }
         final List<String> keys = decomposePaths(jossonPath);
         if (keys.isEmpty()) {
-            return index >= 0 ? node.get(index) : node;
+            return index >= 0 && node.isArray() ? node.get(index) : node;
         }
         final String key = keys.get(0);
         if (key.charAt(0) == INDEX_PREFIX_SYMBOL) {
@@ -261,7 +261,7 @@ class JossonCore {
             if (isCurrentNodePath(key)) {
                 keys.remove(0);
             }
-            if (index >= 0) {
+            if (index >= 0 && node.isArray()) {
                 node = node.get(index);
             }
         }

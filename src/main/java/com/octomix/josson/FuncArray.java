@@ -196,7 +196,7 @@ class FuncArray {
             }
         }
         final String delimiter = pathAndParams.getValue().size() > 0
-                ? getNodeAsText(node, pathAndParams.getValue().get(0)) : "";
+                ? getNodeAsText(node, -1, pathAndParams.getValue().get(0)) : "";
         final List<String> texts = new ArrayList<>();
         for (int i = 0; i < node.size(); i++) {
             final JsonNode valueNode = node.get(i);
@@ -268,8 +268,7 @@ class FuncArray {
                         array.add(jsonNode.get(i));
                     }
                     return array;
-                }
-        );
+                });
     }
 
     static JsonNode funcSize(final JsonNode node, final String params) {
@@ -289,10 +288,10 @@ class FuncArray {
         }
         final int size = node.size();
         int start = pathAndParams.getValue().size() > 0 && !pathAndParams.getValue().get(0).isEmpty()
-                ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 0;
+                ? getNodeAsInt(node, -1, pathAndParams.getValue().get(0)) : 0;
         int end = pathAndParams.getValue().size() > 1 && !pathAndParams.getValue().get(1).isEmpty()
-                ? getNodeAsInt(node, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
-        int step = pathAndParams.getValue().size() > 2 ? getNodeAsInt(node, pathAndParams.getValue().get(2)) : 1;
+                ? getNodeAsInt(node, -1, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
+        int step = pathAndParams.getValue().size() > 2 ? getNodeAsInt(node, -1, pathAndParams.getValue().get(2)) : 1;
         start = start >= 0 ? start : size + start;
         start = start < 0 ? 0 : Math.min(start, size);
         end = end >= 0 ? end : size + end;

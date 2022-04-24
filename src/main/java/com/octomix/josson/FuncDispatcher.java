@@ -70,6 +70,7 @@ class FuncDispatcher {
                 case 'n': return applyN(node, func);
                 case 'o': return applyO(node, func);
                 case 'p': return applyP(node, func);
+                case 'q': return applyQ(node, func);
                 case 'r': return applyR(node, func);
                 case 's': return applyS(node, func);
                 case 't': return applyT(node, func);
@@ -265,6 +266,8 @@ class FuncDispatcher {
             case "indexof":
                 return funcIndexOf(node, params, 1);
             // Format
+            case "if":
+                return funcIf(node, params);
             case "indexedvalue":
                 return funcIndexedValue(node, params);
             // Logical
@@ -474,6 +477,14 @@ class FuncDispatcher {
                 return funcPrependIfMissing(node, params, false);
             case "prependifmissingignorecase":
                 return funcPrependIfMissing(node, params, true);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyQ(final JsonNode node, final String func) {
+        // String
+        if (func.equals("quote")) {
+            return funcSingleQuote(node, params);
         }
         throw new UnsupportedFunctionException();
     }

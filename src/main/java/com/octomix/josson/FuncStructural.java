@@ -38,41 +38,20 @@ class FuncStructural {
     }
 
     static JsonNode funcCoalesce(final JsonNode node, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 1, -1);
-        if (node.isArray()) {
-            final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                array.add(funcCoalesce(node.get(i), paramList));
-            }
-            return array;
-        }
-        return funcCoalesce(node, paramList);
-    }
-
-    private static JsonNode funcCoalesce(JsonNode node, final List<String> paramList) {
-        if (node.isValueNode()) {
-            if (!node.isNull()) {
-                return node;
-            }
-            for (String path : paramList) {
-                try {
-                    node = toValueNode(path);
-                    if (node != null && !node.isNull()) {
-                        return node;
+        return applyWithParams(node, params, 1, -3, null,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    if (dataNode.isValueNode() && !dataNode.isNull()) {
+                        return dataNode;
                     }
-                } catch (NumberFormatException e) {
-                    // continue
-                }
-            }
-        } else if (node.isObject()) {
-            for (String path : paramList) {
-                final JsonNode tryNode = getNodeByPath(node, path);
-                if (tryNode != null && !tryNode.isNull()) {
-                    return tryNode;
-                }
-            }
-        }
-        return null;
+                    for (String path : paramList) {
+                        final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
+                        if (tryNode != null && !tryNode.isNull()) {
+                            return tryNode;
+                        }
+                    }
+                    return null;
+                });
     }
 
     static JsonNode funcEntries(JsonNode node, final String params) {
@@ -116,7 +95,7 @@ class FuncStructural {
                 return null;
             }
         }
-        final int levels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1;
+        final int levels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, -1, pathAndParams.getValue().get(0)) : 1;
         if (!node.isArray() || levels < 1) {
             return node;
         }
@@ -141,14 +120,13 @@ class FuncStructural {
 
     static JsonNode funcJson(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, JsonNode::isTextual,
-                jsonNode -> {
+                (data, paramList) -> {
                     try {
-                        return readJsonNode(jsonNode.asText());
+                        return readJsonNode(data.getKey().asText());
                     } catch (JsonProcessingException e) {
                         throw new IllegalArgumentException(e.getMessage());
                     }
-                }
-        );
+                });
     }
 
     static JsonNode funcKeys(JsonNode node, final String params) {
@@ -164,7 +142,7 @@ class FuncStructural {
         }
         final ArrayNode array = MAPPER.createArrayNode();
         funcKeys(array, node,
-                pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, pathAndParams.getValue().get(0)) : 1);
+                pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, -1, pathAndParams.getValue().get(0)) : 1);
         return array;
     }
 

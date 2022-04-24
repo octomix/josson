@@ -43,13 +43,23 @@ class FuncDate {
     }
 
     static JsonNode funcDatePlus(final JsonNode node, final String params, final ChronoUnit unit) {
-        return applyWithParamAsInt(node, params, JsonNode::isTextual,
-                (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).plus((int) objVar, unit).toString()));
+        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final int amount = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
+                    return TextNode.valueOf(toLocalDateTime(dataNode).plus(amount, unit).toString());
+                });
     }
 
     static JsonNode funcDateMinus(final JsonNode node, final String params, final ChronoUnit unit) {
-        return applyWithParamAsInt(node, params, JsonNode::isTextual,
-                (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).minus((int) objVar, unit).toString()));
+        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final int amount = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
+                    return TextNode.valueOf(toLocalDateTime(dataNode).minus(amount, unit).toString());
+                });
     }
 
     static JsonNode funcDateTruncateTo(final JsonNode node, final String params, final ChronoUnit unit) {
@@ -65,8 +75,13 @@ class FuncDate {
     }
 
     static JsonNode funcDateWith(final JsonNode node, final String params, final ChronoField field) {
-        return applyWithParamAsInt(node, params, JsonNode::isTextual,
-                (jsonNode, objVar) -> TextNode.valueOf(toLocalDateTime(jsonNode).with(field, (int) objVar).toString()));
+        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final int value = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
+                    return TextNode.valueOf(toLocalDateTime(dataNode).with(field, value).toString());
+                });
     }
 
     static JsonNode funcDayEnd(final JsonNode node, final String params) {
