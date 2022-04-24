@@ -97,11 +97,7 @@ class FuncExecutor {
         return getParamArray(paramList, node);
     }
 
-    static ArrayNode getParamArray(final String params, final JsonNode node) {
-        return getParamArray(decomposeFunctionParameters(params, 1, -1), node);
-    }
-
-    static ArrayNode getParamArray(final List<String> paramList, final JsonNode node) {
+    private static ArrayNode getParamArray(final List<String> paramList, final JsonNode node) {
         final ArrayNode array = MAPPER.createArrayNode();
         for (String param : paramList) {
             if (node.isArray()) {
@@ -150,7 +146,7 @@ class FuncExecutor {
 
     static JsonNode applyWithArrayNode(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
                                        final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
-        final ArrayNode paramArray = getParamArray(params, node);
+        final ArrayNode paramArray = getParamArray(decomposeFunctionParameters(params, 1, -1), node);
         if (paramArray.isEmpty()) {
             return null;
         }

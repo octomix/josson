@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.5</version>
+        <version>1.3.6</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.5'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.6'
 
 ## Features and Capabilities
 
@@ -2171,6 +2171,8 @@ Following are some examples of each function.
     json('{"a":1,"b":2,"c":3}').if([a=1 & b=3], 'T') ==> !unresolvable!
 
     json('{"a":1,"b":2,"c":3}').if([a=b], 'T', if([c=3], 'C', 'F')) ==> "C"
+
+    json('[1,2,3,4,5]').if(?.isOdd(), calc(?*2), ?) ==> [ 2.0, 2, 6.0, 4, 10.0 ]
 
 #### 111. caseValue()
 
