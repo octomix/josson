@@ -24,6 +24,7 @@ import java.time.chrono.IsoChronology;
 import java.time.temporal.ChronoField;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
@@ -203,6 +204,11 @@ class FuncLogical {
     static JsonNode funcIsText(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, null,
                 (data, paramList) -> BooleanNode.valueOf(data.getKey().isTextual()));
+    }
+
+    static JsonNode funcMatches(final JsonNode node, final String params, final boolean not) {
+        return applyTextNodeWithParamAsText(node, params, not,
+                (str, param) -> Pattern.compile(param).matcher(str).matches());
     }
 
     static JsonNode funcNot(final JsonNode node, final String params) {

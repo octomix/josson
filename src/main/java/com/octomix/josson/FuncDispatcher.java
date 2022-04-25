@@ -404,6 +404,9 @@ class FuncDispatcher {
                 return funcDateMinus(node, params, ChronoUnit.YEARS);
             case "monthend":
                 return funcMonthEnd(node, params);
+            // Logical
+            case "matches":
+                return funcMatches(node, params, false);
             // Structural
             case "map":
                 return funcMap(node, params);
@@ -432,6 +435,8 @@ class FuncDispatcher {
                 return funcIn(node, params, true, true);
             case "not":
                 return funcNot(node, params);
+            case "notmatches":
+                return funcMatches(node, params, true);
             case "notstartswith":
                 return funcStartsWith(node, params, false, true);
             case "notstartswithignorecase":

@@ -144,30 +144,6 @@ class FuncExecutor {
         return applyAction(node, pathAndParams.getKey(), isValid, action, pathAndParams.getValue());
     }
 
-    static JsonNode applyWithArrayNode(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
-                                       final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
-        final ArrayNode paramArray = getParamArray(decomposeFunctionParameters(params, 1, -1), node);
-        if (paramArray.isEmpty()) {
-            return null;
-        }
-        if (node.isArray()) {
-            final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                final JsonNode jsonNode = node.get(i);
-                if (isValid == null || isValid.test(jsonNode)) {
-                    array.add(action.apply(jsonNode, paramArray));
-                } else {
-                    array.addNull();
-                }
-            }
-            return array;
-        }
-        if (isValid == null || isValid.test(node)) {
-            return action.apply(node, paramArray);
-        }
-        return null;
-    }
-
     static JsonNode applyTextNode(final JsonNode node, final String params,
                                   final Function<JsonNode, String> transform) {
         return applyWithoutParam(node, params, JsonNode::isTextual,
@@ -208,18 +184,38 @@ class FuncExecutor {
         if (target.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < target.size(); i++) {
-                final JsonNode jsonNode = target.get(i);
-                if (isValid == null || isValid.test(jsonNode)) {
-                    array.add(action.apply(Pair.of(jsonNode, path == null ? -1 : i), paramList));
-                } else {
-                    array.addNull();
-                }
+                array.add(applyAction(target.get(i), path == null ? -1 : i, isValid, action, paramList));
             }
             return array;
         }
-        if (isValid == null || isValid.test(target)) {
-            return action.apply(Pair.of(target, path == null ? -1 : 0), paramList);
+        return applyAction(target, path == null ? -1 : 0, isValid, action, paramList);
+    }
+
+    private static JsonNode applyAction(final JsonNode node, final int index, final Predicate<JsonNode> isValid,
+                                        final BiFunction<Pair<JsonNode, Integer>, List<String>, JsonNode> action,
+                                        final List<String> paramList) {
+        return isValid == null || isValid.test(node) ? action.apply(Pair.of(node, index), paramList) : null;
+    }
+
+    static JsonNode applyWithArrayNode(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
+                                       final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
+        final ArrayNode paramArray = getParamArray(decomposeFunctionParameters(params, 1, -1), node);
+        if (paramArray.isEmpty()) {
+            return null;
         }
-        return null;
+        if (node.isArray()) {
+            final ArrayNode array = MAPPER.createArrayNode();
+            for (int i = 0; i < node.size(); i++) {
+                array.add(applyAction(node.get(i), isValid, action, paramArray));
+            }
+            return array;
+        }
+        return applyAction(node, isValid, action, paramArray);
+    }
+
+    private static JsonNode applyAction(final JsonNode node, final Predicate<JsonNode> isValid,
+                                        final BiFunction<JsonNode, ArrayNode, JsonNode> action,
+                                        final ArrayNode paramArray) {
+        return isValid == null || isValid.test(node) ? action.apply(node, paramArray) : null;
     }
 }

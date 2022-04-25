@@ -1267,20 +1267,28 @@ public class UnitTest {
         evaluate.accept("notEndsWithIgnoreCase('ABCDEF','cde')", "true");
         // equals()
         evaluate.accept("'abc'.equals('abc')", "true");
-        evaluate.accept("'abc'.equals(?, ' abc')", "false");
+        evaluate.accept("'abc'.equals(?,' abc')", "false");
         evaluate.accept("equals('ABC','abc')", "false");
         // equalsIgnoreCase()
         evaluate.accept("'abc'.equalsIgnoreCase('abc')", "true");
-        evaluate.accept("'abc'.equalsIgnoreCase(?, ' abc')", "false");
+        evaluate.accept("'abc'.equalsIgnoreCase(?,' abc')", "false");
         evaluate.accept("equalsIgnoreCase('ABC','abc')", "true");
         // notEquals()
         evaluate.accept("'abc'.notEquals('abc')", "false");
-        evaluate.accept("'abc'.notEquals(?, ' abc')", "true");
+        evaluate.accept("'abc'.notEquals(?,' abc')", "true");
         evaluate.accept("notEquals('ABC','abc')", "true");
         // notEqualsIgnoreCase()
         evaluate.accept("'abc'.notEqualsIgnoreCase('abcd')", "true");
-        evaluate.accept("'abc'.notEqualsIgnoreCase(' abc')", "true");
+        evaluate.accept("'abc'.notEqualsIgnoreCase(?,' abc')", "true");
         evaluate.accept("notEqualsIgnoreCase('ABC','abc')", "false");
+        // matches()
+        evaluate.accept("'123a'.matches('^[0-9]+$')", "false");
+        evaluate.accept("'784238'.matches(?,'^[0-9]+$')", "true");
+        evaluate.accept("matches('63 56','^[0-9]+$')", "false");
+        // notMatches()
+        evaluate.accept("'1234-123456'.notMatches('\\d{4}-\\d{6}')", "false");
+        evaluate.accept("'888-123456'.notMatches(?,'\\d{4}-\\d{6}')", "true");
+        evaluate.accept("notMatches('4444-5555','\\d{4}-\\d{6}')", "true");
         // in()
         evaluate.accept("56.in(12,34,56)", "true");
         evaluate.accept("'56'.in(12,34,56)", "true");

@@ -66,10 +66,10 @@ class OperationStackForDatasets extends OperationStack {
             try {
                 node = evaluateStatement(step.getStatement());
             } catch (UnresolvedDatasetException e) {
-                if (step.getIfTrueValue() == null) {
-                    throw e;
+                if ("".equals(step.getIfTrueValue())) {
+                    continue;
                 }
-                continue;
+                throw e;
             }
             if (step.getIfTrueValue() == null) {
                 return node;
