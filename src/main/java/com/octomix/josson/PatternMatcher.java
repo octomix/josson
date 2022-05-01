@@ -543,12 +543,17 @@ class PatternMatcher {
 
     static String getLastElementName(final String path) {
         final List<String> paths = decomposePaths(path);
-        for (int i = paths.size() - 1; i >= 0; i--) {
-            if (matchFunctionAndArgument(paths.get(i)) == null) {
-                return matchFilterQuery(paths.get(i)).getNodeName();
+        int i = paths.size() - 1;
+        if (i < 0) {
+            throw new UnknownFormatConversionException("undefined");
+        }
+        final FuncDispatcher func = matchFunctionAndArgument(paths.get(i));
+        if (func != null) {
+            if (--i < 0) {
+                throw new UnknownFormatConversionException("_" + func.getFuncName());
             }
         }
-        return "undefined";
+        return matchFilterQuery(paths.get(i)).getNodeName();
     }
 
     static void checkElementName(final String name) {

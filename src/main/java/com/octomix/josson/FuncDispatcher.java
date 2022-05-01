@@ -45,6 +45,10 @@ class FuncDispatcher {
         this.params = params;
     }
 
+    String getFuncName() {
+        return funcName;
+    }
+
     private class UnsupportedFunctionException extends UnsupportedOperationException {
         UnsupportedFunctionException() {
             super(String.format("Unsupported function %s()", funcName));

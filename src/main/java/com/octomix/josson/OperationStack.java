@@ -31,6 +31,10 @@ import static com.octomix.josson.PatternMatcher.decomposeStatement;
  */
 abstract class OperationStack {
 
+    private static final String OPEN_PARENTHESIS = "(";
+
+    private static final String CLOSE_PARENTHESIS = ")";
+
     private final LinkedList<OperationStep> stack = new LinkedList<>();
 
     protected final boolean isAntiInject;
@@ -59,13 +63,13 @@ abstract class OperationStack {
         if (inParentheses) {
             iterator = new LinkedList<>();
             while (!stack.isEmpty()) {
-                if ("(".equals(lastStep.getExpression())) {
+                if (OPEN_PARENTHESIS.equals(lastStep.getExpression())) {
                     break;
                 }
                 iterator.addFirst(popStep());
             }
             if (lastStep == null) {
-                throw new IllegalArgumentException(")");
+                throw new IllegalArgumentException(CLOSE_PARENTHESIS);
             }
         } else {
             iterator = stack;
@@ -134,7 +138,7 @@ abstract class OperationStack {
         switch (step.getOperator()) {
             case NOT:
             case NOP:
-                if (")".equals(step.getExpression())) {
+                if (CLOSE_PARENTHESIS.equals(step.getExpression())) {
                     evaluateSteps(true, arrayIndex);
                 } else {
                     pushStep(step);
@@ -144,7 +148,7 @@ abstract class OperationStack {
         if (stack.isEmpty()) {
             throw new IllegalArgumentException();
         }
-        if ("(".equals(lastStep.getExpression())) {
+        if (OPEN_PARENTHESIS.equals(lastStep.getExpression())) {
             pushStep(step);
             return;
         }

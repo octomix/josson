@@ -3046,14 +3046,14 @@ Resolved placeholder is replaced with text and continue for the next round.
 
 Example:
 
-    |<-------------------------------------------------- 3 ----------------------------------------->|
-    |                  |<------------------------------- 2 ---------------------------------->|      |
-    |                  |                     |<--------- 1 -------->|                         |      |
-    |                  |                     |                      |                         |      |
-    {{stock->[itemCode={{order->items[qrCode={{qrCode.singleQuote()}}].itemCode.singleQuote()}}].qty}}
+    |<----------------------------------------------- 3 -------------------------------->|
+    |                  |<---------------------------- 2 ------------------------->|      |
+    |                  |                     |<------ 1 ----->|                   |      |
+    |                  |                     |                |                   |      |
+    {{stock->[itemCode={{order->items[qrCode={{qrCode.quote()}}].itemCode.quote()}}].qty}}
 
-1. `{{qrCode.singleQuote()}}` is resolved to `'1234567890'`
-2. `{{order->items[qrCode='1234567890'].itemCode.singleQuote()}}` is resolved to `'ABCDE'`
+1. `{{qrCode.quote()}}` is resolved to `'1234567890'`
+2. `{{order->items[qrCode='1234567890'].itemCode.quote()}}` is resolved to `'ABCDE'`
 3. `{{stock->[itemCode='ABCDE'].qty}}` is resolved to `100`
 
 The resolved text value is allowed to contain `{` and `}`.

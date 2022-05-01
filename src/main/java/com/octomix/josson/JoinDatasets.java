@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.octomix.josson.commons.StringUtils;
 
+import java.util.UnknownFormatConversionException;
+
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_COLLECT_ALL;
 import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
 import static com.octomix.josson.JossonCore.getNodeByPath;
@@ -216,7 +218,11 @@ class JoinDatasets {
         private String retrieveArrayName() {
             final int pos = keys[0].indexOf(':');
             if (pos < 0) {
-                return getLastElementName(query);
+                try {
+                    return getLastElementName(query);
+                } catch (UnknownFormatConversionException e) {
+                    return e.getConversion();
+                }
             }
             final String arrayName = keys[0].substring(0, pos).trim();
             checkElementName(arrayName);

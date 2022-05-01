@@ -26,6 +26,7 @@ import com.octomix.josson.commons.StringUtils;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UnknownFormatConversionException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -55,6 +56,7 @@ class FuncExecutor {
 
     static Map<String, String> getParamNamePath(final List<String> paramList) {
         final Map<String, String> elements = new LinkedHashMap<>();
+        int noNameCount = 0;
         for (String param : paramList) {
             final String[] values = param.split(":", 2);
             String name = values[0].trim();
@@ -62,7 +64,11 @@ class FuncExecutor {
             if (!isCurrentNodePath(name)) {
                 if (values.length == 1) {
                     path = name;
-                    name = getLastElementName(path);
+                    try {
+                        name = getLastElementName(path);
+                    } catch (UnknownFormatConversionException e) {
+                        name = e.getConversion() + ++noNameCount;
+                    }
                 } else {
                     checkElementName(name);
                     if (!StringUtils.isBlank(values[1])) {
