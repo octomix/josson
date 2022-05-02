@@ -143,16 +143,16 @@ class OperationStep {
         if (rightNode.isBoolean()) {
             switch (operator) {
                 case EQ:
-                    return !leftNode.asBoolean() ^ rightNode.asBoolean();
+                    return leftNode.asBoolean() == rightNode.asBoolean();
                 case NE:
-                    return leftNode.asBoolean() ^ rightNode.asBoolean();
+                    return leftNode.asBoolean() != rightNode.asBoolean();
             }
         } else {
             switch (operator) {
                 case EQ:
                     return leftNode.isNull() && rightNode.isNull();
                 case NE:
-                    return leftNode.isNull() ^ rightNode.isNull();
+                    return !(leftNode.isNull() && rightNode.isNull());
             }
         }
         return false;

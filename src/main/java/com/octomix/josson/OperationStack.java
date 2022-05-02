@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.util.LinkedList;
+import java.util.function.BiFunction;
 
 import static com.octomix.josson.JossonCore.asBoolean;
 import static com.octomix.josson.JossonsCore.antiInjectionDecode;
@@ -111,8 +112,19 @@ abstract class OperationStack {
         return step.getResolved();
     }
 
-    private boolean isResolvedTo(final boolean expected, final int arrayIndex) {
-        return asBoolean(resolveFrom(lastStep, arrayIndex)) == expected;
+    private void popAndResolveIf(final boolean expected, final int arrayIndex,
+                                 final BiFunction<OperationStep, Integer, JsonNode> value) {
+        final OperationStep thisStep = popStep();
+        if (lastStep.getOperator() == Operator.NOT) {
+            if (asBoolean(resolveFrom(lastStep, arrayIndex)) != expected) {
+                lastStep.resetOperator();
+                lastStep.setResolved(value.apply(thisStep, arrayIndex));
+            }
+        } else {
+            if (asBoolean(resolveFrom(lastStep, arrayIndex)) == expected) {
+                lastStep.setResolved(value.apply(thisStep, arrayIndex));
+            }
+        }
     }
 
     private JsonNode relationalCompare(final OperationStep prevStep, final OperationStep step, final int arrayIndex) {
@@ -156,24 +168,15 @@ abstract class OperationStack {
             case AND:
             case OR:
                 if (lastStep.getOperator() == Operator.AND) {
-                    final OperationStep thisStep = popStep();
-                    if (isResolvedTo(true, arrayIndex)) {
-                        lastStep.setResolved(resolveFrom(thisStep, arrayIndex));
-                    }
+                    popAndResolveIf(true, arrayIndex, this::resolveFrom);
                 } else if (lastStep.getOperator() == Operator.OR && step.getOperator() == Operator.OR) {
-                    final OperationStep thisStep = popStep();
-                    if (isResolvedTo(false, arrayIndex)) {
-                        lastStep.setResolved(resolveFrom(thisStep, arrayIndex));
-                    }
+                    popAndResolveIf(false, arrayIndex, this::resolveFrom);
                 }
                 pushStep(step);
                 return;
         }
         if (lastStep.getOperator() == Operator.AND) {
-            final OperationStep thisStep = popStep();
-            if (isResolvedTo(true, arrayIndex)) {
-                lastStep.setResolved(relationalCompare(thisStep, step, arrayIndex));
-            }
+            popAndResolveIf(true, arrayIndex, (thisStep, index) -> relationalCompare(thisStep, step, index));
         } else {
             lastStep.setResolved(relationalCompare(lastStep, step, arrayIndex));
         }

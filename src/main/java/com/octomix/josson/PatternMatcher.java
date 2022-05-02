@@ -548,10 +548,8 @@ class PatternMatcher {
             throw new UnknownFormatConversionException("undefined");
         }
         final FuncDispatcher func = matchFunctionAndArgument(paths.get(i));
-        if (func != null) {
-            if (--i < 0) {
-                throw new UnknownFormatConversionException("_" + func.getFuncName());
-            }
+        if (func != null && --i < 0) {
+            throw new UnknownFormatConversionException("_" + func.getFuncName());
         }
         return matchFilterQuery(paths.get(i)).getNodeName();
     }
