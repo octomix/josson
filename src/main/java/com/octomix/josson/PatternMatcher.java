@@ -191,6 +191,9 @@ class PatternMatcher {
                 case '[':
                 case '<':
                     return null;
+                case '(':
+                    pos = skipEnclosure(input, pos, last, Enclosure.PARENTHESES);
+                    break;
                 case '-':
                     return input.charAt(pos + 1) != '>' ? null
                             : new String[]{rightTrimOf(input, beg, pos), trimOf(input, pos + 2, last + 1)};
@@ -276,7 +279,7 @@ class PatternMatcher {
         return new ArrayFilter(input, null, FILTRATE_COLLECT_ALL);
     }
 
-    static FuncDispatcher matchFunctionAndArgument(final String input) {
+    static String[] matchFunctionAndArgument(final String input) {
         final int last = input.length() - 1;
         for (int pos = 0; pos <= last; pos++) {
             final int end = matchParentheses(input, pos, last);
@@ -289,7 +292,7 @@ class PatternMatcher {
                 if (name.isEmpty()) {
                     throw new SyntaxErrorException(input, "Missing function name");
                 }
-                return new FuncDispatcher(name, trimOf(input, pos + 1, end));
+                return new String[]{name, trimOf(input, pos + 1, end)};
             } else if (matchStringLiteral(input, pos, last) > 0 || matchSquareBrackets(input, pos, last) > 0) {
                 return null;
             }
@@ -547,9 +550,9 @@ class PatternMatcher {
         if (i < 0) {
             throw new UnknownFormatConversionException("undefined");
         }
-        final FuncDispatcher func = matchFunctionAndArgument(paths.get(i));
-        if (func != null && --i < 0) {
-            throw new UnknownFormatConversionException("_" + func.getFuncName());
+        final String[] funcAndArgs = matchFunctionAndArgument(paths.get(i));
+        if (funcAndArgs != null && --i < 0) {
+            throw new UnknownFormatConversionException("_" + funcAndArgs[0]);
         }
         return matchFilterQuery(paths.get(i)).getNodeName();
     }

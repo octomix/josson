@@ -238,7 +238,9 @@ class OperationStep {
             josson = Josson.create(implicitVariable);
         }
         final JsonNode node = josson.getNode(tokens[1]);
-        datasets.put(expression, node == null ? null : Josson.create(node));
+        if (expression.charAt(0) != '$') {
+            datasets.put(expression, node == null ? null : Josson.create(node));
+        }
         return node;
     }
 }

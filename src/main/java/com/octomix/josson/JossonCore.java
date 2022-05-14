@@ -421,9 +421,9 @@ class JossonCore {
             throw new SyntaxErrorException(key);
         }
         keys.remove(0);
-        final FuncDispatcher funcDispatcher = matchFunctionAndArgument(key);
-        if (funcDispatcher != null) {
-            return getNodeByKeys(funcDispatcher.apply(node), keys, nextKeys);
+        final String[] funcAndArgs = matchFunctionAndArgument(key);
+        if (funcAndArgs != null) {
+            return getNodeByKeys(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(node), keys, nextKeys);
         }
         if (node.isValueNode()) {
             return null;

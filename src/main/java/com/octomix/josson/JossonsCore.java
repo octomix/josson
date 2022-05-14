@@ -1,6 +1,7 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.NoValuePresentException;
 import com.octomix.josson.exception.UnresolvedDatasetException;
@@ -9,6 +10,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
 import static com.octomix.josson.commons.StringEscapeUtils.unescapeXml;
 
@@ -28,6 +30,8 @@ class JossonsCore {
     private static final char ANTI_INJECTION_CLOSE = ')';
 
     private static final String UNRESOLVABLE_PLACEHOLDER_MARK = "**";
+
+    private static final String DICTIONARY_FUNCTION_PARAMS = "$params";
 
     protected final Map<String, Josson> datasets = new HashMap<>();
 
@@ -82,6 +86,24 @@ class JossonsCore {
             throw new IllegalArgumentException("invalid data");
         }
         return Josson.create(joinedNode);
+    }
+
+    private void evaluateQueryWithResolver(final String name, final String query, final ResolverProgress progress,
+                                           final Set<String> unresolvablePlaceholders,
+                                           final Set<String> unresolvedDatasetNames) {
+        try {
+            final JsonNode node = new OperationStackForDatasets(datasets).evaluateQuery(query);
+            if (node == null) {
+                unresolvablePlaceholders.add(name);
+                datasets.put(name, null);
+            } else {
+                datasets.put(name, Josson.create(node));
+                unresolvedDatasetNames.remove(name);
+                progress.addResolvedNode(name, node);
+            }
+        } catch (UnresolvedDatasetException e) {
+            unresolvedDatasetNames.add(e.getDatasetName());
+        }
     }
 
     protected JsonNode evaluateQueryWithResolverLoop(final String query, final Function<String, String> dictionaryFinder,
@@ -156,15 +178,32 @@ class JossonsCore {
                         }
                     }
                     String findQuery = dictionaryFinder.apply(name);
+                    ArrayNode params = null;
                     if (findQuery == null) {
-                        datasets.put(name, null);
-                        return;
+                        final String[] funcAndArgs = matchFunctionAndArgument(name);
+                        if (funcAndArgs == null || (findQuery = dictionaryFinder.apply(funcAndArgs[0] + "()")) == null) {
+                            datasets.put(name, null);
+                            return;
+                        }
+                        progress.addResolvingFrom(name, findQuery);
+                        params = MAPPER.createArrayNode();
+                        for (String param : decomposeFunctionParameters(funcAndArgs[1], 0, -1)) {
+                            params.add(evaluateQueryWithResolverLoop(param, dictionaryFinder, dataFinder, progress));
+                        }
+                        datasets.put(DICTIONARY_FUNCTION_PARAMS, Josson.create(params));
+                        for (int j = 0; j < params.size(); j++) {
+                            datasets.put("$" + j, Josson.create(params.get(j)));
+                        }
                     }
                     try {
                         findQuery = fillInPlaceholderLoop(findQuery, false, e.isAntiInject());
                         if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
-                            namedQueries.put(name, findQuery);
                             unresolvedDatasetNames.remove(name);
+                            if (params == null) {
+                                namedQueries.put(name, findQuery);
+                            } else {
+                                evaluateQueryWithResolver(name, findQuery, progress, unresolvablePlaceholders, unresolvedDatasetNames);
+                            }
                         }
                     } catch (NoValuePresentException ex) {
                         if (ex.getPlaceholders().isEmpty()) {
@@ -177,24 +216,17 @@ class JossonsCore {
                             datasets.put(name, null);
                         }
                     }
+                    if (params != null) {
+                        for (int j = 0; j < params.size(); j++) {
+                            datasets.remove("$" + j);
+                        }
+                        datasets.remove(DICTIONARY_FUNCTION_PARAMS);
+                    }
                 });
                 if (!namedQueries.isEmpty()) {
                     progress.addStep("Resolving " + namedQueries);
-                    namedQueries.forEach((name, findQuery) -> {
-                        try {
-                            final JsonNode node = new OperationStackForDatasets(datasets).evaluateQuery(findQuery);
-                            if (node == null) {
-                                unresolvablePlaceholders.add(name);
-                                datasets.put(name, null);
-                            } else {
-                                datasets.put(name, Josson.create(node));
-                                unresolvedDatasetNames.remove(name);
-                                progress.addResolvedNode(name, node);
-                            }
-                        } catch (UnresolvedDatasetException ex) {
-                            unresolvedDatasetNames.add(ex.getDatasetName());
-                        }
-                    });
+                    namedQueries.forEach((name, findQuery) ->
+                        evaluateQueryWithResolver(name, findQuery, progress, unresolvablePlaceholders, unresolvedDatasetNames));
                 }
             }
         }
