@@ -140,7 +140,7 @@ class JossonsCore {
                                                    final ResolverProgress progress) throws NoValuePresentException {
         final Set<String> unresolvablePlaceholders = new HashSet<>();
         final Set<String> unresolvedDatasetNames = new HashSet<>();
-        final List<String> checkInfiniteLoop = new ArrayList<>();
+        final List<String> resolveHistory = new ArrayList<>();
         boolean isAntiInject = false;
         for (; ; progress.nextRound()) {
             try {
@@ -159,23 +159,10 @@ class JossonsCore {
                 }
                 final Map<String, String> namedQueries = new HashMap<>();
                 e.getDatasetNames().forEach(name -> {
-                    checkInfiniteLoop.add(name);
-                    final int half = checkInfiniteLoop.size() / 2;
-                    int i = checkInfiniteLoop.size() - 2;
-                    for (int j = i; j >= half; j--) {
-                        if (checkInfiniteLoop.get(j).equals(name)) {
-                            for (int k = j - 1; i >= j; i--, k--) {
-                                if (!checkInfiniteLoop.get(k).equals(checkInfiniteLoop.get(i))) {
-                                    break;
-                                }
-                            }
-                            if (i < j) {
-                                unresolvablePlaceholders.add(name);
-                                datasets.put(name, null);
-                                return;
-                            }
-                            break;
-                        }
+                    if (inInfiniteLoop(name, resolveHistory)) {
+                        unresolvablePlaceholders.add(name);
+                        datasets.put(name, null);
+                        return;
                     }
                     String findQuery = dictionaryFinder.apply(name);
                     ArrayNode params = null;
@@ -311,6 +298,26 @@ class JossonsCore {
             throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, filled).isAntiInject(outIsAntiInject);
         }
         return fillInPlaceholderLoop(filled, isXml, outIsAntiInject);
+    }
+
+    private static boolean inInfiniteLoop(final String name, final List<String> resolveHistory) {
+        resolveHistory.add(name);
+        final int half = resolveHistory.size() / 2;
+        int i = resolveHistory.size() - 2;
+        for (int j = i; j >= half; j--) {
+            if (resolveHistory.get(j).equals(name)) {
+                for (int k = j - 1; i >= j; i--, k--) {
+                    if (!resolveHistory.get(k).equals(resolveHistory.get(i))) {
+                        break;
+                    }
+                }
+                if (i < j) {
+                    return true;
+                }
+                break;
+            }
+        }
+        return false;
     }
 
     private static boolean antiInjectionEncode(final StringBuilder sb, final String s) {

@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.8</version>
+        <version>1.3.9</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.8'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.9'
 
 ## Features and Capabilities
 
@@ -79,6 +79,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
   - [Dictionary Finder](#dictionary-finder)
   - [Data Finder](#data-finder)
   - [Join Datasets](#join-datasets)
+  - [Dictionary Function](#dictionary-function)
   - [Put Together](#put-together)
 
 - [Appendix](#appendix)
@@ -3101,6 +3102,10 @@ Key `$yesterday` returns a `TextNode` of yesterday's date. e.g. `2021-12-31T00:0
 
 Key `$tomorrow` returns a `TextNode` of tomorrow's date. e.g. `2022-01-02T00:00`
 
+Key `$params` returns an `ArrayNode` of a Dictionary Function's parameters in an array.
+
+Key `$0`, `$1`, `$2`... returns a `JsonNode` of a Dictionary Function's individual parameter naming in zero-based index.
+
 ### Fill In
 
 Below is the JSON for this tutorial.
@@ -3351,7 +3356,7 @@ Basic constructors and methods:
 
 If a key cannot be found in the default dataset mapping during the placeholder resolution process,
 the resolver will ask `Function<String, String> dictionaryFinder` for an answer.
-`dictionaryFinder` takes an argument `String key` and returns either:
+`dictionaryFinder` takes an argument `String key` and returns a resolution statement of either:
 
 - A statement that represent a value.
 
@@ -3361,9 +3366,13 @@ the resolver will ask `Function<String, String> dictionaryFinder` for an answer.
       "true"   // BooleanNode
       "null"   // NullNode
 
-- A Jossons query that retrieve data from other datasets.
+- A Jossons query that retrieve data from other dataset.
 
       "otherKey->jossonQuery"
+
+- A Jossons query with ternary syntax.
+
+      "statement ? otherKey1->jossonQuery : otherKey2->jossonQuery"
 
 - A database query statement, please refer to [Data Finder](#data-finder).
 
@@ -3372,6 +3381,9 @@ the resolver will ask `Function<String, String> dictionaryFinder` for an answer.
 - A join operation query to merge two datasets, please refer to [Join Datasets](#join-datasets).
 
       "leftQuery{keyL1,keyL2...} <=< rightQuery{keyR1,keyR2...}"
+
+All kinds of statement can contain implicit dictionary function parameter variables,
+please refer to [Dictionary Function](#dictionary-function).
 
 ### Data Finder
 
@@ -3440,6 +3452,51 @@ If `arrayName` is not given, the last element name of the query is used.
 - _Right Join Many_ `>>=>`
 
       "leftQuery{arrayName:keyL1,keyL2...} >>=> rightQuery{keyR1,keyR2...}"
+
+### Dictionary Function
+
+If a `dictionaryFinder` key ends with `()`, then it is a dictionary function.
+It's resolution statement can contain the following implicit variables.
+
+- `$params` the calling statement's parameters in an array.
+
+- `$0`, `$1`, `$2`... the calling statement's individual parameter naming in zero-based index.
+
+__Examples__
+
+_Dictionary finder entries_
+
+    "double()" : "$0->calc(?*2)"
+
+    "sum2num()" : "$->calc({{$0}} + {{$1}})"
+
+    "sum2numThenDouble()" : "double({{sum2num({{$0}},{{$1}})}})->formatText('({{$0}}+{{$1}})x2 = %.1f')"
+
+    "projectName()" : "$0='CHI' ? '早晨' : 'Josson'"
+
+    "titledList()" : "$params->slice(1).concat(##,'. ',?).join('\n').concat({{$0->quote()}},'\n',{{$0->repeat('=',length()).quote()}},'\n',?)"
+
+_Placeholders_
+
+    {{double(3)}} ==> "6.0"
+
+    {{sum2num(4,5)}} ==> "9.0"
+
+    {{sum2numThenDouble(1,2)}} ==> "(1+2)x2 = 6.0"
+
+    {{projectName()}} ==> "Josson"
+
+    {{projectName('CHI')}} ==> "早晨"
+
+    {{projectName('ENG')}} ==> "Josson"
+
+    {{titledList('List Title','Item A','Item B','Item C')}}
+    ==>
+    List Title
+    ==========
+    1. Item A
+    2. Item B
+    3. Item C
 
 ### Put Together
 

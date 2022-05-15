@@ -3,6 +3,7 @@ package com.octomix.josson;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.octomix.josson.exception.NoValuePresentException;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
@@ -1775,10 +1776,17 @@ public class UnitTest {
             return null;
         };
         ResolverProgress progress = new ResolverProgress();
-        System.out.println(jossons.fillInPlaceholderWithResolver(
-                "Order ID : {{order->salesOrderId}}\n" +
-                        "{{withStock->concat(itemCode.rightPad(10), 'Qty: ', qty, '   Onhand: ', onhandQty).join('\n')}}",
-                dictionaryFinder::get, dataFinder, progress));
+        try {
+            System.out.println(jossons.fillInPlaceholderWithResolver(
+                    "Order ID : {{order->salesOrderId}}\n" +
+                            "{{withStock->concat(itemCode.rightPad(10), 'Qty: ', qty, '   Onhand: ', onhandQty).join('\n')}}",
+                    dictionaryFinder::get, dataFinder, progress));
+        } catch (NoValuePresentException e) {
+            System.out.println(e.getPlaceholders());
+            System.out.println(e.getContent());
+            System.out.println("\n" + String.join("\n", progress.getSteps()));
+            throw e;
+        }
         System.out.println("\n" + String.join("\n", progress.getSteps()));
     }
 }
