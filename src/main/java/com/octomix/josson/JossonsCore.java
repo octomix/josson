@@ -106,6 +106,46 @@ class JossonsCore {
         }
     }
 
+    private String dictionaryFinderApply(final String name,
+                                         final Function<String, String> dictionaryFinder,
+                                         final BiFunction<String, String, Josson> dataFinder,
+                                         final ResolverProgress progress) {
+        String query = dictionaryFinder.apply(name);
+        if (query == null) {
+            final String[] funcAndArgs = matchFunctionAndArgument(name);
+            if (funcAndArgs == null || (query = dictionaryFinder.apply(funcAndArgs[0] + "()")) == null) {
+                datasets.put(name, null);
+                return null;
+            }
+            progress.addResolvingFrom(name, query);
+            final ArrayNode params = MAPPER.createArrayNode();
+            for (String param : decomposeFunctionParameters(funcAndArgs[1], 0, -1)) {
+                params.add(evaluateQueryWithResolverLoop(param, dictionaryFinder, dataFinder, progress));
+            }
+            putDictionaryFunctionParams(Josson.create(params));
+        }
+        return query;
+    }
+
+    private Josson removeDictionaryFunctionParams() {
+        final Josson params = datasets.remove(DICTIONARY_FUNCTION_PARAMS);
+        if (params != null) {
+            for (int i = 0; i < params.getNode().size(); i++) {
+                datasets.remove("$" + i);
+            }
+        }
+        return params;
+    }
+
+    private void putDictionaryFunctionParams(final Josson params) {
+        if (params != null) {
+            datasets.put(DICTIONARY_FUNCTION_PARAMS, params);
+            for (int i = 0; i < params.getNode().size(); i++) {
+                datasets.put("$" + i, Josson.create(params.getNode().get(i)));
+            }
+        }
+    }
+
     protected JsonNode evaluateQueryWithResolverLoop(final String query, final Function<String, String> dictionaryFinder,
                                                      final BiFunction<String, String, Josson> dataFinder,
                                                      final ResolverProgress progress) {
@@ -115,7 +155,8 @@ class JossonsCore {
             } catch (UnresolvedDatasetException e) {
                 final String name = e.getDatasetName();
                 JsonNode node = null;
-                String findQuery = dictionaryFinder.apply(name);
+                Josson backup = removeDictionaryFunctionParams();
+                String findQuery = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
                 if (findQuery != null) {
                     try {
                         findQuery = fillInPlaceholderWithResolver(
@@ -128,7 +169,9 @@ class JossonsCore {
                     } catch (NoValuePresentException ex) {
                         // ignore
                     }
+                    removeDictionaryFunctionParams();
                 }
+                putDictionaryFunctionParams(backup);
                 datasets.put(name, node == null ? null : Josson.create(node));
                 progress.addResolvedNode(name, node);
             }
@@ -164,51 +207,34 @@ class JossonsCore {
                         datasets.put(name, null);
                         return;
                     }
-                    String findQuery = dictionaryFinder.apply(name);
-                    ArrayNode params = null;
-                    if (findQuery == null) {
-                        final String[] funcAndArgs = matchFunctionAndArgument(name);
-                        if (funcAndArgs == null || (findQuery = dictionaryFinder.apply(funcAndArgs[0] + "()")) == null) {
-                            datasets.put(name, null);
-                            return;
-                        }
-                        progress.addResolvingFrom(name, findQuery);
-                        params = MAPPER.createArrayNode();
-                        for (String param : decomposeFunctionParameters(funcAndArgs[1], 0, -1)) {
-                            params.add(evaluateQueryWithResolverLoop(param, dictionaryFinder, dataFinder, progress));
-                        }
-                        datasets.put(DICTIONARY_FUNCTION_PARAMS, Josson.create(params));
-                        for (int j = 0; j < params.size(); j++) {
-                            datasets.put("$" + j, Josson.create(params.get(j)));
-                        }
-                    }
-                    try {
-                        findQuery = fillInPlaceholderLoop(findQuery, false, e.isAntiInject());
-                        if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
-                            unresolvedDatasetNames.remove(name);
-                            if (params == null) {
-                                namedQueries.put(name, findQuery);
+                    Josson backup = removeDictionaryFunctionParams();
+                    String findQuery = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
+                    if (findQuery != null) {
+                        try {
+                            findQuery = fillInPlaceholderLoop(findQuery, false, e.isAntiInject());
+                            if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
+                                unresolvedDatasetNames.remove(name);
+                                if (datasets.containsKey(DICTIONARY_FUNCTION_PARAMS)) {
+                                    evaluateQueryWithResolver(name, findQuery, progress,
+                                            unresolvablePlaceholders, unresolvedDatasetNames);
+                                } else {
+                                    namedQueries.put(name, findQuery);
+                                }
+                            }
+                        } catch (NoValuePresentException ex) {
+                            if (ex.getPlaceholders().isEmpty()) {
+                                ex.getDatasetNames().stream()
+                                        .filter(s -> !namedQueries.containsKey(s))
+                                        .forEach(unresolvedDatasetNames::add);
                             } else {
-                                evaluateQueryWithResolver(name, findQuery, progress, unresolvablePlaceholders, unresolvedDatasetNames);
+                                unresolvablePlaceholders.addAll(ex.getPlaceholders());
+                                unresolvablePlaceholders.add(name);
+                                datasets.put(name, null);
                             }
                         }
-                    } catch (NoValuePresentException ex) {
-                        if (ex.getPlaceholders().isEmpty()) {
-                            ex.getDatasetNames().stream()
-                                    .filter(s -> !namedQueries.containsKey(s))
-                                    .forEach(unresolvedDatasetNames::add);
-                        } else {
-                            unresolvablePlaceholders.addAll(ex.getPlaceholders());
-                            unresolvablePlaceholders.add(name);
-                            datasets.put(name, null);
-                        }
+                        removeDictionaryFunctionParams();
                     }
-                    if (params != null) {
-                        for (int j = 0; j < params.size(); j++) {
-                            datasets.remove("$" + j);
-                        }
-                        datasets.remove(DICTIONARY_FUNCTION_PARAMS);
-                    }
+                    putDictionaryFunctionParams(backup);
                 });
                 if (!namedQueries.isEmpty()) {
                     progress.addStep("Resolving " + namedQueries);
