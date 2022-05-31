@@ -203,7 +203,7 @@ public class ResolverProgress {
      * @param step the resolution step detail
      */
     void addStep(final String step) {
-        steps.add(String.format("Round %d : %s", round, step));
+        steps.add(String.format("Round %d : %s", round, step.replaceAll("\n", "\\\\n")));
         roundStarted = true;
     }
 

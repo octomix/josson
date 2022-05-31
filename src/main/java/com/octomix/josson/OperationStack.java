@@ -112,16 +112,16 @@ abstract class OperationStack {
         return step.getResolved();
     }
 
-    private void popAndResolveIf(final boolean expected, final int arrayIndex,
+    private void popAndResolveIf(final boolean ifPrevResult, final int arrayIndex,
                                  final BiFunction<OperationStep, Integer, JsonNode> value) {
         final OperationStep thisStep = popStep();
         if (lastStep.getOperator() == Operator.NOT) {
-            if (asBoolean(resolveFrom(lastStep, arrayIndex)) != expected) {
+            if (asBoolean(resolveFrom(lastStep, arrayIndex)) != ifPrevResult) {
                 lastStep.resetOperator();
                 lastStep.setResolved(value.apply(thisStep, arrayIndex));
             }
         } else {
-            if (asBoolean(resolveFrom(lastStep, arrayIndex)) == expected) {
+            if (asBoolean(resolveFrom(lastStep, arrayIndex)) == ifPrevResult) {
                 lastStep.setResolved(value.apply(thisStep, arrayIndex));
             }
         }

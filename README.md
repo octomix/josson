@@ -3385,6 +3385,9 @@ the resolver will ask `Function<String, String> dictionaryFinder` for an answer.
 All kinds of statement can contain implicit dictionary function parameter variables,
 please refer to [Dictionary Function](#dictionary-function).
 
+Resolved result will be cached with the key name except for key name starts with `$` or `*`.
+Next time a placeholder or statement query for the same key will return the cached value without evaluation.
+
 ### Data Finder
 
 After [Dictionary Finder](#dictionary-finder) returned a valid database query statement,
@@ -3459,10 +3462,9 @@ If a `dictionaryFinder` key ends with `()`, then it is a dictionary function.
 It's resolution statement can contain the following implicit variables.
 
 - `$params` the calling statement's parameters in an array.
-
 - `$0`, `$1`, `$2`... the calling statement's individual parameter naming in zero-based index.
 
-__Examples__
+#### Examples
 
 _Dictionary finder entries_
 

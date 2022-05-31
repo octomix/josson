@@ -238,8 +238,13 @@ class OperationStep {
             josson = Josson.create(implicitVariable);
         }
         final JsonNode node = josson.getNode(tokens[1]);
-        if (expression.charAt(0) != '$') {
-            datasets.put(expression, node == null ? null : Josson.create(node));
+        switch (expression.charAt(0)) {
+            // Don't cache result for variable name starts with $ or *
+            case '$':
+            case '*':
+                break;
+            default:
+                datasets.put(expression, node == null ? null : Josson.create(node));
         }
         return node;
     }
