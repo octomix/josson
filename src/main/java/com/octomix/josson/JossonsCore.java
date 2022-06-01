@@ -118,14 +118,14 @@ class JossonsCore {
                 return null;
             }
             progress.addResolvingFrom(name, query);
-            int i = 0;
             final ArrayNode params = MAPPER.createArrayNode();
             for (String param : decomposeFunctionParameters(funcAndArgs[1], 0, -1)) {
-                final JsonNode node = evaluateQueryWithResolverLoop(param, dictionaryFinder, dataFinder, progress);
-                datasets.put("$" + i++, Josson.create(node));
-                params.add(node);
+                params.add(evaluateQueryWithResolverLoop(param, dictionaryFinder, dataFinder, progress));
             }
             datasets.put(DICTIONARY_FUNCTION_PARAMS, Josson.create(params));
+            for (int i = 0; i < params.size(); i++) {
+                datasets.put("$" + i, Josson.create(params.get(i)));
+            }
         }
         return query;
     }
@@ -174,11 +174,12 @@ class JossonsCore {
                         node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
                     } catch (NoValuePresentException ex) {
                         // ignore
+                    } finally {
+                        removeDictionaryFunctionParams(false);
+                        if (backupParams != null) {
+                            datasets.putAll(backupParams);
+                        }
                     }
-                    removeDictionaryFunctionParams(false);
-                }
-                if (backupParams != null) {
-                    datasets.putAll(backupParams);
                 }
                 datasets.put(name, node == null ? null : Josson.create(node));
                 progress.addResolvedNode(name, node);
