@@ -65,6 +65,7 @@ class FuncDispatcher {
                 case 'd': return applyD(node, func);
                 case 'e': return applyE(node, func);
                 case 'f': return applyF(node, func);
+                case 'g': return applyG(node, func);
                 case 'h': return applyH(node, func);
                 case 'i': return applyI(node, func);
                 case 'j': return applyJ(node, func);
@@ -249,6 +250,14 @@ class FuncDispatcher {
                 return funcField(node, params);
             case "flatten":
                 return funcFlatten(node, params);
+        }
+        throw new UnsupportedFunctionException();
+    }
+
+    private JsonNode applyG(final JsonNode node, final String func) {
+        // Structural
+        if ("group".equals(func)) {
+            return funcGroup(node, params);
         }
         throw new UnsupportedFunctionException();
     }

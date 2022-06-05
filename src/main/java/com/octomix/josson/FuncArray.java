@@ -350,7 +350,6 @@ class FuncArray {
     }
 
     private static int jsonNodeComparator(JsonNode o1, JsonNode o2, final String path, final boolean asc) {
-        int compare = 0;
         if (!StringUtils.isEmpty(path)) {
             if (o1.isObject()) {
                 o1 = getNodeByPath(o1, path);
@@ -365,6 +364,7 @@ class FuncArray {
                 }
             }
         }
+        int compare = 0;
         if (o1.isNumber() && o2.isNumber()) {
             final double value = o1.asDouble() - o2.asDouble();
             compare = (value > 0) ? 1 : (value < 0) ? -1 : 0;

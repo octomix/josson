@@ -118,6 +118,46 @@ class FuncStructural {
         }
     }
 
+    static JsonNode funcGroup(JsonNode node, final String params) {
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 2);
+        if (pathAndParams.hasKey()) {
+            node = getNodeByPath(node, pathAndParams.getKey());
+            if (node == null) {
+                return null;
+            }
+        }
+        if (!node.isArray()) {
+            return null;
+        }
+        final List<String> paramList = pathAndParams.getValue();
+        final ArrayNode array = MAPPER.createArrayNode();
+        for (int i = 0; i < node.size(); i++) {
+            final JsonNode valueNode = getNodeByPath(node, i, paramList.get(0));
+            if (valueNode != null && valueNode.isValueNode()) {
+                ArrayNode values = null;
+                for (int j = 0; j < array.size(); j++) {
+                    if (array.get(j).get("key").equals(valueNode)) {
+                        values = (ArrayNode) array.get(j).get("values");
+                        break;
+                    }
+                }
+                if (values == null) {
+                    values = MAPPER.createArrayNode();
+                    final ObjectNode entry = Josson.createObjectNode();
+                    entry.set("key", valueNode);
+                    entry.set("values", values);
+                    array.add(entry);
+                }
+                if (paramList.size() > 1) {
+                    values.add(getNodeByPath(node, i, paramList.get(1)));
+                } else {
+                    values.add(node.get(i));
+                }
+            }
+        }
+        return array;
+    }
+
     static JsonNode funcJson(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, JsonNode::isTextual,
                 (data, paramList) -> {
