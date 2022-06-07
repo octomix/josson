@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.10</version>
+        <version>1.3.11</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.10'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.11
 
 ## Features and Capabilities
 
@@ -1077,7 +1077,34 @@ Below is the JSON for this tutorial.
 
         {}->items*->[{}->field($V...)] ==>[{}]
 
-62. Function `flatten()` flatten an array same as the default path step behavior. But more readable.
+62. Function `group()` works like SQL `group by`. It will build a structure of `[{key, [elements]}]`.
+    The first parameter is the grouping key. If it is a function, it will be given a name `key` in the output.
+    The optional second parameter is to evaluate the grouped element. The default is the whole array element.
+    And the default output array name is `elements`. The names can be renamed by preceding with `newName:`.
+
+        josson.getNode(
+            "items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).[]@" +
+            ".concat('Brand : ',brand,'\n',elements.concat('- ',name,' : Qty=',qty,' Amt=',calc(qty*netPrice),'\n').join()," +
+            "'> Sub-total : Qty=',elements.sum(qty),' Amt=',elements.sum(calc(qty*netPrice))).@join('\n\n')")
+        ==>
+        Brand : WinWin
+        - WinWin TShirt Series A - 2022 : Qty=2 Amt=30.0
+        - WinWin Sport Shoe - Super : Qty=1 Amt=100.0
+        > Sub-total : Qty=3.0 Amt=130.0
+
+        Brand : OctoPlus
+        - OctoPlus Tennis Racket - Star : Qty=1 Amt=140.0
+        > Sub-total : Qty=1.0 Amt=140.0
+
+    _Path chart_
+
+                                   {}->concat($V...)->""
+                                  /                     \
+        {}->items*->group()->[{}]@                       @->[""]->join()==>""
+                                  \                     /
+                                   {}->concat($V...)->""
+
+63. Function `flatten()` flatten an array same as the default path step behavior. But more readable.
 
         josson.getNode("items@.tags")
         ==>
@@ -1103,7 +1130,7 @@ Below is the JSON for this tutorial.
 
 ## Josson Functions
 
-There are over 180 functions. They are classified into 7 categories:
+There are 190 functions. They are classified into 7 categories:
 
 Arithmetic Functions
 
@@ -1314,6 +1341,7 @@ Structural Functions
 187. [map()](#187-map)
 188. [field()](#188-field)
 189. [coalesce()](#189-coalesce)
+190. [group()](#190-group)
 
 Following are some examples of each function.
 
@@ -2995,6 +3023,49 @@ Following are some examples of each function.
     json('["abc","",123,false,null]').coalesce('xyz') ==> [ "abc", "", 123, false, "xyz" ]
 
     json('{"a":null,"c":"abc"}').coalesce(a,b,c,'xyz') ==> "abc"
+
+#### 190. group()
+
+    json('[{"a":1,"b":"A"},{"a":2,"b":"B"},{"a":3,"b":"C"},{"a":2,"b":"D"},{"a":1,"b":"E"}]').group(a)
+    ==>
+    [ {
+      "a" : 1,
+      "elements" : [ {
+        "a" : 1,
+        "b" : "A"
+      }, {
+        "a" : 1,
+        "b" : "E"
+      } ]
+    }, {
+      "a" : 2,
+      "elements" : [ {
+        "a" : 2,
+        "b" : "B"
+      }, {
+        "a" : 2,
+        "b" : "D"
+      } ]
+    }, {
+      "a" : 3,
+      "elements" : [ {
+        "a" : 3,
+        "b" : "C"
+      } ]
+    } ]
+
+    json('[{"a":1,"b":"A"},{"a":2,"b":"B"},{"a":3,"b":"C"},{"a":2,"b":"D"},{"a":1,"b":"E"}]').group(a,bs:b)
+    ==>
+    [ {
+      "a" : 1,
+      "bs" : [ "A", "E" ]
+    }, {
+      "a" : 2,
+      "bs" : [ "B", "D" ]
+    }, {
+      "a" : 3,
+      "bs" : [ "C" ]
+    } ]
 
 ---
 
