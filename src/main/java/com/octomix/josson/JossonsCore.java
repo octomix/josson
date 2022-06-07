@@ -122,6 +122,7 @@ class JossonsCore {
             for (String param : decomposeFunctionParameters(funcAndArgs[1], 0, -1)) {
                 params.add(evaluateQueryWithResolverLoop(param, dictionaryFinder, dataFinder, progress));
             }
+            removeDictionaryFunctionParams();
             datasets.put(DICTIONARY_FUNCTION_PARAMS, Josson.create(params));
             for (int i = 0; i < params.size(); i++) {
                 datasets.put("$" + i, Josson.create(params.get(i)));
@@ -130,38 +131,46 @@ class JossonsCore {
         return query;
     }
 
-    private Map<String, Josson> removeDictionaryFunctionParams(final boolean backup) {
-        final Josson params = datasets.remove(DICTIONARY_FUNCTION_PARAMS);
+    private Map<String, Josson> backupDictionaryFunctionParams() {
+        final Josson params = datasets.get(DICTIONARY_FUNCTION_PARAMS);
         if (params == null) {
             return null;
         }
-        final Map<String, Josson> removed;
-        if (backup) {
-            removed = new HashMap<>();
-            removed.put(DICTIONARY_FUNCTION_PARAMS, params);
-        } else {
-            removed = null;
-        }
+        final Map<String, Josson> backup = new HashMap<>();
+        backup.put(DICTIONARY_FUNCTION_PARAMS, params);
         for (int i = params.getNode().size() - 1; i >= 0; i--) {
             final String key = "$" + i;
-            final Josson param = datasets.remove(key);
-            if (backup) {
-                removed.put(key, param);
+            backup.put(key, datasets.get(key));
+        }
+        return backup;
+    }
+
+    private void restoreDictionaryFunctionParams(Map<String, Josson> backup) {
+        removeDictionaryFunctionParams();
+        if (backup != null) {
+            datasets.putAll(backup);
+        }
+    }
+
+    private void removeDictionaryFunctionParams() {
+        final Josson params = datasets.remove(DICTIONARY_FUNCTION_PARAMS);
+        if (params != null) {
+            for (int i = params.getNode().size() - 1; i >= 0; i--) {
+                datasets.remove("$" + i);
             }
         }
-        return removed;
     }
 
     protected JsonNode evaluateQueryWithResolverLoop(final String query, final Function<String, String> dictionaryFinder,
                                                      final BiFunction<String, String, Josson> dataFinder,
                                                      final ResolverProgress progress) {
+        final Map<String, Josson> backupParams = backupDictionaryFunctionParams();
         for (; ; progress.nextRound()) {
             try {
                 return new OperationStackForDatasets(datasets).evaluateQuery(query);
             } catch (UnresolvedDatasetException e) {
                 final String name = e.getDatasetName();
                 JsonNode node = null;
-                Map<String, Josson> backupParams = removeDictionaryFunctionParams(true);
                 String findQuery = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
                 if (findQuery != null) {
                     try {
@@ -175,10 +184,7 @@ class JossonsCore {
                     } catch (NoValuePresentException ex) {
                         // ignore
                     } finally {
-                        removeDictionaryFunctionParams(false);
-                        if (backupParams != null) {
-                            datasets.putAll(backupParams);
-                        }
+                        restoreDictionaryFunctionParams(backupParams);
                     }
                 }
                 datasets.put(name, node == null ? null : Josson.create(node));
@@ -193,6 +199,7 @@ class JossonsCore {
         final Set<String> unresolvablePlaceholders = new HashSet<>();
         final Set<String> unresolvedDatasetNames = new HashSet<>();
         final List<String> resolveHistory = new ArrayList<>();
+        final Map<String, Josson> backupParams = backupDictionaryFunctionParams();
         boolean isAntiInject = false;
         for (; ; progress.nextRound()) {
             try {
@@ -216,7 +223,6 @@ class JossonsCore {
                         datasets.put(name, null);
                         return;
                     }
-                    Map<String, Josson> backupParams = removeDictionaryFunctionParams(true);
                     String findQuery = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
                     if (findQuery != null) {
                         try {
@@ -241,10 +247,7 @@ class JossonsCore {
                                 datasets.put(name, null);
                             }
                         }
-                        removeDictionaryFunctionParams(false);
-                    }
-                    if (backupParams != null) {
-                        datasets.putAll(backupParams);
+                        restoreDictionaryFunctionParams(backupParams);
                     }
                 });
                 if (!namedQueries.isEmpty()) {

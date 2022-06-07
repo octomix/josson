@@ -22,12 +22,13 @@ import com.fasterxml.jackson.databind.node.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UnknownFormatConversionException;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
+import static com.octomix.josson.PatternMatcher.*;
 
 /**
  * Structural functions.
@@ -130,29 +131,41 @@ class FuncStructural {
             return null;
         }
         final List<String> paramList = pathAndParams.getValue();
+        Pair<String, String> name;
+        try {
+            name = decomposeNameAndPath(paramList.get(0));
+        } catch (UnknownFormatConversionException e) {
+            name = Pair.of("key", paramList.get(0));
+        }
+        Pair<String, String> grouping;
+        if (paramList.size() > 1) {
+            try {
+                grouping = decomposeNameAndPath(paramList.get(1));
+            } catch (UnknownFormatConversionException e) {
+                grouping = Pair.of("elements", paramList.get(1));
+            }
+        } else {
+            grouping = Pair.of("elements", null);
+        }
         final ArrayNode array = MAPPER.createArrayNode();
         for (int i = 0; i < node.size(); i++) {
-            final JsonNode valueNode = getNodeByPath(node, i, paramList.get(0));
+            final JsonNode valueNode = getNodeByPath(node, i, name.getValue() == null ? name.getKey() : name.getValue());
             if (valueNode != null && valueNode.isValueNode()) {
                 ArrayNode values = null;
                 for (int j = 0; j < array.size(); j++) {
-                    if (array.get(j).get("key").equals(valueNode)) {
-                        values = (ArrayNode) array.get(j).get("values");
+                    if (array.get(j).get(name.getKey()).equals(valueNode)) {
+                        values = (ArrayNode) array.get(j).get(grouping.getKey());
                         break;
                     }
                 }
                 if (values == null) {
                     values = MAPPER.createArrayNode();
                     final ObjectNode entry = Josson.createObjectNode();
-                    entry.set("key", valueNode);
-                    entry.set("values", values);
+                    entry.set(name.getKey(), valueNode);
+                    entry.set(grouping.getKey(), values);
                     array.add(entry);
                 }
-                if (paramList.size() > 1) {
-                    values.add(getNodeByPath(node, i, paramList.get(1)));
-                } else {
-                    values.add(node.get(i));
-                }
+                values.add(grouping.getValue() == null ? node.get(i) : getNodeByPath(node, i, grouping.getValue()));
             }
         }
         return array;

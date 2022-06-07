@@ -245,6 +245,7 @@ class OperationStep {
                 break;
             default:
                 datasets.put(expression, node == null ? null : Josson.create(node));
+                break;
         }
         return node;
     }

@@ -638,6 +638,18 @@ public class UnitTest {
                         "  \"subtotal\" : 100.0\n" +
                         "} ]");
 
+        evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).[]@" +
+                        ".concat('Brand : ',brand,'\n',elements.concat('- ',name,' : Qty=',qty,' Amt=',calc(qty*netPrice),'\n').join()," +
+                        "'> Sub-total : Qty=',elements.sum(qty),' Amt=',elements.sum(calc(qty*netPrice))).@join('\n\n')",
+                "Brand : WinWin\n" +
+                        "- WinWin TShirt Series A - 2022 : Qty=2 Amt=30.0\n" +
+                        "- WinWin Sport Shoe - Super : Qty=1 Amt=100.0\n" +
+                        "> Sub-total : Qty=3.0 Amt=130.0\n" +
+                        "\n" +
+                        "Brand : OctoPlus\n" +
+                        "- OctoPlus Tennis Racket - Star : Qty=1 Amt=140.0\n" +
+                        "> Sub-total : Qty=1.0 Amt=140.0");
+
         // Function "flatten" flatten an array same as the default path step behavior. But more readable.
         evaluate.accept("items@.tags",
                 "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
@@ -1630,8 +1642,8 @@ public class UnitTest {
         // group()
         evaluate.accept("json('[{\"a\":1,\"b\":\"A\"},{\"a\":2,\"b\":\"B\"},{\"a\":3,\"b\":\"C\"},{\"a\":2,\"b\":\"D\"},{\"a\":1,\"b\":\"E\"}]').group(a)",
                 "[ {\n" +
-                        "  \"key\" : 1,\n" +
-                        "  \"values\" : [ {\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"elements\" : [ {\n" +
                         "    \"a\" : 1,\n" +
                         "    \"b\" : \"A\"\n" +
                         "  }, {\n" +
@@ -1639,8 +1651,8 @@ public class UnitTest {
                         "    \"b\" : \"E\"\n" +
                         "  } ]\n" +
                         "}, {\n" +
-                        "  \"key\" : 2,\n" +
-                        "  \"values\" : [ {\n" +
+                        "  \"a\" : 2,\n" +
+                        "  \"elements\" : [ {\n" +
                         "    \"a\" : 2,\n" +
                         "    \"b\" : \"B\"\n" +
                         "  }, {\n" +
@@ -1648,22 +1660,22 @@ public class UnitTest {
                         "    \"b\" : \"D\"\n" +
                         "  } ]\n" +
                         "}, {\n" +
-                        "  \"key\" : 3,\n" +
-                        "  \"values\" : [ {\n" +
+                        "  \"a\" : 3,\n" +
+                        "  \"elements\" : [ {\n" +
                         "    \"a\" : 3,\n" +
                         "    \"b\" : \"C\"\n" +
                         "  } ]\n" +
                         "} ]");
         evaluate.accept("json('[{\"a\":1,\"b\":\"A\"},{\"a\":2,\"b\":\"B\"},{\"a\":3,\"b\":\"C\"},{\"a\":2,\"b\":\"D\"},{\"a\":1,\"b\":\"E\"}]').group(a,b)",
                 "[ {\n" +
-                        "  \"key\" : 1,\n" +
-                        "  \"values\" : [ \"A\", \"E\" ]\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"b\" : [ \"A\", \"E\" ]\n" +
                         "}, {\n" +
-                        "  \"key\" : 2,\n" +
-                        "  \"values\" : [ \"B\", \"D\" ]\n" +
+                        "  \"a\" : 2,\n" +
+                        "  \"b\" : [ \"B\", \"D\" ]\n" +
                         "}, {\n" +
-                        "  \"key\" : 3,\n" +
-                        "  \"values\" : [ \"C\" ]\n" +
+                        "  \"a\" : 3,\n" +
+                        "  \"b\" : [ \"C\" ]\n" +
                         "} ]");
     }
 

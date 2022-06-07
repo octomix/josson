@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.octomix.josson.commons.StringUtils;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -58,25 +57,13 @@ class FuncExecutor {
         final Map<String, String> elements = new LinkedHashMap<>();
         int noNameCount = 0;
         for (String param : paramList) {
-            final String[] values = param.split(":", 2);
-            String name = values[0].trim();
-            String path = null;
-            if (!isCurrentNodePath(name)) {
-                if (values.length == 1) {
-                    path = name;
-                    try {
-                        name = getLastElementName(path);
-                    } catch (UnknownFormatConversionException e) {
-                        name = e.getConversion() + ++noNameCount;
-                    }
-                } else {
-                    checkElementName(name);
-                    if (!StringUtils.isBlank(values[1])) {
-                        path = values[1].trim();
-                    }
-                }
+            Pair<String, String> namePath;
+            try {
+                namePath = decomposeNameAndPath(param);
+            } catch (UnknownFormatConversionException e) {
+                namePath = Pair.of(e.getConversion() + ++noNameCount, param);
             }
-            elements.put(name, path);
+            elements.put(namePath.getKey(), namePath.getValue());
         }
         return elements;
     }

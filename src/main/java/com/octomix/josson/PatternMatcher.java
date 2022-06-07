@@ -510,6 +510,25 @@ class PatternMatcher {
         return steps;
     }
 
+    static Pair<String, String> decomposeNameAndPath(final String input) throws UnknownFormatConversionException {
+        final int len = input.length();
+        final int last = len - 1;
+        for (int pos = 0; pos < len; pos++) {
+            if (input.charAt(pos) == ':') {
+                final String name = trimOf(input, 0, pos);
+                if (name.isEmpty()) {
+                    throw new SyntaxErrorException(input, "Missing name");
+                }
+                checkElementName(name);
+                final String path = trimOf(input, pos + 1, len);
+                return Pair.of(name, path.isEmpty() ? null : path);
+            } else {
+                pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
+            }
+        }
+        return Pair.of(getLastElementName(input), input);
+    }
+
     static List<String> separateXmlTags(final String input) {
         final List<String> tokens = new ArrayList<>();
         final int len = input.length();
@@ -546,10 +565,10 @@ class PatternMatcher {
 
     static String getLastElementName(final String path) {
         final List<String> paths = decomposePaths(path);
-        int i = paths.size() - 1;
-        if (i < 0) {
+        if (paths.isEmpty()) {
             throw new UnknownFormatConversionException("undefined");
         }
+        int i = paths.size() - 1;
         final String[] funcAndArgs = matchFunctionAndArgument(paths.get(i));
         if (funcAndArgs != null && --i < 0) {
             throw new UnknownFormatConversionException("_" + funcAndArgs[0]);
