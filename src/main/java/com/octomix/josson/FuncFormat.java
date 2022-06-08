@@ -140,13 +140,17 @@ class FuncFormat {
     }
 
     static JsonNode funcFormatTexts(final JsonNode node, final String params) {
-        return applyWithParams(node, params, 2, -2, JsonNode::isTextual,
+        return applyWithParams(node, params, 2, -3, null,
                 (data, paramList) -> {
-                    final Object[] valueObjects = valuesAsObjects(node, data.getValue(), paramList);
+                    final String format = getNodeAsText(node, data.getValue(), paramList.get(0));
+                    if (format == null) {
+                        return null;
+                    }
+                    final Object[] valueObjects = valuesAsObjects(node, data.getValue(), paramList.subList(1, paramList.size()));
                     if (valueObjects == null) {
                         return null;
                     }
-                    return TextNode.valueOf(String.format(data.getKey().asText(), valueObjects));
+                    return TextNode.valueOf(String.format(format, valueObjects));
                 });
     }
 

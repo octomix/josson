@@ -345,7 +345,11 @@ Below is the JSON for this tutorial.
 
         {}->customer.name->upperCase() ==>""
 
-6. Function name is case-insensitive. Function parameter can refer to a child node of the step.
+6. Function name is case-insensitive.  
+   If one more parameter is given in addition to a function's maximum number of argument,
+   the function will manipulate the data that evaluated from the 1st parameter.
+   This mechanism does not apply to function that accept unlimited number of arguments.  
+   e.g. upperCase() needs 0 argument. If 1 parameter is given, upperCase() will manipulate that data.
 
         josson.getNode("customer.UPPERCase(name)")
         ==>
@@ -2272,6 +2276,8 @@ Following are some examples of each function.
     'b'.formatTexts('1:%s 2:%s 3:%s', 'a', ?, 'c') ==> "1:a 2:b 3:c"
 
     json('{"A":"a","B":"b"}').formatTexts('1:%s 2:%s 3:%s', A, B, 'c') ==> "1:a 2:b 3:c"
+
+    json('[{"a":1,"b":3},{"a":2,"b":4}]').formatTexts('a=%d b=%d',a,b) ==> [ "a=1 b=3", "a=2 b=4" ]
 
 #### 118. toNumber()
 

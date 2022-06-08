@@ -453,20 +453,23 @@ class JossonCore {
                                            final List<String> keys, final List<String> nextKeys) {
         final ArrayNode array = MAPPER.createArrayNode();
         if (mode == FILTRATE_DIVERT_ALL) {
+            List<String> nextNextKeys = null;
             for (int i = 0; i < node.size(); i++) {
-                final List<String> nextNextKeys = new ArrayList<>();
+                nextNextKeys = new ArrayList<>();
                 final JsonNode addNode = getNodeByKeys(
                         elem == null ? node.get(i) : node.get(i).get(elem), new ArrayList<>(keys), nextNextKeys);
                 if (addNode != null) {
                     array.add(addNode);
                 }
+            }
+            if (nextNextKeys != null) {
                 if (nextKeys.isEmpty() && !nextNextKeys.isEmpty()) {
                     nextKeys.addAll(nextNextKeys);
                 }
+                keys.clear();
+                keys.addAll(nextKeys);
+                nextKeys.clear();
             }
-            keys.clear();
-            keys.addAll(nextKeys);
-            nextKeys.clear();
         } else {
             for (int i = 0; i < node.size(); i++) {
                 final JsonNode addNode = elem == null ? node.get(i) : node.get(i).get(elem);

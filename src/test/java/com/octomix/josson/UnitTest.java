@@ -1200,6 +1200,7 @@ public class UnitTest {
         evaluate.accept("formatTexts('1:%s 2:%s 3:%s', 'a', 'b', 'c')", "1:a 2:b 3:c");
         evaluate.accept("'b'.formatTexts('1:%s 2:%s 3:%s', 'a', ?, 'c')", "1:a 2:b 3:c");
         evaluate.accept("json('{\"A\":\"a\",\"B\":\"b\"}').formatTexts('1:%s 2:%s 3:%s', A, B, 'c')", "1:a 2:b 3:c");
+        evaluate.accept("json('[{\"a\":1,\"b\":3},{\"a\":2,\"b\":4}]').formatTexts('a=%d b=%d',a,b)", "[ \"a=1 b=3\", \"a=2 b=4\" ]");
         // toNumber()
         evaluate.accept("'123'.toNumber()", "123.0");
         evaluate.accept("toNumber('abc')", "0.0");
