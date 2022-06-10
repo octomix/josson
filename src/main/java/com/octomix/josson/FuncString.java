@@ -31,7 +31,7 @@ import static com.octomix.josson.Mapper.MAPPER;
 /**
  * String functions.
  */
-class FuncString {
+final class FuncString {
 
     private FuncString() {
     }
@@ -75,10 +75,9 @@ class FuncString {
                     final StringBuilder sb = new StringBuilder();
                     for (String path : paramList) {
                         final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
-                        if (!nodeHasValue(tryNode)) {
-                            return null;
+                        if (nodeHasValue(tryNode)) {
+                            sb.append(tryNode.asText());
                         }
-                        sb.append(tryNode.asText());
                     }
                     return TextNode.valueOf(sb.toString());
                 });

@@ -2145,7 +2145,6 @@ Following are some examples of each function.
 
     untilInYear('2021-12-12T13:14','2021-03-03T01:00') ==> 0
 
-
 #### 103. localToOffsetDate()
 
     '2022-01-02T03:04:05'.localToOffsetDate() ==> "2022-01-02T03:04:05+08:00"

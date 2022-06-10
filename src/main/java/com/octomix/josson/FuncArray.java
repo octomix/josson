@@ -32,7 +32,7 @@ import static com.octomix.josson.Mapper.MAPPER;
 /**
  * Array functions.
  */
-class FuncArray {
+final class FuncArray {
 
     private FuncArray() {
     }

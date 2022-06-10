@@ -37,7 +37,7 @@ import static com.octomix.josson.PatternMatcher.*;
 /**
  * Common logic to execute functions.
  */
-class FuncExecutor {
+final class FuncExecutor {
 
     private FuncExecutor() {
     }

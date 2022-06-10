@@ -29,7 +29,7 @@ import static com.octomix.josson.JossonCore.*;
 /**
  * Date functions.
  */
-class FuncDate {
+final class FuncDate {
 
     private FuncDate() {
     }

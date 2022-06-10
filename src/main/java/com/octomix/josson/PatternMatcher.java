@@ -28,7 +28,7 @@ import static com.octomix.josson.JossonCore.*;
 /**
  * A syntax analyser.
  */
-class PatternMatcher {
+final class PatternMatcher {
 
     /**
      * Pattern enclosure types.

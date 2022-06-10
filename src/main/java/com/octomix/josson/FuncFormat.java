@@ -35,7 +35,7 @@ import static com.octomix.josson.JossonCore.*;
 /**
  * Format functions.
  */
-class FuncFormat {
+final class FuncFormat {
 
     private FuncFormat() {
     }

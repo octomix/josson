@@ -33,7 +33,7 @@ import static com.octomix.josson.PatternMatcher.*;
 /**
  * Structural functions.
  */
-class FuncStructural {
+final class FuncStructural {
 
     private FuncStructural() {
     }

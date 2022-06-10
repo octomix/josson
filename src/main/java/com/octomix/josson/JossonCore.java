@@ -37,7 +37,7 @@ import static com.octomix.josson.PatternMatcher.*;
 /**
  * Static core functions for Josson.
  */
-class JossonCore {
+final class JossonCore {
 
     static final char QUOTE_SYMBOL = '\'';
 

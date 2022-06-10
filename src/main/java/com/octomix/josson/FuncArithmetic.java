@@ -33,7 +33,7 @@ import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 /**
  * Arithmetic functions.
  */
-class FuncArithmetic {
+final class FuncArithmetic {
 
     private FuncArithmetic() {
     }

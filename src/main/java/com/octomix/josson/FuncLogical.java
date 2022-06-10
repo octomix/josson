@@ -32,7 +32,7 @@ import static com.octomix.josson.JossonCore.*;
 /**
  * Logical functions.
  */
-class FuncLogical {
+final class FuncLogical {
 
     private FuncLogical() {
     }
