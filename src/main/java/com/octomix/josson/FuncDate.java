@@ -17,6 +17,7 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import java.time.temporal.ChronoField;
@@ -104,6 +105,16 @@ class FuncDate {
 
     static JsonNode funcLengthOfYear(final JsonNode node, final String params) {
         return applyTextNodeToInt(node, params, jsonNode -> toLocalDateTime(jsonNode).toLocalDate().lengthOfYear());
+    }
+
+    static JsonNode funcUntil(final JsonNode node, final String params, final ChronoUnit unit) {
+        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final JsonNode later = getNodeByPath(paramNode, data.getValue(), paramList.get(0));
+                    return LongNode.valueOf(toLocalDateTime(dataNode).until(toLocalDateTime(later), unit));
+                });
     }
 
     static JsonNode funcLocalToOffsetDate(final JsonNode node, final String params) {

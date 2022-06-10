@@ -612,6 +612,19 @@ class FuncDispatcher {
 
     private JsonNode applyU(final JsonNode node, final String func) {
         switch (func) {
+            // Date
+            case "untilinsecond":
+                return funcUntil(node, params, ChronoUnit.SECONDS);
+            case "untilinminute":
+                return funcUntil(node, params, ChronoUnit.MINUTES);
+            case "untilinhour":
+                return funcUntil(node, params, ChronoUnit.HOURS);
+            case "untilinday":
+                return funcUntil(node, params, ChronoUnit.DAYS);
+            case "untilinmonth":
+                return funcUntil(node, params, ChronoUnit.MONTHS);
+            case "untilinyear":
+                return funcUntil(node, params, ChronoUnit.YEARS);
             // Format
             case "urldecode":
                 return funcUrlDecode(node, params);

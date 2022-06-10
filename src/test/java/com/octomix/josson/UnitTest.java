@@ -1112,6 +1112,24 @@ public class UnitTest {
         // lengthOfYear()
         evaluate.accept("'2022-01-02T03:04'.lengthOfYear()", "365");
         evaluate.accept("lengthOfYear('2024-02-04T13:14')", "366");
+        // untilInSecond()
+        evaluate.accept("'2020-01-02T23:04'.untilInSecond('2022-06-11T01:02')", "76903080");
+        evaluate.accept("untilInSecond('2021-12-12T13:14','2021-03-03T01:00')", "-24581640");
+        // untilInMinute()
+        evaluate.accept("'2020-01-02T23:04'.untilInMinute('2022-06-11T01:02')", "1281718");
+        evaluate.accept("untilInMinute('2021-12-12T13:14','2021-03-03T01:00')", "-409694");
+        // untilInHour()
+        evaluate.accept("'2020-01-02T23:04'.untilInHour('2022-06-11T01:02')", "21361");
+        evaluate.accept("untilInHour('2021-12-12T13:14','2021-03-03T01:00')", "-6828");
+        // untilInDay()
+        evaluate.accept("'2020-01-02T23:04'.untilInDay('2022-06-11T01:02')", "890");
+        evaluate.accept("untilInDay('2021-12-12T13:14','2021-03-03T01:00')", "-284");
+        // untilInMonth()
+        evaluate.accept("'2020-01-02T23:04'.untilInMonth('2022-06-11T01:02')", "29");
+        evaluate.accept("untilInMonth('2021-12-12T13:14','2021-03-03T01:00')", "-9");
+        // untilInYear()
+        evaluate.accept("'2020-01-02T23:04'.untilInYear('2022-06-11T01:02')", "2");
+        evaluate.accept("untilInYear('2021-12-12T13:14','2021-03-03T01:00')", "0");
         // localToOffsetDate()
         evaluate.accept("'2022-01-02T03:04:05'.localToOffsetDate()", "2022-01-02T03:04:05+08:00");
         evaluate.accept("localToOffsetDate('2022-02-04T13:14:15')", "2022-02-04T13:14:15+08:00");
