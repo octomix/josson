@@ -69,7 +69,7 @@ final class FuncString {
         return applyTextNode(node, params, jsonNode -> StringUtils.capitalize(jsonNode.asText()));
     }
 
-    static JsonNode funcConcat(final JsonNode node, final String params) {
+    static JsonNode funcConcat(final JsonNode node, final String params, final boolean notNull) {
         return applyWithParams(node, params, 1, -3, null,
                 (data, paramList) -> {
                     final StringBuilder sb = new StringBuilder();
@@ -77,6 +77,8 @@ final class FuncString {
                         final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
                         if (nodeHasValue(tryNode)) {
                             sb.append(tryNode.asText());
+                        } else if (notNull) {
+                            return null;
                         }
                     }
                     return TextNode.valueOf(sb.toString());

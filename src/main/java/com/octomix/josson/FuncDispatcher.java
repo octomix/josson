@@ -169,7 +169,9 @@ class FuncDispatcher {
             case "center":
                 return funcPadding(node, params, 0);
             case "concat":
-                return funcConcat(node, params);
+                return funcConcat(node, params, true);
+            case "concatfree":
+                return funcConcat(node, params, false);
             // Structural
             case "coalesce":
                 return funcCoalesce(node, params);
