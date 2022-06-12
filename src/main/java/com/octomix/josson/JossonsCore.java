@@ -53,7 +53,8 @@ class JossonsCore {
             }
             progress.addResolvingFrom(name, query);
             try {
-                dataset = joinDatasets(joinDatasets, dictionaryFinder, dataFinder, progress);
+                dataset = joinDatasets.apply(joinQuery ->
+                        evaluateQueryWithResolverLoop(joinQuery, dictionaryFinder, dataFinder, progress));
             } catch (IllegalArgumentException e) {
                 progress.addStep("Join operation failed - " + e.getMessage());
             }
@@ -61,31 +62,6 @@ class JossonsCore {
         progress.addResolvedDataset(name, dataset);
         datasets.put(name, dataset);
         return true;
-    }
-
-    private Josson joinDatasets(final JoinDatasets datasets, final Function<String, String> dictionaryFinder,
-                                final BiFunction<String, String, Josson> dataFinder, final ResolverProgress progress) {
-        final JsonNode leftNode = evaluateQueryWithResolverLoop(
-                datasets.getLeftDataset().getQuery(), dictionaryFinder, dataFinder, progress);
-        if (leftNode == null) {
-            throw new IllegalArgumentException("unresolvable left side");
-        }
-        if (!leftNode.isContainerNode()) {
-            throw new IllegalArgumentException("left side is not a container node");
-        }
-        final JsonNode rightNode = evaluateQueryWithResolverLoop(
-                datasets.getRightDataset().getQuery(), dictionaryFinder, dataFinder, progress);
-        if (rightNode == null) {
-            throw new IllegalArgumentException("unresolvable right side");
-        }
-        if (!rightNode.isContainerNode()) {
-            throw new IllegalArgumentException("right side is not a container node");
-        }
-        final JsonNode joinedNode = datasets.joinNodes(leftNode, rightNode);
-        if (joinedNode == null) {
-            throw new IllegalArgumentException("invalid data");
-        }
-        return Josson.create(joinedNode);
     }
 
     private void evaluateQueryWithResolver(final String name, final String query, final ResolverProgress progress,
@@ -106,8 +82,7 @@ class JossonsCore {
         }
     }
 
-    private String dictionaryFinderApply(final String name,
-                                         final Function<String, String> dictionaryFinder,
+    private String dictionaryFinderApply(final String name, final Function<String, String> dictionaryFinder,
                                          final BiFunction<String, String, Josson> dataFinder,
                                          final ResolverProgress progress) {
         String query = dictionaryFinder.apply(name);
@@ -338,6 +313,40 @@ class JossonsCore {
             throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, filled).isAntiInject(outIsAntiInject);
         }
         return fillInPlaceholderLoop(filled, isXml, outIsAntiInject);
+    }
+
+    private static List<String> separateXmlTags(final String input) {
+        final List<String> tokens = new ArrayList<>();
+        final int len = input.length();
+        int text = 0;
+        int tag = -1;
+        for (int pos = 0; pos < len; pos++) {
+            switch (input.charAt(pos)) {
+                case '<':
+                    if (text >= 0) {
+                        if (text < pos) {
+                            tokens.add(input.substring(text, pos));
+                        }
+                        text = -1;
+                        tag = pos;
+                    }
+                    break;
+                case '>':
+                    if (tag >= 0) {
+                        pos++;
+                        if (pos == len || input.charAt(pos) != '<') {
+                            tokens.add(input.substring(tag, pos));
+                            tag = -1;
+                            text = pos;
+                        }
+                    }
+                    break;
+            }
+        }
+        if (text >= 0 && text < len) {
+            tokens.add(input.substring(text, len));
+        }
+        return tokens;
     }
 
     private static boolean inInfiniteLoop(final String name, final List<String> resolveHistory) {

@@ -17,6 +17,8 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.text.DateFormat;
@@ -31,5 +33,13 @@ class Mapper extends ObjectMapper {
     Mapper() {
         this.registerModule(new JavaTimeModule());
         this.setDateFormat(DateFormat.getInstance());
+    }
+
+    static ObjectNode cloneObjectNode(ObjectNode objectNode) {
+        return MAPPER.createObjectNode().setAll(objectNode);
+    }
+
+    static ArrayNode cloneArrayNode(ArrayNode arrayNode) {
+        return MAPPER.createArrayNode().addAll(arrayNode);
     }
 }

@@ -66,6 +66,23 @@ final class FuncFormat {
                 });
     }
 
+    static JsonNode funcCoalesce(final JsonNode node, final String params) {
+        return applyWithParams(node, params, 1, -3, null,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    if (dataNode.isValueNode() && !dataNode.isNull()) {
+                        return dataNode;
+                    }
+                    for (String path : paramList) {
+                        final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
+                        if (tryNode != null && !tryNode.isNull()) {
+                            return tryNode;
+                        }
+                    }
+                    return null;
+                });
+    }
+
     static TextNode funcCsv(final JsonNode node, final String params, final boolean showNull) {
         final JsonNode container = getParamArrayOrItselfIsContainer(params, node);
         if (container == null) {

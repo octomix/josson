@@ -22,11 +22,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.octomix.josson.commons.StringUtils;
 
 import java.util.UnknownFormatConversionException;
+import java.util.function.Function;
 
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_COLLECT_ALL;
 import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
 import static com.octomix.josson.JossonCore.getNodeByPath;
-import static com.octomix.josson.Mapper.MAPPER;
+import static com.octomix.josson.Mapper.*;
 import static com.octomix.josson.PatternMatcher.*;
 
 /**
@@ -62,7 +63,17 @@ class JoinDatasets {
         /**
          * Right join many.
          */
-        RIGHT_JOIN_MANY(">>=>");
+        RIGHT_JOIN_MANY(">>=>"),
+
+        /**
+         * Concatenate two objects or two arrays, from right into the left one.
+         */
+        LEFT_CONCATENATE("<<<"),
+
+        /**
+         * Concatenate two objects or two arrays, from left into the right one.
+         */
+        RIGHT_CONCATENATE(">>>");
 
         private final String symbol;
 
@@ -105,52 +116,65 @@ class JoinDatasets {
         }
     }
 
-    Dataset getLeftDataset() {
-        return leftDataset;
-    }
-
-    Dataset getRightDataset() {
-        return rightDataset;
-    }
-
-    JsonNode joinNodes(JsonNode leftNode, JsonNode rightNode) {
+    Josson apply(final Function<String, JsonNode> evaluateQuery) {
+        leftDataset.apply("left", evaluateQuery);
+        rightDataset.apply("right", evaluateQuery);
         switch (operator) {
             case INNER_JOIN_ONE:
-                if (leftNode.isObject() || !rightNode.isObject()) {
+                if (leftDataset.node.isObject() || !rightDataset.node.isObject()) {
                     break;
                 }
-                // fallthrough
+                swapDataset();
+                break;
             case RIGHT_JOIN_ONE:
+                operator = JoinOperator.LEFT_JOIN_ONE;
+                swapDataset();
+                break;
             case RIGHT_JOIN_MANY:
-                final JsonNode swapNode = leftNode;
-                leftNode = rightNode;
-                rightNode = swapNode;
-                final Dataset swapDataset = leftDataset;
-                leftDataset = rightDataset;
-                rightDataset = swapDataset;
-                switch (operator) {
-                    case RIGHT_JOIN_ONE:
-                        operator = JoinOperator.LEFT_JOIN_ONE;
-                        break;
-                    case RIGHT_JOIN_MANY:
-                        operator = JoinOperator.LEFT_JOIN_MANY;
-                        break;
-                }
+                operator = JoinOperator.LEFT_JOIN_MANY;
+                swapDataset();
+                break;
+            case RIGHT_CONCATENATE:
+                operator = JoinOperator.LEFT_CONCATENATE;
+                swapDataset();
+                break;
+        }
+        return Josson.create(joinNodes());
+    }
+
+    private void swapDataset() {
+        final Dataset tempDataset = leftDataset;
+        leftDataset = rightDataset;
+        rightDataset = tempDataset;
+    }
+
+    private JsonNode joinNodes() {
+        if (operator == JoinOperator.LEFT_CONCATENATE) {
+            if (leftDataset.node.isObject() && rightDataset.node.isObject()) {
+                return cloneObjectNode((ObjectNode) leftDataset.node).setAll((ObjectNode) rightDataset.node);
+            } else if (leftDataset.node.isArray() && rightDataset.node.isArray()) {
+                return cloneArrayNode((ArrayNode) leftDataset.node).addAll((ArrayNode) rightDataset.node);
+            }
+            throw new IllegalArgumentException("cannot concatenate an object and an array");
         }
         final ArrayNode rightArray;
-        if (rightNode.isArray()) {
-            rightArray = (ArrayNode) rightNode;
+        if (rightDataset.node.isArray()) {
+            rightArray = (ArrayNode) rightDataset.node;
         } else {
             rightArray = MAPPER.createArrayNode();
-            rightArray.add(rightNode);
+            rightArray.add(rightDataset.node);
         }
-        if (leftNode.isObject()) {
-            return joinToObjectNode((ObjectNode) leftNode, rightArray);
+        if (leftDataset.node.isObject()) {
+            final ObjectNode joinedObject = joinToObjectNode((ObjectNode) leftDataset.node, rightArray);
+            if (joinedObject == null) {
+                throw new IllegalArgumentException("invalid data");
+            }
+            return joinedObject;
         }
         final ArrayNode joinedArray = MAPPER.createArrayNode();
-        for (int i = 0; i < leftNode.size(); i++) {
-            if (leftNode.get(i).isObject()) {
-                final ObjectNode joinedNode = joinToObjectNode((ObjectNode) leftNode.get(i), rightArray);
+        for (int i = 0; i < leftDataset.node.size(); i++) {
+            if (leftDataset.node.get(i).isObject()) {
+                final ObjectNode joinedNode = joinToObjectNode((ObjectNode) leftDataset.node.get(i), rightArray);
                 if (joinedNode != null) {
                     joinedArray.add(joinedNode);
                 }
@@ -175,16 +199,12 @@ class JoinDatasets {
         if (operator == JoinOperator.LEFT_JOIN_MANY) {
             final JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.getSymbol());
             if (rightToJoin != null) {
-                final ObjectNode joinedNode = leftObject.deepCopy();
-                joinedNode.set(arrayName, rightToJoin);
-                return joinedNode;
+                return cloneObjectNode(leftObject).set(arrayName, rightToJoin);
             }
         } else {
             final JsonNode rightToJoin = getNodeByPath(rightArray, path);
             if (rightToJoin != null && rightToJoin.isObject()) {
-                final ObjectNode joinedNode = leftObject.deepCopy();
-                joinedNode.setAll((ObjectNode) rightToJoin);
-                return joinedNode;
+                return cloneObjectNode(leftObject).setAll((ObjectNode) rightToJoin);
             }
             if (operator == JoinOperator.INNER_JOIN_ONE) {
                 return null;
@@ -202,13 +222,11 @@ class JoinDatasets {
 
         private final String[] keys;
 
+        private JsonNode node;
+        
         Dataset(final String query, final String[] keys) {
             this.query = query;
             this.keys = keys;
-        }
-
-        String getQuery() {
-            return query;
         }
 
         String[] getKeys() {
@@ -228,6 +246,16 @@ class JoinDatasets {
             checkElementName(arrayName);
             keys[0] = keys[0].substring(pos + 1);
             return arrayName;
+        }
+
+        private void apply(final String side, final Function<String, JsonNode> evaluateQuery) {
+            node = evaluateQuery.apply(query);
+            if (node == null) {
+                throw new IllegalArgumentException("unresolvable " + side + " side");
+            }
+            if (!node.isContainerNode()) {
+                throw new IllegalArgumentException(side + " side is not a container node");
+            }
         }
     }
 }

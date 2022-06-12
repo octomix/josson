@@ -322,7 +322,14 @@ final class PatternMatcher {
         }
         final JoinDatasets.Dataset leftDataset = matchJoinDatasetQuery(leftQuery);
         final JoinDatasets.Dataset rightDataset = matchJoinDatasetQuery(rightQuery);
-        if (leftDataset.getKeys().length != rightDataset.getKeys().length) {
+        if (operator == JoinDatasets.JoinOperator.LEFT_CONCATENATE
+                || operator == JoinDatasets.JoinOperator.RIGHT_CONCATENATE) {
+            if (leftDataset.getKeys() != null || rightDataset.getKeys() != null) {
+                throw new SyntaxErrorException(input, "Concatenate operation does not need join key");
+            }
+        } else if (leftDataset.getKeys() == null || rightDataset.getKeys() == null) {
+            throw new SyntaxErrorException(input, "Missing join key");
+        } else if (leftDataset.getKeys().length != rightDataset.getKeys().length) {
             throw new SyntaxErrorException(input, "Mismatch key count");
         }
         return new JoinDatasets(leftDataset, operator, rightDataset);
@@ -359,7 +366,7 @@ final class PatternMatcher {
         if (query != null) {
             throw new SyntaxErrorException(input, "Missing '}'", -1);
         }
-        throw new SyntaxErrorException(input, "Invalid join dataset query");
+        return new JoinDatasets.Dataset(input, null);
     }
 
     static List<String> decomposePaths(final String input) {
@@ -527,40 +534,6 @@ final class PatternMatcher {
             }
         }
         return Pair.of(getLastElementName(input), input);
-    }
-
-    static List<String> separateXmlTags(final String input) {
-        final List<String> tokens = new ArrayList<>();
-        final int len = input.length();
-        int text = 0;
-        int tag = -1;
-        for (int pos = 0; pos < len; pos++) {
-            switch (input.charAt(pos)) {
-                case '<':
-                    if (text >= 0) {
-                        if (text < pos) {
-                            tokens.add(input.substring(text, pos));
-                        }
-                        text = -1;
-                        tag = pos;
-                    }
-                    break;
-                case '>':
-                    if (tag >= 0) {
-                        pos++;
-                        if (pos == len || input.charAt(pos) != '<') {
-                            tokens.add(input.substring(tag, pos));
-                            tag = -1;
-                            text = pos;
-                        }
-                    }
-                    break;
-            }
-        }
-        if (text >= 0 && text < len) {
-            tokens.add(input.substring(text, len));
-        }
-        return tokens;
     }
 
     static String getLastElementName(final String path) {

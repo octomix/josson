@@ -45,10 +45,6 @@ class FuncDispatcher {
         this.params = params;
     }
 
-    String getFuncName() {
-        return funcName;
-    }
-
     private class UnsupportedFunctionException extends UnsupportedOperationException {
         UnsupportedFunctionException() {
             super(String.format("Unsupported function %s()", funcName));
@@ -97,7 +93,7 @@ class FuncDispatcher {
                 return funcAbs(node, params);
             // Array
             case "avg":
-                return funcAggregate(node, funcName, params);
+                return funcAggregate(node, func, params);
             // Date
             case "ampmofday":
                 return funcAmPmOfDay(node, params);
@@ -148,7 +144,7 @@ class FuncDispatcher {
                 return funcCeil(node, params);
             // Array
             case "count":
-                return funcAggregate(node, funcName, params);
+                return funcAggregate(node, func, params);
             // Format
             case "casevalue":
                 return funcCaseValue(node, params);
@@ -548,7 +544,7 @@ class FuncDispatcher {
             case "sort":
                 return funcSort(node, params);
             case "sum":
-                return funcAggregate(node, funcName, params);
+                return funcAggregate(node, func, params);
             // Date
             case "second":
                 return funcChronometry(node, params, ChronoField.SECOND_OF_MINUTE);

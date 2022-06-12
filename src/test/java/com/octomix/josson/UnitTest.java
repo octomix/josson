@@ -792,6 +792,10 @@ public class UnitTest {
         evaluate.accept("4.center('a', ?, 'yz')", "yayz");
         // concat()
         evaluate.accept("'Hello'.concat(2022, '... ', ?, ' World!')", "2022... Hello World!");
+        evaluate.accept("json('{\"a\":\"Hello\",\"c\":\" World!\"}').concat(a,b,c)", "!unresolvable!");
+        // concatFree()
+        evaluate.accept("'Hello'.concatFree(2022, '... ', ?, ' World!')", "2022... Hello World!");
+        evaluate.accept("json('{\"a\":\"Hello\",\"c\":\" World!\"}').concatFree(a,b,c)", "Hello World!");
         // keepAfter()
         evaluate.accept("'abcxmnxyz'.keepAfter('x')", "mnxyz");
         evaluate.accept("'abcxmnxyz'.keepAfter(?, 'X')", "*empty*");

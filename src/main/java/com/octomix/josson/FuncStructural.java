@@ -27,7 +27,7 @@ import java.util.UnknownFormatConversionException;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
-import static com.octomix.josson.Mapper.MAPPER;
+import static com.octomix.josson.Mapper.*;
 import static com.octomix.josson.PatternMatcher.*;
 
 /**
@@ -36,23 +36,6 @@ import static com.octomix.josson.PatternMatcher.*;
 final class FuncStructural {
 
     private FuncStructural() {
-    }
-
-    static JsonNode funcCoalesce(final JsonNode node, final String params) {
-        return applyWithParams(node, params, 1, -3, null,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    if (dataNode.isValueNode() && !dataNode.isNull()) {
-                        return dataNode;
-                    }
-                    for (String path : paramList) {
-                        final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
-                        if (tryNode != null && !tryNode.isNull()) {
-                            return tryNode;
-                        }
-                    }
-                    return null;
-                });
     }
 
     static JsonNode funcEntries(JsonNode node, final String params) {
@@ -75,13 +58,13 @@ final class FuncStructural {
     static JsonNode funcField(final JsonNode node, final String params) {
         final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
         if (node.isObject()) {
-            return funcMap(node.deepCopy(), node, args, -1);
+            return funcMap(cloneObjectNode((ObjectNode) node), node, args, -1);
         }
         if (node.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 final JsonNode elem = node.get(i);
-                array.add(elem.isObject() ? funcMap(elem.deepCopy(), node, args, i) : null);
+                array.add(elem.isObject() ? funcMap(cloneObjectNode((ObjectNode) elem), node, args, i) : null);
             }
             return array;
         }
