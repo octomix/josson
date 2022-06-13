@@ -26,6 +26,7 @@ import java.util.function.BiFunction;
 import static com.octomix.josson.JossonCore.asBoolean;
 import static com.octomix.josson.JossonsCore.antiInjectionDecode;
 import static com.octomix.josson.PatternMatcher.decomposeStatement;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Abstract class of logical operations on a stack of OperationStep.
@@ -85,7 +86,7 @@ abstract class OperationStack {
                 }
                 result = true;
             }
-            if (result && !"".equals(step.getExpression())) {
+            if (result && !EMPTY.equals(step.getExpression())) {
                 node = resolveFrom(step, arrayIndex);
                 if (step.getOperator() == Operator.NOT) {
                     result = !asBoolean(node);

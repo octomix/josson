@@ -189,6 +189,9 @@ class FuncDispatcher {
                 return funcChronometry(node, params, ChronoField.DAY_OF_YEAR);
             case "dayend":
                 return funcDayEnd(node, params);
+            // Format
+            case "default":
+                return funcDefault(node, params);
             // String
             case "doublequote":
                 return funcDoubleQuote(node, params);

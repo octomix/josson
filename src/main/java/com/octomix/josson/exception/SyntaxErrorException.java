@@ -6,6 +6,11 @@ package com.octomix.josson.exception;
 public class SyntaxErrorException extends IllegalArgumentException {
 
     /**
+     * The error is at the end of the statement.
+     */
+    public static final int POS_AT_THE_END = -1;
+
+    /**
      * Thrown to indicate that there is a syntax error in a query statement.
      *
      * @param statement the invalid statement
@@ -32,7 +37,7 @@ public class SyntaxErrorException extends IllegalArgumentException {
      * @param pos the position where the error occur
      */
     public SyntaxErrorException(final String statement, final String message, final int pos) {
-        super(String.format("%s %s: %s", message, pos == -1 ? "at the end" : "at position " + pos, statement));
+        super(String.format("%s %s: %s", message, pos == POS_AT_THE_END ? "at the end" : "at position " + pos, statement));
     }
 
     /**

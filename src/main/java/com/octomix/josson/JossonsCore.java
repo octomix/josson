@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static com.octomix.josson.FuncExecutor.UNLIMITED_WITH_PATH;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
 import static com.octomix.josson.commons.StringEscapeUtils.unescapeXml;
@@ -94,7 +95,7 @@ class JossonsCore {
             }
             progress.addResolvingFrom(name, query);
             final ArrayNode params = MAPPER.createArrayNode();
-            for (String param : decomposeFunctionParameters(funcAndArgs[1], 0, -1)) {
+            for (String param : decomposeFunctionParameters(funcAndArgs[1], 0, UNLIMITED_WITH_PATH)) {
                 params.add(evaluateQueryWithResolverLoop(param, dictionaryFinder, dataFinder, progress));
             }
             removeDictionaryFunctionParams();

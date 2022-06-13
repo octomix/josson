@@ -28,6 +28,7 @@ import java.util.Set;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Array functions.
@@ -196,7 +197,7 @@ final class FuncArray {
             }
         }
         final String delimiter = pathAndParams.getValue().size() > 0
-                ? getNodeAsText(node, -1, pathAndParams.getValue().get(0)) : "";
+                ? getNodeAsText(node, NON_ARRAY_INDEX, pathAndParams.getValue().get(0)) : EMPTY;
         final List<String> texts = new ArrayList<>();
         for (int i = 0; i < node.size(); i++) {
             final JsonNode valueNode = node.get(i);
@@ -288,10 +289,10 @@ final class FuncArray {
         }
         final int size = node.size();
         int start = pathAndParams.getValue().size() > 0 && !pathAndParams.getValue().get(0).isEmpty()
-                ? getNodeAsInt(node, -1, pathAndParams.getValue().get(0)) : 0;
+                ? getNodeAsInt(node, NON_ARRAY_INDEX, pathAndParams.getValue().get(0)) : 0;
         int end = pathAndParams.getValue().size() > 1 && !pathAndParams.getValue().get(1).isEmpty()
-                ? getNodeAsInt(node, -1, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
-        int step = pathAndParams.getValue().size() > 2 ? getNodeAsInt(node, -1, pathAndParams.getValue().get(2)) : 1;
+                ? getNodeAsInt(node, NON_ARRAY_INDEX, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
+        int step = pathAndParams.getValue().size() > 2 ? getNodeAsInt(node, NON_ARRAY_INDEX, pathAndParams.getValue().get(2)) : 1;
         start = start >= 0 ? start : size + start;
         start = start < 0 ? 0 : Math.min(start, size);
         end = end >= 0 ? end : size + end;

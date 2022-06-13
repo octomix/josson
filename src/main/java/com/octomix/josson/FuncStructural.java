@@ -56,9 +56,9 @@ final class FuncStructural {
     }
 
     static JsonNode funcField(final JsonNode node, final String params) {
-        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
+        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
         if (node.isObject()) {
-            return funcMap(cloneObjectNode((ObjectNode) node), node, args, -1);
+            return funcMap(cloneObjectNode((ObjectNode) node), node, args, NON_ARRAY_INDEX);
         }
         if (node.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
@@ -79,7 +79,7 @@ final class FuncStructural {
                 return null;
             }
         }
-        final int levels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, -1, pathAndParams.getValue().get(0)) : 1;
+        final int levels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, NON_ARRAY_INDEX, pathAndParams.getValue().get(0)) : 1;
         if (!node.isArray() || levels < 1) {
             return node;
         }
@@ -178,7 +178,7 @@ final class FuncStructural {
         }
         final ArrayNode array = MAPPER.createArrayNode();
         funcKeys(array, node,
-                pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, -1, pathAndParams.getValue().get(0)) : 1);
+                pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, NON_ARRAY_INDEX, pathAndParams.getValue().get(0)) : 1);
         return array;
     }
 
@@ -192,9 +192,9 @@ final class FuncStructural {
     }
 
     static JsonNode funcMap(final JsonNode node, final String params) {
-        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, -1));
+        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
         if (!node.isArray()) {
-            return funcMap(MAPPER.createObjectNode(), node, args, -1);
+            return funcMap(MAPPER.createObjectNode(), node, args, NON_ARRAY_INDEX);
         }
         final ArrayNode array = MAPPER.createArrayNode();
         for (int i = 0; i < node.size(); i++) {

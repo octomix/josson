@@ -33,11 +33,22 @@ import java.util.function.Predicate;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Common logic to execute functions.
  */
 final class FuncExecutor {
+
+    /**
+     * Unlimited number of parameters with optional data path.
+     */
+    static final int UNLIMITED_WITH_PATH = -1;
+
+    /**
+     * Unlimited number of parameters and not accept data path.
+     */
+    static final int UNLIMITED_AND_NO_PATH = -2;
 
     private FuncExecutor() {
     }
@@ -49,7 +60,7 @@ final class FuncExecutor {
 
     static Pair<String, List<String>> getParamPathAndStrings(final String params, final int min, final int max) {
         final List<String> paramList = decomposeFunctionParameters(params, min, max + 1);
-        final String path = max < -2 ? "" : paramList.size() > max ? paramList.remove(0) : null;
+        final String path = max <= UNLIMITED_AND_NO_PATH ? EMPTY : paramList.size() > max ? paramList.remove(0) : null;
         return Pair.of(path, paramList);
     }
 
@@ -69,7 +80,7 @@ final class FuncExecutor {
     }
 
     static JsonNode getParamArrayOrItselfIsContainer(final String params, final JsonNode node) {
-        final List<String> paramList = decomposeFunctionParameters(params, 0, -1);
+        final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
             if (node.isContainerNode()) {
                 return node;
@@ -80,7 +91,7 @@ final class FuncExecutor {
     }
 
     static ArrayNode getParamArrayOrItself(final String params, final JsonNode node) {
-        final List<String> paramList = decomposeFunctionParameters(params, 0, -1);
+        final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
             if (node.isArray()) {
                 return (ArrayNode) node;
@@ -177,11 +188,11 @@ final class FuncExecutor {
         if (target.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < target.size(); i++) {
-                array.add(applyAction(target.get(i), path == null ? -1 : i, isValid, action, paramList));
+                array.add(applyAction(target.get(i), path == null ? NON_ARRAY_INDEX : i, isValid, action, paramList));
             }
             return array;
         }
-        return applyAction(target, path == null ? -1 : 0, isValid, action, paramList);
+        return applyAction(target, path == null ? NON_ARRAY_INDEX : 0, isValid, action, paramList);
     }
 
     private static JsonNode applyAction(final JsonNode node, final int index, final Predicate<JsonNode> isValid,
@@ -192,7 +203,7 @@ final class FuncExecutor {
 
     static JsonNode applyWithArrayNode(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
                                        final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
-        final ArrayNode paramArray = getParamArray(decomposeFunctionParameters(params, 1, -1), node);
+        final ArrayNode paramArray = getParamArray(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH), node);
         if (paramArray.isEmpty()) {
             return null;
         }

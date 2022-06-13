@@ -1206,6 +1206,11 @@ public class UnitTest {
         evaluate.accept("4.cycleValue('a','b','c','d')", "a");
         evaluate.accept("-1.cycleValue('a','b','c','d')", "d");
         evaluate.accept("-6.cycleValue('a','b','c','d')", "c");
+        // default()
+        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x)", "*empty*");
+        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x,'Hi')", "Hi");
+        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x,null,c,a,b)", "1");
+        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x,null,c,b,a)", "B");
         // formatDate()
         evaluate.accept("'2022-01-02T03:04:05'.formatDate('dd/MM/yyyy HH:mm:ss')", "02/01/2022 03:04:05");
         evaluate.accept("'2022-01-02T03:04:05'.formatDate(?, 'yyyy-MM-dd')", "2022-01-02");

@@ -44,7 +44,7 @@ final class FuncArithmetic {
     }
 
     static JsonNode funcCalc(final JsonNode node, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 1, -1);
+        final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH);
         String calc = paramList.remove(0);
         final Map<String, String> args = getParamNamePath(paramList);
         if (calc.contains(CURRENT_NODE)) {
@@ -59,7 +59,7 @@ final class FuncArithmetic {
             }
             return array;
         }
-        return funcCalc(node, expression, args, -1);
+        return funcCalc(node, expression, args, NON_ARRAY_INDEX);
     }
 
     private static DoubleNode funcCalc(final JsonNode node, final Expression expression,

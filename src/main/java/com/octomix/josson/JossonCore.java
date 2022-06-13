@@ -33,6 +33,7 @@ import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Static core functions for Josson.
@@ -64,6 +65,8 @@ final class JossonCore {
     private static Locale locale = Locale.getDefault();
 
     private static ZoneId zoneId = ZoneId.systemDefault();
+
+    static final int NON_ARRAY_INDEX = -1;
 
     private JossonCore() {
     }
@@ -116,7 +119,7 @@ final class JossonCore {
     static JsonNode getImplicitVariable(final String name) {
         if (name.charAt(0) == '$') {
             switch (StringUtils.stripStart(name.substring(1), null).toLowerCase()) {
-                case "":
+                case EMPTY:
                     return BooleanNode.TRUE;
                 case "now":
                     return TextNode.valueOf(LocalDateTime.now().toString());
@@ -206,7 +209,7 @@ final class JossonCore {
 
     static String getNodeAsText(JsonNode node, final int index, final String jossonPath) {
         node = getNodeByPath(node, index, jossonPath);
-        return node == null ? "" : node.asText();
+        return node == null ? EMPTY : node.asText();
     }
 
     static int getNodeAsInt(JsonNode node, final int index, final String jossonPath) {
@@ -225,7 +228,7 @@ final class JossonCore {
     }
 
     static JsonNode getNodeByPath(final JsonNode node, final String jossonPath) {
-        return getNodeByPath(node, -1, jossonPath);
+        return getNodeByPath(node, NON_ARRAY_INDEX, jossonPath);
     }
 
     static JsonNode getNodeByPath(JsonNode node, final int index, final String jossonPath) {
@@ -310,7 +313,7 @@ final class JossonCore {
             return "-" + toAlphabetIndex(-number - 1, base);
         }
         final int quot = number / 26;
-        return (quot == 0 ? "" : toAlphabetIndex(quot - 1, base)) + (char) (base + number % 26);
+        return (quot == 0 ? EMPTY : toAlphabetIndex(quot - 1, base)) + (char) (base + number % 26);
     }
 
     private static String toRomanIndex(int number, final boolean isUpper) {

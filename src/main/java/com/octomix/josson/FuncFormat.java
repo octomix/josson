@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Format functions.
@@ -49,7 +50,7 @@ final class FuncFormat {
     }
 
     static JsonNode funcCaseValue(final JsonNode node, final String params) {
-        return applyWithParams(node, params, 2, -3, JsonNode::isValueNode,
+        return applyWithParams(node, params, 2, UNLIMITED_AND_NO_PATH, JsonNode::isValueNode,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
                     final int last = paramList.size() - 1;
@@ -67,10 +68,10 @@ final class FuncFormat {
     }
 
     static JsonNode funcCoalesce(final JsonNode node, final String params) {
-        return applyWithParams(node, params, 1, -3, null,
+        return applyWithParams(node, params, 1, UNLIMITED_AND_NO_PATH, null,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
-                    if (dataNode.isValueNode() && !dataNode.isNull()) {
+                    if (nodeHasValue(dataNode)) {
                         return dataNode;
                     }
                     for (String path : paramList) {
@@ -101,7 +102,7 @@ final class FuncFormat {
                 if (elem.isContainerNode()) {
                     funcCsvCollectValues(values, elem, showNull);
                 } else {
-                    values.add(showNull || !elem.isNull() ? elem : TextNode.valueOf(""));
+                    values.add(showNull || !elem.isNull() ? elem : TextNode.valueOf(EMPTY));
                 }
             });
             return;
@@ -111,7 +112,7 @@ final class FuncFormat {
             if (tryNode.isContainerNode()) {
                 funcCsvCollectValues(values, tryNode, showNull);
             } else {
-                values.add(showNull || !tryNode.isNull() ? tryNode : TextNode.valueOf(""));
+                values.add(showNull || !tryNode.isNull() ? tryNode : TextNode.valueOf(EMPTY));
             }
         }
     }
@@ -122,6 +123,19 @@ final class FuncFormat {
                     final int size = paramArray.size();
                     final int index = jsonNode.asInt() % size;
                     return paramArray.get(index < 0 ? index + size : index);
+                });
+    }
+
+    static JsonNode funcDefault(final JsonNode node, final String params) {
+        return applyWithParams(node, params, 0, UNLIMITED_AND_NO_PATH, null,
+                (data, paramList) -> {
+                    for (String path : paramList) {
+                        final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
+                        if (tryNode != null && !tryNode.isNull()) {
+                            return tryNode;
+                        }
+                    }
+                    return TextNode.valueOf(EMPTY);
                 });
     }
 
@@ -157,7 +171,7 @@ final class FuncFormat {
     }
 
     static JsonNode funcFormatTexts(final JsonNode node, final String params) {
-        return applyWithParams(node, params, 2, -3, null,
+        return applyWithParams(node, params, 2, UNLIMITED_AND_NO_PATH, null,
                 (data, paramList) -> {
                     final String format = getNodeAsText(node, data.getValue(), paramList.get(0));
                     if (format == null) {

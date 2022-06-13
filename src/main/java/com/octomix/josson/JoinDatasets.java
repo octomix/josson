@@ -29,6 +29,7 @@ import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
 import static com.octomix.josson.JossonCore.getNodeByPath;
 import static com.octomix.josson.Mapper.*;
 import static com.octomix.josson.PatternMatcher.*;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Join datasets operations.
@@ -191,9 +192,9 @@ class JoinDatasets {
                 return null;
             }
             relationalOps[j] = rightDataset.keys[j] + Operator.EQ.getSymbol()
-                    + (leftValue.isTextual() ? QUOTE_SYMBOL : "")
+                    + (leftValue.isTextual() ? QUOTE_SYMBOL : EMPTY)
                     + leftValue.asText().replace("'", "''")
-                    + (leftValue.isTextual() ? QUOTE_SYMBOL : "");
+                    + (leftValue.isTextual() ? QUOTE_SYMBOL : EMPTY);
         }
         final String path = String.format("[%s]", StringUtils.join(relationalOps, Operator.AND.getSymbol()));
         if (operator == JoinOperator.LEFT_JOIN_MANY) {

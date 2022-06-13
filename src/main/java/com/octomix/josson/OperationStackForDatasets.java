@@ -24,6 +24,7 @@ import java.util.Map;
 
 import static com.octomix.josson.JossonCore.asBoolean;
 import static com.octomix.josson.PatternMatcher.decomposeTernarySteps;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Logical operations on a stack of OperationStep for datasets.
@@ -66,7 +67,7 @@ class OperationStackForDatasets extends OperationStack {
             try {
                 node = evaluateStatement(step.getStatement());
             } catch (UnresolvedDatasetException e) {
-                if ("".equals(step.getIfTrueValue())) {
+                if (EMPTY.equals(step.getIfTrueValue())) {
                     continue;
                 }
                 throw e;
@@ -84,6 +85,6 @@ class OperationStackForDatasets extends OperationStack {
                 }
             }
         }
-        return TextNode.valueOf("");
+        return TextNode.valueOf(EMPTY);
     }
 }

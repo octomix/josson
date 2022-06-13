@@ -18,6 +18,8 @@ package com.octomix.josson.exception;
 
 import java.util.Set;
 
+import static com.octomix.josson.commons.StringUtils.EMPTY;
+
 /**
  * Thrown to indicate that Jossons cannot resolve all the placeholders.
  */
@@ -50,8 +52,8 @@ public class NoValuePresentException extends Exception {
      */
     public NoValuePresentException(final Set<String> datasetNames, final Set<String> placeholders,
                                    final String content) {
-        super((datasetNames == null ? "" : String.format("Unresolved datasets %s.", datasetNames))
-            + (placeholders == null ? "" : String.format("Unresolvable placeholders %s.", placeholders)));
+        super((datasetNames == null ? EMPTY : String.format("Unresolved datasets %s.", datasetNames))
+            + (placeholders == null ? EMPTY : String.format("Unresolvable placeholders %s.", placeholders)));
         this.datasetNames = datasetNames;
         this.placeholders = placeholders;
         this.content = content;

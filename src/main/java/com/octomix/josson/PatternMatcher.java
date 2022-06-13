@@ -24,6 +24,8 @@ import java.util.*;
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
+import static com.octomix.josson.exception.SyntaxErrorException.POS_AT_THE_END;
 
 /**
  * A syntax analyser.
@@ -169,7 +171,7 @@ final class PatternMatcher {
             }
             pos = skipEnclosure(input, pos, last, Enclosure.STRING_LITERAL);
         }
-        throw new SyntaxErrorException(input, String.format("Missing '%c'", expectedEnd), -1);
+        throw new SyntaxErrorException(input, String.format("Missing '%c'", expectedEnd), POS_AT_THE_END);
     }
 
     private static int skipDatasetQuery(final String input, int pos, final int last) {
@@ -240,7 +242,7 @@ final class PatternMatcher {
                 case '[':
                     final char lastChar = query.charAt(query.length() - 1);
                     if (firstChar == '{' && lastChar == '}' || firstChar == '[' && lastChar == ']') {
-                        return new String[]{name, arrayEnd == 0 ? "" : "[]", query};
+                        return new String[]{name, arrayEnd == 0 ? EMPTY : "[]", query};
                     }
             }
         }
@@ -364,7 +366,7 @@ final class PatternMatcher {
             pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
         }
         if (query != null) {
-            throw new SyntaxErrorException(input, "Missing '}'", -1);
+            throw new SyntaxErrorException(input, "Missing '}'", POS_AT_THE_END);
         }
         return new JoinDatasets.Dataset(input, null);
     }
@@ -421,7 +423,7 @@ final class PatternMatcher {
             int beg = pos;
             while ("=!<>&|~".indexOf(input.charAt(pos)) >= 0) {
                 if (pos++ == last) {
-                    throw new SyntaxErrorException(input, "Invalid syntax", -1);
+                    throw new SyntaxErrorException(input, "Invalid syntax", POS_AT_THE_END);
                 }
             }
             final int end = pos - 1;
@@ -476,7 +478,7 @@ final class PatternMatcher {
         }
         if (min > 0 && params.size() < min) {
             throw new SyntaxErrorException(input,
-                    String.format("Expected %s%d arguments", min == max ? "" : " at least ", min));
+                    String.format("Expected %s%d arguments", min == max ? EMPTY : "at least ", min));
         }
         for (int i = params.size() - 1; i >= 0; i--) {
             if (params.get(i).isEmpty()) {

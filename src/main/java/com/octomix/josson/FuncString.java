@@ -27,6 +27,7 @@ import java.util.function.Function;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * String functions.
@@ -70,7 +71,7 @@ final class FuncString {
     }
 
     static JsonNode funcConcat(final JsonNode node, final String params, final boolean notNull) {
-        return applyWithParams(node, params, 1, -3, null,
+        return applyWithParams(node, params, 1, UNLIMITED_AND_NO_PATH, null,
                 (data, paramList) -> {
                     final StringBuilder sb = new StringBuilder();
                     for (String path : paramList) {
@@ -103,7 +104,7 @@ final class FuncString {
                             : (ignoreCase
                                 ? StringUtils.indexOfIgnoreCase(str, param)
                                 : StringUtils.indexOf(str, param));
-                    return pos < 0 ? "" : after ? str.substring(pos + param.length()) : str.substring(0, pos);
+                    return pos < 0 ? EMPTY : after ? str.substring(pos + param.length()) : str.substring(0, pos);
                 });
     }
 
@@ -118,7 +119,7 @@ final class FuncString {
 
     static JsonNode funcNotBlankOrEmpty(final JsonNode node, final String params,
                                         final Function<CharSequence, Boolean> transform) {
-        return applyWithParams(node, params, 1, -3, null,
+        return applyWithParams(node, params, 1, UNLIMITED_AND_NO_PATH, null,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
                     if (dataNode.isTextual() && transform.apply(dataNode.asText())) {
