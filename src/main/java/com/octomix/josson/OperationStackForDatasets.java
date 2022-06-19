@@ -63,14 +63,9 @@ class OperationStackForDatasets extends OperationStack {
 
     JsonNode evaluateQuery(final String query) throws UnresolvedDatasetException {
         for (TernaryStep step : decomposeTernarySteps(query)) {
-            final JsonNode node;
-            try {
-                node = evaluateStatement(step.getStatement());
-            } catch (UnresolvedDatasetException e) {
-                if (EMPTY.equals(step.getIfTrueValue())) {
-                    continue;
-                }
-                throw e;
+            final JsonNode node = evaluateStatement(step.getStatement());
+            if ((node == null || node.isNull()) && EMPTY.equals(step.getIfTrueValue())) {
+                continue;
             }
             if (step.getIfTrueValue() == null) {
                 return node;
