@@ -66,18 +66,17 @@ class JossonsCore {
     }
 
     private void evaluateQueryWithResolver(final String name, final String query, final ResolverProgress progress,
-                                           final Set<String> unresolvablePlaceholders,
                                            final Set<String> unresolvedDatasetNames) {
         try {
             final JsonNode node = new OperationStackForDatasets(datasets).evaluateQuery(query);
             if (node == null) {
-                unresolvablePlaceholders.add(name);
                 datasets.put(name, null);
+                progress.addUnresolvableStep(name);
             } else {
                 datasets.put(name, Josson.create(node));
-                unresolvedDatasetNames.remove(name);
                 progress.addResolvedNode(name, node);
             }
+            unresolvedDatasetNames.remove(name);
         } catch (UnresolvedDatasetException e) {
             unresolvedDatasetNames.add(e.getDatasetName());
         }
@@ -206,8 +205,7 @@ class JossonsCore {
                             if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
                                 unresolvedDatasetNames.remove(name);
                                 if (datasets.containsKey(DICTIONARY_FUNCTION_PARAMS)) {
-                                    evaluateQueryWithResolver(name, findQuery, progress,
-                                            unresolvablePlaceholders, unresolvedDatasetNames);
+                                    evaluateQueryWithResolver(name, findQuery, progress, unresolvedDatasetNames);
                                 } else {
                                     namedQueries.put(name, findQuery);
                                 }
@@ -229,7 +227,7 @@ class JossonsCore {
                 if (!namedQueries.isEmpty()) {
                     progress.addStep("Resolving " + namedQueries);
                     namedQueries.forEach((name, findQuery) ->
-                        evaluateQueryWithResolver(name, findQuery, progress, unresolvablePlaceholders, unresolvedDatasetNames));
+                        evaluateQueryWithResolver(name, findQuery, progress, unresolvedDatasetNames));
                 }
             }
         }
