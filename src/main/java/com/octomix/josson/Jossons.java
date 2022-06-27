@@ -235,7 +235,7 @@ public class Jossons extends JossonsCore {
                                               final BiFunction<String, String, Josson> dataFinder,
                                               final ResolverProgress progress) {
         final JsonNode node = evaluateQueryWithResolverLoop(query, dictionaryFinder, dataFinder, progress);
-        progress.addQueryResult(node);
+        progress.addResolvedNode("query result", node);
         return node;
     }
 

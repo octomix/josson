@@ -366,8 +366,7 @@ final class JossonCore {
             }
             matchedNodes.add(node.get(Integer.parseInt(statement)));
             return matchedNodes;
-        } catch (NumberFormatException e) {
-            // continue
+        } catch (NumberFormatException ignore) {
         }
         final OperationStack opStack = new OperationStackForJsonNode(node);
         for (int i = 0; i < node.size(); i++) {
@@ -386,8 +385,7 @@ final class JossonCore {
             try {
                 node = toValueNode(keys.get(0));
                 keys.remove(0);
-            } catch (NumberFormatException e) {
-                // continue
+            } catch (NumberFormatException ignore) {
             }
             while (node != null && !keys.isEmpty()) {
                 final List<String> nextKeys = new ArrayList<>();

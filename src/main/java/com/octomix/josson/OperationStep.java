@@ -206,8 +206,7 @@ class OperationStep {
     JsonNode evaluateExpression(final Map<String, Josson> datasets) throws UnresolvedDatasetException {
         try {
             return toValueNode(expression);
-        } catch (NumberFormatException e) {
-            // continue
+        } catch (NumberFormatException ignore) {
         }
         if (datasets.containsKey(expression)) {
             final Josson josson = datasets.get(expression);

@@ -44,7 +44,7 @@ class JossonsCore {
         Josson dataset = null;
         final String[] tokens = matchDbQuery(query);
         if (tokens != null) {
-            progress.addResolvingFrom(name, query);
+            progress.addResolvingStep(name, query);
             final String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
             dataset = dataFinder.apply(collectionName, tokens[2]);
         } else {
@@ -52,30 +52,26 @@ class JossonsCore {
             if (joinDatasets == null) {
                 return false;
             }
-            progress.addResolvingFrom(name, query);
+            progress.addResolvingStep(name, query);
             try {
                 dataset = joinDatasets.apply(joinQuery ->
                         evaluateQueryWithResolverLoop(joinQuery, dictionaryFinder, dataFinder, progress));
             } catch (IllegalArgumentException e) {
-                progress.addStep("Join operation failed - " + e.getMessage());
+                progress.addMessageStep("Join operation failed - " + e.getMessage());
             }
         }
-        progress.addResolvedDataset(name, dataset);
         datasets.put(name, dataset);
+        progress.addResolvedDataset(name, dataset);
         return true;
     }
 
     private void evaluateQueryWithResolver(final String name, final String query, final ResolverProgress progress,
                                            final Set<String> unresolvedDatasetNames) {
+        progress.addResolvingStep(name, query);
         try {
             final JsonNode node = new OperationStackForDatasets(datasets).evaluateQuery(query);
-            if (node == null) {
-                datasets.put(name, null);
-                progress.addUnresolvableStep(name);
-            } else {
-                datasets.put(name, Josson.create(node));
-                progress.addResolvedNode(name, node);
-            }
+            datasets.put(name, node == null ? null : Josson.create(node));
+            progress.addResolvedNode(name, node);
             unresolvedDatasetNames.remove(name);
         } catch (UnresolvedDatasetException e) {
             unresolvedDatasetNames.add(e.getDatasetName());
@@ -92,7 +88,6 @@ class JossonsCore {
                 datasets.put(name, null);
                 return null;
             }
-            progress.addResolvingFrom(name, query);
             final ArrayNode params = MAPPER.createArrayNode();
             for (String param : decomposeFunctionParameters(funcAndArgs[1], 0, UNLIMITED_WITH_PATH)) {
                 params.add(evaluateQueryWithResolverLoop(param, dictionaryFinder, dataFinder, progress));
@@ -154,10 +149,9 @@ class JossonsCore {
                         if (buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
                             continue;
                         }
-                        progress.addResolvingFrom(name, findQuery);
+                        progress.addResolvingStep(name, findQuery);
                         node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
-                    } catch (NoValuePresentException ex) {
-                        // ignore
+                    } catch (NoValuePresentException ignore) {
                     } finally {
                         restoreDictionaryFunctionParams(backupParams);
                     }
@@ -216,19 +210,14 @@ class JossonsCore {
                                         .filter(s -> !namedQueries.containsKey(s))
                                         .forEach(unresolvedDatasetNames::add);
                             } else {
-                                unresolvablePlaceholders.addAll(ex.getPlaceholders());
-                                unresolvablePlaceholders.add(name);
                                 datasets.put(name, null);
                             }
                         }
                         restoreDictionaryFunctionParams(backupParams);
                     }
                 });
-                if (!namedQueries.isEmpty()) {
-                    progress.addStep("Resolving " + namedQueries);
-                    namedQueries.forEach((name, findQuery) ->
-                        evaluateQueryWithResolver(name, findQuery, progress, unresolvedDatasetNames));
-                }
+                namedQueries.forEach((name, findQuery) ->
+                    evaluateQueryWithResolver(name, findQuery, progress, unresolvedDatasetNames));
             }
         }
         if (!unresolvablePlaceholders.isEmpty()) {
@@ -356,13 +345,10 @@ class JossonsCore {
             if (resolveHistory.get(j).equals(name)) {
                 for (int k = j - 1; i >= j; i--, k--) {
                     if (!resolveHistory.get(k).equals(resolveHistory.get(i))) {
-                        break;
+                        return false;
                     }
                 }
-                if (i < j) {
-                    return true;
-                }
-                break;
+                return true;
             }
         }
         return false;

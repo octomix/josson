@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Record all the resolution progress steps.
@@ -34,7 +35,36 @@ public class ResolverProgress {
 
     private boolean roundStarted;
 
-    private final List<String> steps = new ArrayList<>();
+    private final List<Step> steps = new ArrayList<>();
+
+    private enum StepType {
+        SUBJECT,
+        MESSAGE,
+        RESOLVING,
+        RESOLVED,
+        UNRESOLVABLE
+    }
+
+    private static class Step {
+
+        final private StepType stepType;
+
+        final private int round;
+
+        final private String name;
+
+        final private String message;
+
+        final private JsonNode node;
+
+        private Step(final StepType stepType, final int round, final String name, final String message, final JsonNode node) {
+            this.stepType = stepType;
+            this.round = round;
+            this.name = name;
+            this.message = message;
+            this.node = node;
+        }
+    }
 
     /**
      * Create a {@code ResolverProgress} for Jossons to record resolution progress steps.
@@ -49,7 +79,7 @@ public class ResolverProgress {
      * @param subject the 1st progress step entry
      */
     public ResolverProgress(final String subject) {
-        steps.add(subject);
+        steps.add(new Step(StepType.SUBJECT, 0, null, subject, null));
     }
 
     /**
@@ -100,16 +130,7 @@ public class ResolverProgress {
      * Programmatically add the "End" step.
      */
     public void markEnd() {
-        addStep("End");
-    }
-
-    /**
-     * Get the progress steps after a resolution process.
-     *
-     * @return The resolution progress steps
-     */
-    public List<String> getSteps() {
-        return steps;
+        addMessageStep("End");
     }
 
     /**
@@ -134,16 +155,6 @@ public class ResolverProgress {
     /**
      * Add a resolution step.
      *
-     * @param name the resolving dataset name
-     * @param query the query statement
-     */
-    void addResolvingFrom(final String name, final String query) {
-        addStep(String.format("Resolving %s from %s", name, query));
-    }
-
-    /**
-     * Add a resolution step.
-     *
      * @param name the related dataset name
      * @param node the resolved {@code JsonNode}, {@code null} means the dataset is unresolvable.
      */
@@ -151,7 +162,7 @@ public class ResolverProgress {
         if (node == null) {
             addUnresolvableStep(name);
         } else {
-            addResolvedStep(name, resolvedValue(node));
+            addResolvedStep(name, node);
         }
     }
 
@@ -165,17 +176,39 @@ public class ResolverProgress {
         if (dataset == null || dataset.getNode() == null) {
             addUnresolvableStep(name);
         } else {
-            addResolvedStep(name, simplifyResolvedValue(dataset.getNode()));
+            addMessageStep(String.format("Resolved %s to %s", name, simplifyResolvedValue(dataset.getNode())));
         }
     }
 
     /**
-     * Add a query result to the resolution steps.
+     * Add a resolution message.
      *
-     * @param node the resolved {@code JsonNode}
+     * @param message the message to display
      */
-    void addQueryResult(final JsonNode node) {
-        addStep("Query result = " + (node == null ? "null" : resolvedValue(node)));
+    void addMessageStep(final String message) {
+        addStep(new Step(StepType.MESSAGE, round, null, message, null));
+    }
+
+    /**
+     * Add a resolution step.
+     *
+     * @param name the resolving dataset name
+     * @param query the query statement
+     */
+    void addResolvingStep(final String name, final String query) {
+        if (steps.stream().noneMatch(step -> step.stepType == StepType.RESOLVING && step.name.equals(name))) {
+            addStep(new Step(StepType.RESOLVING, round, name, query, null));
+        }
+    }
+
+    /**
+     * Add a resolved resolution step.
+     *
+     * @param name the resolved dataset name
+     * @param node the resolved value
+     */
+    void addResolvedStep(final String name, final JsonNode node) {
+        addStep(new Step(StepType.RESOLVED, round, name, null, node));
     }
 
     /**
@@ -184,17 +217,7 @@ public class ResolverProgress {
      * @param name the unresolvable dataset name
      */
     void addUnresolvableStep(final String name) {
-        addStep("Unresolvable " + name);
-    }
-
-    /**
-     * Add a resolved resolution step.
-     *
-     * @param name the resolved dataset name
-     * @param value the resolved value
-     */
-    void addResolvedStep(final String name, final String value) {
-        addStep(String.format("Resolved %s=%s", name, value));
+        addStep(new Step(StepType.UNRESOLVABLE, round, name, null, null));
     }
 
     /**
@@ -202,12 +225,49 @@ public class ResolverProgress {
      *
      * @param step the resolution step detail
      */
-    void addStep(final String step) {
-        steps.add(String.format("Round %d : %s", round, step.replaceAll("\n", "\\\\n")));
+    private void addStep(final Step step) {
+        steps.add(step);
         roundStarted = true;
     }
 
+    /**
+     * Get the progress steps after a resolution process.
+     *
+     * @return The resolution progress steps
+     */
+    public List<String> getSteps() {
+        return steps.stream().map(this::formatStep).collect(Collectors.toList());
+    }
+
+    private String formatStep(final Step step) {
+        String message = null;
+        switch (step.stepType) {
+            case SUBJECT:
+                return step.message;
+
+            case MESSAGE:
+                message = step.message;
+                break;
+
+            case RESOLVING:
+                message = String.format("Resolving %s from %s", step.name, step.message);
+                break;
+
+            case RESOLVED:
+                message = String.format("Resolved %s = %s", step.name, resolvedValue(step.node));
+                break;
+
+            case UNRESOLVABLE:
+                message = "Unresolvable " + step.name;
+                break;
+        }
+        return String.format("Round %d : %s", step.round, message.replaceAll("\n", "\\\\n"));
+    }
+
     private String resolvedValue(final JsonNode node) {
+        if (node == null) {
+            return null;
+        }
         switch (debugLevel) {
             case SHOW_CONTENT_UP_TO_ARRAY_NODE:
                 if (node.isArray()) {
