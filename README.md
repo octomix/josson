@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.15</version>
+        <version>1.3.16</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.15
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.16'
 
 ## Features and Capabilities
 
@@ -128,6 +128,7 @@ To apply a Josson query path and get the result JsonNode.
 | `object[expression]` | A validation filter                                                   |
 | `function()`         | A Josson function                                                     |
 | `@function()`        | Merge all branch results into a single array before manipulation      |
+| `function()@`        | Divert the function output array elements to separate branches        |
 | `@.`                 | The array node itself if the current node is an array node            |
 | `?`                  | The node itself for non-array node or an array element for array node |
 | `#`                  | Zero-based index of an array element                                  |
@@ -735,9 +736,10 @@ Below is the JSON for this tutorial.
                   \                           /
                    {}->tags*->[""]->join()->""
 
-37. Syntax `[]@` can divert the array output of function.
+37. Modifier `@` after a function diverts the function output array elements to separate branches.  
+    It has the same effect of a path step `.[]@` after a function.
 
-        josson.getNode("'1+2 | 3+4 | 5+6'.split('|').[]@.split('+').calc(?*2).round(0).join('+').concat('(',?,')/2').@join(' | ')")
+        josson.getNode("'1+2 | 3+4 | 5+6'.split('|')@.split('+').calc(?*2).round(0).join('+').concat('(',?,')/2').@join(' | ')")
         ==>
         "(2+4)/2 | (6+8)/2 | (10+12)/2"
 
@@ -3096,6 +3098,13 @@ Following are some examples of each function.
       "a" : 1,
       "b" : [ 2, 3 ],
       "f" : 6
+    }
+
+    json('{"id":"1782-734828-A","name":"Cyron"}').field(id.split('-')@.repeat('X',length()).@join('-'))
+    ==>
+    {
+      "id" : "XXXX-XXXXXX-X",
+      "name" : "Cyron"
     }
 
 #### 198. group()

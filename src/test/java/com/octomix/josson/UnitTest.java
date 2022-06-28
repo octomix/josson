@@ -416,7 +416,8 @@ public class UnitTest {
         evaluate.accept("items@.tags.join('+').@join(' / ')",
                 "SHIRT+WOMEN / TENNIS+SPORT+RACKET / SHOE+SPORT+WOMEN");
 
-        // Syntax "[]@" can divert the array output of function.
+        // Modifier "@" after a function diverts the function output array elements to separate branches.
+        // It has the same effect of a path step ".[]@" after a function.
         //
         //                    ""->split()->[""->calc(?)]->[$D->round()]->[$I]->join()->""->concat()
         //                   /                                                                     \
@@ -424,7 +425,7 @@ public class UnitTest {
         //                   \                                                                     /
         //                    ""->split()->[""->calc(?)]->[$D->round()]->[$I]->join()->""->concat()
         //
-        evaluate.accept("'1+2 | 3+4 | 5+6'.split('|').[]@.split('+').calc(?*2).round(0).join('+').concat('(',?,')/2').@join(' | ')",
+        evaluate.accept("'1+2 | 3+4 | 5+6'.split('|')@.split('+').calc(?*2).round(0).join('+').concat('(',?,')/2').@join(' | ')",
                 "(2+4)/2 | (6+8)/2 | (10+12)/2");
 
         // All function parameters can refer to a child node of the step.
@@ -1653,6 +1654,11 @@ public class UnitTest {
                         "  \"a\" : 1,\n" +
                         "  \"b\" : [ 2, 3 ],\n" +
                         "  \"f\" : 6\n" +
+                        "}");
+        evaluate.accept("json('{\"id\":\"1782-734828-A\",\"name\":\"Cyron\"}').field(id.split('-')@.repeat('X',length()).@join('-'))",
+                "{\n" +
+                        "  \"id\" : \"XXXX-XXXXXX-X\",\n" +
+                        "  \"name\" : \"Cyron\"\n" +
                         "}");
         // coalesce()
         evaluate.accept("json('[\"abc\",\"\",123,false,null]').coalesce('xyz')", "[ \"abc\", \"\", 123, false, \"xyz\" ]");
