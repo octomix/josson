@@ -422,8 +422,11 @@ final class JossonCore {
             throw new SyntaxErrorException(key);
         }
         keys.remove(0);
-        final String[] funcAndArgs = matchFunctionAndArgument(key);
+        final String[] funcAndArgs = matchFunctionAndArgument(key, true);
         if (funcAndArgs != null) {
+            if (key.charAt(key.length()-1) == FILTRATE_DIVERT_ALL.getSymbol()) {
+                keys.add(0, "[]" + FILTRATE_DIVERT_ALL.getSymbol());
+            }
             return getNodeByKeys(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(node), keys, nextKeys);
         }
         if (node.isValueNode()) {

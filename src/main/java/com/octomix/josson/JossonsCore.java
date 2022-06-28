@@ -83,7 +83,7 @@ class JossonsCore {
                                          final ResolverProgress progress) {
         String query = dictionaryFinder.apply(name);
         if (query == null) {
-            final String[] funcAndArgs = matchFunctionAndArgument(name);
+            final String[] funcAndArgs = matchFunctionAndArgument(name, false);
             if (funcAndArgs == null || (query = dictionaryFinder.apply(funcAndArgs[0] + "()")) == null) {
                 datasets.put(name, null);
                 return null;
@@ -135,10 +135,11 @@ class JossonsCore {
                                                      final BiFunction<String, String, Josson> dataFinder,
                                                      final ResolverProgress progress) {
         final Map<String, Josson> backupParams = backupDictionaryFunctionParams();
-        for (; ; progress.nextRound()) {
+        for (; ; restoreDictionaryFunctionParams(backupParams), progress.nextRound()) {
             try {
                 return new OperationStackForDatasets(datasets).evaluateQuery(query);
             } catch (UnresolvedDatasetException e) {
+                removeDictionaryFunctionParams();
                 final String name = e.getDatasetName();
                 JsonNode node = null;
                 String findQuery = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
@@ -152,8 +153,6 @@ class JossonsCore {
                         progress.addResolvingStep(name, findQuery);
                         node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
                     } catch (NoValuePresentException ignore) {
-                    } finally {
-                        restoreDictionaryFunctionParams(backupParams);
                     }
                 }
                 datasets.put(name, node == null ? null : Josson.create(node));

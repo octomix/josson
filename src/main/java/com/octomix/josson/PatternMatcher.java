@@ -281,13 +281,14 @@ final class PatternMatcher {
         return new ArrayFilter(input, null, FILTRATE_COLLECT_ALL);
     }
 
-    static String[] matchFunctionAndArgument(final String input) {
+    static String[] matchFunctionAndArgument(final String input, final boolean allowDivert) {
         final int last = input.length() - 1;
         for (int pos = 0; pos <= last; pos++) {
             final int end = matchParentheses(input, pos, last);
             if (end > 0) {
-                final String ending = rightTrimOf(input, end + 1, last + 1);
-                if (!ending.isEmpty()) {
+                final String ending = trimOf(input, end + 1, last + 1);
+                if (!ending.isEmpty()
+                        && (!allowDivert || ending.length() > 1 || ending.charAt(0) != FILTRATE_DIVERT_ALL.getSymbol())) {
                     throw new SyntaxErrorException(input, String.format("Invalid '%s' after function", ending), end);
                 }
                 final String name = rightTrimOf(input, 0, pos);
@@ -543,12 +544,17 @@ final class PatternMatcher {
         if (paths.isEmpty()) {
             throw new UnknownFormatConversionException("undefined");
         }
-        int i = paths.size() - 1;
-        final String[] funcAndArgs = matchFunctionAndArgument(paths.get(i));
-        if (funcAndArgs != null && --i < 0) {
-            throw new UnknownFormatConversionException("_" + funcAndArgs[0]);
+        String funcName = null;
+        for (int i = paths.size() - 1; i >= 0; i--) {
+            final String[] funcAndArgs = matchFunctionAndArgument(paths.get(i), true);
+            if (funcAndArgs == null) {
+                return matchFilterQuery(paths.get(i)).getNodeName();
+            }
+            if (funcName == null) {
+                funcName = funcAndArgs[0];
+            }
         }
-        return matchFilterQuery(paths.get(i)).getNodeName();
+        throw new UnknownFormatConversionException("_" + funcName);
     }
 
     static void checkElementName(final String name) {
