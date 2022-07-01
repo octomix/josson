@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.JossonsCore.isCacheDataset;
 import static com.octomix.josson.PatternMatcher.matchDatasetQuery;
 
 /**
@@ -221,7 +222,10 @@ class OperationStep {
         }
         final String[] tokens = matchDatasetQuery(expression);
         if (tokens == null) {
-            throw new UnresolvedDatasetException(expression);
+            if (isCacheDataset(expression)) {
+                throw new UnresolvedDatasetException(expression);
+            }
+            return null;
         }
         final Josson josson;
         if (datasets.containsKey(tokens[0])) {
@@ -232,19 +236,16 @@ class OperationStep {
         } else {
             implicitVariable = getImplicitVariable(tokens[0]);
             if (implicitVariable == null) {
-                throw new UnresolvedDatasetException(tokens[0]);
+                if (isCacheDataset(tokens[0])) {
+                    throw new UnresolvedDatasetException(tokens[0]);
+                }
+                return null;
             }
             josson = Josson.create(implicitVariable);
         }
         final JsonNode node = josson.getNode(tokens[1]);
-        switch (expression.charAt(0)) {
-            // Don't cache result for variable name starts with $ or *
-            case '$':
-            case '*':
-                break;
-            default:
-                datasets.put(expression, node == null ? null : Josson.create(node));
-                break;
+        if (isCacheDataset(expression)) {
+            datasets.put(expression, node == null ? null : Josson.create(node));
         }
         return node;
     }

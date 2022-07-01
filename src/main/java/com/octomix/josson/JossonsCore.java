@@ -32,11 +32,19 @@ class JossonsCore {
 
     private static final String UNRESOLVABLE_PLACEHOLDER_MARK = "**";
 
-    private static final String DICTIONARY_FUNCTION_PARAMS = "$params";
+    private static final String DICTIONARY_FUNCTION_PARAM_PREFIX = "$";
+
+    private static final String DICTIONARY_FUNCTION_PARAMS = DICTIONARY_FUNCTION_PARAM_PREFIX + "params";
 
     protected final Map<String, Josson> datasets = new HashMap<>();
 
     protected JossonsCore() {
+    }
+
+    private void putUnresolvable(final String name) {
+        if (isCacheDataset(name)) {
+            datasets.put(name, null);
+        }
     }
 
     private boolean buildDataset(final String name, final String query, final Function<String, String> dictionaryFinder,
@@ -85,7 +93,7 @@ class JossonsCore {
         if (query == null) {
             final String[] funcAndArgs = matchFunctionAndArgument(name, false);
             if (funcAndArgs == null || (query = dictionaryFinder.apply(funcAndArgs[0] + "()")) == null) {
-                datasets.put(name, null);
+                putUnresolvable(name);
                 return null;
             }
             final ArrayNode params = MAPPER.createArrayNode();
@@ -95,7 +103,7 @@ class JossonsCore {
             removeDictionaryFunctionParams();
             datasets.put(DICTIONARY_FUNCTION_PARAMS, Josson.create(params));
             for (int i = 0; i < params.size(); i++) {
-                datasets.put("$" + i, Josson.create(params.get(i)));
+                datasets.put(DICTIONARY_FUNCTION_PARAM_PREFIX + i, Josson.create(params.get(i)));
             }
         }
         return query;
@@ -109,7 +117,7 @@ class JossonsCore {
         final Map<String, Josson> backup = new HashMap<>();
         backup.put(DICTIONARY_FUNCTION_PARAMS, params);
         for (int i = params.getNode().size() - 1; i >= 0; i--) {
-            final String key = "$" + i;
+            final String key = DICTIONARY_FUNCTION_PARAM_PREFIX + i;
             backup.put(key, datasets.get(key));
         }
         return backup;
@@ -126,7 +134,7 @@ class JossonsCore {
         final Josson params = datasets.remove(DICTIONARY_FUNCTION_PARAMS);
         if (params != null) {
             for (int i = params.getNode().size() - 1; i >= 0; i--) {
-                datasets.remove("$" + i);
+                datasets.remove(DICTIONARY_FUNCTION_PARAM_PREFIX + i);
             }
         }
     }
@@ -206,7 +214,7 @@ class JossonsCore {
                         } catch (NoValuePresentException ex) {
                             if (ex.getPlaceholders().isEmpty()) {
                                 ex.getDatasetNames().stream()
-                                        .filter(s -> !namedQueries.containsKey(s))
+                                        .filter(s -> isCacheDataset(s) && !namedQueries.containsKey(s))
                                         .forEach(unresolvedDatasetNames::add);
                             } else {
                                 datasets.put(name, null);
@@ -267,7 +275,7 @@ class JossonsCore {
                     final JsonNode node = new OperationStackForDatasets(datasets, inIsAntiInject).evaluateQuery(query);
                     if (node == null) {
                         unresolvedPlaceholders.add(query);
-                        datasets.put(query, null);
+                        putUnresolvable(query);
                         sb.append(UNRESOLVABLE_PLACEHOLDER_MARK).append(query).append(UNRESOLVABLE_PLACEHOLDER_MARK);
                     } else if (node.isValueNode()) {
                         outIsAntiInject = antiInjectionEncode(sb, node.asText()) || outIsAntiInject;
@@ -395,5 +403,10 @@ class JossonsCore {
             }
         }
         return offset == 0 ? s : sb.append(s, offset, len).toString();
+    }
+
+    static boolean isCacheDataset(final String name) {
+        // Don't cache result for variable name starts with $
+        return name.charAt(0) != '$';
     }
 }
