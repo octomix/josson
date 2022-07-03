@@ -73,16 +73,18 @@ class JossonsCore {
         return true;
     }
 
-    private void evaluateQueryWithResolver(final String name, final String query, final ResolverProgress progress,
-                                           final Set<String> unresolvedDatasetNames) {
+    private boolean evaluateQuery(final String name, final String query, final ResolverProgress progress,
+                                  final Set<String> unresolvedDatasetNames) {
         progress.addResolvingStep(name, query);
         try {
             final JsonNode node = new OperationStackForDatasets(datasets).evaluateQuery(query);
             datasets.put(name, node == null ? null : Josson.create(node));
             progress.addResolvedNode(name, node);
             unresolvedDatasetNames.remove(name);
+            return true;
         } catch (UnresolvedDatasetException e) {
             unresolvedDatasetNames.add(e.getDatasetName());
+            return false;
         }
     }
 
@@ -192,39 +194,41 @@ class JossonsCore {
                     unresolvablePlaceholders.addAll(e.getPlaceholders());
                     template = e.getContent();
                 }
-                final Map<String, String> namedQueries = new HashMap<>();
+                final Map<String, String> batchEvaluate = new HashMap<>();
+                int lastHistory = resolveHistory.size();
                 e.getDatasetNames().forEach(name -> {
                     if (inInfiniteLoop(name, resolveHistory)) {
                         unresolvablePlaceholders.add(name);
                         datasets.put(name, null);
                         return;
                     }
-                    String findQuery = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
-                    if (findQuery != null) {
-                        try {
-                            findQuery = fillInPlaceholderLoop(findQuery, false, e.isAntiInject());
-                            if (!buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
-                                unresolvedDatasetNames.remove(name);
-                                if (datasets.containsKey(DICTIONARY_FUNCTION_PARAMS)) {
-                                    evaluateQueryWithResolver(name, findQuery, progress, unresolvedDatasetNames);
-                                } else {
-                                    namedQueries.put(name, findQuery);
-                                }
-                            }
-                        } catch (NoValuePresentException ex) {
-                            if (ex.getPlaceholders().isEmpty()) {
-                                ex.getDatasetNames().stream()
-                                        .filter(s -> isCacheDataset(s) && !namedQueries.containsKey(s))
-                                        .forEach(unresolvedDatasetNames::add);
-                            } else {
-                                datasets.put(name, null);
-                            }
-                        }
+                    final String query = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
+                    if (query != null) {
+                        fillInAndResolveQuery(
+                                name, query, dictionaryFinder, dataFinder, progress,
+                                batchEvaluate, unresolvedDatasetNames, e.isAntiInject());
                         restoreDictionaryFunctionParams(backupParams);
                     }
                 });
-                namedQueries.forEach((name, findQuery) ->
-                    evaluateQueryWithResolver(name, findQuery, progress, unresolvedDatasetNames));
+                batchEvaluate.forEach((name, query) -> evaluateQuery(name, query, progress, unresolvedDatasetNames));
+                if (unresolvedDatasetNames.isEmpty()) {
+                    while (--lastHistory >= 0) {
+                        final String retry = resolveHistory.get(lastHistory);
+                        if (datasets.containsKey(retry)) {
+                            break;
+                        }
+                        final String query = dictionaryFinderApply(retry, dictionaryFinder, dataFinder, progress);
+                        if (query == null) {
+                            break;
+                        }
+                        if (!fillInAndResolveQuery(
+                                retry, query, dictionaryFinder, dataFinder, progress,
+                                null, unresolvedDatasetNames, e.isAntiInject())) {
+                            lastHistory = 0;
+                        }
+                        restoreDictionaryFunctionParams(backupParams);
+                    }
+                }
             }
         }
         if (!unresolvablePlaceholders.isEmpty()) {
@@ -232,6 +236,33 @@ class JossonsCore {
             throw new NoValuePresentException(null, unresolvablePlaceholders, template);
         }
         return template;
+    }
+
+    private boolean fillInAndResolveQuery(final String name, final String query,
+                                          final Function<String, String> dictionaryFinder,
+                                          final BiFunction<String, String, Josson> dataFinder,
+                                          final ResolverProgress progress, final Map<String, String> batchEvaluate,
+                                          final Set<String> unresolvedDatasetNames, final boolean isAntiInject) {
+        try {
+            unresolvedDatasetNames.remove(name);
+            final String filled = fillInPlaceholderLoop(query, false, isAntiInject);
+            if (buildDataset(name, filled, dictionaryFinder, dataFinder, progress)) {
+                return true;
+            }
+            if (batchEvaluate == null || datasets.containsKey(DICTIONARY_FUNCTION_PARAMS)) {
+                return evaluateQuery(name, filled, progress, unresolvedDatasetNames);
+            }
+            batchEvaluate.put(name, filled);
+        } catch (NoValuePresentException ex) {
+            if (ex.getPlaceholders().isEmpty()) {
+                ex.getDatasetNames().stream()
+                        .filter(JossonsCore::isCacheDataset)
+                        .forEach(unresolvedDatasetNames::add);
+            } else {
+                datasets.put(name, null);
+            }
+        }
+        return false;
     }
 
     protected String fillInPlaceholderLoop(final String template, final boolean isXml,

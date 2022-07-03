@@ -7,7 +7,7 @@ import com.octomix.josson.exception.NoValuePresentException;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1840,7 +1840,7 @@ public class UnitTest {
                         ""));
 
         // Test join datasets
-        Map<String, String> dictionaryFinder = new LinkedHashMap<>();
+        Map<String, String> dictionaryFinder = new HashMap<>();
         dictionaryFinder.put("stocks", "[]?{ignoredQuery}");
         dictionaryFinder.put("withStock",
                 "order->items.map(itemCode,qty){itemCode} <=< stocks{itemCode}");

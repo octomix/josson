@@ -3668,7 +3668,7 @@ _Placeholders_
 
 #### An example of _Left Join One_ with _Dictionary Finder_ and _Data Finder_
 
-    Map<String, String> dictionaryFinder = new LinkedHashMap<>();
+    Map<String, String> dictionaryFinder = new HashMap<>();
     dictionaryFinder.put("stocks", "[]?{ignoredQuery}");
     dictionaryFinder.put("withStock", "order->items.map(itemCode,qty){itemCode} <=< stocks{itemCode}");
 
