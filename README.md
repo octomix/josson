@@ -1,6 +1,6 @@
 # Josson & Jossons
 
-- _Josson_ is a query language for JSON.
+- _Josson_ is a complete query and transformation language for JSON.
 - _Jossons_ is a template engine to generate text output.
 
 ![logo](./logo.png)
@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.16</version>
+        <version>1.3.17</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.16'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.17'
 
 ## Features and Capabilities
 
