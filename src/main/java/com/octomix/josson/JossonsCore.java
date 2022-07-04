@@ -2,6 +2,7 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.NoValuePresentException;
 import com.octomix.josson.exception.UnresolvedDatasetException;
@@ -162,7 +163,12 @@ class JossonsCore {
                         }
                         progress.addResolvingStep(name, findQuery);
                         node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
-                    } catch (NoValuePresentException ignore) {
+                    } catch (NoValuePresentException ex) {
+                        if (ex.getPlaceholders().stream().noneMatch(JossonsCore::isCacheDataset)) {
+                            ex.getPlaceholders().forEach(placeholder ->
+                                    datasets.put(placeholder, Josson.create(NullNode.getInstance())));
+                            continue;
+                        }
                     }
                 }
                 datasets.put(name, node == null ? null : Josson.create(node));
