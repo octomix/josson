@@ -52,6 +52,7 @@ final class FuncArithmetic {
             args.put("_THIS_NODE_", CURRENT_NODE);
         }
         final Expression expression = new Expression(calc);
+        expression.disableImpliedMultiplicationMode();
         if (node.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {

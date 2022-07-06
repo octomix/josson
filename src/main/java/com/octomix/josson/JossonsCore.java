@@ -10,7 +10,6 @@ import com.octomix.josson.exception.UnresolvedDatasetException;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.octomix.josson.FuncExecutor.UNLIMITED_WITH_PATH;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -41,12 +40,6 @@ class JossonsCore {
     protected final Map<String, Josson> datasets = new HashMap<>();
 
     protected JossonsCore() {
-    }
-
-    private void putUnresolvable(final String name) {
-        if (isCacheDataset(name)) {
-            datasets.put(name, null);
-        }
     }
 
     private boolean buildDataset(final String name, final String query, final Function<String, String> dictionaryFinder,
@@ -97,7 +90,9 @@ class JossonsCore {
         if (query == null) {
             final String[] funcAndArgs = matchFunctionAndArgument(name, false);
             if (funcAndArgs == null || (query = dictionaryFinder.apply(funcAndArgs[0] + "()")) == null) {
-                putUnresolvable(name);
+                if (isCacheDataset(name)) {
+                    datasets.put(name, null);
+                }
                 return null;
             }
             final ArrayNode params = MAPPER.createArrayNode();
@@ -161,22 +156,15 @@ class JossonsCore {
                         findQuery = fillInPlaceholderWithResolver(
                                 findQuery, dictionaryFinder, dataFinder, false, progress);
                     } catch (NoValuePresentException ex) {
-                        final Set<String> tempUnresolvable = ex.getPlaceholders().stream()
-                                .filter(placeholder -> !datasets.containsKey(placeholder))
-                                .collect(Collectors.toSet());
-                        if (tempUnresolvable.isEmpty()) {
+                        ex.getPlaceholders().forEach(placeholder ->
+                                datasets.put(placeholder, Josson.create(NullNode.getInstance())));
+                        try {
+                            findQuery = fillInPlaceholderWithResolver(
+                                    findQuery, dictionaryFinder, dataFinder, false, progress);
+                        } catch (NoValuePresentException exc) {
                             findQuery = null;
-                        } else {
-                            tempUnresolvable.forEach(placeholder ->
-                                    datasets.put(placeholder, Josson.create(NullNode.getInstance())));
-                            try {
-                                findQuery = fillInPlaceholderWithResolver(
-                                        findQuery, dictionaryFinder, dataFinder, false, progress);
-                            } catch (NoValuePresentException exc) {
-                                findQuery = null;
-                            }
-                            tempUnresolvable.forEach(datasets::remove);
                         }
+                        ex.getPlaceholders().forEach(datasets::remove);
                     }
                     if (findQuery != null) {
                         if (buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
@@ -326,7 +314,9 @@ class JossonsCore {
                     final JsonNode node = new OperationStackForDatasets(datasets, inIsAntiInject).evaluateQuery(query);
                     if (node == null) {
                         unresolvedPlaceholders.add(query);
-                        putUnresolvable(query);
+                        if (isCacheDataset(query)) {
+                            datasets.put(query, null);
+                        }
                         sb.append(UNRESOLVABLE_PLACEHOLDER_MARK).append(query).append(UNRESOLVABLE_PLACEHOLDER_MARK);
                     } else if (node.isValueNode()) {
                         outIsAntiInject = antiInjectionEncode(sb, node.asText()) || outIsAntiInject;
