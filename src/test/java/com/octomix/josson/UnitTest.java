@@ -1872,5 +1872,31 @@ public class UnitTest {
             throw e;
         }
         System.out.println("\n" + String.join("\n", progress.getSteps()));
+
+        // Test dictionary function
+        dictionaryFinder = new HashMap<>();
+        dictionaryFinder.put("double()", "$0->calc(?*2)");
+        dictionaryFinder.put("sum2num()", "$->calc({{$0}} + {{$1}})");
+        dictionaryFinder.put("sum2numThenDouble()", "double(sum2num({{$0}},{{$1}}))->formatText('({{$0}}+{{$1}})x2 = %.1f')");
+        dictionaryFinder.put("projectName()", "$0='CHI' ? '早晨' : 'Josson'");
+        dictionaryFinder.put("titledList()", "$params->slice(1).concat(##,'. ',?).join('\n').concat({{$0->quote()}},'\n',{{$0->repeat('=',length()).quote()}},'\n',?)");
+        progress = new ResolverProgress();
+        try {
+            System.out.println(jossons.fillInPlaceholderWithResolver("\n" +
+                            "\ndouble(3) ==> {{double(3)}}\n"+
+                            "\nsum2num(4,5) ==> {{sum2num(4,5)}}\n"+
+                            "\nsum2numThenDouble(1,2) ==> {{sum2numThenDouble(1,2)}}\n"+
+                            "\nprojectName() ==> {{projectName()}}\n"+
+                            "\nprojectName('CHI') ==> {{projectName('CHI')}}\n"+
+                            "\nprojectName('ENG') ==> {{projectName('ENG')}}\n"+
+                            "\ntitledList('List Title','Item A','Item B','Item C')\n==>\n{{titledList('List Title','Item A','Item B','Item C')}}",
+                    dictionaryFinder::get, null, progress));
+        } catch (NoValuePresentException e) {
+            System.out.println(e.getPlaceholders());
+            System.out.println(e.getContent());
+            System.out.println("\n" + String.join("\n", progress.getSteps()));
+            throw e;
+        }
+        System.out.println("\n" + String.join("\n", progress.getSteps()));
     }
 }

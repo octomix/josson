@@ -10,6 +10,7 @@ import com.octomix.josson.exception.UnresolvedDatasetException;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.octomix.josson.FuncExecutor.UNLIMITED_WITH_PATH;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -155,20 +156,33 @@ class JossonsCore {
                 JsonNode node = null;
                 String findQuery = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
                 if (findQuery != null) {
+                    progress.addResolvingStep(name, findQuery);
                     try {
                         findQuery = fillInPlaceholderWithResolver(
                                 findQuery, dictionaryFinder, dataFinder, false, progress);
+                    } catch (NoValuePresentException ex) {
+                        final Set<String> tempUnresolvable = ex.getPlaceholders().stream()
+                                .filter(placeholder -> !datasets.containsKey(placeholder))
+                                .collect(Collectors.toSet());
+                        if (tempUnresolvable.isEmpty()) {
+                            findQuery = null;
+                        } else {
+                            tempUnresolvable.forEach(placeholder ->
+                                    datasets.put(placeholder, Josson.create(NullNode.getInstance())));
+                            try {
+                                findQuery = fillInPlaceholderWithResolver(
+                                        findQuery, dictionaryFinder, dataFinder, false, progress);
+                            } catch (NoValuePresentException exc) {
+                                findQuery = null;
+                            }
+                            tempUnresolvable.forEach(datasets::remove);
+                        }
+                    }
+                    if (findQuery != null) {
                         if (buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
                             continue;
                         }
-                        progress.addResolvingStep(name, findQuery);
                         node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
-                    } catch (NoValuePresentException ex) {
-                        if (ex.getPlaceholders().stream().noneMatch(JossonsCore::isCacheDataset)) {
-                            ex.getPlaceholders().forEach(placeholder ->
-                                    datasets.put(placeholder, Josson.create(NullNode.getInstance())));
-                            continue;
-                        }
                     }
                 }
                 datasets.put(name, node == null ? null : Josson.create(node));

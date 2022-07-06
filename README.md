@@ -3636,7 +3636,7 @@ _Dictionary finder entries_
 
     "sum2num()" : "$->calc({{$0}} + {{$1}})"
 
-    "sum2numThenDouble()" : "double({{sum2num({{$0}},{{$1}})}})->formatText('({{$0}}+{{$1}})x2 = %.1f')"
+    "sum2numThenDouble()" : "double(sum2num({{$0}},{{$1}}))->formatText('({{$0}}+{{$1}})x2 = %.1f')"
 
     "projectName()" : "$0='CHI' ? '早晨' : 'Josson'"
 
