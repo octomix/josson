@@ -14,7 +14,6 @@ import java.util.function.Function;
 import static com.octomix.josson.FuncExecutor.UNLIMITED_WITH_PATH;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
-import static com.octomix.josson.commons.StringEscapeUtils.unescapeXml;
 
 /**
  * Core functions for Jossons.
@@ -154,13 +153,13 @@ class JossonsCore {
                     progress.addResolvingStep(name, findQuery);
                     try {
                         findQuery = fillInPlaceholderWithResolver(
-                                findQuery, dictionaryFinder, dataFinder, false, progress);
+                                findQuery, dictionaryFinder, dataFinder, MarkupLanguage.NONE, progress);
                     } catch (NoValuePresentException ex) {
                         ex.getPlaceholders().forEach(placeholder ->
                                 datasets.put(placeholder, Josson.create(NullNode.getInstance())));
                         try {
                             findQuery = fillInPlaceholderWithResolver(
-                                    findQuery, dictionaryFinder, dataFinder, false, progress);
+                                    findQuery, dictionaryFinder, dataFinder, MarkupLanguage.NONE, progress);
                         } catch (NoValuePresentException exc) {
                             findQuery = null;
                         }
@@ -180,8 +179,9 @@ class JossonsCore {
     }
 
     protected String fillInPlaceholderWithResolver(String template, final Function<String, String> dictionaryFinder,
-                                                   final BiFunction<String, String, Josson> dataFinder, final boolean isXml,
-                                                   final ResolverProgress progress) throws NoValuePresentException {
+                                                   final BiFunction<String, String, Josson> dataFinder,
+                                                   final MarkupLanguage escaping, final ResolverProgress progress)
+            throws NoValuePresentException {
         final Set<String> unresolvablePlaceholders = new HashSet<>();
         final Set<String> unresolvedDatasetNames = new HashSet<>();
         final List<String> resolveHistory = new ArrayList<>();
@@ -192,7 +192,7 @@ class JossonsCore {
                 if (!unresolvedDatasetNames.isEmpty()) {
                     throw new NoValuePresentException(new HashSet<>(unresolvedDatasetNames), null);
                 }
-                template = fillInPlaceholderLoop(template, isXml, isAntiInject);
+                template = fillInPlaceholderLoop(template, escaping, isAntiInject);
                 break;
             } catch (NoValuePresentException e) {
                 isAntiInject = e.isAntiInject();
@@ -253,7 +253,7 @@ class JossonsCore {
                                           final Set<String> unresolvedDatasetNames, final boolean isAntiInject) {
         try {
             unresolvedDatasetNames.remove(name);
-            final String filled = fillInPlaceholderLoop(query, false, isAntiInject);
+            final String filled = fillInPlaceholderLoop(query, MarkupLanguage.NONE, isAntiInject);
             if (buildDataset(name, filled, dictionaryFinder, dataFinder, progress)) {
                 return true;
             }
@@ -273,7 +273,7 @@ class JossonsCore {
         return false;
     }
 
-    protected String fillInPlaceholderLoop(final String template, final boolean isXml,
+    protected String fillInPlaceholderLoop(final String template, final MarkupLanguage escaping,
                                            final boolean inIsAntiInject) throws NoValuePresentException {
         final Set<String> unresolvedDatasets = new HashSet<>();
         final Set<String> unresolvedPlaceholders = new HashSet<>();
@@ -298,16 +298,16 @@ class JossonsCore {
                     && template.charAt(i) == PLACEHOLDER_CLOSE
                     && template.charAt(i + 1) == PLACEHOLDER_CLOSE) {
                 String query = template.substring(placeholderAt + 2, i);
-                if (isXml) {
+                if (escaping.isEscapingRequired()) {
                     final StringBuilder rebuild = new StringBuilder();
-                    for (String token : separateXmlTags(query)) {
-                        if (token.charAt(0) == '<') {
+                    for (String token : escaping.separateTags(query)) {
+                        if (token.charAt(0) == escaping.tagOpen) {
                             sb.append(token);
                         } else {
                             rebuild.append(token);
                         }
                     }
-                    query = unescapeXml(rebuild.toString());
+                    query = escaping.unescape(rebuild.toString());
                 }
                 try {
                     query = StringUtils.strip(query);
@@ -317,17 +317,24 @@ class JossonsCore {
                         if (isCacheDataset(query)) {
                             datasets.put(query, null);
                         }
-                        sb.append(UNRESOLVABLE_PLACEHOLDER_MARK).append(query).append(UNRESOLVABLE_PLACEHOLDER_MARK);
-                    } else if (node.isValueNode()) {
-                        outIsAntiInject = antiInjectionEncode(sb, node.asText()) || outIsAntiInject;
-                        // Remember even if it is an empty string
-                        textAdded = true;
+                        sb.append(UNRESOLVABLE_PLACEHOLDER_MARK)
+                                .append(escaping.escape(query))
+                                .append(UNRESOLVABLE_PLACEHOLDER_MARK);
                     } else {
-                        outIsAntiInject = antiInjectionEncode(sb, node.toString()) || outIsAntiInject;
+                        final String text;
+                        if (node.isValueNode()) {
+                            text = node.asText();
+                            // Remember even if it is an empty string
+                            textAdded = true;
+                        } else {
+                            text = node.toString();
+                        }
+                        outIsAntiInject = antiInjectionEncode(sb, escaping.escape(text)) || outIsAntiInject;
                     }
                 } catch (UnresolvedDatasetException e) {
                     unresolvedDatasets.add(e.getDatasetName());
-                    sb.append(PLACEHOLDER_OPEN).append(PLACEHOLDER_OPEN).append(query)
+                    sb.append(PLACEHOLDER_OPEN).append(PLACEHOLDER_OPEN)
+                            .append(escaping.escape(query))
                             .append(PLACEHOLDER_CLOSE).append(PLACEHOLDER_CLOSE);
                 }
                 placeholderAt = -1;
@@ -348,41 +355,7 @@ class JossonsCore {
         if (!unresolvedDatasets.isEmpty() || !unresolvedPlaceholders.isEmpty()) {
             throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, filled).isAntiInject(outIsAntiInject);
         }
-        return fillInPlaceholderLoop(filled, isXml, outIsAntiInject);
-    }
-
-    private static List<String> separateXmlTags(final String input) {
-        final List<String> tokens = new ArrayList<>();
-        final int len = input.length();
-        int text = 0;
-        int tag = -1;
-        for (int pos = 0; pos < len; pos++) {
-            switch (input.charAt(pos)) {
-                case '<':
-                    if (text >= 0) {
-                        if (text < pos) {
-                            tokens.add(input.substring(text, pos));
-                        }
-                        text = -1;
-                        tag = pos;
-                    }
-                    break;
-                case '>':
-                    if (tag >= 0) {
-                        pos++;
-                        if (pos == len || input.charAt(pos) != '<') {
-                            tokens.add(input.substring(tag, pos));
-                            tag = -1;
-                            text = pos;
-                        }
-                    }
-                    break;
-            }
-        }
-        if (text >= 0 && text < len) {
-            tokens.add(input.substring(text, len));
-        }
-        return tokens;
+        return fillInPlaceholderLoop(filled, escaping, outIsAntiInject);
     }
 
     private static boolean inInfiniteLoop(final String name, final List<String> resolveHistory) {

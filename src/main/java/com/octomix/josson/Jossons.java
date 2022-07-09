@@ -32,7 +32,14 @@ import java.util.function.Function;
  */
 public class Jossons extends JossonsCore {
 
+    private MarkupLanguage escapingMarkup;
+
+    /**
+     * Plain text is the default.
+     * Uses {@code escapingMarkup()} to set {@link MarkupLanguage} to XML or HTML.
+     */
     private Jossons() {
+        escapingMarkup = MarkupLanguage.NONE;
     }
 
     /**
@@ -100,6 +107,17 @@ public class Jossons extends JossonsCore {
     }
 
     /**
+     * Set the escaping operation for markup language.
+     *
+     * @param markupLanguage {@link MarkupLanguage}
+     * @return {@code this}
+     */
+    public Jossons escapingMarkup(final MarkupLanguage markupLanguage) {
+        escapingMarkup = markupLanguage;
+        return this;
+    }
+
+    /**
      * Put dataset to the dataset mapping.
      *
      * @param key the mapping key
@@ -121,23 +139,6 @@ public class Jossons extends JossonsCore {
     }
 
     /**
-     * <p>XML template version of {@code fillInPlaceholder()}.
-     * Unescapes placeholder before the resolution process of that placeholder.
-     * Useful to merge docx template document.</p>
-     *
-     * @param template the XML template to be executed
-     * @return The merged text content
-     * @see #fillInPlaceholder
-     * @throws NoValuePresentException if any placeholder was unable to resolve
-     */
-    public String fillInXmlPlaceholder(final String template) throws NoValuePresentException {
-        if (StringUtils.isBlank(template)) {
-            return template;
-        }
-        return fillInPlaceholderLoop(template, true, false);
-    }
-
-    /**
      * <p>Uses the stored dataset mapping to merge and fill all placeholders in a template.
      * Placeholder is start with "{{" and end with "}}" as the quote marks.</p>
      * <p>Any unresolvable placeholder will raise {@code NoValuePresentException} with the incomplete merged text
@@ -151,36 +152,7 @@ public class Jossons extends JossonsCore {
         if (StringUtils.isBlank(template)) {
             return template;
         }
-        return fillInPlaceholderLoop(template, false, false);
-    }
-
-    /**
-     * <p>XML template version of {@code fillInPlaceholderWithResolver()}.
-     * Unescapes placeholder before the resolution process of that placeholder.
-     * Useful to merge docx template document.</p>
-     *
-     * @param template the template to be executed
-     * @param dictionaryFinder a callback function to return solution query statement
-     * @param dataFinder a callback function to process database query statement
-     * @param progress a {@code ResolverProgress} object to log the resolver progress steps
-     * @return The merged text content
-     * @see #fillInPlaceholderWithResolver
-     * @throws NoValuePresentException if any placeholder was unable to resolve
-     */
-    public String fillInXmlPlaceholderWithResolver(final String template,
-                                                   final Function<String, String> dictionaryFinder,
-                                                   final BiFunction<String, String, Josson> dataFinder,
-                                                   final ResolverProgress progress) throws NoValuePresentException {
-        if (StringUtils.isBlank(template)) {
-            return template;
-        }
-        try {
-            return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, true, progress);
-        } finally {
-            if (progress.isAutoMarkEnd()) {
-                progress.markEnd();
-            }
-        }
+        return fillInPlaceholderLoop(template, escapingMarkup, false);
     }
 
     /**
@@ -209,7 +181,7 @@ public class Jossons extends JossonsCore {
             return template;
         }
         try {
-            return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, false, progress);
+            return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, escapingMarkup, progress);
         } finally {
             if (progress.isAutoMarkEnd()) {
                 progress.markEnd();

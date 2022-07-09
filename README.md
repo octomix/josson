@@ -32,7 +32,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 ### Josson
 
 - Query a JSON dataset.
-- Restructure JSON data.
+- Restructure JSON data and capable of grouping data.
 - Has many functions to format text output.
 - Has many functions to manipulate date values.
 - Has many functions to work on array node.
@@ -40,12 +40,15 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 
 ### Jossons
 
-- Query data from multiple JSON datasets.
-- Join two JSON datasets to build a new dataset.
+- Is a template engine to fill in placeholders and generate text output.
+- Support XML and HTML escaping.
+- Resolve template placeholder by querying data from multiple Josson objects.
 - Resolve template placeholder from external data source on demand.
-- I used Jossons to generate millions of SMS/Email notifications during the first year.
-- I used Jossons to generate reports that retrieve data from MongoDB directly without writing a line of code.
+- Join two JSON datasets to build a new dataset.
 - Can be used to build a rule engine.
+- I used Jossons to generate millions of SMS/Email notifications during the first year.
+- I used Jossons to generate plain text and csv reports that retrieve data from MongoDB directly.
+  All definitions are stored in template document. No need to write extra program coding for different report.
 
 ## Table of Contents
 
@@ -3164,7 +3167,7 @@ Each entry under root of the ObjectNode will become a member of the default data
 To create a Jossons object with given JSON string that deserialized to a Jackson ObjectNode.
 Each entry under root of the ObjectNode will become a member of the default dataset mapping.
 
-    Jossons jossons = Jossons.fromJsonString("...");
+    Jossons jossons = Jossons.fromJsonString("{...}");
 
 To create a Jossons object with given text-based dataset mapping `Map<String, String>`.
 
@@ -3177,6 +3180,12 @@ To create a Jossons object with given integer-based dataset mapping `Map<String,
 To add more default dataset entry to a Jossons object afterward.
 
     jossons.putDataset("key", josson);
+
+To tell Jossons what markup language escaping operation is required.
+Default is `MarkupLanguage.NONE` for plain text.
+
+    jossons.escapingMarkup(MarkupLanguage.XML);
+    jossons.escapingMarkup(MarkupLanguage.HTML);
 
 ## Jossons Template Language
 
