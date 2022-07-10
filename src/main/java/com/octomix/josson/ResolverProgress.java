@@ -47,15 +47,15 @@ public class ResolverProgress {
 
     private static class Step {
 
-        final private StepType stepType;
+        private final StepType stepType;
 
-        final private int round;
+        private final int round;
 
-        final private String name;
+        private final String name;
 
-        final private String message;
+        private final String message;
 
-        final private JsonNode node;
+        private final JsonNode node;
 
         private Step(final StepType stepType, final int round, final String name, final String message, final JsonNode node) {
             this.stepType = stepType;

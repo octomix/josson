@@ -303,7 +303,7 @@ final class PatternMatcher {
         return null;
     }
 
-    static JoinDatasets matchJoinDatasetOperation(final String input) {
+    static JoinOperation matchJoinOperation(final String input) {
         final int last = input.length() - 1;
         int pos = skipDatasetQuery(input, 0, last);
         final String leftQuery = trimOf(input, 0, pos);
@@ -313,7 +313,7 @@ final class PatternMatcher {
                 break;
             }
         }
-        final JoinDatasets.JoinOperator operator = JoinDatasets.JoinOperator.fromSymbol(input.substring(beg, pos));
+        final JoinOperation operator = JoinOperation.fromSymbol(input.substring(beg, pos));
         if (operator == null) {
             return null;
         }
@@ -323,22 +323,16 @@ final class PatternMatcher {
         if (pos <= last) {
             throw new SyntaxErrorException(input, "Too many arguments for join operation", pos);
         }
-        final JoinDatasets.Dataset leftDataset = matchJoinDatasetQuery(leftQuery);
-        final JoinDatasets.Dataset rightDataset = matchJoinDatasetQuery(rightQuery);
-        if (operator == JoinDatasets.JoinOperator.LEFT_CONCATENATE
-                || operator == JoinDatasets.JoinOperator.RIGHT_CONCATENATE) {
-            if (leftDataset.getKeys() != null || rightDataset.getKeys() != null) {
-                throw new SyntaxErrorException(input, "Concatenate operation does not need join key");
-            }
-        } else if (leftDataset.getKeys() == null || rightDataset.getKeys() == null) {
-            throw new SyntaxErrorException(input, "Missing join key");
-        } else if (leftDataset.getKeys().length != rightDataset.getKeys().length) {
-            throw new SyntaxErrorException(input, "Mismatch key count");
+        final JoinDataset leftDataset = matchJoinDatasetQuery(leftQuery);
+        final JoinDataset rightDataset = matchJoinDatasetQuery(rightQuery);
+        try {
+            return operator.init(leftDataset, rightDataset);
+        } catch (IllegalArgumentException e) {
+            throw new SyntaxErrorException(input, e.getMessage());
         }
-        return new JoinDatasets(leftDataset, operator, rightDataset);
     }
 
-    private static JoinDatasets.Dataset matchJoinDatasetQuery(final String input) {
+    private static JoinDataset matchJoinDatasetQuery(final String input) {
         final int last = input.length() - 1;
         String query = null;
         for (int pos = 0, beg = 0; pos <= last; pos++) {
@@ -362,14 +356,14 @@ final class PatternMatcher {
                     if (Arrays.stream(keys).anyMatch(StringUtils::isBlank)) {
                         throw new SyntaxErrorException(input, "Missing join key");
                     }
-                    return new JoinDatasets.Dataset(query, keys);
+                    return new JoinDataset(query, keys);
             }
             pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
         }
         if (query != null) {
             throw new SyntaxErrorException(input, "Missing '}'", POS_AT_THE_END);
         }
-        return new JoinDatasets.Dataset(input, null);
+        return new JoinDataset(input, null);
     }
 
     static List<String> decomposePaths(final String input) {

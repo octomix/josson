@@ -32,15 +32,10 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 ### Josson
 
 - Query a JSON dataset.
-
 - Restructure JSON data and capable of grouping data.
-
 - Has many functions to format text output.
-
 - Has many functions to manipulate date values.
-
 - Has many functions to work on array node.
-
 - Can be used as an API parameter to trim down the response JSON result.
 
 ### Jossons
