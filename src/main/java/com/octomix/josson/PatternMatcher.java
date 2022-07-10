@@ -55,7 +55,7 @@ final class PatternMatcher {
         static final Enclosure[] ALL_KINDS = new Enclosure[]{
             STRING_LITERAL,
             SQUARE_BRACKETS,
-            PARENTHESES
+            PARENTHESES,
         };
     }
 

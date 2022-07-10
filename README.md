@@ -32,21 +32,33 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 ### Josson
 
 - Query a JSON dataset.
+
 - Restructure JSON data and capable of grouping data.
+
 - Has many functions to format text output.
+
 - Has many functions to manipulate date values.
+
 - Has many functions to work on array node.
+
 - Can be used as an API parameter to trim down the response JSON result.
 
 ### Jossons
 
 - Is a template engine to fill in placeholders and generate text output.
+
 - Support XML and HTML escaping.
+
 - Resolve template placeholder by querying data from multiple Josson objects.
+
 - Resolve template placeholder from external data source on demand.
+
 - Join two JSON datasets to build a new dataset.
+
 - Can be used to build a rule engine.
+
 - I used Jossons to generate millions of SMS/Email notifications during the first year.
+
 - I used Jossons to generate plain text and csv reports that retrieve data from MongoDB directly.
   All definitions are stored in template document. No need to write extra program coding for different report.
 
@@ -145,15 +157,17 @@ To apply a Josson query path and get the result JsonNode.
 
 | Operator | Description                             |
 |:---------|:----------------------------------------|
+| (        | Grouping                                |
+| )        | Grouping                                |
 | =        | Is equal to (support object and array)  |
 | !=       | Not equal to (support object and array) |
 | &gt;     | Greater than                            |
-| >=       | Greater than or equal to                |
+| &gt;=    | Greater than or equal to                |
 | &lt;     | Less than                               |
-| <=       | Less than or equal to                   |
+| &lt;=    | Less than or equal to                   |
 | =~       | Left matches regular expression         |
 | !        | Logical NOT                             |
-| &        | Logical AND                             |
+| &amp;    | Logical AND                             |
 | &#124;   | Logical OR                              |
 
 ### Path Chart Elements

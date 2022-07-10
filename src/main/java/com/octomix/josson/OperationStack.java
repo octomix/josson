@@ -129,10 +129,8 @@ abstract class OperationStack {
     }
 
     private JsonNode relationalCompare(final OperationStep prevStep, final OperationStep step, final int arrayIndex) {
-        return BooleanNode.valueOf(OperationStep.relationalCompare(
-                resolveFrom(prevStep, arrayIndex),
-                step.getOperator(),
-                evaluateExpression(step, arrayIndex)));
+        return BooleanNode.valueOf(step.getOperator().relationalCompare(
+                resolveFrom(prevStep, arrayIndex), evaluateExpression(step, arrayIndex)));
     }
 
     JsonNode evaluate(final String statement, final int arrayIndex) {
@@ -163,20 +161,14 @@ abstract class OperationStack {
         }
         if (OPEN_PARENTHESIS.equals(lastStep.getExpression())) {
             pushStep(step);
-            return;
-        }
-        switch (step.getOperator()) {
-            case AND:
-            case OR:
-                if (lastStep.getOperator() == Operator.AND) {
-                    popAndResolveIf(true, arrayIndex, this::resolveFrom);
-                } else if (lastStep.getOperator() == Operator.OR && step.getOperator() == Operator.OR) {
-                    popAndResolveIf(false, arrayIndex, this::resolveFrom);
-                }
-                pushStep(step);
-                return;
-        }
-        if (lastStep.getOperator() == Operator.AND) {
+        } else if (step.getOperator() == Operator.AND || step.getOperator() == Operator.OR) {
+            if (lastStep.getOperator() == Operator.AND) {
+                popAndResolveIf(true, arrayIndex, this::resolveFrom);
+            } else if (lastStep.getOperator() == Operator.OR && step.getOperator() == Operator.OR) {
+                popAndResolveIf(false, arrayIndex, this::resolveFrom);
+            }
+            pushStep(step);
+        } else if (lastStep.getOperator() == Operator.AND) {
             popAndResolveIf(true, arrayIndex, (thisStep, index) -> relationalCompare(thisStep, step, index));
         } else {
             lastStep.setResolved(relationalCompare(lastStep, step, arrayIndex));

@@ -300,7 +300,7 @@ class JossonsCore {
                 String query = template.substring(placeholderAt + 2, i);
                 if (escaping.isEscapingRequired()) {
                     final StringBuilder rebuild = new StringBuilder();
-                    for (String token : escaping.separateTags(query)) {
+                    for (String token : escaping.separateTagAndText(query)) {
                         if (token.charAt(0) == escaping.tagOpen) {
                             sb.append(token);
                         } else {

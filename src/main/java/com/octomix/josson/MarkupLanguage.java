@@ -96,7 +96,7 @@ public enum MarkupLanguage {
         }
     }
 
-    public List<String> separateTags(final String content) {
+    public List<String> separateTagAndText(final String content) {
         final List<String> tokens = new ArrayList<>();
         final int len = content.length();
         int text = 0;
@@ -111,14 +111,12 @@ public enum MarkupLanguage {
                     text = -1;
                     tag = pos;
                 }
-            } else if (tagMark == tagClose) {
-                if (tag >= 0) {
-                    pos++;
-                    if (pos == len || content.charAt(pos) != tagOpen) {
-                        tokens.add(content.substring(tag, pos));
-                        tag = -1;
-                        text = pos;
-                    }
+            } else if (tagMark == tagClose && tag >= 0) {
+                pos++;
+                if (pos == len || content.charAt(pos) != tagOpen) {
+                    tokens.add(content.substring(tag, pos));
+                    tag = -1;
+                    text = pos;
                 }
             }
         }
