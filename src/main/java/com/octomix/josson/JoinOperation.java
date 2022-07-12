@@ -60,6 +60,21 @@ enum JoinOperation {
     RIGHT_JOIN_MANY(">>=>"),
 
     /**
+     * Left excluding join.
+     */
+    LEFT_EXCLUDING_JOIN("<!<"),
+
+    /**
+     * Right excluding join.
+     */
+    RIGHT_EXCLUDING_JOIN(">!>"),
+
+    /**
+     * Outer excluding join.
+     */
+    OUTER_EXCLUDING_JOIN("<!>"),
+
+    /**
      * Concatenate two objects or two arrays, from right into the left one.
      */
     LEFT_CONCATENATE("<<<"),
@@ -117,67 +132,78 @@ enum JoinOperation {
     }
 
     JsonNode apply(final Function<String, JsonNode> evaluateQuery) {
-        final JsonNode leftNode = leftDataset.apply(evaluateQuery);
-        final JsonNode rightNode = rightDataset.apply(evaluateQuery);
+        leftDataset.apply(evaluateQuery);
+        rightDataset.apply(evaluateQuery);
         switch (this) {
             case INNER_JOIN_ONE:
-                if (leftNode.isObject() || !rightNode.isObject()) {
+                if (leftDataset.getNode().isObject() || !rightDataset.getNode().isObject()) {
                     break;
                 }
-                return joinNodes(rightNode, leftNode);
+                return joinNodes(rightDataset, leftDataset);
             case RIGHT_JOIN_ONE:
-                return LEFT_JOIN_ONE.joinNodes(rightNode, leftNode);
+                return LEFT_JOIN_ONE.joinNodes(rightDataset, leftDataset);
             case RIGHT_JOIN_MANY:
-                return LEFT_JOIN_MANY.joinNodes(rightNode, leftNode);
+                return LEFT_JOIN_MANY.joinNodes(rightDataset, leftDataset);
+            case RIGHT_EXCLUDING_JOIN:
+                return LEFT_EXCLUDING_JOIN.joinNodes(rightDataset, leftDataset);
+            case LEFT_CONCATENATE:
+                return concatenate(leftDataset.getNode(), rightDataset.getNode());
             case RIGHT_CONCATENATE:
-                return LEFT_CONCATENATE.joinNodes(rightNode, leftNode);
+                return concatenate(rightDataset.getNode(), leftDataset.getNode());
         }
-        return joinNodes(leftNode, rightNode);
+        return joinNodes(leftDataset, rightDataset);
     }
 
-    private JsonNode joinNodes(final JsonNode leftNode, final JsonNode rightNode) {
-        if (this == LEFT_CONCATENATE) {
-            if (leftNode.isObject() && rightNode.isObject()) {
-                return cloneObjectNode((ObjectNode) leftNode).setAll((ObjectNode) rightNode);
-            } else if (leftNode.isArray() && rightNode.isArray()) {
-                return cloneArrayNode((ArrayNode) leftNode).addAll((ArrayNode) rightNode);
-            }
-            throw new IllegalArgumentException("cannot concatenate an object and an array");
+    private JsonNode concatenate(final JsonNode leftNode, final JsonNode rightNode) {
+        if (leftNode.isObject() && rightNode.isObject()) {
+            return cloneObjectNode((ObjectNode) leftNode).setAll((ObjectNode) rightNode);
+        } else if (leftNode.isArray() && rightNode.isArray()) {
+            return cloneArrayNode((ArrayNode) leftNode).addAll((ArrayNode) rightNode);
         }
+        throw new IllegalArgumentException("cannot concatenate an object and an array");
+    }
+
+    private JsonNode joinNodes(final JoinDataset left, final JoinDataset right) {
         final ArrayNode rightArray;
-        if (rightNode.isArray()) {
-            rightArray = (ArrayNode) rightNode;
+        if (right.getNode().isArray()) {
+            rightArray = (ArrayNode) right.getNode();
         } else {
             rightArray = MAPPER.createArrayNode();
-            rightArray.add(rightNode);
+            rightArray.add(right.getNode());
         }
-        if (leftNode.isObject()) {
-            final ObjectNode joinedObject = joinToObjectNode((ObjectNode) leftNode, rightArray);
+        if (left.getNode().isObject()) {
+            final ObjectNode joinedObject = joinToObjectNode(
+                    (ObjectNode) left.getNode(), left.getKeys(), rightArray, right.getKeys());
             if (joinedObject == null) {
                 throw new IllegalArgumentException("invalid data");
             }
             return joinedObject;
         }
         final ArrayNode joinedArray = MAPPER.createArrayNode();
-        for (int i = 0; i < leftNode.size(); i++) {
-            if (leftNode.get(i).isObject()) {
-                final ObjectNode joinedNode = joinToObjectNode((ObjectNode) leftNode.get(i), rightArray);
+        for (int i = 0; i < left.getNode().size(); i++) {
+            if (left.getNode().get(i).isObject()) {
+                final ObjectNode joinedNode = joinToObjectNode(
+                        (ObjectNode) left.getNode().get(i), left.getKeys(), rightArray, right.getKeys());
                 if (joinedNode != null) {
                     joinedArray.add(joinedNode);
                 }
             }
         }
+        if (this == OUTER_EXCLUDING_JOIN) {
+            return joinedArray.addAll((ArrayNode) LEFT_EXCLUDING_JOIN.joinNodes(right, left));
+        }
         return joinedArray;
     }
 
-    private ObjectNode joinToObjectNode(final ObjectNode leftObject, final ArrayNode rightArray) {
-        final String[] relationalOps = new String[leftDataset.getKeys().length];
-        for (int j = leftDataset.getKeys().length - 1; j >= 0; j--) {
-            final JsonNode leftValue = getNodeByPath(leftObject, leftDataset.getKeys()[j]);
+    private ObjectNode joinToObjectNode(final ObjectNode leftObject, final String[] leftKeys,
+                                        final ArrayNode rightArray, final String[] rightKeys) {
+        final String[] relationalOps = new String[leftKeys.length];
+        for (int j = leftKeys.length - 1; j >= 0; j--) {
+            final JsonNode leftValue = getNodeByPath(leftObject, leftKeys[j]);
             if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
-            relationalOps[j] = rightDataset.getKeys()[j] + Operator.EQ.getSymbol()
+            relationalOps[j] = rightKeys[j] + Operator.EQ.getSymbol()
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : EMPTY)
                     + leftValue.asText().replace("'", "''")
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : EMPTY);
@@ -190,10 +216,13 @@ enum JoinOperation {
             }
         } else {
             final JsonNode rightToJoin = getNodeByPath(rightArray, path);
-            if (rightToJoin != null && rightToJoin.isObject()) {
+            if (this == LEFT_EXCLUDING_JOIN || this == OUTER_EXCLUDING_JOIN) {
+                if (rightToJoin != null) {
+                    return null;
+                }
+            } else if (rightToJoin != null && rightToJoin.isObject()) {
                 return cloneObjectNode(leftObject).setAll((ObjectNode) rightToJoin);
-            }
-            if (this == INNER_JOIN_ONE) {
+            } else if (this == INNER_JOIN_ONE) {
                 return null;
             }
         }

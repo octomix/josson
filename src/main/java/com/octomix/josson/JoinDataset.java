@@ -33,6 +33,8 @@ final class JoinDataset {
 
     private final String[] keys;
 
+    private JsonNode node;
+
     JoinDataset(final String query, final String[] keys) {
         this.query = query;
         this.keys = keys;
@@ -40,6 +42,10 @@ final class JoinDataset {
 
     String[] getKeys() {
         return keys;
+    }
+
+    JsonNode getNode() {
+        return node;
     }
 
     String resolveArrayName() {
@@ -57,14 +63,13 @@ final class JoinDataset {
         return arrayName;
     }
 
-    JsonNode apply(final Function<String, JsonNode> evaluateQuery) {
-        final JsonNode node = evaluateQuery.apply(query);
+    void apply(final Function<String, JsonNode> evaluateQuery) {
+        node = evaluateQuery.apply(query);
         if (node == null) {
             throw new IllegalArgumentException("unresolvable " + query);
         }
         if (!node.isContainerNode()) {
             throw new IllegalArgumentException("result is not a container node " + query);
         }
-        return node;
     }
 }

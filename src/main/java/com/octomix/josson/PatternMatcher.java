@@ -307,15 +307,18 @@ final class PatternMatcher {
         final int last = input.length() - 1;
         int pos = skipDatasetQuery(input, 0, last);
         final String leftQuery = trimOf(input, 0, pos);
-        final int beg = pos;
+        if (pos >= last || "<>".indexOf(input.charAt(pos)) < 0) {
+            return null;
+        }
+        final int beg = pos++;
         for (; pos <= last; pos++) {
-            if ("<=>".indexOf(input.charAt(pos)) < 0) {
+            if ("<=>!".indexOf(input.charAt(pos)) < 0) {
                 break;
             }
         }
         final JoinOperation operator = JoinOperation.fromSymbol(input.substring(beg, pos));
         if (operator == null) {
-            return null;
+            throw new SyntaxErrorException(input, "Invalid operator", beg);
         }
         final int end = skipDatasetQuery(input, pos, last);
         final String rightQuery = trimOf(input, pos, last + 1);
