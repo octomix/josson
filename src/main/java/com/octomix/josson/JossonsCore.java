@@ -50,16 +50,16 @@ class JossonsCore {
             final String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
             dataset = dataFinder.apply(collectionName, tokens[2]);
         } else {
-            final JoinOperation joinOperation = matchJoinOperation(query);
-            if (joinOperation == null) {
+            final JoinAndSetOperator operator = matchJoinOrSetOperation(query);
+            if (operator == null) {
                 return false;
             }
             progress.addResolvingStep(name, query);
             try {
-                dataset = Josson.create(joinOperation.apply(joinQuery ->
+                dataset = Josson.create(operator.apply(joinQuery ->
                         evaluateQueryWithResolverLoop(joinQuery, dictionaryFinder, dataFinder, progress)));
             } catch (IllegalArgumentException e) {
-                progress.addMessageStep("Join operation failed - " + e.getMessage());
+                progress.addMessageStep("Operation failed - " + e.getMessage());
             }
         }
         datasets.put(name, dataset);

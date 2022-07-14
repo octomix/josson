@@ -41,21 +41,15 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 ### Jossons
 
 - Is a template engine to fill in placeholders and generate text output.
-
 - Support XML and HTML escaping.
-
 - Resolve template placeholder by querying data from multiple Josson objects.
-
 - Resolve template placeholder from external data source on demand.
-
 - Join two JSON datasets to build a new dataset.
-
+- Set operation on two datasets.
 - Can be used to build a rule engine.
-
 - I used Jossons to generate millions of SMS/Email notifications during the first year.
-
 - I used Jossons to generate plain text and csv reports that retrieve data from MongoDB directly.
-  All definitions are stored in template document. No need to write extra program coding for different report.
+- I store the notification or report definitions in template documents. No need to write extra program coding for different template.
 
 ## Table of Contents
 
@@ -88,7 +82,8 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 - [Jossons Resolver](#jossons-resolver)
   - [Dictionary Finder](#dictionary-finder)
   - [Data Finder](#data-finder)
-  - [Join Datasets](#join-datasets)
+  - [Join Operation](#join-operation)
+  - [Set Operation](#set-operation)
   - [Dictionary Function](#dictionary-function)
   - [Put Together](#put-together)
 
@@ -3550,9 +3545,13 @@ the resolver will ask `Function<String, String> dictionaryFinder` for an answer.
 
       "collectionName ? {findStatement}"
 
-- A join operation query to merge two datasets, please refer to [Join Datasets](#join-datasets).
+- A join operation to merge two datasets, please refer to [Join Operation](#join-operation).
 
       "leftQuery{keyL1,keyL2...} <=< rightQuery{keyR1,keyR2...}"
+
+- A set operation on two datasets, please refer to [Set Operation](#set-operation).
+
+      "leftQuery <u> rightQuery"
 
 All kinds of statement can contain implicit dictionary function parameter variables,
 please refer to [Dictionary Function](#dictionary-function).
@@ -3591,7 +3590,7 @@ For Many-documents query request, the collection name argument has a suffix of `
 
 [Appendix](#appendix) has an example of MongoDB adapter for this _Data Finder_.
 
-### Join Datasets
+### Join Operation
 
 Josson query works on single JSON dataset.
 In order to let a placeholder output to include data from two datasets.
@@ -3628,15 +3627,57 @@ If `arrayName` is not given, the last element name of the query is used.
 
       "leftQuery{arrayName:keyL1,keyL2...} >>=> rightQuery{keyR1,keyR2...}"
 
-And there are two concatenation operations that combine two object nodes or two array nodes into one.
+- _Left Excluding Join_ `<!<`
 
-- _Left Concatenate_ `<<<`
+      "leftQuery{keyL1,keyL2...} <!< rightQuery{keyR1,keyR2...}"
 
-      "leftQuery <<< rightQuery"
+- _Right Excluding Join_ `>!>`
 
-- _Right Concatenate_ `>>>`
+      "leftQuery{keyL1,keyL2...} >!> rightQuery{keyR1,keyR2...}"
 
-      "leftQuery >>> rightQuery"
+- _Outer Excluding Join_ `<!>`
+
+      "leftQuery{keyL1,keyL2...} <!> rightQuery{keyR1,keyR2...}"
+
+### Set Operation
+
+Set operations do not need matching key.
+
+- _Left Concatenate_ `<+<`
+
+  Concatenate right into left, works on two objects or two arrays.
+
+      "leftQuery <+< rightQuery"
+
+- _Right Concatenate_ `>+>`
+
+  Concatenate left into right, works on two objects or two arrays.
+
+      "leftQuery >+> rightQuery"
+
+- _Subtract Right From Left_ `<-<`
+
+  Subtract right from left, works on two objects or two arrays.
+
+      "leftQuery <-< rightQuery"
+
+- _Subtract Left From Right_ `>->`
+
+  Subtract left from right, works on two objects or two arrays.
+
+      "leftQuery >-> rightQuery"
+
+- _Union_ `<u>`
+
+  Works on two arrays.
+
+      "leftQuery <u> rightQuery"
+
+- _Intersection_ `>n<`
+
+  Works on two arrays.
+
+      "leftQuery >n< rightQuery"
 
 ### Dictionary Function
 

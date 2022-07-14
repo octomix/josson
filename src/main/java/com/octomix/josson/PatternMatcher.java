@@ -303,7 +303,7 @@ final class PatternMatcher {
         return null;
     }
 
-    static JoinOperation matchJoinOperation(final String input) {
+    static JoinAndSetOperator matchJoinOrSetOperation(final String input) {
         final int last = input.length() - 1;
         int pos = skipDatasetQuery(input, 0, last);
         final String leftQuery = trimOf(input, 0, pos);
@@ -312,11 +312,11 @@ final class PatternMatcher {
         }
         final int beg = pos++;
         for (; pos <= last; pos++) {
-            if ("<=>!".indexOf(input.charAt(pos)) < 0) {
+            if ("<=>!+-un".indexOf(input.charAt(pos)) < 0) {
                 break;
             }
         }
-        final JoinOperation operator = JoinOperation.fromSymbol(input.substring(beg, pos));
+        final JoinAndSetOperator operator = JoinAndSetOperator.fromSymbol(input.substring(beg, pos));
         if (operator == null) {
             throw new SyntaxErrorException(input, "Invalid operator", beg);
         }
@@ -326,8 +326,8 @@ final class PatternMatcher {
         if (pos <= last) {
             throw new SyntaxErrorException(input, "Too many arguments for join operation", pos);
         }
-        final JoinDataset leftDataset = matchJoinDatasetQuery(leftQuery);
-        final JoinDataset rightDataset = matchJoinDatasetQuery(rightQuery);
+        final JoinAndSetOperand leftDataset = matchJoinDatasetQuery(leftQuery);
+        final JoinAndSetOperand rightDataset = matchJoinDatasetQuery(rightQuery);
         try {
             return operator.init(leftDataset, rightDataset);
         } catch (IllegalArgumentException e) {
@@ -335,7 +335,7 @@ final class PatternMatcher {
         }
     }
 
-    private static JoinDataset matchJoinDatasetQuery(final String input) {
+    private static JoinAndSetOperand matchJoinDatasetQuery(final String input) {
         final int last = input.length() - 1;
         String query = null;
         for (int pos = 0, beg = 0; pos <= last; pos++) {
@@ -359,14 +359,14 @@ final class PatternMatcher {
                     if (Arrays.stream(keys).anyMatch(StringUtils::isBlank)) {
                         throw new SyntaxErrorException(input, "Missing join key");
                     }
-                    return new JoinDataset(query, keys);
+                    return new JoinAndSetOperand(query, keys);
             }
             pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
         }
         if (query != null) {
             throw new SyntaxErrorException(input, "Missing '}'", POS_AT_THE_END);
         }
-        return new JoinDataset(input, null);
+        return new JoinAndSetOperand(input, null);
     }
 
     static List<String> decomposePaths(final String input) {

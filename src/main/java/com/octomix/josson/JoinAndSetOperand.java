@@ -25,9 +25,9 @@ import static com.octomix.josson.PatternMatcher.checkElementName;
 import static com.octomix.josson.PatternMatcher.getLastElementName;
 
 /**
- * Defines left or right dataset for join operation.
+ * Defines dataset for join and set operation.
  */
-final class JoinDataset {
+final class JoinAndSetOperand {
 
     private final String query;
 
@@ -35,7 +35,7 @@ final class JoinDataset {
 
     private JsonNode node;
 
-    JoinDataset(final String query, final String[] keys) {
+    JoinAndSetOperand(final String query, final String[] keys) {
         this.query = query;
         this.keys = keys;
     }
