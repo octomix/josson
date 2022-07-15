@@ -3645,37 +3645,43 @@ Set operations do not need matching key.
 
 - _Left Concatenate_ `<+<`
 
-  Concatenate right into left, works on two objects or two arrays.
+  Concatenate right into left. Works on two objects or two arrays.
 
       "leftQuery <+< rightQuery"
 
 - _Right Concatenate_ `>+>`
 
-  Concatenate left into right, works on two objects or two arrays.
+  Concatenate left into right. Works on two objects or two arrays.
 
       "leftQuery >+> rightQuery"
 
 - _Subtract Right From Left_ `<-<`
 
-  Subtract right from left, works on two objects or two arrays.
+  Set of elements in the left set that are not in the right set. Works on two objects or two arrays.
 
       "leftQuery <-< rightQuery"
 
 - _Subtract Left From Right_ `>->`
 
-  Subtract left from right, works on two objects or two arrays.
+  Set of elements in the right set that are not in the left set. Works on two objects or two arrays.
 
       "leftQuery >-> rightQuery"
 
+- _Symmetric Difference_ `<->`
+
+  Set of elements in either set but not in the intersection. Works on two objects or two arrays.
+
+      "leftQuery <-> rightQuery"
+
 - _Union_ `<u>`
 
-  Works on two arrays.
+  Set of all elements in the collection of sets. Works on two arrays.
 
       "leftQuery <u> rightQuery"
 
 - _Intersection_ `>n<`
 
-  Works on two arrays.
+  Set of elements that exists in both set. Works on two arrays.
 
       "leftQuery >n< rightQuery"
 

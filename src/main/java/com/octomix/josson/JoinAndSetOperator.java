@@ -96,6 +96,11 @@ enum JoinAndSetOperator {
     SUBTRACT_LEFT_FROM_RIGHT(">->"),
 
     /**
+     * Symmetric difference, works on two objects or two arrays.
+     */
+    SYMMETRIC_DIFFERENCE("<->"),
+
+    /**
      * Union, works on two arrays.
      */
     UNION("<u>"),
@@ -132,6 +137,7 @@ enum JoinAndSetOperator {
             case RIGHT_CONCATENATE:
             case SUBTRACT_RIGHT_FROM_LEFT:
             case SUBTRACT_LEFT_FROM_RIGHT:
+            case SYMMETRIC_DIFFERENCE:
             case UNION:
             case INTERSECTION:
                 if (leftDataset.getKeys() != null || rightDataset.getKeys() != null) {
@@ -174,6 +180,8 @@ enum JoinAndSetOperator {
                 return subtract(leftDataset.getNode(), rightDataset.getNode());
             case SUBTRACT_LEFT_FROM_RIGHT:
                 return subtract(rightDataset.getNode(), leftDataset.getNode());
+            case SYMMETRIC_DIFFERENCE:
+                return symmetricDifference(leftDataset.getNode(), rightDataset.getNode());
             case UNION:
                 return union(rightDataset.getNode(), leftDataset.getNode());
             case INTERSECTION:
@@ -287,14 +295,23 @@ enum JoinAndSetOperator {
             }
             return node;
         }
-        throw new IllegalArgumentException("cannot subtract an object and an array");
+        throw new IllegalArgumentException("cannot subtract between an object and an array");
+    }
+
+    private static ArrayNode symmetricDifference(final JsonNode leftNode, final JsonNode rightNode) {
+        if (leftNode.isObject() && rightNode.isObject()) {
+            return ((ObjectNode) subtract(leftNode, rightNode)).setAll((ObjectNode) subtract(rightNode, leftNode));
+        } else if (leftNode.isArray() && rightNode.isArray()) {
+            return ((ArrayNode) subtract(leftNode, rightNode)).addAll((ArrayNode) subtract(rightNode, leftNode));
+        }
+        throw new IllegalArgumentException("cannot operate difference between an object and an array");
     }
 
     private static ArrayNode union(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isArray() && rightNode.isArray()) {
             return cloneArrayNode((ArrayNode) rightNode).addAll((ArrayNode) subtract(leftNode, rightNode));
         }
-        throw new IllegalArgumentException("cannot union object");
+        throw new IllegalArgumentException("cannot operate union on object");
     }
 
     private static ArrayNode intersection(final JsonNode leftNode, final JsonNode rightNode) {
@@ -310,6 +327,6 @@ enum JoinAndSetOperator {
             }
             return node;
         }
-        throw new IllegalArgumentException("cannot intersection object");
+        throw new IllegalArgumentException("cannot operate intersection on object");
     }
 }
