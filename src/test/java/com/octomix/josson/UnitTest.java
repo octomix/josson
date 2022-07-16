@@ -612,7 +612,7 @@ public class UnitTest {
                         "  \"subtotal\" : 30.0\n" +
                         "}");
 
-        // Function `map` and `field` works on array.
+        // Function "map" and "field" works on array.
         evaluate.accept("items.field(subtotal:calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)),brand:,property:,tags:)",
                 "[ {\n" +
                         "  \"itemCode\" : \"B00001\",\n" +
@@ -639,6 +639,28 @@ public class UnitTest {
                         "  \"subtotal\" : 100.0\n" +
                         "} ]");
 
+        // Function "group" works like SQL "group by".
+        evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))",
+                "[ {\n" +
+                        "  \"brand\" : \"WinWin\",\n" +
+                        "  \"elements\" : [ {\n" +
+                        "    \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                        "    \"qty\" : 2,\n" +
+                        "    \"netPrice\" : 15.0\n" +
+                        "  }, {\n" +
+                        "    \"name\" : \"WinWin Sport Shoe - Super\",\n" +
+                        "    \"qty\" : 1,\n" +
+                        "    \"netPrice\" : 100.0\n" +
+                        "  } ]\n" +
+                        "}, {\n" +
+                        "  \"brand\" : \"OctoPlus\",\n" +
+                        "  \"elements\" : [ {\n" +
+                        "    \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                        "    \"qty\" : 1,\n" +
+                        "    \"netPrice\" : 140.0\n" +
+                        "  } ]\n" +
+                        "} ]");
+
         evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).[]@" +
                         ".concat('Brand : ',brand,'\n',elements.concat('- ',name,' : Qty=',qty,' Amt=',calc(qty*netPrice),'\n').join()," +
                         "'> Sub-total : Qty=',elements.sum(qty),' Amt=',elements.sum(calc(qty*netPrice))).@join('\n\n')",
@@ -650,6 +672,25 @@ public class UnitTest {
                         "Brand : OctoPlus\n" +
                         "- OctoPlus Tennis Racket - Star : Qty=1 Amt=140.0\n" +
                         "> Sub-total : Qty=1.0 Amt=140.0");
+
+        // Function "unwind" works like MongoDB "$unwind" operation.
+        evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).unwind(elements)",
+                "[ {\n" +
+                        "  \"brand\" : \"WinWin\",\n" +
+                        "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                        "  \"qty\" : 2,\n" +
+                        "  \"netPrice\" : 15.0\n" +
+                        "}, {\n" +
+                        "  \"brand\" : \"WinWin\",\n" +
+                        "  \"name\" : \"WinWin Sport Shoe - Super\",\n" +
+                        "  \"qty\" : 1,\n" +
+                        "  \"netPrice\" : 100.0\n" +
+                        "}, {\n" +
+                        "  \"brand\" : \"OctoPlus\",\n" +
+                        "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                        "  \"qty\" : 1,\n" +
+                        "  \"netPrice\" : 140.0\n" +
+                        "} ]");
 
         // Function "flatten" flatten an array same as the default path step behavior. But more readable.
         evaluate.accept("items@.tags",
@@ -938,12 +979,12 @@ public class UnitTest {
         evaluate.accept("'Peggy''s cat'.singleQuote()", "'Peggy''s cat'");
         evaluate.accept("123.singleQuote()", "'123'");
         evaluate.accept("quote('Raymond''s dog')", "'Raymond''s dog'");
-        evaluate.accept("quote(True)", "'true'");
+        evaluate.accept("q(True)", "'true'");
         // doubleQuote()
         evaluate.accept("'Peggy\"s cat'.doubleQuote()", "\"Peggy\\\"s cat\"");
         evaluate.accept("12.3.doubleQuote()", "\"12.3\"");
-        evaluate.accept("doubleQuote('Raymond\"s dog')", "\"Raymond\\\"s dog\"");
-        evaluate.accept("doubleQuote(False)", "\"false\"");
+        evaluate.accept("qq('Raymond\"s dog')", "\"Raymond\\\"s dog\"");
+        evaluate.accept("qq(False)", "\"false\"");
 
         // Date functions
         // amPmOfDay()
@@ -1710,6 +1751,24 @@ public class UnitTest {
                         "}, {\n" +
                         "  \"a\" : 3,\n" +
                         "  \"bs\" : [ \"C\" ]\n" +
+                        "} ]");
+        // unwind()
+        evaluate.accept("json('[{\"a\":1,\"bs\":[\"A\",\"E\"]},{\"a\":2,\"bs\":[\"B\",\"D\"]},{\"a\":3,\"bs\":[\"C\"]}]').unwind(b:bs)",
+                "[ {\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"b\" : \"A\"\n" +
+                        "}, {\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"b\" : \"E\"\n" +
+                        "}, {\n" +
+                        "  \"a\" : 2,\n" +
+                        "  \"b\" : \"B\"\n" +
+                        "}, {\n" +
+                        "  \"a\" : 2,\n" +
+                        "  \"b\" : \"D\"\n" +
+                        "}, {\n" +
+                        "  \"a\" : 3,\n" +
+                        "  \"b\" : \"C\"\n" +
                         "} ]");
     }
 

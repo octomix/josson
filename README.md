@@ -1094,6 +1094,28 @@ Below is the JSON for this tutorial.
     The first parameter is the grouping key. If it is a function, it will be given a name `key` in the output.
     The optional second parameter is to evaluate the grouped element. The default is the whole array element.
     And the default output array name is `elements`. The names can be renamed by preceding with `newName:`.
+    
+        josson.getNode("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))")
+        ==>
+        [ {
+          "brand" : "WinWin",
+          "elements" : [ {
+            "name" : "WinWin TShirt Series A - 2022",
+            "qty" : 2,
+            "netPrice" : 15.0
+          }, {
+            "name" : "WinWin Sport Shoe - Super",
+            "qty" : 1,
+            "netPrice" : 100.0
+          } ]
+        }, {
+          "brand" : "OctoPlus",
+          "elements" : [ {
+            "name" : "OctoPlus Tennis Racket - Star",
+            "qty" : 1,
+            "netPrice" : 140.0
+          } ]
+        } ]
 
         josson.getNode(
             "items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).[]@" +
@@ -1117,7 +1139,32 @@ Below is the JSON for this tutorial.
                                   \                     /
                                    {}->concat($V...)->""
 
-63. Function `flatten()` flatten an array same as the default path step behavior. But more readable.
+63. Function `unwind()` works like MongoDB `$unwind` operation. The operation is the reverse of `group()`.
+
+        josson.getNode("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).unwind(elements)")
+        ==>
+        [ {
+          "brand" : "WinWin",
+          "name" : "WinWin TShirt Series A - 2022",
+          "qty" : 2,
+          "netPrice" : 15.0
+        }, {
+          "brand" : "WinWin",
+          "name" : "WinWin Sport Shoe - Super",
+          "qty" : 1,
+          "netPrice" : 100.0
+        }, {
+          "brand" : "OctoPlus",
+          "name" : "OctoPlus Tennis Racket - Star",
+          "qty" : 1,
+          "netPrice" : 140.0
+        } ]
+
+    _Path chart_
+
+        {}->items*->group()->[{}]->unwind()==>[{}]
+
+64. Function `flatten()` flatten an array same as the default path step behavior. But more readable.
 
         josson.getNode("items@.tags")
         ==>
@@ -1196,8 +1243,8 @@ String Functions
 44. [trim()](#44-trim)
 45. [uncapitalize()](#45-uncapitalize)
 46. [upperCase()](#46-uppercase)
-47. [singleQuote() / quote()](#47-singlequote--quote)
-48. [doubleQuote()](#48-doublequote)
+47. [singleQuote() / quote() / q()](#47-singlequote--quote--q)
+48. [doubleQuote() / qq()](#48-doublequote--qq)
 
 Date Functions
 
@@ -1363,6 +1410,7 @@ Structural Functions
 196. [map()](#196-map)
 197. [field()](#197-field)
 198. [group()](#198-group)
+199. [unwind()](#199-unwind)
 
 Following are some examples of each function.
 
@@ -1770,7 +1818,7 @@ Following are some examples of each function.
 
     upperCase('cAt') ==> "CAT"
 
-#### 47. singleQuote() / quote()
+#### 47. singleQuote() / quote() / q()
 
     'Peggy''s cat'.singleQuote() ==> "'Peggy''s cat'"
 
@@ -1778,17 +1826,17 @@ Following are some examples of each function.
 
     quote('Raymond''s dog') ==> "'Raymond''s dog'"
 
-    quote(True) ==> "'true'"
+    q(True) ==> "'true'"
 
-#### 48. doubleQuote()
+#### 48. doubleQuote() / qq()
 
     'Peggy\"s cat'.doubleQuote() ==> "\"Peggy\\\"s cat\""
 
     12.3.doubleQuote() ==> "\"12.3\""
 
-    doubleQuote('Raymond\"s dog') ==> "\"Raymond\\\"s dog\""
+    qq('Raymond\"s dog') ==> "\"Raymond\\\"s dog\""
 
-    doubleQuote(False) ==> "\"false\""
+    qq(False) ==> "\"false\""
 
 ### Date Functions
 
@@ -3155,6 +3203,27 @@ Following are some examples of each function.
     }, {
       "a" : 3,
       "bs" : [ "C" ]
+    } ]
+
+#### 199. unwind()
+
+    json('[{"a":1,"bs":["A","E"]},{"a":2,"bs":["B","D"]},{"a":3,"bs":["C"]}]').unwind(b:bs)
+    ==>
+    [ {
+      "a" : 1,
+      "b" : "A"
+    }, {
+      "a" : 1,
+      "b" : "E"
+    }, {
+      "a" : 2,
+      "b" : "B"
+    }, {
+      "a" : 2,
+      "b" : "D"
+    }, {
+      "a" : 3,
+      "b" : "C"
     } ]
 
 ---

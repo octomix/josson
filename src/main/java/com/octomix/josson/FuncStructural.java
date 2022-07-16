@@ -19,6 +19,7 @@ package com.octomix.josson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
+import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.util.List;
 import java.util.Map;
@@ -243,5 +244,49 @@ final class FuncStructural {
             container.forEach(array::add);
         }
         return array;
+    }
+
+    static JsonNode funcUnwind(JsonNode node, final String params) {
+        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
+        if (pathAndParams.hasKey()) {
+            node = getNodeByPath(node, pathAndParams.getKey());
+            if (node == null) {
+                return null;
+            }
+        }
+        final Pair<String, String> nameAndPath = decomposeNameAndPath(pathAndParams.getValue().get(0));
+        if (nameAndPath.getValue() == null) {
+            throw new SyntaxErrorException("Missing path '" + params + "'");
+        }
+        final ArrayNode unwind = MAPPER.createArrayNode();
+        if (node.isObject()) {
+            funcUnwind(unwind, node, nameAndPath);
+        } else if (node.isArray()) {
+            node.elements().forEachRemaining(element -> funcUnwind(unwind, element, nameAndPath));
+        }
+        return unwind;
+    }
+
+    private static void funcUnwind(final ArrayNode unwind, final JsonNode node, final Pair<String, String> nameAndPath) {
+        final JsonNode array = getNodeByPath(node, nameAndPath.getValue());
+        if (!array.isArray()) {
+            return;
+        }
+        array.elements().forEachRemaining(
+                element -> {
+                    final ObjectNode object = MAPPER.createObjectNode();
+                    node.fields().forEachRemaining((Map.Entry<String, JsonNode> field) -> {
+                        if (!field.getKey().equals(nameAndPath.getValue())) {
+                            object.set(field.getKey(), field.getValue());
+                        }
+                    });
+                    if (element.isObject()) {
+                        object.setAll((ObjectNode) element);
+                    } else {
+                        object.set(nameAndPath.getKey(), element);
+                    }
+                    unwind.add(object);
+                }
+        );
     }
 }

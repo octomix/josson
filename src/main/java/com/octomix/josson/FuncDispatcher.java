@@ -501,9 +501,13 @@ class FuncDispatcher {
     }
 
     private JsonNode applyQ(final JsonNode node, final String func) {
-        // String
-        if (func.equals("quote")) {
-            return funcSingleQuote(node, params);
+        switch (func) {
+            // String
+            case "q":
+            case "quote":
+                return funcSingleQuote(node, params);
+            case "qq":
+                return funcDoubleQuote(node, params);
         }
         throw new UnsupportedFunctionException();
     }
@@ -636,6 +640,9 @@ class FuncDispatcher {
                 return funcUncapitalize(node, params);
             case "uppercase":
                 return funcUpperCase(node, params);
+            // Structural
+            case "unwind":
+                return funcUnwind(node, params);
         }
         throw new UnsupportedFunctionException();
     }

@@ -524,7 +524,7 @@ final class PatternMatcher {
             if (input.charAt(pos) == ':') {
                 final String name = trimOf(input, 0, pos);
                 if (name.isEmpty()) {
-                    throw new SyntaxErrorException(input, "Missing name");
+                    throw new SyntaxErrorException(input, "Missing field name");
                 }
                 checkElementName(name);
                 final String path = trimOf(input, pos + 1, len);
