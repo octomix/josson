@@ -37,23 +37,21 @@ final class FuncLogical {
     private FuncLogical() {
     }
 
-    static BooleanNode funcContains(JsonNode node, final String params, final boolean ignoreCase, final boolean not) {
-        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        final JsonNode valueNode = getNodeByPath(node, pathAndParams.getValue().get(0));
+    static BooleanNode funcContains(final JsonNode node, final String params, final boolean ignoreCase, final boolean not) {
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
+        final JsonNode workNode = nodeAndParams.getKey();
+        if (workNode == null) {
+            return BooleanNode.FALSE;
+        }
+        final JsonNode valueNode = getNodeByPath(node, nodeAndParams.getValue().get(0));
         if (valueNode == null || valueNode.isContainerNode()) {
             return BooleanNode.FALSE;
         }
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return BooleanNode.FALSE;
-            }
-        }
         if (valueNode.isNumber()) {
             final double value = valueNode.asDouble();
-            if (node.isArray()) {
-                for (int i = 0; i < node.size(); i++) {
-                    final JsonNode elem = node.get(i);
+            if (workNode.isArray()) {
+                for (int i = 0; i < workNode.size(); i++) {
+                    final JsonNode elem = workNode.get(i);
                     if ((elem.isNumber() || elem.isTextual()) && elem.asDouble() == value) {
                         return BooleanNode.valueOf(!not);
                     }
@@ -62,9 +60,9 @@ final class FuncLogical {
             return BooleanNode.valueOf(not);
         }
         if (valueNode.isNull()) {
-            if (node.isArray()) {
-                for (int i = 0; i < node.size(); i++) {
-                    if (node.get(i).isNull()) {
+            if (workNode.isArray()) {
+                for (int i = 0; i < workNode.size(); i++) {
+                    if (workNode.get(i).isNull()) {
                         return BooleanNode.valueOf(!not);
                     }
                 }
@@ -72,20 +70,20 @@ final class FuncLogical {
             return BooleanNode.valueOf(not);
         }
         final String value = valueNode.asText();
-        if (node.isObject()) {
+        if (workNode.isObject()) {
             if (ignoreCase) {
-                for (Iterator<String> it = node.fieldNames(); it.hasNext();) {
+                for (Iterator<String> it = workNode.fieldNames(); it.hasNext();) {
                     if (value.equalsIgnoreCase(it.next())) {
                         return BooleanNode.valueOf(!not);
                     }
                 }
                 return BooleanNode.valueOf(not);
             }
-            return BooleanNode.valueOf(not ^ node.get(value) != null);
+            return BooleanNode.valueOf(not ^ workNode.get(value) != null);
         }
-        if (node.isArray()) {
-            for (int i = 0; i < node.size(); i++) {
-                final JsonNode elem = node.get(i);
+        if (workNode.isArray()) {
+            for (int i = 0; i < workNode.size(); i++) {
+                final JsonNode elem = workNode.get(i);
                 if (elem.isTextual() || elem.isNumber()) {
                     if (ignoreCase) {
                         if (value.equalsIgnoreCase(elem.asText())) {
@@ -99,8 +97,8 @@ final class FuncLogical {
             return BooleanNode.valueOf(not);
         }
         return BooleanNode.valueOf(not ^ (ignoreCase
-                ? StringUtils.containsIgnoreCase(node.asText(), value)
-                : StringUtils.contains(node.asText(), value)));
+                ? StringUtils.containsIgnoreCase(workNode.asText(), value)
+                : StringUtils.contains(workNode.asText(), value)));
     }
 
     static JsonNode funcEndsWith(final JsonNode node, final String params,

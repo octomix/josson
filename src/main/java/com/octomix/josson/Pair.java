@@ -45,10 +45,6 @@ class Pair<K, V> {
         return value;
     }
 
-    boolean hasKey() {
-        return key != null;
-    }
-
     public String toString() {
         return "(" + key + ',' + value + ')';
     }

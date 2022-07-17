@@ -207,22 +207,26 @@ final class JossonCore {
         return dateTime.atOffset(zoneId.getRules().getOffset(dateTime));
     }
 
-    static String getNodeAsText(JsonNode node, final int index, final String jossonPath) {
-        node = getNodeByPath(node, index, jossonPath);
-        return node == null ? EMPTY : node.asText();
+    static String getNodeAsText(final JsonNode node, final int index, final String jossonPath) {
+        final JsonNode workNode = getNodeByPath(node, index, jossonPath);
+        return workNode == null ? EMPTY : workNode.asText();
     }
 
-    static int getNodeAsInt(JsonNode node, final int index, final String jossonPath) {
-        node = getNodeByPath(node, index, jossonPath);
-        if (node != null && node.isValueNode()) {
-            if (node.isTextual()) {
+    static int getNodeAsInt(final JsonNode node, final String jossonPath) {
+        return getNodeAsInt(node, NON_ARRAY_INDEX, jossonPath);
+    }
+
+    static int getNodeAsInt(final JsonNode node, final int index, final String jossonPath) {
+        final JsonNode workNode = getNodeByPath(node, index, jossonPath);
+        if (workNode != null && workNode.isValueNode()) {
+            if (workNode.isTextual()) {
                 try {
-                    return Integer.parseInt(node.asText());
+                    return Integer.parseInt(workNode.asText());
                 } catch (NumberFormatException e) {
                     return 0;
                 }
             }
-            return node.asInt();
+            return workNode.asInt();
         }
         return 0;
     }
@@ -334,52 +338,6 @@ final class JossonCore {
         return result.toString();
     }
 
-    /**
-     * Find an element or filter an array node.
-     *
-     * @param node      the Jackson JsonNode to be processed
-     * @param statement multiple relational operations combined with logical operators
-     * @param mode      {@code FILTRATE_FIRST_FOUND} | {@code FILTRATE_COLLECT_ALL} | {@code FILTRATE_DIVERT_ALL}
-     * @return The 1st matched element for {@code FILTRATE_FIRST_FOUND} or
-     *         all matched elements in an array node for {@code FILTRATE_COLLECT_ALL} and {@code FILTRATE_DIVERT_ALL}
-     */
-    private static JsonNode evaluateFilter(final JsonNode node, final String statement, final FilterMode mode) {
-        if (node == null) {
-            return null;
-        }
-        if (StringUtils.isEmpty(statement)) {
-            return node;
-        }
-        if (!node.isArray()) {
-            return asBoolean(new OperationStackForJsonNode(node).evaluateStatement(statement)) ? node : null;
-        }
-        if (node.size() == 0) {
-            return null;
-        }
-        ArrayNode matchedNodes = null;
-        if (mode != FILTRATE_FIND_FIRST) {
-            matchedNodes = MAPPER.createArrayNode();
-        }
-        try {
-            if (mode == FILTRATE_FIND_FIRST) {
-                return node.get(Integer.parseInt(statement));
-            }
-            matchedNodes.add(node.get(Integer.parseInt(statement)));
-            return matchedNodes;
-        } catch (NumberFormatException ignore) {
-        }
-        final OperationStack opStack = new OperationStackForJsonNode(node);
-        for (int i = 0; i < node.size(); i++) {
-            if (asBoolean(opStack.evaluate(statement, i))) {
-                if (mode == FILTRATE_FIND_FIRST) {
-                    return node.get(i);
-                }
-                matchedNodes.add(node.get(i));
-            }
-        }
-        return matchedNodes;
-    }
-
     private static JsonNode getNodeByKeys(JsonNode node, List<String> keys) {
         if (node != null && !keys.isEmpty()) {
             try {
@@ -442,7 +400,7 @@ final class JossonCore {
             if (!filter.getNodeName().isEmpty()) {
                 node = getNodeByPath(node, filter.getNodeName());
             }
-            node = evaluateFilter(node, filter.getFilter(), filter.getMode());
+            node = filter.evaluateFilter(node, filter.getFilter());
         }
         if (node == null) {
             return null;

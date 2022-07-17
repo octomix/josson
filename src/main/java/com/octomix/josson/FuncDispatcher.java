@@ -112,6 +112,9 @@ class FuncDispatcher {
 
     private JsonNode applyB(final JsonNode node, final String func) {
         switch (func) {
+            // Array
+            case "bottomn":
+                return funcTopBottomN(node, params, false);
             // Format
             case "b64decode":
                 return funcB64Decode(node, params, Base64.getDecoder());
@@ -581,6 +584,9 @@ class FuncDispatcher {
 
     private JsonNode applyT(final JsonNode node, final String func) {
         switch (func) {
+            // Array
+            case "topn":
+                return funcTopBottomN(node, params, true);
             // Date
             case "truncatetomicro":
                 return funcDateTruncateTo(node, params, ChronoUnit.MICROS);

@@ -53,15 +53,15 @@ final class FuncExecutor {
     private FuncExecutor() {
     }
 
-    static String getParamPath(final String params) {
+    static JsonNode getParamNode(final JsonNode node, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, 1);
-        return paramList.isEmpty() ? null : paramList.get(0);
+        return paramList.isEmpty() ? node : getNodeByPath(node, paramList.get(0));
     }
 
-    static Pair<String, List<String>> getParamPathAndStrings(final String params, final int min, final int max) {
+    static Pair<JsonNode, List<String>> getParamNodeAndStrings(final JsonNode node, final String params, final int min, final int max) {
         final List<String> paramList = decomposeFunctionParameters(params, min, max + 1);
         final String path = max <= UNLIMITED_AND_NO_PATH ? EMPTY : paramList.size() > max ? paramList.remove(0) : null;
-        return Pair.of(path, paramList);
+        return Pair.of(path == null ? node : getNodeByPath(node, path), paramList);
     }
 
     static Map<String, String> getParamNamePath(final List<String> paramList) {
@@ -125,27 +125,23 @@ final class FuncExecutor {
         return array;
     }
 
-    static JsonNode applyWithoutParam(JsonNode node, final String params, final Function<JsonNode, JsonNode> action) {
-        final String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        return action.apply(node);
+    static JsonNode applyWithoutParam(final JsonNode node, final String params, final Function<JsonNode, JsonNode> action) {
+        final JsonNode workNode = getParamNode(node, params);
+        return workNode == null ? null : action.apply(workNode);
     }
 
     static JsonNode applyWithoutParam(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
                                       final BiFunction<Pair<JsonNode, Integer>, List<String>, JsonNode> action) {
-        return applyAction(node, getParamPath(params), isValid, action, null);
+        final List<String> paramList = decomposeFunctionParameters(params, 0, 1);
+        return applyAction(node, paramList.isEmpty() ? null : paramList.get(0), isValid, action, null);
     }
 
     static JsonNode applyWithParams(final JsonNode node, final String params, final int min, final int max,
                                     final Predicate<JsonNode> isValid,
                                     final BiFunction<Pair<JsonNode, Integer>, List<String>, JsonNode> action) {
-        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, min, max);
-        return applyAction(node, pathAndParams.getKey(), isValid, action, pathAndParams.getValue());
+        final List<String> paramList = decomposeFunctionParameters(params, min, max + 1);
+        final String path = max <= UNLIMITED_AND_NO_PATH ? EMPTY : paramList.size() > max ? paramList.remove(0) : null;
+        return applyAction(node, path, isValid, action, paramList);
     }
 
     static JsonNode applyTextNode(final JsonNode node, final String params,

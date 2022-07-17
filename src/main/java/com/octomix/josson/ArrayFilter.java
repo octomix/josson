@@ -16,6 +16,14 @@
 
 package com.octomix.josson;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.octomix.josson.commons.StringUtils;
+
+import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_FIND_FIRST;
+import static com.octomix.josson.JossonCore.asBoolean;
+import static com.octomix.josson.Mapper.MAPPER;
+
 /**
  * Stores an array filter details.
  */
@@ -83,5 +91,50 @@ class ArrayFilter {
 
     FilterMode getMode() {
         return mode;
+    }
+
+    /**
+     * Find an element or filter an array node.
+     *
+     * @param node      the Jackson JsonNode to be processed
+     * @param statement multiple relational operations combined with logical operators
+     * @return The 1st matched element for {@code FILTRATE_FIRST_FOUND} or
+     *         all matched elements in an array node for {@code FILTRATE_COLLECT_ALL} and {@code FILTRATE_DIVERT_ALL}
+     */
+    JsonNode evaluateFilter(final JsonNode node, final String statement) {
+        if (node == null) {
+            return null;
+        }
+        if (StringUtils.isEmpty(statement)) {
+            return node;
+        }
+        if (!node.isArray()) {
+            return asBoolean(new OperationStackForJsonNode(node).evaluateStatement(statement)) ? node : null;
+        }
+        if (node.size() == 0) {
+            return null;
+        }
+        ArrayNode matchedNodes = null;
+        if (mode != FILTRATE_FIND_FIRST) {
+            matchedNodes = MAPPER.createArrayNode();
+        }
+        try {
+            if (mode == FILTRATE_FIND_FIRST) {
+                return node.get(Integer.parseInt(statement));
+            }
+            matchedNodes.add(node.get(Integer.parseInt(statement)));
+            return matchedNodes;
+        } catch (NumberFormatException ignore) {
+        }
+        final OperationStack opStack = new OperationStackForJsonNode(node);
+        for (int i = 0; i < node.size(); i++) {
+            if (asBoolean(opStack.evaluate(statement, i))) {
+                if (mode == FILTRATE_FIND_FIRST) {
+                    return node.get(i);
+                }
+                matchedNodes.add(node.get(i));
+            }
+        }
+        return matchedNodes;
     }
 }

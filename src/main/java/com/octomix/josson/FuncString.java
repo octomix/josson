@@ -98,13 +98,11 @@ final class FuncString {
         return applyTextNodeWithParamAsText(node, params,
                 (str, param) -> {
                     final int pos = last
-                            ? (ignoreCase
-                                ? StringUtils.lastIndexOfIgnoreCase(str, param)
-                                : StringUtils.lastIndexOf(str, param))
-                            : (ignoreCase
-                                ? StringUtils.indexOfIgnoreCase(str, param)
-                                : StringUtils.indexOf(str, param));
-                    return pos < 0 ? EMPTY : after ? str.substring(pos + param.length()) : str.substring(0, pos);
+                        ? (ignoreCase ? StringUtils.lastIndexOfIgnoreCase(str, param) : StringUtils.lastIndexOf(str, param))
+                        : (ignoreCase ? StringUtils.indexOfIgnoreCase(str, param) : StringUtils.indexOf(str, param));
+                    return pos < 0 ? EMPTY
+                        : after ? str.substring(pos + param.length())
+                        : str.substring(0, pos);
                 });
     }
 

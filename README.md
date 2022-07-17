@@ -32,10 +32,8 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 ### Josson
 
 - Query a JSON dataset.
-- Restructure JSON data and capable of grouping data.
-- Has many functions to format text output.
-- Has many functions to manipulate date values.
-- Has many functions to work on array node.
+- There are 201 internal functions to manipulate and format data.
+- Restructure JSON data and capable of grouping and unwind data.
 - Can be used as an API parameter to trim down the response JSON result.
 
 ### Jossons
@@ -46,18 +44,20 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 - Resolve template placeholder from external data source on demand.
 - Join two JSON datasets to build a new dataset.
 - Set operation on two datasets.
-- Can be used to build a rule engine.
 - I used Jossons to generate millions of SMS/Email notifications during the first year.
 - I used Jossons to generate plain text and csv reports that retrieve data from MongoDB directly.
 - I store the notification or report definitions in template documents. No need to write extra program coding for different template.
 
 ## Table of Contents
 
+- [Operation Summary](#operator-summary)
+  - [Relational and Logical Operators](#relational-and-logical-operators)
+  - [Join and Set Operators](#join-and-set-operators)
+
 - [Josson Basic](#josson-basic)
 
 - [Josson Query Language](#josson-query-language)
   - [Path Steps](#path-steps)
-  - [Operators](#operators)
   - [Path Chart Elements](#path-chart-elements)
   - [Tutorial](#tutorial)
 
@@ -91,6 +91,45 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
   - [MongoDB Adapter](#mongodb-adapter)
 
 ---
+
+## Operator Summary
+
+### Relational and Logical Operators
+
+| Operator | Description                             |
+|:---------|:----------------------------------------|
+| (        | Grouping                                |
+| )        | Grouping                                |
+| =        | Is equal to (support object and array)  |
+| !=       | Not equal to (support object and array) |
+| &gt;     | Greater than                            |
+| &gt;=    | Greater than or equal to                |
+| &lt;     | Less than                               |
+| &lt;=    | Less than or equal to                   |
+| =~       | Left matches regular expression         |
+| !        | Logical NOT                             |
+| &amp;    | Logical AND                             |
+| &#124;   | Logical OR                              |
+
+### Join and Set Operators
+
+| Operator      | Description              |
+|:--------------|:-------------------------|
+| &gt;=&lt;     | Inner join one           |
+| &lt;=&lt;     | Left join one            |
+| &gt;=&gt;     | Right join one           |
+| &lt;=&lt;&lt; | Left join many           |
+| &gt;&gt;=&gt; | Right join many          |
+| &lt;!&lt;     | Left excluding join      |
+| &gt;!&gt;     | Right excluding join     |
+| &lt;!&gt;     | Outer excluding join     |
+| &lt;+&lt;     | Left concatenate         |
+| &gt;+&gt;     | Right concatenate        |
+| &lt;-&lt;     | Subtract right from left |
+| &gt;-&gt;     | Subtract left from right |
+| &lt;-&gt;     | Symmetric difference     |
+| &lt;u&gt;     | Union                    |
+| &gt;n&lt;     | Intersection             |
 
 ## Josson Basic
 
@@ -142,23 +181,6 @@ To apply a Josson query path and get the result JsonNode.
 | `#a`                 | Lowercase alphabetic index of an array element                        |
 | `#R`                 | Uppercase roman numerals index of an array element                    |
 | `#r`                 | Lowercase roman numerals index of an array element                    |
-
-### Operators
-
-| Operator | Description                             |
-|:---------|:----------------------------------------|
-| (        | Grouping                                |
-| )        | Grouping                                |
-| =        | Is equal to (support object and array)  |
-| !=       | Not equal to (support object and array) |
-| &gt;     | Greater than                            |
-| &gt;=    | Greater than or equal to                |
-| &lt;     | Less than                               |
-| &lt;=    | Less than or equal to                   |
-| =~       | Left matches regular expression         |
-| !        | Logical NOT                             |
-| &amp;    | Logical AND                             |
-| &#124;   | Logical OR                              |
 
 ### Path Chart Elements
 
@@ -1190,7 +1212,7 @@ Below is the JSON for this tutorial.
 
 ## Josson Functions
 
-There are over 190 functions. They are classified into 7 categories:
+There are 201 functions. They are classified into 7 categories:
 
 Arithmetic Functions
 
@@ -1385,32 +1407,34 @@ Array Functions
 174. [last()](#174-last)
 175. [max()](#175-max)
 176. [min()](#176-min)
-177. [sum()](#177-sum)
-178. [avg()](#178-avg)
-179. [count()](#179-count)
-180. [reverse()](#180-reverse)
-181. [slice()](#181-slice)
-182. [sort()](#182-sort)
-183. [distinct()](#183-distinct)
-184. [join()](#184-join)
-185. [findByMax()](#185-findbymax)
-186. [findByMin()](#186-findbymin)
-187. [findByNullOrMax()](#187-findbynullormax)
-188. [findByNullOrMin()](#188-findbynullormin)
-189. [findByMaxOrNull()](#189-findbymaxornull)
-190. [findByMinOrNull()](#190-findbyminornull)
+177. [topN()](#177-topn)
+178. [bottomN()](#178-bottomn)
+179. [sum()](#179-sum)
+180. [avg()](#180-avg)
+181. [count()](#181-count)
+182. [reverse()](#182-reverse)
+183. [slice()](#183-slice)
+184. [sort()](#184-sort)
+185. [distinct()](#185-distinct)
+186. [join()](#186-join)
+187. [findByMax()](#187-findbymax)
+188. [findByMin()](#188-findbymin)
+189. [findByNullOrMax()](#189-findbynullormax)
+190. [findByNullOrMin()](#190-findbynullormin)
+191. [findByMaxOrNull()](#191-findbymaxornull)
+192. [findByMinOrNull()](#192-findbyminornull)
 
 Structural Functions
 
-191. [json()](#191-json)
-192. [entries()](#192-entries)
-193. [keys()](#193-keys)
-194. [toArray()](#194-toarray)
-195. [flatten()](#195-flatten)
-196. [map()](#196-map)
-197. [field()](#197-field)
-198. [group()](#198-group)
-199. [unwind()](#199-unwind)
+193. [json()](#193-json)
+194. [entries()](#194-entries)
+195. [keys()](#195-keys)
+196. [toArray()](#196-toarray)
+197. [flatten()](#197-flatten)
+198. [map()](#198-map)
+199. [field()](#199-field)
+200. [group()](#200-group)
+201. [unwind()](#201-unwind)
 
 Following are some examples of each function.
 
@@ -2854,31 +2878,43 @@ Following are some examples of each function.
 
     min(json('[7,1,9,null,5,3]'), 15, 16) ==> 1
 
-#### 177. sum()
+#### 177. topN()
+
+    json('[7,1,9,null,5,3]').topN(2) ==> [ 9, 7 ]
+
+    topN(json('[7,1,9,null,5,3]'), 6) ==> [ 9, 7, 5, 3, 1 ]
+
+#### 178. bottomN()
+
+    json('[7,1,9,null,5,3]').bottomN(2) ==> [ 1, 3 ]
+
+    bottomN(json('[7,1,9,null,5,3]'), 6) ==> [ 1, 3, 5, 7, 9 ]
+
+#### 179. sum()
 
     json('[7,1,9,null,5,3]').sum() ==> 25.0
 
     sum(json('[7,1,9,null,5,3]'), 15, 16) ==> 56.0
 
-#### 178. avg()
+#### 180. avg()
 
     json('[7,1,9,null,5,3]').avg() ==> 5.0
 
     avg(json('[7,1,9,null,5,3]'), 15, 16) ==> 8.0
 
-#### 179. count()
+#### 181. count()
 
     json('[7,1,9,null,5,3]').count() ==> 5
 
     count(json('[7,1,9,null,5,3]'), 15, 16) ==> 7
 
-#### 180. reverse()
+#### 182. reverse()
 
     json('[7,1,9,null,5,3]').reverse() ==> [ 3, 5, null, 9, 1, 7 ]
 
     reverse(json('[7,1,9,null,5,3]')) ==> [ 3, 5, null, 9, 1, 7 ]
 
-#### 181. slice()
+#### 183. slice()
 
     json('[1,2,3,4,5,6,7,8,9]').slice(3) ==> [ 4, 5, 6, 7, 8, 9 ]
 
@@ -2898,7 +2934,7 @@ Following are some examples of each function.
 
     slice(json('[1,2,3,4,5,6,7,8,9]'),,-5,1) ==> [ 1, 2, 3, 4 ]
 
-#### 182. sort()
+#### 184. sort()
 
     json('[1,1,3,5,3,7,3,9]').sort() ==> [ 1, 1, 3, 3, 3, 5, 7, 9 ]
 
@@ -2936,7 +2972,7 @@ Following are some examples of each function.
       "val" : "B"
     } ]
 
-#### 183. distinct()
+#### 185. distinct()
 
     json('[1,1,3,5,3,7,3,9]').distinct().sort() ==> [ 1.0, 3.0, 5.0, 7.0, 9.0 ]
 
@@ -2944,7 +2980,7 @@ Following are some examples of each function.
 
     distinct(json('["1","1.0",1,1.0,1.00,true,"true",null,"null"]')) ==> [ "1", "1.0", "null", "true", 1.0, true ]
 
-#### 184. join()
+#### 186. join()
 
     json('["Hello", ",", "World", "!"]').join() ==> "Hello,World!"
 
@@ -2952,7 +2988,7 @@ Following are some examples of each function.
 
     join(json('["A",1,"B","2.00","C",3.00,"D",true,null]'),'/') ==> "A/1/B/2.00/C/3.0/D/true"
 
-#### 185. findByMax()
+#### 187. findByMax()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByMax(price)
     ==>
@@ -2968,7 +3004,7 @@ Following are some examples of each function.
       "price" : 5
     }
 
-#### 186. findByMin()
+#### 188. findByMin()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByMin(?,price)
     ==>
@@ -2984,7 +3020,7 @@ Following are some examples of each function.
       "price" : 8
     }
 
-#### 187. findByNullOrMax()
+#### 189. findByNullOrMax()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByNullOrMax(price)
     ==>
@@ -2999,7 +3035,7 @@ Following are some examples of each function.
       "price" : 5
     }
 
-#### 188. findByNullOrMin()
+#### 190. findByNullOrMin()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByNullOrMin(?,price)
     ==>
@@ -3014,7 +3050,7 @@ Following are some examples of each function.
       "price" : 8
     }
 
-#### 189. findByMaxOrNull()
+#### 191. findByMaxOrNull()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByMaxOrNull(price)
     ==>
@@ -3030,7 +3066,7 @@ Following are some examples of each function.
       "price" : 5
     }
 
-#### 190. findByMinOrNull()
+#### 192. findByMinOrNull()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByMinOrNull(?,price)
     ==>
@@ -3048,7 +3084,7 @@ Following are some examples of each function.
 
 ### Structural Functions
 
-#### 191. json()
+#### 193. json()
 
     json('[1,"2",{"a":1,"b":2}]')
     ==>
@@ -3068,7 +3104,7 @@ Following are some examples of each function.
       }
     }
 
-#### 192. entries()
+#### 194. entries()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').entries()
     ==>
@@ -3086,7 +3122,7 @@ Following are some examples of each function.
       }
     } ]
 
-#### 193. keys()
+#### 195. keys()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').keys() ==> [ "a", "b", "c" ]
 
@@ -3094,7 +3130,7 @@ Following are some examples of each function.
 
     keys(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}'), -1) ==> [ "a", "b", "c", "d", "e" ]
 
-#### 194. toArray()
+#### 196. toArray()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()
     ==>
@@ -3107,7 +3143,7 @@ Following are some examples of each function.
 
     toArray(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()) ==> [ 1, 2, 3, 4, 5 ]
 
-#### 195. flatten()
+#### 197. flatten()
 
     json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()
     ==>
@@ -3121,7 +3157,7 @@ Following are some examples of each function.
     ==>
     [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]
 
-#### 196. map()
+#### 198. map()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').map(c.e,c.d,b,a)
     ==>
@@ -3145,7 +3181,7 @@ Following are some examples of each function.
       }
     }
 
-#### 197. field()
+#### 199. field()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').field(f:6,c:)
     ==>
@@ -3162,7 +3198,7 @@ Following are some examples of each function.
       "name" : "Cyron"
     }
 
-#### 198. group()
+#### 200. group()
 
     json('[{"a":1,"b":"A"},{"a":2,"b":"B"},{"a":3,"b":"C"},{"a":2,"b":"D"},{"a":1,"b":"E"}]').group(a)
     ==>
@@ -3205,7 +3241,7 @@ Following are some examples of each function.
       "bs" : [ "C" ]
     } ]
 
-#### 199. unwind()
+#### 201. unwind()
 
     json('[{"a":1,"bs":["A","E"]},{"a":2,"bs":["B","D"]},{"a":3,"bs":["C"]}]').unwind(b:bs)
     ==>

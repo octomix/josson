@@ -39,19 +39,13 @@ final class FuncStructural {
     private FuncStructural() {
     }
 
-    static JsonNode funcEntries(JsonNode node, final String params) {
-        final String path = getParamPath(params);
-        if (path != null) {
-            node = getNodeByPath(node, path);
-            if (node == null) {
-                return null;
-            }
-        }
-        if (!node.isObject()) {
+    static JsonNode funcEntries(final JsonNode node, final String params) {
+        final JsonNode workNode = getParamNode(node, params);
+        if (workNode == null || !workNode.isObject()) {
             return null;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        node.fields().forEachRemaining((Map.Entry<String, JsonNode> field) ->
+        workNode.fields().forEachRemaining((Map.Entry<String, JsonNode> field) ->
                 array.add(Josson.createObjectNode().put("key", field.getKey()).set("value", field.getValue())));
         return array;
     }
@@ -72,20 +66,18 @@ final class FuncStructural {
         return null;
     }
 
-    static JsonNode funcFlatten(JsonNode node, final String params) {
-        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
+    static JsonNode funcFlatten(final JsonNode node, final String params) {
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 0, 1);
+        final JsonNode workNode = nodeAndParams.getKey();
+        if (workNode == null || !workNode.isArray()) {
+            return workNode;
         }
-        final int levels = pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, NON_ARRAY_INDEX, pathAndParams.getValue().get(0)) : 1;
-        if (!node.isArray() || levels < 1) {
-            return node;
+        final int levels = nodeAndParams.getValue().size() > 0 ? getNodeAsInt(node, nodeAndParams.getValue().get(0)) : 1;
+        if (levels < 1) {
+            return workNode;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        funcFlatten(array, node, levels);
+        funcFlatten(array, workNode, levels);
         return array;
     }
 
@@ -103,18 +95,13 @@ final class FuncStructural {
         }
     }
 
-    static JsonNode funcGroup(JsonNode node, final String params) {
-        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 2);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        if (!node.isArray()) {
+    static JsonNode funcGroup(final JsonNode node, final String params) {
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 2);
+        final JsonNode workNode = nodeAndParams.getKey();
+        if (workNode == null || !workNode.isArray()) {
             return null;
         }
-        final List<String> paramList = pathAndParams.getValue();
+        final List<String> paramList = nodeAndParams.getValue();
         Pair<String, String> name;
         try {
             name = decomposeNameAndPath(paramList.get(0));
@@ -132,8 +119,8 @@ final class FuncStructural {
             grouping = Pair.of("elements", null);
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        for (int i = 0; i < node.size(); i++) {
-            final JsonNode valueNode = getNodeByPath(node, i, name.getValue() == null ? name.getKey() : name.getValue());
+        for (int i = 0; i < workNode.size(); i++) {
+            final JsonNode valueNode = getNodeByPath(workNode, i, name.getValue() == null ? name.getKey() : name.getValue());
             if (valueNode != null && valueNode.isValueNode()) {
                 ArrayNode values = null;
                 for (int j = 0; j < array.size(); j++) {
@@ -149,7 +136,7 @@ final class FuncStructural {
                     entry.set(grouping.getKey(), values);
                     array.add(entry);
                 }
-                values.add(grouping.getValue() == null ? node.get(i) : getNodeByPath(node, i, grouping.getValue()));
+                values.add(grouping.getValue() == null ? workNode.get(i) : getNodeByPath(workNode, i, grouping.getValue()));
             }
         }
         return array;
@@ -166,20 +153,15 @@ final class FuncStructural {
                 });
     }
 
-    static JsonNode funcKeys(JsonNode node, final String params) {
-        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 0, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
-        }
-        if (!node.isObject()) {
+    static JsonNode funcKeys(final JsonNode node, final String params) {
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 0, 1);
+        final JsonNode workNode = nodeAndParams.getKey();
+        if (workNode == null || !workNode.isObject()) {
             return null;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        funcKeys(array, node,
-                pathAndParams.getValue().size() > 0 ? getNodeAsInt(node, NON_ARRAY_INDEX, pathAndParams.getValue().get(0)) : 1);
+        funcKeys(array, workNode,
+                nodeAndParams.getValue().size() > 0 ? getNodeAsInt(workNode, nodeAndParams.getValue().get(0)) : 1);
         return array;
     }
 
@@ -246,23 +228,21 @@ final class FuncStructural {
         return array;
     }
 
-    static JsonNode funcUnwind(JsonNode node, final String params) {
-        final Pair<String, List<String>> pathAndParams = getParamPathAndStrings(params, 1, 1);
-        if (pathAndParams.hasKey()) {
-            node = getNodeByPath(node, pathAndParams.getKey());
-            if (node == null) {
-                return null;
-            }
+    static JsonNode funcUnwind(final JsonNode node, final String params) {
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
+        final JsonNode workNode = nodeAndParams.getKey();
+        if (workNode == null) {
+            return null;
         }
-        final Pair<String, String> nameAndPath = decomposeNameAndPath(pathAndParams.getValue().get(0));
+        final Pair<String, String> nameAndPath = decomposeNameAndPath(nodeAndParams.getValue().get(0));
         if (nameAndPath.getValue() == null) {
             throw new SyntaxErrorException("Missing path '" + params + "'");
         }
         final ArrayNode unwind = MAPPER.createArrayNode();
-        if (node.isObject()) {
-            funcUnwind(unwind, node, nameAndPath);
-        } else if (node.isArray()) {
-            node.elements().forEachRemaining(element -> funcUnwind(unwind, element, nameAndPath));
+        if (workNode.isObject()) {
+            funcUnwind(unwind, workNode, nameAndPath);
+        } else if (workNode.isArray()) {
+            workNode.elements().forEachRemaining(element -> funcUnwind(unwind, element, nameAndPath));
         }
         return unwind;
     }

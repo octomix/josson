@@ -1488,6 +1488,12 @@ public class UnitTest {
         // min()
         evaluate.accept("json('[7,1,9,null,5,3]').min()", "1");
         evaluate.accept("min(json('[7,1,9,null,5,3]'), 15, 16)", "1");
+        // topN()
+        evaluate.accept("json('[7,1,9,null,5,3]').topN(2)", "[ 9, 7 ]");
+        evaluate.accept("topN(json('[7,1,9,null,5,3]'), 6)", "[ 9, 7, 5, 3, 1 ]");
+        // bottomN()
+        evaluate.accept("json('[7,1,9,null,5,3]').bottomN(2)", "[ 1, 3 ]");
+        evaluate.accept("bottomN(json('[7,1,9,null,5,3]'), 6)", "[ 1, 3, 5, 7, 9 ]");
         // sum()
         evaluate.accept("json('[7,1,9,null,5,3]').sum()", "25.0");
         evaluate.accept("sum(json('[7,1,9,null,5,3]'), 15, 16)", "56.0");
