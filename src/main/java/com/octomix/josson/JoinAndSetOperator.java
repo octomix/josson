@@ -116,8 +116,6 @@ enum JoinAndSetOperator {
 
     private JoinAndSetOperand rightDataset;
 
-    private static final Operator eq = Operator.EQ;
-
     JoinAndSetOperator(final String symbol) {
         this.symbol = symbol;
     }
@@ -234,7 +232,7 @@ enum JoinAndSetOperator {
             if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
-            relationalOps[j] = rightKeys[j] + eq.getSymbol()
+            relationalOps[j] = rightKeys[j] + Operator.EQ.getSymbol()
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : EMPTY)
                     + leftValue.asText().replace("'", "''")
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : EMPTY);
@@ -285,7 +283,7 @@ enum JoinAndSetOperator {
             for (int i = 0; i < leftNode.size(); i++) {
                 int j = rightNode.size() - 1;
                 for (; j >= 0 ; j--) {
-                    if (eq.relationalCompare(leftNode.get(i), rightNode.get(j))) {
+                    if (Operator.EQ.relationalCompare(leftNode.get(i), rightNode.get(j))) {
                         break;
                     }
                 }
@@ -319,7 +317,7 @@ enum JoinAndSetOperator {
             final ArrayNode node = MAPPER.createArrayNode();
             for (int i = 0; i < leftNode.size(); i++) {
                 for (int j = 0; j < rightNode.size(); j++) {
-                    if (eq.relationalCompare(leftNode.get(i), rightNode.get(j))) {
+                    if (Operator.EQ.relationalCompare(leftNode.get(i), rightNode.get(j))) {
                         node.add(leftNode.get(i));
                         break;
                     }

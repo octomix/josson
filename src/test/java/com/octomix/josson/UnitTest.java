@@ -1470,11 +1470,11 @@ public class UnitTest {
         evaluate.accept("lastIndex(json('[7,1,9,null,5,3]'))", "5");
         // indexOf()
         evaluate.accept("json('[1,1,3,5,null,3,7,3,9]').indexOf(3)", "2");
-        evaluate.accept("json('[1,1,3,5,null,3,7,3,9]').indexOf(?, 1)", "0");
+        evaluate.accept("json('[1,1,3,5,null,3,7,3,9]').indexOf(?, '1')", "0");
         evaluate.accept("indexOf(json('[1,1,3,5,null,3,7,3,9]'), null)", "4");
         // lastIndexOf()
         evaluate.accept("json('[1,1,3,5,null,3,7,3,9]').lastIndexOf(3)", "7");
-        evaluate.accept("json('[1,1,3,5,null,3,7,3,9]').lastIndexOf(?, 1)", "1");
+        evaluate.accept("json('[1,1,3,5,null,3,7,3,9]').lastIndexOf(?, '1')", "1");
         evaluate.accept("lastIndexOf(json('[1,1,3,5,null,3,7,3,9]'), null)", "4");
         // first()
         evaluate.accept("json('[7,1,9,null,5,3]').first()", "7");

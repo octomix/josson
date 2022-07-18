@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.18</version>
+        <version>1.3.19</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.18'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.19'
 
 ## Features and Capabilities
 
@@ -2842,7 +2842,7 @@ Following are some examples of each function.
 
     json('[1,1,3,5,null,3,7,3,9]').indexOf(3) ==> 2
 
-    json('[1,1,3,5,null,3,7,3,9]').indexOf(?, 1) ==> 0
+    json('[1,1,3,5,null,3,7,3,9]').indexOf(?, '1') ==> 0
 
     indexOf(json('[1,1,3,5,null,3,7,3,9]'), null) ==> 4
 
@@ -2850,7 +2850,7 @@ Following are some examples of each function.
 
     json('[1,1,3,5,null,3,7,3,9]').lastIndexOf(3) ==> 7
 
-    json('[1,1,3,5,null,3,7,3,9]').lastIndexOf(?, 1) ==> 1
+    json('[1,1,3,5,null,3,7,3,9]').lastIndexOf(?, '1') ==> 1
 
     lastIndexOf(json('[1,1,3,5,null,3,7,3,9]'), null) ==> 4
 
