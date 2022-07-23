@@ -43,21 +43,29 @@ class JossonsCore {
 
     private boolean buildDataset(final String name, final String query, final Function<String, String> dictionaryFinder,
                                  final BiFunction<String, String, Josson> dataFinder, final ResolverProgress progress) {
-        Josson dataset = null;
-        final String[] tokens = matchDbQuery(query);
-        if (tokens != null) {
-            progress.addResolvingStep(name, query);
-            final String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
-            dataset = dataFinder.apply(collectionName, tokens[2]);
-        } else {
-            final JoinAndSetOperator operator = matchJoinOrSetOperation(query);
-            if (operator == null) {
+        final String[] dbTokens = matchDbQuery(query);
+        List<CombineOperation> operations = null;
+        if (dbTokens == null) {
+            operations = matchCombineOperations(query);
+            if (operations == null) {
                 return false;
             }
-            progress.addResolvingStep(name, query);
+        }
+        progress.addResolvingStep(name, query);
+        Josson dataset = null;
+        if (dbTokens != null) {
+            final String collectionName = (dbTokens[0].isEmpty() ? name : dbTokens[0]) + dbTokens[1];
+            dataset = dataFinder.apply(collectionName, dbTokens[2]);
+        } else {
             try {
-                dataset = Josson.create(operator.apply(joinQuery ->
-                        evaluateQueryWithResolverLoop(joinQuery, dictionaryFinder, dataFinder, progress)));
+                JsonNode combined = null;
+                for (CombineOperation operation : operations) {
+                    combined = operation.apply(combined, eachQuery -> {
+                        progress.addMessageStep("Resolving " + eachQuery);
+                        return evaluateQueryWithResolverLoop(eachQuery, dictionaryFinder, dataFinder, progress);
+                    });
+                }
+                dataset = Josson.create(combined);
             } catch (IllegalArgumentException e) {
                 progress.addMessageStep("Operation failed - " + e.getMessage());
             }

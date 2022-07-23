@@ -38,7 +38,7 @@ public class Jossons extends JossonsCore {
      * Plain text is the default.
      * Uses {@code escapingMarkup()} to set {@link MarkupLanguage} to XML or HTML.
      */
-    private Jossons() {
+    public Jossons() {
         escapingMarkup = MarkupLanguage.NONE;
     }
 

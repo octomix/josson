@@ -201,16 +201,10 @@ enum Operator {
         if (leftNode.isArray()) {
             final List<JsonNode> rightArray = new ArrayList<>();
             for (int j = 0; j < size; j++) {
-                if (!rightNode.get(j).isValueNode()) {
-                    return this == NE;
-                }
                 rightArray.add(rightNode.get(j));
             }
             for (int i = size - 1; i >= 0; i--) {
                 final JsonNode leftElem = leftNode.get(i);
-                if (!leftElem.isValueNode()) {
-                    return false;
-                }
                 int j = i;
                 for (; j >= 0; j--) {
                     if (EQ.relationalCompare(leftElem, rightArray.get(j))) {

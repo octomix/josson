@@ -27,7 +27,7 @@ import static com.octomix.josson.PatternMatcher.getLastElementName;
 /**
  * Defines dataset for join and set operation.
  */
-final class JoinAndSetOperand {
+final class CombineOperand {
 
     private final String query;
 
@@ -35,7 +35,7 @@ final class JoinAndSetOperand {
 
     private JsonNode node;
 
-    JoinAndSetOperand(final String query, final String[] keys) {
+    CombineOperand(final String query, final String[] keys) {
         this.query = query;
         this.keys = keys;
     }
@@ -46,6 +46,14 @@ final class JoinAndSetOperand {
 
     JsonNode getNode() {
         return node;
+    }
+
+    void setNode(JsonNode node) {
+        this.node = node;
+    }
+
+    boolean noQuery() {
+        return query.isEmpty();
     }
 
     String resolveArrayName() {

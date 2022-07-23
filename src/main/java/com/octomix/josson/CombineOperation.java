@@ -25,112 +25,26 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_COLLECT_ALL;
+import static com.octomix.josson.CombineOperator.*;
 import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
 import static com.octomix.josson.JossonCore.getNodeByPath;
 import static com.octomix.josson.Mapper.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
- * Dataset join and set operators.
+ * Dataset join and set operation.
  */
-enum JoinAndSetOperator {
+class CombineOperation {
 
-    /**
-     * Inner join one.
-     */
-    INNER_JOIN_ONE(">=<"),
+    private final CombineOperand leftOperand;
 
-    /**
-     * Left join one.
-     */
-    LEFT_JOIN_ONE("<=<"),
+    private final CombineOperator operator;
 
-    /**
-     * Right join one.
-     */
-    RIGHT_JOIN_ONE(">=>"),
+    private final CombineOperand rightOperand;
 
-    /**
-     * Left join many.
-     */
-    LEFT_JOIN_MANY("<=<<"),
-
-    /**
-     * Right join many.
-     */
-    RIGHT_JOIN_MANY(">>=>"),
-
-    /**
-     * Left excluding join.
-     */
-    LEFT_EXCLUDING_JOIN("<!<"),
-
-    /**
-     * Right excluding join.
-     */
-    RIGHT_EXCLUDING_JOIN(">!>"),
-
-    /**
-     * Outer excluding join.
-     */
-    OUTER_EXCLUDING_JOIN("<!>"),
-
-    /**
-     * Concatenate right into left, works on two objects or two arrays.
-     */
-    LEFT_CONCATENATE("<+<"),
-
-    /**
-     * Concatenate left into right, works on two objects or two arrays.
-     */
-    RIGHT_CONCATENATE(">+>"),
-
-    /**
-     * Subtract right from left, works on two objects or two arrays.
-     */
-    SUBTRACT_RIGHT_FROM_LEFT("<-<"),
-
-    /**
-     * Subtract left from right, works on two objects or two arrays.
-     */
-    SUBTRACT_LEFT_FROM_RIGHT(">->"),
-
-    /**
-     * Symmetric difference, works on two objects or two arrays.
-     */
-    SYMMETRIC_DIFFERENCE("<->"),
-
-    /**
-     * Union, works on two arrays.
-     */
-    UNION("<u>"),
-
-    /**
-     * Intersection, works on two arrays.
-     */
-    INTERSECTION(">n<");
-
-    private final String symbol;
-
-    private JoinAndSetOperand leftDataset;
-
-    private JoinAndSetOperand rightDataset;
-
-    JoinAndSetOperator(final String symbol) {
-        this.symbol = symbol;
-    }
-
-    static JoinAndSetOperator fromSymbol(final String symbol) {
-        for (JoinAndSetOperator operator : values()) {
-            if (operator.symbol.equals(symbol)) {
-                return operator;
-            }
-        }
-        return null;
-    }
-
-    JoinAndSetOperator init(final JoinAndSetOperand leftDataset, final JoinAndSetOperand rightDataset) {
-        switch (this) {
+    CombineOperation(final CombineOperand leftOperand, final CombineOperator operator, final CombineOperand rightOperand) {
+        switch (operator) {
+            // Set operations
             case LEFT_CONCATENATE:
             case RIGHT_CONCATENATE:
             case SUBTRACT_RIGHT_FROM_LEFT:
@@ -138,60 +52,66 @@ enum JoinAndSetOperator {
             case SYMMETRIC_DIFFERENCE:
             case UNION:
             case INTERSECTION:
-                if (leftDataset.getKeys() != null || rightDataset.getKeys() != null) {
+                if (leftOperand.getKeys() != null || rightOperand.getKeys() != null) {
                     throw new IllegalArgumentException("Set operation does not need join key");
                 }
                 break;
+
+            // Join operations
             default:
-                if (leftDataset.getKeys() == null || rightDataset.getKeys() == null) {
+                if (leftOperand.getKeys() == null || rightOperand.getKeys() == null) {
                     throw new IllegalArgumentException("Missing join key");
-                } else if (leftDataset.getKeys().length != rightDataset.getKeys().length) {
+                } else if (leftOperand.getKeys().length != rightOperand.getKeys().length) {
                     throw new IllegalArgumentException("Mismatch key count");
                 }
                 break;
         }
-        this.leftDataset = leftDataset;
-        this.rightDataset = rightDataset;
-        return this;
+        this.leftOperand = leftOperand;
+        this.operator = operator;
+        this.rightOperand = rightOperand;
     }
 
-    JsonNode apply(final Function<String, JsonNode> evaluateQuery) {
-        leftDataset.apply(evaluateQuery);
-        rightDataset.apply(evaluateQuery);
-        switch (this) {
-            case INNER_JOIN_ONE:
-                if (leftDataset.getNode().isObject() || !rightDataset.getNode().isObject()) {
+    JsonNode apply(JsonNode previousResult, final Function<String, JsonNode> evaluateQuery) {
+        if (previousResult != null) {
+            leftOperand.setNode(previousResult);
+        } else {
+            leftOperand.apply(evaluateQuery);
+        }
+        rightOperand.apply(evaluateQuery);
+        switch (operator) {
+            case INNER_JOIN:
+                if (leftOperand.getNode().isObject() || !rightOperand.getNode().isObject()) {
                     break;
                 }
-                return joinNodes(rightDataset, leftDataset);
+                return joinNodes(rightOperand, operator, leftOperand);
             case RIGHT_JOIN_ONE:
-                return LEFT_JOIN_ONE.joinNodes(rightDataset, leftDataset);
+                return joinNodes(rightOperand, LEFT_JOIN_ONE, leftOperand);
             case RIGHT_JOIN_MANY:
-                return LEFT_JOIN_MANY.joinNodes(rightDataset, leftDataset);
+                return joinNodes(rightOperand, LEFT_JOIN_MANY, leftOperand);
             case RIGHT_EXCLUDING_JOIN:
-                return LEFT_EXCLUDING_JOIN.joinNodes(rightDataset, leftDataset);
+                return joinNodes(rightOperand, LEFT_EXCLUDING_JOIN, leftOperand);
             case LEFT_CONCATENATE:
-                return concatenate(leftDataset.getNode(), rightDataset.getNode());
+                return concatenate(leftOperand.getNode(), rightOperand.getNode());
             case RIGHT_CONCATENATE:
-                return concatenate(rightDataset.getNode(), leftDataset.getNode());
+                return concatenate(rightOperand.getNode(), leftOperand.getNode());
             case SUBTRACT_RIGHT_FROM_LEFT:
-                return subtract(leftDataset.getNode(), rightDataset.getNode());
+                return subtract(leftOperand.getNode(), rightOperand.getNode());
             case SUBTRACT_LEFT_FROM_RIGHT:
-                return subtract(rightDataset.getNode(), leftDataset.getNode());
+                return subtract(rightOperand.getNode(), leftOperand.getNode());
             case SYMMETRIC_DIFFERENCE:
-                return symmetricDifference(leftDataset.getNode(), rightDataset.getNode());
+                return symmetricDifference(leftOperand.getNode(), rightOperand.getNode());
             case UNION:
-                return union(rightDataset.getNode(), leftDataset.getNode());
+                return union(rightOperand.getNode(), leftOperand.getNode());
             case INTERSECTION:
-                return intersection(rightDataset.getNode(), leftDataset.getNode());
+                return intersection(rightOperand.getNode(), leftOperand.getNode());
             default:
                 break;
         }
-        return joinNodes(leftDataset, rightDataset);
+        return joinNodes(leftOperand, operator, rightOperand);
     }
 
-    private JsonNode joinNodes(final JoinAndSetOperand left, final JoinAndSetOperand right) {
-        final String arrayName = this == LEFT_JOIN_MANY ? right.resolveArrayName() : null;
+    private static JsonNode joinNodes(final CombineOperand left, final CombineOperator operator, final CombineOperand right) {
+        final String arrayName = operator == LEFT_JOIN_MANY ? right.resolveArrayName() : null;
         final ArrayNode rightArray;
         if (right.getNode().isArray()) {
             rightArray = (ArrayNode) right.getNode();
@@ -201,7 +121,7 @@ enum JoinAndSetOperator {
         }
         if (left.getNode().isObject()) {
             final ObjectNode joinedObject = joinToObjectNode(
-                    (ObjectNode) left.getNode(), left.getKeys(), rightArray, right.getKeys(), arrayName);
+                    (ObjectNode) left.getNode(), left.getKeys(), operator, rightArray, right.getKeys(), arrayName);
             if (joinedObject == null) {
                 throw new IllegalArgumentException("invalid data");
             }
@@ -211,21 +131,22 @@ enum JoinAndSetOperator {
         for (int i = 0; i < left.getNode().size(); i++) {
             if (left.getNode().get(i).isObject()) {
                 final ObjectNode joinedNode = joinToObjectNode(
-                        (ObjectNode) left.getNode().get(i), left.getKeys(), rightArray, right.getKeys(), arrayName);
+                        (ObjectNode) left.getNode().get(i), left.getKeys(), operator, rightArray, right.getKeys(), arrayName);
                 if (joinedNode != null) {
                     joinedArray.add(joinedNode);
                 }
             }
         }
-        if (this == OUTER_EXCLUDING_JOIN) {
-            return joinedArray.addAll((ArrayNode) LEFT_EXCLUDING_JOIN.joinNodes(right, left));
+        if (operator == OUTER_EXCLUDING_JOIN) {
+            return joinedArray.addAll((ArrayNode) joinNodes(right, LEFT_EXCLUDING_JOIN, left));
         }
         return joinedArray;
     }
 
-    private ObjectNode joinToObjectNode(final ObjectNode leftObject, final String[] leftKeys,
-                                        final ArrayNode rightArray, final String[] rightKeys,
-                                        final String arrayName) {
+    private static ObjectNode joinToObjectNode(final ObjectNode leftObject, final String[] leftKeys,
+                                               final CombineOperator operator,
+                                               final ArrayNode rightArray, final String[] rightKeys,
+                                               final String arrayName) {
         final String[] relationalOps = new String[leftKeys.length];
         for (int j = leftKeys.length - 1; j >= 0; j--) {
             final JsonNode leftValue = getNodeByPath(leftObject, leftKeys[j]);
@@ -238,20 +159,20 @@ enum JoinAndSetOperator {
                     + (leftValue.isTextual() ? QUOTE_SYMBOL : EMPTY);
         }
         final String path = String.format("[%s]", StringUtils.join(relationalOps, Operator.AND.getSymbol()));
-        if (this == LEFT_JOIN_MANY) {
+        if (operator == LEFT_JOIN_MANY) {
             final JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.getSymbol());
             if (rightToJoin != null) {
                 return cloneObjectNode(leftObject).set(arrayName, rightToJoin);
             }
         } else {
             final JsonNode rightToJoin = getNodeByPath(rightArray, path);
-            if (this == LEFT_EXCLUDING_JOIN || this == OUTER_EXCLUDING_JOIN) {
+            if (operator == LEFT_EXCLUDING_JOIN || operator == OUTER_EXCLUDING_JOIN) {
                 if (rightToJoin != null) {
                     return null;
                 }
             } else if (rightToJoin != null && rightToJoin.isObject()) {
                 return cloneObjectNode(leftObject).setAll((ObjectNode) rightToJoin);
-            } else if (this == INNER_JOIN_ONE) {
+            } else if (operator == INNER_JOIN) {
                 return null;
             }
         }

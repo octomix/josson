@@ -84,6 +84,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
   - [Data Finder](#data-finder)
   - [Join Operation](#join-operation)
   - [Set Operation](#set-operation)
+  - [Join and Set Pipe Chaining](#join-and-set-pipe-chaining)
   - [Dictionary Function](#dictionary-function)
   - [Put Together](#put-together)
 
@@ -115,7 +116,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 
 | Operator      | Description              |
 |:--------------|:-------------------------|
-| &gt;=&lt;     | Inner join one           |
+| &gt;=&lt;     | Inner join               |
 | &lt;=&lt;     | Left join one            |
 | &gt;=&gt;     | Right join one           |
 | &lt;=&lt;&lt; | Left join many           |
@@ -130,6 +131,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 | &lt;-&gt;     | Symmetric difference     |
 | &lt;u&gt;     | Union                    |
 | &gt;n&lt;     | Intersection             |
+| &#124;        | Chaining pipe            |
 
 ## Josson Basic
 
@@ -3268,6 +3270,10 @@ Following are some examples of each function.
 
 Jossons stores JSON datasets in a map of type `Map<String, Josson>` for placeholder resolution.
 
+To create a Jossons object without data.
+
+    Jossons jossons = new Jossons();
+
 To create a Jossons object with given Jackson ObjectNode.
 Each entry under root of the ObjectNode will become a member of the default dataset mapping.
 
@@ -3317,7 +3323,7 @@ To apply a Josson Query on a dataset entry's value.
 Placeholders can be nested and are resolved from inside to outside.
 Resolved placeholder is replaced with text and continue for the next round.
 
-Example:
+__Example__
 
     |<----------------------------------------------- 3 --------------------------------->|
     |                  |<---------------------------- 2 -------------------------->|      |
@@ -3701,18 +3707,18 @@ Josson query works on single JSON dataset.
 In order to let a placeholder output to include data from two datasets.
 It is required to use join operation to build a new dataset for the placeholder.
 
-There are two join types.
-
-- _Join One_ - Find the first matched object node and merge the object elements.
-- _Join Many_ - Find all matched nodes and embed into the object as an array node.
-
 At least one matching key must be given and the number of key on both side must be the same.
 Join operations match `keyL1` with `keyR1`, `keyL2` with `keyR2` and so on.
+
+There are two join types for left and right join.
+
+- _Join One_ - Find the first matched object node and merge the object elements.
+- _Join Many_ - Find all matched nodes and embed inside the object as a new array node.
 
 For Join Many operations, the `arrayName:` is optional.
 If `arrayName` is not given, the last element name of the query is used.
 
-- _Inner Join One_ `>=<`
+- _Inner Join_ `>=<`
 
       "leftQuery{keyL1,keyL2...} >=< rightQuery{keyR1,keyR2...}"
 
@@ -3790,6 +3796,19 @@ Set operations do not need matching key.
 
       "leftQuery >n< rightQuery"
 
+### Join and Set Pipe Chaining
+
+The chaining Pipe is used to perform multiple join and set operations within a single expression.
+This chaining operation will be chained using the pipe operator `|`.
+
+> ... `|` {keyL1,keyL2...} `JoinOperator` query{keyR1,keyR2...} `|` ...
+>
+> ... `|` `SetOperator` query `|` ...
+
+__Example__
+
+      "queryA <+< queryB | {aKey1} >=> queryC{cKey1} | {cKey1,cKey2} <=<< queryD{dKey1,dKey2}"
+
 ### Dictionary Function
 
 If a `dictionaryFinder` key ends with `()`, then it is a dictionary function.
@@ -3798,7 +3817,7 @@ It's resolution statement can contain the following implicit variables.
 - `$params` the calling statement's parameters in an array.
 - `$0`, `$1`, `$2`... the calling statement's individual parameter naming in zero-based index.
 
-#### Examples
+__Examples__
 
 _Dictionary finder entries_
 
