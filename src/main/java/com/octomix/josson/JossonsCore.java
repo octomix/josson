@@ -60,10 +60,8 @@ class JossonsCore {
             try {
                 JsonNode combined = null;
                 for (CombineOperation operation : operations) {
-                    combined = operation.apply(combined, eachQuery -> {
-                        progress.addMessageStep("Resolving " + eachQuery);
-                        return evaluateQueryWithResolverLoop(eachQuery, dictionaryFinder, dataFinder, progress);
-                    });
+                    combined = operation.apply(combined, eachQuery ->
+                            evaluateQueryWithResolverLoop(eachQuery, dictionaryFinder, dataFinder, progress));
                 }
                 dataset = Josson.create(combined);
             } catch (IllegalArgumentException e) {

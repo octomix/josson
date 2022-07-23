@@ -62,6 +62,8 @@ final class JossonCore {
 
     private static final String LOWER_ROMAN_INDEX = INDEX_PREFIX_SYMBOL + "r";
 
+    private static final String NEGATIVE_SIGN = "-";
+
     private static Locale locale = Locale.getDefault();
 
     private static ZoneId zoneId = ZoneId.systemDefault();
@@ -314,7 +316,7 @@ final class JossonCore {
 
     private static String toAlphabetIndex(final int number, final int base) {
         if (number < 0) {
-            return "-" + toAlphabetIndex(-number - 1, base);
+            return NEGATIVE_SIGN + toAlphabetIndex(-number - 1, base);
         }
         final int quot = number / 26;
         return (quot == 0 ? EMPTY : toAlphabetIndex(quot - 1, base)) + (char) (base + number % 26);
@@ -322,7 +324,7 @@ final class JossonCore {
 
     private static String toRomanIndex(int number, final boolean isUpper) {
         if (number < 0) {
-            return "-" + toRomanIndex(-number - 1, isUpper);
+            return NEGATIVE_SIGN + toRomanIndex(-number - 1, isUpper);
         }
         number++;
         final int[] numbers = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};

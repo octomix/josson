@@ -63,7 +63,7 @@ public class Josson {
      * @throws NullPointerException if {@code node} is null
      */
     public static Josson create(final JsonNode node) {
-        Objects.requireNonNull(node, "node must not be null");
+        Objects.requireNonNull(node);
         return new Josson(node);
     }
 
@@ -118,7 +118,7 @@ public class Josson {
      * @throws NullPointerException if {@code node} is null
      */
     public void setNode(final JsonNode node) {
-        Objects.requireNonNull(node, "node must not be null");
+        Objects.requireNonNull(node);
         this.jsonNode = node;
     }
 

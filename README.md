@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.19</version>
+        <version>1.3.20</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.19'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.20'
 
 ## Features and Capabilities
 
@@ -3801,13 +3801,13 @@ Set operations do not need matching key.
 The chaining Pipe is used to perform multiple join and set operations within a single expression.
 This chaining operation will be chained using the pipe operator `|`.
 
-> ... `|` {keyL1,keyL2...} `JoinOperator` query{keyR1,keyR2...} `|` ...
->
-> ... `|` `SetOperator` query `|` ...
+    ... | {keyL1,keyL2...} <JoinOperator> query{keyR1,keyR2...} | ...
+
+    ... | <SetOperator> query | ...
 
 __Example__
 
-      "queryA <+< queryB | {aKey1} >=> queryC{cKey1} | {cKey1,cKey2} <=<< queryD{dKey1,dKey2}"
+    "queryA{aKey1} >=> queryB{bKey1} | <+< queryC | {cKey1,cKey2} <=<< queryD{arrayName:dKey1,dKey2}"
 
 ### Dictionary Function
 
@@ -3817,7 +3817,7 @@ It's resolution statement can contain the following implicit variables.
 - `$params` the calling statement's parameters in an array.
 - `$0`, `$1`, `$2`... the calling statement's individual parameter naming in zero-based index.
 
-__Examples__
+#### Examples
 
 _Dictionary finder entries_
 
