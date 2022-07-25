@@ -150,7 +150,9 @@ class FuncDispatcher {
                 return funcAggregate(node, func, params);
             // Format
             case "casevalue":
-                return funcCaseValue(node, params);
+                return funcCaseValue(node, params, false);
+            case "casevalueignorecase":
+                return funcCaseValue(node, params, true);
             case "csv":
                 return funcCsv(node, params, false);
             case "csvshownull":
@@ -617,6 +619,8 @@ class FuncDispatcher {
             // Structural
             case "toarray":
                 return funcToArray(node, params);
+            case "toobject":
+                return funcToObject(node, params);
         }
         throw new UnsupportedFunctionException();
     }

@@ -49,7 +49,7 @@ final class FuncFormat {
         return applyTextNode(node, params, jsonNode -> encoder.encodeToString(jsonNode.asText().getBytes()));
     }
 
-    static JsonNode funcCaseValue(final JsonNode node, final String params) {
+    static JsonNode funcCaseValue(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyWithParams(node, params, 2, UNLIMITED_AND_NO_PATH, JsonNode::isValueNode,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
@@ -58,8 +58,10 @@ final class FuncFormat {
                     for (; i < last; i += 2) {
                         final JsonNode caseKey = getNodeByPath(node, data.getValue(), paramList.get(i));
                         if (dataNode.isNumber() && (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asDouble() == dataNode.asDouble()
-                                || dataNode.isNull() && caseKey.isNull()
-                                || caseKey.asText().equals(dataNode.asText())) {
+                            || dataNode.isNull() && caseKey.isNull()
+                            || (ignoreCase
+                                ? caseKey.asText().equalsIgnoreCase(dataNode.asText())
+                                : caseKey.asText().equals(dataNode.asText()))) {
                             return getNodeByPath(node, data.getValue(), paramList.get(i + 1));
                         }
                     }

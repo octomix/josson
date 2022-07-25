@@ -1231,10 +1231,14 @@ public class UnitTest {
         evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=b], 'T', if([c=3], 'C', 'F'))", "C");
         evaluate.accept("json('[1,2,3,4,5]').if(?.isOdd(), calc(?*2), ?)", "[ 2.0, 2, 6.0, 4, 10.0 ]");
         // caseValue()
-        evaluate.accept("'a'.caseValue('c',1,'b',2,'a',3,4)", "3");
-        evaluate.accept("'z'.caseValue('c',1,'b',2,'a',3,4)", "4");
-        evaluate.accept("'z'.caseValue('c',1,'b',2,'a',3)", "!unresolvable!");
+        evaluate.accept("'a'.caseValue('A',1,'b',2,'a',3,4)", "3");
+        evaluate.accept("'z'.caseValue('A',1,'b',2,'a',3,4)", "4");
+        evaluate.accept("'z'.caseValue('A',1,'b',2,'a',3)", "!unresolvable!");
         evaluate.accept("json('[{\"s\":1},{\"s\":null},{\"s\":3}]').s.caseValue(1,'A',null,'B')", "[ \"A\", \"B\", null ]");
+        // caseValueIgnoreCase()
+        evaluate.accept("'a'.caseValueIgnoreCase('A',1,'b',2,'a',3,4)", "1");
+        evaluate.accept("'z'.caseValueIgnoreCase('A',1,'b',2,'a',3,4)", "4");
+        evaluate.accept("'z'.caseValueIgnoreCase('A',1,'b',2,'a',3)", "!unresolvable!");
         // indexedValue()
         evaluate.accept("0.indexedValue('a','b','c','d')", "a");
         evaluate.accept("1.indexedValue(json('[\"a\",\"b\",\"c\",\"d\"]'))", "b");
@@ -1669,6 +1673,26 @@ public class UnitTest {
                 "[ 4, 5 ]");
         evaluate.accept("toArray(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').toArray())",
                 "[ 1, 2, 3, 4, 5 ]");
+        // toObject()
+        evaluate.accept("'a'.toObject('text')",
+                "{\n" +
+                "  \"text\" : \"a\"\n" +
+                "}");
+        evaluate.accept("99.toObject('number')",
+                "{\n" +
+                "  \"number\" : 99\n" +
+                "}");
+        evaluate.accept("json('[1,2,3]').toObject('array')",
+                "{\n" +
+                "  \"array\" : [ 1, 2, 3 ]\n" +
+                "}");
+        evaluate.accept("json('{\"a\":1,\"b\":2}').toObject('obj')",
+                "{\n" +
+                "  \"obj\" : {\n" +
+                "    \"a\" : 1,\n" +
+                "    \"b\" : 2\n" +
+                "  }\n" +
+                "}");
         // flatten()
         evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()",
                 "[ [ [ 1, 2 ], [ 3, 4 ] ], [ [ 5, 6 ], [ 7, 8 ] ], [ [ 9, 10 ], [ 11, 12 ] ], [ [ 13, 14 ], [ 15, 16 ] ] ]");

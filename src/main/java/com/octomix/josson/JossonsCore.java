@@ -44,12 +44,13 @@ class JossonsCore {
     private boolean buildDataset(final String name, final String query, final Function<String, String> dictionaryFinder,
                                  final BiFunction<String, String, Josson> dataFinder, final ResolverProgress progress) {
         final String[] dbTokens = matchDbQuery(query);
-        List<CombineOperation> operations = null;
+        final List<CombineOperation> operations;
         if (dbTokens == null) {
-            operations = matchCombineOperations(query);
-            if (operations == null) {
+            if ((operations = matchCombineOperations(query)) == null) {
                 return false;
             }
+        } else {
+            operations = null;
         }
         progress.addResolvingStep(name, query);
         Josson dataset = null;

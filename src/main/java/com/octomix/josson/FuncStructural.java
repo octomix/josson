@@ -228,6 +228,16 @@ final class FuncStructural {
         return array;
     }
 
+    static JsonNode funcToObject(final JsonNode node, final String params) {
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
+        final JsonNode workNode = nodeAndParams.getKey();
+        if (workNode == null) {
+            return null;
+        }
+        final List<String> paramList = nodeAndParams.getValue();
+        return MAPPER.createObjectNode().set(getNodeAsText(workNode, NON_ARRAY_INDEX, paramList.get(0)), workNode);
+    }
+
     static JsonNode funcUnwind(final JsonNode node, final String params) {
         final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
         final JsonNode workNode = nodeAndParams.getKey();
