@@ -294,6 +294,8 @@ class FuncDispatcher {
                 return funcIn(node, params, false, false);
             case "inignorecase":
                 return funcIn(node, params, true, false);
+            case "isarray":
+                return funcIsArray(node, params);
             case "isblank":
                 return funcIsBlank(node, params, false);
             case "isnotblank":
@@ -304,6 +306,10 @@ class FuncDispatcher {
                 return funcIsEmpty(node, params, false);
             case "isnotempty":
                 return funcIsEmpty(node, params, true);
+            case "isemptyarray":
+                return funcIsEmptyArray(node, params);
+            case "isemptyobject":
+                return funcIsEmptyObject(node, params);
             case "iseven":
                 return funcIsEven(node, params);
             case "isnull":
@@ -312,6 +318,8 @@ class FuncDispatcher {
                 return funcIsNull(node, params, true);
             case "isnumber":
                 return funcIsNumber(node, params);
+            case "isobject":
+                return funcIsObject(node, params);
             case "isodd":
                 return funcIsOdd(node, params);
             case "istext":

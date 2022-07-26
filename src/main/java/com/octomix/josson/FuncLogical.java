@@ -150,6 +150,10 @@ final class FuncLogical {
                 });
     }
 
+    static JsonNode funcIsArray(final JsonNode node, final String params) {
+        return applyWithoutParam(node, params, jsonNode -> BooleanNode.valueOf(jsonNode.isArray()));
+    }
+
     static JsonNode funcIsBlank(final JsonNode node, final String params, final boolean not) {
         return applyWithoutParam(node, params, null,
                 (data, paramList) -> {
@@ -164,19 +168,41 @@ final class FuncLogical {
     }
 
     static JsonNode funcIsEmpty(final JsonNode node, final String params, final boolean not) {
+        return applyWithoutParam(node, params, null,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    return BooleanNode.valueOf(
+                            dataNode.isTextual() ? not ^ dataNode.asText().isEmpty() : dataNode.isNull() != not);
+                });
+    }
+
+    static JsonNode funcIsEmptyArray(final JsonNode node, final String params) {
         return applyWithoutParam(node, params,
-                jsonNode -> BooleanNode.valueOf(
-                        jsonNode.isContainerNode() ? not ^ jsonNode.isEmpty()
-                        : jsonNode.isTextual() ? not ^ jsonNode.asText().isEmpty()
-                        : jsonNode.isNull() != not));
+                jsonNode -> BooleanNode.valueOf(jsonNode.isArray() && jsonNode.isEmpty()));
+    }
+
+    static JsonNode funcIsEmptyObject(final JsonNode node, final String params) {
+        return applyWithoutParam(node, params,
+                jsonNode -> BooleanNode.valueOf(jsonNode.isObject() && jsonNode.isEmpty()));
     }
 
     static JsonNode funcIsEven(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, null,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
-                    return nodeHasValue(dataNode) ? BooleanNode.valueOf((dataNode.asInt() & 1) == 0)
-                            : BooleanNode.FALSE;
+                    final int number;
+                    if (dataNode.isNumber()) {
+                        number = dataNode.asInt();
+                    } else if (dataNode.isTextual()) {
+                        try {
+                            number = Integer.parseInt(dataNode.asText());
+                        } catch (NumberFormatException e) {
+                            return BooleanNode.FALSE;
+                        }
+                    } else {
+                        return BooleanNode.FALSE;
+                    }
+                    return BooleanNode.valueOf((number & 1) == 0);
                 });
     }
 
@@ -190,12 +216,27 @@ final class FuncLogical {
                 (data, paramList) -> BooleanNode.valueOf(data.getKey().isNumber()));
     }
 
+    static JsonNode funcIsObject(final JsonNode node, final String params) {
+        return applyWithoutParam(node, params, jsonNode -> BooleanNode.valueOf(jsonNode.isObject()));
+    }
+
     static JsonNode funcIsOdd(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, null,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
-                    return nodeHasValue(dataNode) ? BooleanNode.valueOf((dataNode.asInt() & 1) != 0)
-                            : BooleanNode.FALSE;
+                    final int number;
+                    if (dataNode.isNumber()) {
+                        number = dataNode.asInt();
+                    } else if (dataNode.isTextual()) {
+                        try {
+                            number = Integer.parseInt(dataNode.asText());
+                        } catch (NumberFormatException e) {
+                            return BooleanNode.FALSE;
+                        }
+                    } else {
+                        return BooleanNode.FALSE;
+                    }
+                    return BooleanNode.valueOf((number & 1) != 0);
                 });
     }
 

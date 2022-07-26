@@ -1394,61 +1394,75 @@ public class UnitTest {
         evaluate.accept("''.isEmpty()", "true");
         evaluate.accept("isEmpty(' ')", "false");
         evaluate.accept("isEmpty(1)", "false");
-        evaluate.accept("isEmpty(0)", "false");
         evaluate.accept("isEmpty(true)", "false");
-        evaluate.accept("isEmpty(false)", "false");
         evaluate.accept("isEmpty(null)", "true");
-        evaluate.accept("json('[]').isEmpty()", "true");
-        evaluate.accept("isEmpty(json('[0]'))", "false");
-        evaluate.accept("json('{}').isEmpty()", "true");
-        evaluate.accept("isEmpty(json('{\"a\":1}'))", "false");
+        evaluate.accept("isEmpty(json('[\"\",\" \",0,false,null]'))", "[ true, false, false, false, true ]");
         // isNotEmpty()
         evaluate.accept("''.isNotEmpty()", "false");
         evaluate.accept("isNotEmpty(' ')", "true");
         evaluate.accept("isNotEmpty(1)", "true");
-        evaluate.accept("isNotEmpty(0)", "true");
         evaluate.accept("isNotEmpty(true)", "true");
-        evaluate.accept("isNotEmpty(false)", "true");
         evaluate.accept("isNotEmpty(null)", "false");
-        evaluate.accept("json('[]').isNotEmpty()", "false");
-        evaluate.accept("isNotEmpty(json('[0]'))", "true");
-        evaluate.accept("json('{}').isNotEmpty()", "false");
-        evaluate.accept("isNotEmpty(json('{\"a\":1}'))", "true");
+        evaluate.accept("isNotEmpty(json('[\"\",\" \",0,false,null]'))", "[ false, true, true, true, false ]");
         // isBlank()
         evaluate.accept("''.isBlank()", "true");
         evaluate.accept("isBlank(' ')", "true");
+        evaluate.accept("isBlank(json('[\"\",\" \",\"X\",0,false,null]'))", "[ true, true, false, false, false, false ]");
         // isNotBlank()
         evaluate.accept("''.isNotBlank()", "false");
         evaluate.accept("isNotBlank(' ')", "false");
+        evaluate.accept("isNotBlank(json('[\"\",\" \",\"X\",0,false,null]'))", "[ false, false, true, false, false, false ]");
         // isNull()
         evaluate.accept("null.isNull()", "!unresolvable!");
         evaluate.accept("isNull(null)", "true");
         evaluate.accept("isNull('')", "false");
+        evaluate.accept("isNull(json('[\"text\",1,true,null]'))", "[ false, false, false, true ]");
         // isNotNull()
         evaluate.accept("null.isNotNull()", "!unresolvable!");
         evaluate.accept("isNotNull(null)", "false");
         evaluate.accept("isNotNull('')", "true");
+        evaluate.accept("isNotNull(json('[\"text\",1,true,null]'))", "[ true, true, true, false ]");
         // isText()
         evaluate.accept("'text'.isText()", "true");
         evaluate.accept("isText(1)", "false");
         evaluate.accept("isText(true)", "false");
-        evaluate.accept("isText(null)", "false");
+        evaluate.accept("isText(json('[\"text\",1,true,null]'))", "[ true, false, false, false ]");
         // isBoolean()
         evaluate.accept("'text'.isBoolean()", "false");
         evaluate.accept("isBoolean(1)", "false");
         evaluate.accept("isBoolean(true)", "true");
-        evaluate.accept("isBoolean(null)", "false");
+        evaluate.accept("isBoolean(json('[\"text\",1,true,null]'))", "[ false, false, true, false ]");
         // isNumber()
         evaluate.accept("'text'.isNumber()", "false");
         evaluate.accept("isNumber(1)", "true");
         evaluate.accept("isNumber(true)", "false");
-        evaluate.accept("isNumber(null)", "false");
+        evaluate.accept("isNumber(json('[\"text\",1,true,null]'))", "[ false, true, false, false ]");
         // isEven()
         evaluate.accept("1.isEven()", "false");
         evaluate.accept("isEven(2)", "true");
+        evaluate.accept("isEven(json('[\"text\",1,2,null]'))", "[ false, false, true, false ]");
         // isOdd()
         evaluate.accept("1.isOdd()", "true");
         evaluate.accept("isOdd(2)", "false");
+        evaluate.accept("isOdd(json('[\"text\",1,2,null]'))", "[ false, true, false, false ]");
+        // isArray()
+        evaluate.accept("'text'.isArray()", "false");
+        evaluate.accept("isArray(1)", "false");
+        evaluate.accept("isArray(null)", "false");
+        evaluate.accept("json('[1,2]').isArray()", "true");
+        evaluate.accept("isArray(json('{\"a\":1}'))", "false");
+        // isObject()
+        evaluate.accept("'text'.isObject()", "false");
+        evaluate.accept("isObject(1)", "false");
+        evaluate.accept("isObject(null)", "false");
+        evaluate.accept("json('[1,2]').isObject()", "false");
+        evaluate.accept("isObject(json('{\"a\":1}'))", "true");
+        // isEmptyArray()
+        evaluate.accept("json('[]').isEmptyArray()", "true");
+        evaluate.accept("isEmptyArray(json('[0]'))", "false");
+        // isEmptyObject()
+        evaluate.accept("json('{}').isEmptyObject()", "true");
+        evaluate.accept("isEmptyObject(json('{\"a\":1}'))", "false");
         // not()
         evaluate.accept("true.not()", "false");
         evaluate.accept("not(false)", "true");
