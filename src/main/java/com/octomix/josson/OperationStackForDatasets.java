@@ -20,10 +20,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.octomix.josson.JossonCore.asBoolean;
 import static com.octomix.josson.PatternMatcher.decomposeTernarySteps;
+import static com.octomix.josson.PatternMatcher.matchCombineOperations;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -62,6 +64,27 @@ class OperationStackForDatasets extends OperationStack {
     }
 
     JsonNode evaluateQuery(final String query) throws UnresolvedDatasetException {
+        final List<CombineOperation> operations = matchCombineOperations(query);
+        if (operations != null) {
+            JsonNode combined = null;
+            for (CombineOperation operation : operations) {
+                try {
+                    combined = operation.apply(combined, eachQuery -> {
+                        try {
+                            return evaluateStatement(eachQuery);
+                        } catch (UnresolvedDatasetException e) {
+                            throw new IllegalArgumentException(null, e);
+                        }
+                    });
+                } catch (IllegalArgumentException e) {
+                    if (e.getCause() instanceof UnresolvedDatasetException) {
+                        throw (UnresolvedDatasetException) e.getCause();
+                    }
+                    throw e;
+                }
+            }
+            return combined;
+        }
         for (TernaryStep step : decomposeTernarySteps(query)) {
             final JsonNode node = evaluateStatement(step.getStatement());
             if ((node == null || node.isNull()) && EMPTY.equals(step.getIfTrueValue())) {

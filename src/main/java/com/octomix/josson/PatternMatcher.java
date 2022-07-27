@@ -305,36 +305,27 @@ final class PatternMatcher {
 
     static List<CombineOperation> matchCombineOperations(final String input) {
         final int last = input.length() - 1;
-        final int pos = skipDatasetQuery(input, 0, last);
-        if (pos >= last || "<>".indexOf(input.charAt(pos)) < 0) {
+        final int end = skipDatasetQuery(input, 0, last);
+        if (end >= last || "<>".indexOf(input.charAt(end)) < 0) {
             return null;
         }
-        final CombineOperand leftOperand = matchCombineOperand(trimOf(input, 0, pos));
-        if (leftOperand.noQuery()) {
-            throw new SyntaxErrorException(input, "Missing query statement", 0);
+        final int pos = CombineOperator.findEndingPos(input, end, last);
+        final CombineOperator operator = CombineOperator.fromSymbol(input.substring(end, pos));
+        if (operator == null) {
+            return null;
         }
-        List<CombineOperation> operations = new ArrayList<>();
-        matchCombineOperation(input, pos, last, leftOperand, operations);
+        final CombineOperand leftOperand = matchCombineOperand(input, 0, end, true);
+        final List<CombineOperation> operations = new ArrayList<>();
+        matchCombineOperation(input, pos, last, leftOperand, operator, operations);
         return operations;
     }
 
     private static void matchCombineOperation(final String input, final int beg, final int last,
-                                              final CombineOperand leftOperand, final List<CombineOperation> operations) {
+                                              final CombineOperand leftOperand, final CombineOperator operator,
+                                              final List<CombineOperation> operations) {
         int pos = beg;
-        for (; pos <= last; pos++) {
-            if ("<=>!+-un".indexOf(input.charAt(pos)) < 0) {
-                break;
-            }
-        }
-        final CombineOperator operator = CombineOperator.fromSymbol(input.substring(beg, pos));
-        if (operator == null) {
-            throw new SyntaxErrorException(input, "Invalid join or set operator", beg);
-        }
         int end = skipDatasetQuery(input, pos, last);
-        final CombineOperand rightOperand = matchCombineOperand(trimOf(input, pos, end));
-        if (rightOperand.noQuery()) {
-            throw new SyntaxErrorException(input, "Missing query statement", pos);
-        }
+        final CombineOperand rightOperand = matchCombineOperand(input, pos, end, true);
         operations.add(new CombineOperation(leftOperand, operator, rightOperand));
         pos = eatSpaces(input, end, last);
         if (pos <= last) {
@@ -342,12 +333,29 @@ final class PatternMatcher {
                 throw new SyntaxErrorException(input, "Expecting pipe operator '|'", pos);
             }
             end = skipDatasetQuery(input, ++pos, last);
-            final CombineOperand nextLeftOperand = matchCombineOperand(trimOf(input, pos, end));
-            if (!nextLeftOperand.noQuery()) {
+            final CombineOperand nextLeftOperand = matchCombineOperand(input, pos, end, false);
+            pos = CombineOperator.findEndingPos(input, end, last);
+            final CombineOperator nextOperator = CombineOperator.fromSymbol(input.substring(end, pos));
+            if (nextOperator == null) {
+                throw new SyntaxErrorException(input, "Invalid join or set operator", end);
+            }
+            matchCombineOperation(input, pos, last, nextLeftOperand, nextOperator, operations);
+        }
+    }
+
+    private static CombineOperand matchCombineOperand(final String input, final int pos, final int end,
+                                                      final boolean needQuery) {
+        CombineOperand operand = matchCombineOperand(trimOf(input, pos, end));
+        if (needQuery) {
+            if (!operand.hasQuery()) {
+                throw new SyntaxErrorException(input, "Missing query statement", pos);
+            }
+        } else {
+            if (operand.hasQuery()) {
                 throw new SyntaxErrorException(input, "Unnecessary query statement", pos);
             }
-            matchCombineOperation(input, end, last, nextLeftOperand, operations);
         }
+        return operand;
     }
 
     private static CombineOperand matchCombineOperand(final String input) {

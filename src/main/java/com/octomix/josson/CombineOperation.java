@@ -193,7 +193,17 @@ class CombineOperation {
             final ObjectNode node = MAPPER.createObjectNode();
             leftNode.fields().forEachRemaining(
                     (Map.Entry<String, JsonNode> field) -> {
-                        if (!rightNode.has(field.getKey())) {
+                        if (rightNode.has(field.getKey())) {
+                            if (field.getValue().isObject() && rightNode.get(field.getKey()).isObject()
+                                || field.getValue().isArray() && rightNode.get(field.getKey()).isArray()) {
+                                final JsonNode diff = subtract(field.getValue(), rightNode.get(field.getKey()));
+                                if (!diff.isEmpty()) {
+                                    node.set(field.getKey(), diff);
+                                }
+                            } else if (Operator.NE.relationalCompare(field.getValue(), rightNode.get(field.getKey()))) {
+                                node.set(field.getKey(), field.getValue());
+                            }
+                        } else {
                             node.set(field.getKey(), field.getValue());
                         }
                     }
@@ -217,7 +227,7 @@ class CombineOperation {
         throw new IllegalArgumentException("cannot subtract between an object and an array");
     }
 
-    private static ArrayNode symmetricDifference(final JsonNode leftNode, final JsonNode rightNode) {
+    private static JsonNode symmetricDifference(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isObject() && rightNode.isObject()) {
             return ((ObjectNode) subtract(leftNode, rightNode)).setAll((ObjectNode) subtract(rightNode, leftNode));
         } else if (leftNode.isArray() && rightNode.isArray()) {

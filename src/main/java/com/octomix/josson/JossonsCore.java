@@ -41,34 +41,15 @@ class JossonsCore {
     protected JossonsCore() {
     }
 
-    private boolean buildDataset(final String name, final String query, final Function<String, String> dictionaryFinder,
-                                 final BiFunction<String, String, Josson> dataFinder, final ResolverProgress progress) {
-        final String[] dbTokens = matchDbQuery(query);
-        final List<CombineOperation> operations;
-        if (dbTokens == null) {
-            if ((operations = matchCombineOperations(query)) == null) {
-                return false;
-            }
-        } else {
-            operations = null;
+    private boolean evaluateDbQuery(final String name, final String query,
+                                    final BiFunction<String, String, Josson> dataFinder, final ResolverProgress progress) {
+        final String[] tokens = matchDbQuery(query);
+        if (tokens == null) {
+            return false;
         }
         progress.addResolvingStep(name, query);
-        Josson dataset = null;
-        if (dbTokens != null) {
-            final String collectionName = (dbTokens[0].isEmpty() ? name : dbTokens[0]) + dbTokens[1];
-            dataset = dataFinder.apply(collectionName, dbTokens[2]);
-        } else {
-            try {
-                JsonNode combined = null;
-                for (CombineOperation operation : operations) {
-                    combined = operation.apply(combined, eachQuery ->
-                            evaluateQueryWithResolverLoop(eachQuery, dictionaryFinder, dataFinder, progress));
-                }
-                dataset = Josson.create(combined);
-            } catch (IllegalArgumentException e) {
-                progress.addMessageStep("Operation failed - " + e.getMessage());
-            }
-        }
+        final String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
+        final Josson dataset = dataFinder.apply(collectionName, tokens[2]);
         datasets.put(name, dataset);
         progress.addResolvedDataset(name, dataset);
         return true;
@@ -77,16 +58,20 @@ class JossonsCore {
     private boolean evaluateQuery(final String name, final String query, final ResolverProgress progress,
                                   final Set<String> unresolvedDatasetNames) {
         progress.addResolvingStep(name, query);
+        JsonNode node;
         try {
-            final JsonNode node = new OperationStackForDatasets(datasets).evaluateQuery(query);
-            datasets.put(name, node == null ? null : Josson.create(node));
-            progress.addResolvedNode(name, node);
-            unresolvedDatasetNames.remove(name);
-            return true;
+            node = new OperationStackForDatasets(datasets).evaluateQuery(query);
+        } catch (IllegalArgumentException e) {
+            node = null;
+            progress.addMessageStep(e.getMessage());
         } catch (UnresolvedDatasetException e) {
             unresolvedDatasetNames.add(e.getDatasetName());
             return false;
         }
+        datasets.put(name, node == null ? null : Josson.create(node));
+        progress.addResolvedNode(name, node);
+        unresolvedDatasetNames.remove(name);
+        return true;
     }
 
     private String dictionaryFinderApply(final String name, final Function<String, String> dictionaryFinder,
@@ -151,6 +136,9 @@ class JossonsCore {
         for (; ; restoreDictionaryFunctionParams(backupParams), progress.nextRound()) {
             try {
                 return new OperationStackForDatasets(datasets).evaluateQuery(query);
+            } catch (IllegalArgumentException e) {
+                progress.addMessageStep(e.getMessage());
+                return null;
             } catch (UnresolvedDatasetException e) {
                 removeDictionaryFunctionParams();
                 final String name = e.getDatasetName();
@@ -173,7 +161,7 @@ class JossonsCore {
                         ex.getPlaceholders().forEach(datasets::remove);
                     }
                     if (findQuery != null) {
-                        if (buildDataset(name, findQuery, dictionaryFinder, dataFinder, progress)) {
+                        if (evaluateDbQuery(name, findQuery, dataFinder, progress)) {
                             continue;
                         }
                         node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
@@ -219,8 +207,7 @@ class JossonsCore {
                     }
                     final String query = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
                     if (query != null) {
-                        fillInAndResolveQuery(
-                                name, query, dictionaryFinder, dataFinder, progress,
+                        fillInAndResolveQuery(name, query, dataFinder, progress,
                                 batchEvaluate, unresolvedDatasetNames, e.isAntiInject());
                         restoreDictionaryFunctionParams(backupParams);
                     }
@@ -236,8 +223,7 @@ class JossonsCore {
                         if (query == null) {
                             break;
                         }
-                        if (!fillInAndResolveQuery(
-                                retry, query, dictionaryFinder, dataFinder, progress,
+                        if (!fillInAndResolveQuery(retry, query, dataFinder, progress,
                                 null, unresolvedDatasetNames, e.isAntiInject())) {
                             lastHistory = 0;
                         }
@@ -254,14 +240,13 @@ class JossonsCore {
     }
 
     private boolean fillInAndResolveQuery(final String name, final String query,
-                                          final Function<String, String> dictionaryFinder,
                                           final BiFunction<String, String, Josson> dataFinder,
                                           final ResolverProgress progress, final Map<String, String> batchEvaluate,
                                           final Set<String> unresolvedDatasetNames, final boolean isAntiInject) {
         try {
             unresolvedDatasetNames.remove(name);
             final String filled = fillInPlaceholderLoop(query, MarkupLanguage.NONE, isAntiInject);
-            if (buildDataset(name, filled, dictionaryFinder, dataFinder, progress)) {
+            if (evaluateDbQuery(name, filled, dataFinder, progress)) {
                 return true;
             }
             if (batchEvaluate == null || datasets.containsKey(DICTIONARY_FUNCTION_PARAMS)) {

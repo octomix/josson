@@ -110,4 +110,14 @@ enum CombineOperator {
         }
         return null;
     }
+
+    static int findEndingPos(final String input, final int beg, final int last) {
+        int pos = beg;
+        for (; pos <= last; pos++) {
+            if ("<=>!+-un".indexOf(input.charAt(pos)) < 0) {
+                return pos;
+            }
+        }
+        return pos;
+    }
 }

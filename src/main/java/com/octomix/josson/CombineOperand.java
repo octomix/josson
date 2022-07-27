@@ -52,8 +52,8 @@ final class CombineOperand {
         this.node = node;
     }
 
-    boolean noQuery() {
-        return query.isEmpty();
+    boolean hasQuery() {
+        return query.length() > 0;
     }
 
     String resolveArrayName() {

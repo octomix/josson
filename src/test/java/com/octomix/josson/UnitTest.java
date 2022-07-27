@@ -1690,23 +1690,23 @@ public class UnitTest {
         // toObject()
         evaluate.accept("'a'.toObject('text')",
                 "{\n" +
-                "  \"text\" : \"a\"\n" +
-                "}");
+                        "  \"text\" : \"a\"\n" +
+                        "}");
         evaluate.accept("99.toObject('number')",
                 "{\n" +
-                "  \"number\" : 99\n" +
-                "}");
+                        "  \"number\" : 99\n" +
+                        "}");
         evaluate.accept("json('[1,2,3]').toObject('array')",
                 "{\n" +
-                "  \"array\" : [ 1, 2, 3 ]\n" +
-                "}");
+                        "  \"array\" : [ 1, 2, 3 ]\n" +
+                        "}");
         evaluate.accept("json('{\"a\":1,\"b\":2}').toObject('obj')",
                 "{\n" +
-                "  \"obj\" : {\n" +
-                "    \"a\" : 1,\n" +
-                "    \"b\" : 2\n" +
-                "  }\n" +
-                "}");
+                        "  \"obj\" : {\n" +
+                        "    \"a\" : 1,\n" +
+                        "    \"b\" : 2\n" +
+                        "  }\n" +
+                        "}");
         // flatten()
         evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()",
                 "[ [ [ 1, 2 ], [ 3, 4 ] ], [ [ 5, 6 ], [ 7, 8 ] ], [ [ 9, 10 ], [ 11, 12 ] ], [ [ 13, 14 ], [ 15, 16 ] ] ]");
