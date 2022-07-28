@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.20</version>
+        <version>1.3.21</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.20'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.21'
 
 ## Features and Capabilities
 
@@ -1406,6 +1406,7 @@ Logical Functions
 174. [isLeapYear()](#174-isleapyear)
 
 Array Functions
+
 175. [size()](#175-size)
 176. [lastIndex()](#176-lastindex)
 177. [indexOf()](#177-indexof)
@@ -2505,7 +2506,6 @@ Following are some examples of each function.
     json('{"len1":"12.3","len2":null,"len3":"64.0\""}').csvParams() ==> "'12.3',null,'64.0\"'"
 
     csvParams(json('[[[[1,2],["3","4''"]]],{"a":1,"b":[2.0,8.888],"c":{"d":true,"e":null}}]')) ==> "1,2,'3','4''',1,2.0,8.888,true,null"
-
 
 ### Logical Functions
 
@@ -3850,9 +3850,6 @@ the resolver will ask `Function<String, String> dictionaryFinder` for an answer.
 
       "collectionName ? {findStatement}"
 
-All kinds of statement can contain implicit dictionary function parameter variables,
-please refer to [Dictionary Function](#dictionary-function).
-
 Resolved result will be cached with the key name except for key name starts with `$`.
 Next time a placeholder or statement query for the same key will return the cached value without evaluation.
 
@@ -3894,6 +3891,11 @@ It's resolution statement can contain the following implicit variables.
 
 - `$params` the calling statement's parameters in an array.
 - `$0`, `$1`, `$2`... the calling statement's individual parameter naming in zero-based index.
+
+If it is necessary to pass the values in an array node as the function parameters in the form of (elem0, elem1, elem2...),
+use placeholder to transform by Josson function csvParams().
+
+    "customFunction({{arrayNode->csvParams()}})"
 
 #### Examples
 
