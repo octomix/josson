@@ -86,7 +86,7 @@ final class FuncFormat {
                 });
     }
 
-    static TextNode funcCsv(final JsonNode node, final String params, final boolean showNull) {
+    static TextNode funcCsv(final JsonNode node, final String params, final boolean showNull, final boolean forParams) {
         final JsonNode container = getParamArrayOrItselfIsContainer(params, node);
         if (container == null) {
             return null;
@@ -94,7 +94,7 @@ final class FuncFormat {
         final List<JsonNode> values = new ArrayList<>();
         funcCsvCollectValues(values, container, showNull);
         return TextNode.valueOf(values.stream()
-                .map(value -> csvQuote(value.asText()))
+                .map(value -> forParams ? valueNodeToLiteral(value) : funcCsvQuote(value.asText()))
                 .collect(Collectors.joining(",")));
     }
 
@@ -117,6 +117,23 @@ final class FuncFormat {
                 values.add(showNull || !tryNode.isNull() ? tryNode : TextNode.valueOf(EMPTY));
             }
         }
+    }
+
+    private static String funcCsvQuote(final String input) {
+        final String quote = "\"";
+        final String result;
+        final boolean needQuote;
+        if (input.contains(quote)) {
+            needQuote = true;
+            result = input.replace(quote, "\"\"");
+        } else {
+            needQuote = input.contains(",");
+            result = input;
+        }
+        if (needQuote) {
+            return quote + result + quote;
+        }
+        return result;
     }
 
     static JsonNode funcCycleValue(final JsonNode node, final String params) {

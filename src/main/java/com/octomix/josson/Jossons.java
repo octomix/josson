@@ -173,6 +173,7 @@ public class Jossons extends JossonsCore {
      * @param progress a {@code ResolverProgress} object to log the resolver progress steps
      * @return The merged text content
      * @throws NoValuePresentException if any placeholder was unable to resolve
+     * @throws NullPointerException if {@code dictionaryFinder} is null
      */
     public String fillInPlaceholderWithResolver(final String template, final Function<String, String> dictionaryFinder,
                                                 final BiFunction<String, String, Josson> dataFinder,
@@ -180,6 +181,7 @@ public class Jossons extends JossonsCore {
         if (StringUtils.isBlank(template)) {
             return template;
         }
+        Objects.requireNonNull(dictionaryFinder);
         try {
             return fillInPlaceholderWithResolver(template, dictionaryFinder, dataFinder, escapingMarkup, progress);
         } finally {
@@ -202,10 +204,12 @@ public class Jossons extends JossonsCore {
      * @param dataFinder a callback function to process database query statement
      * @param progress a {@code ResolverProgress} object to log the resolver progress steps
      * @return The resulting Jackson JsonNode
+     * @throws NullPointerException if {@code dictionaryFinder} is null
      */
     public JsonNode evaluateQueryWithResolver(final String query, final Function<String, String> dictionaryFinder,
                                               final BiFunction<String, String, Josson> dataFinder,
                                               final ResolverProgress progress) {
+        Objects.requireNonNull(dictionaryFinder);
         final JsonNode node = evaluateQueryWithResolverLoop(query, dictionaryFinder, dataFinder, progress);
         progress.addResolvedNode("query result", node);
         return node;

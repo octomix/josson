@@ -186,7 +186,7 @@ final class FuncLogical {
                 jsonNode -> BooleanNode.valueOf(jsonNode.isObject() && jsonNode.isEmpty()));
     }
 
-    static JsonNode funcIsEven(final JsonNode node, final String params) {
+    static JsonNode funcIsEvenOdd(final JsonNode node, final String params, final int parity) {
         return applyWithoutParam(node, params, null,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
@@ -202,7 +202,7 @@ final class FuncLogical {
                     } else {
                         return BooleanNode.FALSE;
                     }
-                    return BooleanNode.valueOf((number & 1) == 0);
+                    return BooleanNode.valueOf((number & 1) == parity);
                 });
     }
 
@@ -218,26 +218,6 @@ final class FuncLogical {
 
     static JsonNode funcIsObject(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, jsonNode -> BooleanNode.valueOf(jsonNode.isObject()));
-    }
-
-    static JsonNode funcIsOdd(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, null,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final int number;
-                    if (dataNode.isNumber()) {
-                        number = dataNode.asInt();
-                    } else if (dataNode.isTextual()) {
-                        try {
-                            number = Integer.parseInt(dataNode.asText());
-                        } catch (NumberFormatException e) {
-                            return BooleanNode.FALSE;
-                        }
-                    } else {
-                        return BooleanNode.FALSE;
-                    }
-                    return BooleanNode.valueOf((number & 1) != 0);
-                });
     }
 
     static JsonNode funcIsText(final JsonNode node, final String params) {

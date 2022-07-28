@@ -17,13 +17,19 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.JossonsCore.isCacheDataset;
 import static com.octomix.josson.PatternMatcher.matchDatasetQuery;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Relational operation.
@@ -65,7 +71,7 @@ class OperationStep {
 
     JsonNode evaluateExpression(final Map<String, Josson> datasets) throws UnresolvedDatasetException {
         try {
-            return toValueNode(expression);
+            return literalToValueNode(expression);
         } catch (NumberFormatException ignore) {
         }
         if (datasets.containsKey(expression)) {
@@ -107,5 +113,23 @@ class OperationStep {
             datasets.put(expression, node == null ? null : Josson.create(node));
         }
         return node;
+    }
+
+    private static JsonNode getImplicitVariable(final String name) {
+        if (name.charAt(0) == '$') {
+            switch (StringUtils.stripStart(name.substring(1), null).toLowerCase()) {
+                case EMPTY:
+                    return BooleanNode.TRUE;
+                case "now":
+                    return TextNode.valueOf(LocalDateTime.now().toString());
+                case "today":
+                    return TextNode.valueOf(LocalDate.now().atStartOfDay().toString());
+                case "yesterday":
+                    return TextNode.valueOf(LocalDate.now().atStartOfDay().minusDays(1).toString());
+                case "tomorrow":
+                    return TextNode.valueOf(LocalDate.now().atStartOfDay().plusDays(1).toString());
+            }
+        }
+        return null;
     }
 }

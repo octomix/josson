@@ -89,7 +89,7 @@ final class FuncString {
     static JsonNode funcDoubleQuote(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, JossonCore::nodeHasValue,
                 (data, paramList) -> TextNode.valueOf(String.format("\"%s\"",
-                        StringUtils.replace(data.getKey().asText(), "\"", "\\\"", -1, false)))
+                        data.getKey().asText().replace("\"", "\\\"")))
         );
     }
 
@@ -200,8 +200,7 @@ final class FuncString {
 
     static JsonNode funcSingleQuote(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, JossonCore::nodeHasValue,
-                (data, paramList) -> TextNode.valueOf(String.format("'%s'",
-                        StringUtils.replace(data.getKey().asText(), "'", "''", -1, false)))
+                (data, paramList) -> TextNode.valueOf(quoteText(data.getKey().asText()))
         );
     }
 

@@ -1229,7 +1229,7 @@ public class UnitTest {
         evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1 & b=3], 'T', 'F')", "F");
         evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1 & b=3], 'T')", "!unresolvable!");
         evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=b], 'T', if([c=3], 'C', 'F'))", "C");
-        evaluate.accept("json('[1,2,3,4,5]').if(?.isOdd(), calc(?*2), ?)", "[ 2.0, 2, 6.0, 4, 10.0 ]");
+        evaluate.accept("json('[1,2,3,4,5]').if(isOdd(), calc(?*2), ?)", "[ 2.0, 2, 6.0, 4, 10.0 ]");
         // caseValue()
         evaluate.accept("'a'.caseValue('A',1,'b',2,'a',3,4)", "3");
         evaluate.accept("'z'.caseValue('A',1,'b',2,'a',3,4)", "4");
@@ -1758,6 +1758,11 @@ public class UnitTest {
                 "\"12.3\"\"\",null,\"64.0\"\"\"");
         evaluate.accept("csvShowNull(json('[[[[1,2],[\"3\",\"4\\\"\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
                 "1,2,3,\"4\"\"\",1,2.0,8.888,true,null");
+        // csvParams()
+        evaluate.accept("json('{\"len1\":\"12.3\",\"len2\":null,\"len3\":\"64.0\\\"\"}').csvParams()",
+                "'12.3',null,'64.0\"'");
+        evaluate.accept("csvParams(json('[[[[1,2],[\"3\",\"4''\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
+                "1,2,'3','4''',1,2.0,8.888,true,null");
         // group()
         evaluate.accept("json('[{\"a\":1,\"b\":\"A\"},{\"a\":2,\"b\":\"B\"},{\"a\":3,\"b\":\"C\"},{\"a\":2,\"b\":\"D\"},{\"a\":1,\"b\":\"E\"}]').group(a)",
                 "[ {\n" +

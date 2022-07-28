@@ -154,9 +154,11 @@ class FuncDispatcher {
             case "casevalueignorecase":
                 return funcCaseValue(node, params, true);
             case "csv":
-                return funcCsv(node, params, false);
+                return funcCsv(node, params, false, false);
             case "csvshownull":
-                return funcCsv(node, params, true);
+                return funcCsv(node, params, true, false);
+            case "csvparams":
+                return funcCsv(node, params, true, true);
             case "cyclevalue":
                 return funcCycleValue(node, params);
             // Logical
@@ -311,7 +313,7 @@ class FuncDispatcher {
             case "isemptyobject":
                 return funcIsEmptyObject(node, params);
             case "iseven":
-                return funcIsEven(node, params);
+                return funcIsEvenOdd(node, params, 0);
             case "isnull":
                 return funcIsNull(node, params, false);
             case "isnotnull":
@@ -321,7 +323,7 @@ class FuncDispatcher {
             case "isobject":
                 return funcIsObject(node, params);
             case "isodd":
-                return funcIsOdd(node, params);
+                return funcIsEvenOdd(node, params, 1);
             case "istext":
                 return funcIsText(node, params);
             case "isweekday":

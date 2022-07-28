@@ -48,8 +48,13 @@ class JossonsCore {
             return false;
         }
         progress.addResolvingStep(name, query);
-        final String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
-        final Josson dataset = dataFinder.apply(collectionName, tokens[2]);
+        final Josson dataset;
+        if (dataFinder == null) {
+            dataset = null;
+        } else {
+            final String collectionName = (tokens[0].isEmpty() ? name : tokens[0]) + tokens[1];
+            dataset = dataFinder.apply(collectionName, tokens[2]);
+        }
         datasets.put(name, dataset);
         progress.addResolvedDataset(name, dataset);
         return true;

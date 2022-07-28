@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -93,47 +92,16 @@ final class JossonCore {
         return zoneId;
     }
 
-    static String unquoteString(final String quotedString) {
-        final int last = quotedString.length() - 1;
-        if (last < 1 || quotedString.charAt(0) != QUOTE_SYMBOL || quotedString.charAt(last) != QUOTE_SYMBOL) {
-            throw new IllegalArgumentException("Argument is not a valid string literal: " + quotedString);
-        }
-        return quotedString.substring(1, last).replace("''", "'");
+    static String quoteText(final String text) {
+        return String.format("'%s'", text.replace("'", "''"));
     }
 
-    static String csvQuote(final String input) {
-        final String quote = "\"";
-        final String result;
-        final boolean needQuote;
-        if (input.contains(quote)) {
-            needQuote = true;
-            result = input.replace(quote, "\"\"");
-        } else {
-            needQuote = input.contains(",");
-            result = input;
+    static String unquoteText(final String quotedText) {
+        final int last = quotedText.length() - 1;
+        if (last < 1 || quotedText.charAt(0) != QUOTE_SYMBOL || quotedText.charAt(last) != QUOTE_SYMBOL) {
+            throw new IllegalArgumentException("Argument is not a valid string literal: " + quotedText);
         }
-        if (needQuote) {
-            return quote + result + quote;
-        }
-        return result;
-    }
-
-    static JsonNode getImplicitVariable(final String name) {
-        if (name.charAt(0) == '$') {
-            switch (StringUtils.stripStart(name.substring(1), null).toLowerCase()) {
-                case EMPTY:
-                    return BooleanNode.TRUE;
-                case "now":
-                    return TextNode.valueOf(LocalDateTime.now().toString());
-                case "today":
-                    return TextNode.valueOf(LocalDate.now().atStartOfDay().toString());
-                case "yesterday":
-                    return TextNode.valueOf(LocalDate.now().atStartOfDay().minusDays(1).toString());
-                case "tomorrow":
-                    return TextNode.valueOf(LocalDate.now().atStartOfDay().plusDays(1).toString());
-            }
-        }
-        return null;
+        return quotedText.substring(1, last).replace("''", "'");
     }
 
     static boolean isCurrentNodePath(final String path) {
@@ -154,7 +122,7 @@ final class JossonCore {
         return false;
     }
 
-    static ValueNode toValueNode(final String literal) throws NumberFormatException {
+    static ValueNode literalToValueNode(final String literal) throws NumberFormatException {
         if (StringUtils.isEmpty(literal)) {
             return null;
         }
@@ -168,12 +136,16 @@ final class JossonCore {
             return BooleanNode.FALSE;
         }
         if (literal.charAt(0) == QUOTE_SYMBOL) {
-            return TextNode.valueOf(unquoteString(literal));
+            return TextNode.valueOf(unquoteText(literal));
         }
         if (literal.indexOf('.') < 0) {
             return IntNode.valueOf(Integer.parseInt(literal));
         }
         return DoubleNode.valueOf(Double.parseDouble(literal));
+    }
+
+    static String valueNodeToLiteral(final JsonNode node) {
+        return node.isTextual() ? quoteText(node.asText()) : node.asText();
     }
 
     static boolean asBoolean(final JsonNode node) {
@@ -343,7 +315,7 @@ final class JossonCore {
     private static JsonNode getNodeByKeys(JsonNode node, List<String> keys) {
         if (node != null && !keys.isEmpty()) {
             try {
-                node = toValueNode(keys.get(0));
+                node = literalToValueNode(keys.get(0));
                 keys.remove(0);
             } catch (NumberFormatException ignore) {
             }

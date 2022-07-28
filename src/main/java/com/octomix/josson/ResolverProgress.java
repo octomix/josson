@@ -261,7 +261,7 @@ public class ResolverProgress {
                 message = "Unresolvable " + step.name;
                 break;
         }
-        return String.format("Round %d : %s", step.round, message.replaceAll("\n", "\\\\n"));
+        return String.format("Round %d : %s", step.round, message.replace("\n", "\\\\n"));
     }
 
     private String resolvedValue(final JsonNode node) {
