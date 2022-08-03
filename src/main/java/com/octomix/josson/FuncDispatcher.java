@@ -17,6 +17,7 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.octomix.josson.commons.CaseUtils;
 import com.octomix.josson.commons.StringUtils;
 
 import java.time.temporal.ChronoField;
@@ -167,6 +168,10 @@ class FuncDispatcher {
             case "containsignorecase":
                 return funcContains(node, params, true, false);
             // String
+            case "camelcase":
+                return funcCamelCase(node, params, false);
+            case "camelsnakecase":
+                return funcSnakeCase(node, params, CaseUtils.Type.CAMEL);
             case "capitalize":
                 return funcCapitalize(node, params);
             case "center":
@@ -395,6 +400,8 @@ class FuncDispatcher {
                 return funcPadding(node, params, -1);
             case "length":
                 return funcLength(node, params);
+            case "lowersnakecase":
+                return funcSnakeCase(node, params, CaseUtils.Type.LOWER);
             case "lowercase":
                 return funcLowerCase(node, params);
         }
@@ -580,6 +587,8 @@ class FuncDispatcher {
             // String
             case "singlequote":
                 return funcSingleQuote(node, params);
+            case "snakecase":
+                return funcSnakeCase(node, params, CaseUtils.Type.UNDEFINED);
             case "split":
                 return funcSplit(node, params);
             case "strip":
@@ -658,6 +667,10 @@ class FuncDispatcher {
             // String
             case "uncapitalize":
                 return funcUncapitalize(node, params);
+            case "uppercamelcase":
+                return funcCamelCase(node, params, true);
+            case "uppersnakecase":
+                return funcSnakeCase(node, params, CaseUtils.Type.UPPER);
             case "uppercase":
                 return funcUpperCase(node, params);
             // Structural

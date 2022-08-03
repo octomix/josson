@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.octomix.josson.commons.CaseUtils;
 import com.octomix.josson.commons.StringUtils;
 
 import java.util.function.Function;
@@ -64,6 +65,16 @@ final class FuncString {
                         ? StringUtils.appendIfMissingIgnoreCase(str, param)
                         : StringUtils.appendIfMissing(str, param)
         );
+    }
+
+    static JsonNode funcCamelCase(final JsonNode node, final String params, final boolean capitalizeFirstLetter) {
+        return applyWithParams(node, params, 0, 1, JsonNode::isTextual,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final String delimiters = paramList.size() > 0 ? getNodeAsText(paramNode, data.getValue(), paramList.get(0)) : " _.";
+                    return TextNode.valueOf(CaseUtils.toCamelCase(dataNode.asText(), capitalizeFirstLetter, delimiters));
+                });
     }
 
     static JsonNode funcCapitalize(final JsonNode node, final String params) {
@@ -202,6 +213,11 @@ final class FuncString {
         return applyWithoutParam(node, params, JossonCore::nodeHasValue,
                 (data, paramList) -> TextNode.valueOf(quoteText(data.getKey().asText()))
         );
+    }
+
+    static JsonNode funcSnakeCase(final JsonNode node, final String params, final CaseUtils.Type type) {
+        return applyWithoutParam(node, params, JsonNode::isTextual,
+                (data, paramList) -> TextNode.valueOf(CaseUtils.toSnakeCase(data.getKey().asText(), type)));
     }
 
     static JsonNode funcSplit(final JsonNode node, final String params) {

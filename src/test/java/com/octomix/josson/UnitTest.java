@@ -823,6 +823,26 @@ public class UnitTest {
         evaluate.accept("'abc'.appendIfMissingIgnoreCase(?, 'xyz')", "abcxyz");
         evaluate.accept("appendIfMissingIgnoreCase('abcxyz', 'xyz')", "abcxyz");
         evaluate.accept("'xyz'.appendIfMissingIgnoreCase('abcXYZ', ?)", "abcXYZ");
+        // camelCase()
+        evaluate.accept("'i am  a   man .and..i have_a__pen'.camelCase()", "iAmAManAndIHaveAPen");
+        evaluate.accept("' Text  to__c@mel case '.camelCase()", "textToC@melCase");
+        evaluate.accept("' Text  to__c@mel case '.camelCase(' _.@')", "textToCMelCase");
+        // upperCamelCase()
+        evaluate.accept("'i am  a   man .and..i have_a__pen'.upperCamelCase()", "IAmAManAndIHaveAPen");
+        evaluate.accept("' Text  to__c@mel case '.upperCamelCase()", "TextToC@melCase");
+        evaluate.accept("' Text  to__c@mel case '.upperCamelCase(' _.@')", "TextToCMelCase");
+        // snakeCase()
+        evaluate.accept("' Text  to__snake case '.snakeCase()", "Text_to_snake_case");
+        evaluate.accept("'camelToSnakeCase'.snakeCase()", "camel_To_Snake_Case");
+        // lowerSnakeCase()
+        evaluate.accept("' Text  to__snake case '.lowerSnakeCase()", "text_to_snake_case");
+        evaluate.accept("'camelToSnakeCase'.lowerSnakeCase()", "camel_to_snake_case");
+        // upperSnakeCase()
+        evaluate.accept("' Text  to__snake case '.upperSnakeCase()", "TEXT_TO_SNAKE_CASE");
+        evaluate.accept("'camelToSnakeCase'.upperSnakeCase()", "CAMEL_TO_SNAKE_CASE");
+        // camelSnakeCase()
+        evaluate.accept("' Text  to__snake case '.camelSnakeCase()", "Text_To_Snake_Case");
+        evaluate.accept("'camelToSnakeCase'.camelSnakeCase()", "Camel_To_Snake_Case");
         // capitalize()
         evaluate.accept("'cat'.capitalize()", "Cat");
         evaluate.accept("capitalize('cAt')", "CAt");
