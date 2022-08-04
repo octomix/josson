@@ -79,7 +79,7 @@ final class FuncExecutor {
         return elements;
     }
 
-    static JsonNode getParamArrayOrItselfIsContainer(final String params, final JsonNode node) {
+    static JsonNode getParamArrayOrItselfIsContainer(final JsonNode node, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
             if (node.isContainerNode()) {
@@ -87,10 +87,10 @@ final class FuncExecutor {
             }
             return null;
         }
-        return getParamArray(paramList, node);
+        return getParamArray(node, paramList);
     }
 
-    static ArrayNode getParamArrayOrItself(final String params, final JsonNode node) {
+    static ArrayNode getParamArrayOrItself(final JsonNode node, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
             if (node.isArray()) {
@@ -98,10 +98,10 @@ final class FuncExecutor {
             }
             return null;
         }
-        return getParamArray(paramList, node);
+        return getParamArray(node, paramList);
     }
 
-    private static ArrayNode getParamArray(final List<String> paramList, final JsonNode node) {
+    private static ArrayNode getParamArray(final JsonNode node, final List<String> paramList) {
         final ArrayNode array = MAPPER.createArrayNode();
         for (String param : paramList) {
             if (node.isArray()) {
@@ -199,7 +199,7 @@ final class FuncExecutor {
 
     static JsonNode applyWithArrayNode(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
                                        final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
-        final ArrayNode paramArray = getParamArray(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH), node);
+        final ArrayNode paramArray = getParamArray(node, decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
         if (paramArray.isEmpty()) {
             return null;
         }

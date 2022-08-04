@@ -39,7 +39,7 @@ final class FuncArray {
     }
 
     static ValueNode funcAggregate(final JsonNode node, final String funcId, final String params) {
-        final ArrayNode array = getParamArrayOrItself(params, node);
+        final ArrayNode array = getParamArrayOrItself(node, params);
         if (array == null) {
             return null;
         }
@@ -67,7 +67,7 @@ final class FuncArray {
     }
 
     static JsonNode funcDistinct(final JsonNode node, final String params) {
-        final ArrayNode array = getParamArrayOrItself(params, node);
+        final ArrayNode array = getParamArrayOrItself(node, params);
         if (array == null) {
             return null;
         }
@@ -189,7 +189,7 @@ final class FuncArray {
     }
 
     static JsonNode funcMaxMin(final JsonNode node, final String params, final boolean isMax) {
-        final ArrayNode array = getParamArrayOrItself(params, node);
+        final ArrayNode array = getParamArrayOrItself(node, params);
         if (array == null) {
             return null;
         }

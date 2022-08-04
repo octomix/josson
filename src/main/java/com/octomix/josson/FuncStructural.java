@@ -102,11 +102,11 @@ final class FuncStructural {
             return null;
         }
         final List<String> paramList = nodeAndParams.getValue();
-        Pair<String, String> name;
+        Pair<String, String> nameAndPath;
         try {
-            name = decomposeNameAndPath(paramList.get(0));
+            nameAndPath = decomposeNameAndPath(paramList.get(0));
         } catch (UnknownFormatConversionException e) {
-            name = Pair.of("key", paramList.get(0));
+            nameAndPath = Pair.of("key", paramList.get(0));
         }
         Pair<String, String> grouping;
         if (paramList.size() > 1) {
@@ -120,23 +120,26 @@ final class FuncStructural {
         }
         final ArrayNode array = MAPPER.createArrayNode();
         for (int i = 0; i < workNode.size(); i++) {
-            final JsonNode valueNode = getNodeByPath(workNode, i, name.getValue() == null ? name.getKey() : name.getValue());
+            final Pair<String, String> evalNameAndPath = evaluateNameAndPath(nameAndPath, workNode, i);
+            final JsonNode valueNode = getNodeByPath(workNode, i, evalNameAndPath.getValue() == null
+                    ? evalNameAndPath.getKey() : evalNameAndPath.getValue());
             if (valueNode != null && valueNode.isValueNode()) {
                 ArrayNode values = null;
+                final Pair<String, String> evalGrouping = evaluateNameAndPath(grouping, workNode, i);
                 for (int j = 0; j < array.size(); j++) {
-                    if (array.get(j).get(name.getKey()).equals(valueNode)) {
-                        values = (ArrayNode) array.get(j).get(grouping.getKey());
+                    if (array.get(j).get(evalNameAndPath.getKey()).equals(valueNode)) {
+                        values = (ArrayNode) array.get(j).get(evalGrouping.getKey());
                         break;
                     }
                 }
                 if (values == null) {
                     values = MAPPER.createArrayNode();
                     final ObjectNode entry = Josson.createObjectNode();
-                    entry.set(name.getKey(), valueNode);
-                    entry.set(grouping.getKey(), values);
+                    entry.set(evalNameAndPath.getKey(), valueNode);
+                    entry.set(evalGrouping.getKey(), values);
                     array.add(entry);
                 }
-                values.add(grouping.getValue() == null ? workNode.get(i) : getNodeByPath(workNode, i, grouping.getValue()));
+                values.add(evalGrouping.getValue() == null ? workNode.get(i) : getNodeByPath(workNode, i, evalGrouping.getValue()));
             }
         }
         return array;
@@ -189,25 +192,18 @@ final class FuncStructural {
     private static ObjectNode funcMap(final ObjectNode base, final JsonNode node,
                                       final Map<String, String> args, final int index) {
         for (Map.Entry<String, String> arg : args.entrySet()) {
-            final String name = arg.getKey();
-            if (isCurrentNodePath(name)) {
-                if ((index >= 0 ? node.get(index) : node).isObject()) {
-                    base.setAll((ObjectNode) (index >= 0 ? node.get(index) : node));
-                }
-                continue;
-            }
-            final String path = arg.getValue();
-            if (path == null) {
-                base.remove(name);
+            final Pair<String, String> evalNameAndPath = evaluateNameAndPath(Pair.of(arg.getKey(), arg.getValue()), node, index);
+            if (evalNameAndPath.getValue() == null) {
+                base.remove(evalNameAndPath.getKey());
             } else {
-                base.set(name, getNodeByPath(node, index, path));
+                base.set(evalNameAndPath.getKey(), getNodeByPath(node, index, evalNameAndPath.getValue()));
             }
         }
         return base;
     }
 
     static JsonNode funcToArray(final JsonNode node, final String params) {
-        final JsonNode container = getParamArrayOrItselfIsContainer(params, node);
+        final JsonNode container = getParamArrayOrItselfIsContainer(node, params);
         if (container == null) {
             return null;
         }
@@ -250,9 +246,11 @@ final class FuncStructural {
         }
         final ArrayNode unwind = MAPPER.createArrayNode();
         if (workNode.isObject()) {
-            funcUnwind(unwind, workNode, nameAndPath);
+            funcUnwind(unwind, workNode, evaluateNameAndPath(nameAndPath, workNode, NON_ARRAY_INDEX));
         } else if (workNode.isArray()) {
-            workNode.elements().forEachRemaining(element -> funcUnwind(unwind, element, nameAndPath));
+            for (int i = 0; i < workNode.size(); i++) {
+                funcUnwind(unwind, workNode.get(i), evaluateNameAndPath(nameAndPath, workNode, i));
+            }
         }
         return unwind;
     }

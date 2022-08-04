@@ -87,7 +87,7 @@ final class FuncFormat {
     }
 
     static TextNode funcCsv(final JsonNode node, final String params, final boolean showNull, final boolean forParams) {
-        final JsonNode container = getParamArrayOrItselfIsContainer(params, node);
+        final JsonNode container = getParamArrayOrItselfIsContainer(node, params);
         if (container == null) {
             return null;
         }

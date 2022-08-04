@@ -16,6 +16,7 @@
 
 package com.octomix.josson;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
 
@@ -545,18 +546,32 @@ final class PatternMatcher {
         final int last = len - 1;
         for (int pos = 0; pos < len; pos++) {
             if (input.charAt(pos) == ':') {
-                final String name = trimOf(input, 0, pos);
+                String name = trimOf(input, 0, pos);
                 if (name.isEmpty()) {
                     throw new SyntaxErrorException(input, "Missing field name");
                 }
-                checkElementName(name);
-                final String path = trimOf(input, pos + 1, len);
+                String path = trimOf(input, pos + 1, len);
+                if (path.startsWith(":")) {
+                    name = ":" + name;
+                    path = path.substring(eatSpaces(path, 1, path.length() - 1));
+                } else {
+                    checkElementName(name);
+                }
                 return Pair.of(name, path.isEmpty() ? null : path);
             } else {
                 pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
             }
         }
         return Pair.of(getLastElementName(input), input);
+    }
+
+    static Pair<String, String> evaluateNameAndPath(final Pair<String, String> nameAndPath, final JsonNode node, final int index) {
+        if (nameAndPath.getKey().startsWith(":")) {
+            final String name = getNodeAsText(node, index, nameAndPath.getKey().substring(1));
+            checkElementName(name);
+            return Pair.of(name, nameAndPath.getValue());
+        }
+        return nameAndPath;
     }
 
     static String getLastElementName(final String path) {
