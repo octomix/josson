@@ -443,7 +443,11 @@ final class PatternMatcher {
         int pos = 0;
         while (pos <= last) {
             int beg = pos;
-            while ("=!<>&|~".indexOf(input.charAt(pos)) >= 0) {
+            while (true) {
+                final char ch = input.charAt(pos);
+                if ("=!<>&|".indexOf(ch) < 0 && !(ch == '~' && pos > beg)) {
+                    break;
+                }
                 if (pos++ == last) {
                     throw new SyntaxErrorException(input, "Invalid syntax", POS_AT_THE_END);
                 }

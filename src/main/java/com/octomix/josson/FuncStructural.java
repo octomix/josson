@@ -41,12 +41,18 @@ final class FuncStructural {
 
     static JsonNode funcEntries(final JsonNode node, final String params) {
         final JsonNode workNode = getParamNode(node, params);
-        if (workNode == null || !workNode.isObject()) {
+        if (workNode == null || !workNode.isContainerNode()) {
             return null;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        workNode.fields().forEachRemaining((Map.Entry<String, JsonNode> field) ->
+        if (workNode.isArray()) {
+            workNode.forEach(elem -> elem.fields()
+                .forEachRemaining((Map.Entry<String, JsonNode> field) ->
+                    array.add(Josson.createObjectNode().put("key", field.getKey()).set("value", field.getValue()))));
+        } else {
+            workNode.fields().forEachRemaining((Map.Entry<String, JsonNode> field) ->
                 array.add(Josson.createObjectNode().put("key", field.getKey()).set("value", field.getValue())));
+        }
         return array;
     }
 

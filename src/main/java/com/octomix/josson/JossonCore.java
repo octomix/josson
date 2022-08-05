@@ -45,6 +45,10 @@ final class JossonCore {
 
     private static final String PARENT_ARRAY_NODE = "@";
 
+    private static final char WILDCARD_SYMBOL = '*';
+
+    private static final char MATCHES_SYMBOL = '~';
+
     private static final char COLLECT_BRANCHES_SYMBOL = '@';
 
     private static final char INDEX_PREFIX_SYMBOL = '#';
@@ -337,8 +341,25 @@ final class JossonCore {
         }
         String key = keys.get(0);
         switch (key.charAt(0)) {
-            case INDEX_PREFIX_SYMBOL:
-                throw new SyntaxErrorException(key);
+            case WILDCARD_SYMBOL:
+                if (key.length() == 1) {
+                    key = "toarray()";
+                } else {
+                    final String wildcardFilter = key.substring(1).trim();
+                    key = "entries()";
+                    keys.add(1, wildcardFilter);
+                    keys.add(2, "value");
+                }
+                break;
+            case MATCHES_SYMBOL:
+                final String strLiteral = key.substring(1).trim();
+                if (strLiteral.charAt(0) != QUOTE_SYMBOL || strLiteral.charAt(strLiteral.length() - 1) != QUOTE_SYMBOL) {
+                    throw new SyntaxErrorException(key);
+                }
+                key = "entries()";
+                keys.add(1, "[key.matches(" + strLiteral + ")]*");
+                keys.add(2, "value");
+                break;
             case COLLECT_BRANCHES_SYMBOL:
                 key = key.substring(1).trim();
                 nextKeys.addAll(keys);
@@ -349,6 +370,8 @@ final class JossonCore {
                 }
                 keys.clear();
                 return node;
+            case INDEX_PREFIX_SYMBOL:
+                throw new SyntaxErrorException(key);
         }
         if (isCurrentNodePath(key)) {
             throw new SyntaxErrorException(key);
