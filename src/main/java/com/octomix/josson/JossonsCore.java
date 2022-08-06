@@ -36,6 +36,9 @@ class JossonsCore {
 
     private static final String DICTIONARY_FUNCTION_PARAMS = DICTIONARY_FUNCTION_PARAM_PREFIX + "params";
 
+    /**
+     * Collection of datasets for query resolution.
+     */
     protected final Map<String, Josson> datasets = new HashMap<>();
 
     protected JossonsCore() {

@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.21</version>
+        <version>1.3.22</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.21'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.22'
 
 ## Features and Capabilities
 
@@ -50,14 +50,14 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 
 ## Table of Contents
 
-- [Operation Summary](#operator-summary)
+- [Operator Summary](#operator-summary)
   - [Relational and Logical Operators](#relational-and-logical-operators)
   - [Join and Set Operators](#join-and-set-operators)
 
 - [Josson Basic](#josson-basic)
 
 - [Josson Query Language](#josson-query-language)
-  - [Path Steps](#path-steps)
+  - [Josson Path](#josson-path)
   - [Path Chart Elements](#path-chart-elements)
   - [Tutorial](#tutorial)
 
@@ -161,28 +161,81 @@ To apply a Josson query path and get the result JsonNode.
 
 ## Josson Query Language
 
-### Path Steps
+### Josson Path
 
-| Step                 | Description                                                           |
-|:---------------------|:----------------------------------------------------------------------|
-| `array[number]`      | An array element by zero-based index                                  |
-| `array[expression]`  | A filter to find the first matching element                           |
-| `array[expression]*` | A filter to query all matching elements                               |
-| `array[expression]@` | A filter to divert each matching element to separate branch           |
-| `array@`             | Divert each element to separate branch                                |
-| `[]@`                | Divert each element of the current array node to separate branch      |
-| `object[expression]` | A validation filter                                                   |
-| `function()`         | A Josson function                                                     |
-| `@function()`        | Merge all branch results into a single array before manipulation      |
-| `function()@`        | Divert the function output array elements to separate branches        |
-| `@.`                 | The array node itself if the current node is an array node            |
-| `?`                  | The node itself for non-array node or an array element for array node |
-| `#`                  | Zero-based index of an array element                                  |
-| `##`                 | One-based index of an array element                                   |
-| `#A`                 | Uppercase alphabetic index of an array element                        |
-| `#a`                 | Lowercase alphabetic index of an array element                        |
-| `#R`                 | Uppercase roman numerals index of an array element                    |
-| `#r`                 | Lowercase roman numerals index of an array element                    |
+A _Josson Path_ is constructed with _Path Steps_ connected by `.`.
+
+A path step can...
+
+- Return an element of an object node by key name.
+- Filter an array node, return the first matching element or all matching elements.
+- Perform a transformation action by a [Josson Function](#josson-functions).
+
+| Step             | Description                                                          |
+|:-----------------|:---------------------------------------------------------------------|
+| `key`            | A child element key name                                             |
+| `[number]`       | An array element by zero-based index                                 |
+| `[expression]`   | A boolean filter expression to find the first matching array element |
+| `[expression]*`  | A boolean filter expression to query all matching array elements     |
+| `[expression]@`  | Filter all matching elements and divert each to separate branches    |
+| `[]@`            | Divert each element of the current array node to separate branches   |
+| `array@`         | Divert each array element to separate branches                       |
+| `function()`     | A Josson function                                                    |
+| `@function()`    | Merge all branch results into a single array before manipulation     |
+| `function()@`    | Divert the function output array elements to separate branches       |
+| `*`              | Wildcard search to match any object element                          |
+| `*[expression]`  | Wildcard search with filter and returns the first matching element   |
+| `*[expression]*` | Wildcard search with filter and returns all matching elements        |
+| `~'regex'`       | Search by regular expression and returns all matching elements       |
+
+To specify an array and then apply a filter can be simplified by removing the `.` between them.
+The following two are the same.
+
+    array.[expression]*
+    array[expression]*
+
+Filter can also apply to an object node.
+If the expression is evaluated to `true`, the object itself is returned.
+Otherwise, return `null`.
+
+A wildcard search with filter is actually a combination of 3 steps.
+This is the operation of a wildcard search with filter that returns all matching elements:
+
+    entries().[expression]*.value
+
+Josson function > Array filter > Select element
+
+Function `entries()` transform object `{ "name" : <JsonNode> }` into this new structure:
+
+    {
+        "key" : "name",
+        "value" : <JsonNode>
+    }
+
+Therefore, use keyword `key` in a wildcard filter expression to search.
+Even keyword `value` can be used in wildcard filter expression. For example:
+
+    *[key.startsWith('item') & value.isText()]
+    *[key.matches('^[A-Z]{10}$')]*
+    *[key =~ '^[A-Z]{10}$']*
+    entries().[key =~ '^[A-Z]{10}$']*.value
+
+The last 3 examples do the same thing and can be simplified to this syntax:
+
+    ~'^[A-Z]{10}$'
+
+Additional step symbols are available in filter expression and function argument.
+
+| Step | Description                                                              |
+|:-----|:-------------------------------------------------------------------------|
+| `?`  | The node itself for non-array node or an array element for array node    |
+| `@`  | The array node itself if the current node is an array node               |
+| `#`  | Zero-based index of an array element                                     |
+| `##` | One-based index of an array element                                      |
+| `#A` | Uppercase alphabetic index of an array element                           |
+| `#a` | Lowercase alphabetic index of an array element                           |
+| `#R` | Uppercase roman numerals index of an array element                       |
+| `#r` | Lowercase roman numerals index of an array element                       |
 
 ### Path Chart Elements
 
@@ -966,7 +1019,7 @@ Below is the JSON for this tutorial.
 
         {}->items*->[unitPrice]->[$D->calc(?)]->[$D->concat(?)] ==>[""]
 
-54. Function `entries()` returns an array of an object's string-keyed property `[key, value]` pairs.
+54. Function `entries()` returns an array of an object's string-keyed property `[{key, value}]` pairs.
 
         josson.getNode("items[0].entries()")
         ==>
@@ -1045,7 +1098,7 @@ Below is the JSON for this tutorial.
 
 59. Function `map()` constructs a new object node.
     For multi-steps path, the last element name will become the new element name.
-    To rename an element, use syntax `newFieldName:path`.
+    To rename an element, use syntax `newFieldName:path` or `queryThatResolveToName::path`.
 
         josson.getNode("map(customer.name,date:salesDate,sales:map(items.concat(name,' x ',qty,unit), totalQty:items.sum(qty), totalAmount))")
         ==>
@@ -1064,7 +1117,7 @@ Below is the JSON for this tutorial.
         {}->map($V...) ==>{}
 
 60. Function `field()` adds, removes and renames field on the current object node.
-    To remove an element, use syntax `fieldName:`.
+    To remove an element, use syntax `fieldName:` or `queryThatResolveToName::`.
 
         josson.getNode("items[0].field(subtotal:calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)),brand:,property:,tags:)")
         ==>
@@ -1117,7 +1170,8 @@ Below is the JSON for this tutorial.
 62. Function `group()` works like SQL `group by`. It will build a structure of `[{key, [elements]}]`.
     The first parameter is the grouping key. If it is a function, it will be given a name `key` in the output.
     The optional second parameter is to evaluate the grouped element. The default is the whole array element.
-    And the default output array name is `elements`. The names can be renamed by preceding with `newName:`.
+    And the default output array name is `elements`.
+    The names can be renamed by preceding with `newName:` or `queryThatResovleToName::`.
     
         josson.getNode("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))")
         ==>
@@ -1214,7 +1268,7 @@ Below is the JSON for this tutorial.
 
 ## Josson Functions
 
-There are 208 functions. They are classified into 7 categories:
+There are 214 functions. They are classified into 7 categories:
 
 Arithmetic Functions
 
@@ -1267,183 +1321,189 @@ String Functions
 44. [trim()](#44-trim)
 45. [uncapitalize()](#45-uncapitalize)
 46. [upperCase()](#46-uppercase)
-47. [singleQuote() / quote() / q()](#47-singlequote--quote--q)
-48. [doubleQuote() / qq()](#48-doublequote--qq)
+47. [camelCase()](#47-camelcase)
+48. [upperCamelCase()](#48-uppercamelcase)
+49. [snakeCase()](#49-snakecase)
+50. [lowerSnakeCase()](#50-lowersnakecase)
+51. [upperSnakeCase()](#51-uppersnakecase)
+52. [camelSnakeCase()](#52-camelsnakecase)
+53. [singleQuote() / quote() / q()](#53-singlequote--quote--q)
+54. [doubleQuote() / qq()](#54-doublequote--qq)
 
 Date Functions
 
-49. [amPmOfDay()](#49-ampmofday)
-50. [second()](#50-second)
-51. [secondOfDay()](#51-secondofday)
-52. [minute()](#52-minute)
-53. [minuteOfDay()](#53-minuteofday)
-54. [hourOfAmPm()](#54-hourofampm)
-55. [hour()](#55-hour)
-56. [dayOfWeek()](#56-dayofweek)
-57. [day()](#57-day)
-58. [dayOfYear()](#58-dayofyear)
-59. [month()](#59-month)
-60. [year()](#60-year)
-61. [plusSeconds()](#61-plusseconds)
-62. [plusMinutes()](#62-plusminutes)
-63. [plusHours()](#63-plushours)
-64. [plusDays()](#64-plusdays)
-65. [plusWeeks()](#65-plusweeks)
-66. [plusMonths()](#66-plusmonths)
-67. [plusYears()](#67-plusyears)
-68. [minusSeconds()](#68-minusseconds)
-69. [minusMinutes()](#69-minusminutes)
-70. [minusHours()](#70-minushours)
-71. [minusDays()](#71-minusdays)
-72. [minusWeeks()](#72-minusweeks)
-73. [minusMonths()](#73-minusmonths)
-74. [minusYears()](#74-minusyears)
-75. [truncateToMicro()](#75-truncatetomicro)
-76. [truncateToMilli()](#76-truncatetomilli)
-77. [truncateToSecond()](#77-truncatetosecond)
-78. [truncateToMinute()](#78-truncatetominute)
-79. [truncateToHour()](#79-truncatetohour)
-80. [truncateToDay()](#80-truncatetoday)
-81. [truncateToMonth()](#81-truncatetomonth)
-82. [truncateToYear()](#82-truncatetoyear)
-83. [withNano()](#83-withnano)
-84. [withMicro()](#84-withmicro)
-85. [withMilli()](#85-withmilli)
-86. [withSecond()](#86-withsecond)
-87. [withMinute()](#87-withminute)
-88. [withHour()](#88-withhour)
-89. [withDay()](#89-withday)
-90. [withDayOfYear()](#90-withdayofyear)
-91. [withMonth()](#91-withmonth)
-92. [withYear()](#92-withyear)
-93. [dayEnd()](#93-dayend)
-94. [monthEnd()](#94-monthend)
-95. [yearEnd()](#95-yearend)
-96. [lengthOfMonth()](#96-lengthofmonth)
-97. [lengthOfYear()](#97-lengthofyear)
-98. [untilInSecond()](#98-untilinsecond)
-99. [untilInMinute()](#99-untilinminute)
-100. [untilInHour()](#100-untilinhour)
-101. [untilInDay()](#101-untilinday)
-102. [untilInMonth()](#102-untilinmonth)
-103. [untilInYear()](#103-untilinyear)
-104. [localToOffsetDate()](#104-localtooffsetdate)
-105. [offsetToLocalDate()](#105-offsettolocaldate)
+55. [amPmOfDay()](#55-ampmofday)
+56. [second()](#56-second)
+57. [secondOfDay()](#57-secondofday)
+58. [minute()](#58-minute)
+59. [minuteOfDay()](#59-minuteofday)
+60. [hourOfAmPm()](#60-hourofampm)
+61. [hour()](#61-hour)
+62. [dayOfWeek()](#62-dayofweek)
+63. [day()](#63-day)
+64. [dayOfYear()](#64-dayofyear)
+65. [month()](#65-month)
+66. [year()](#66-year)
+67. [plusSeconds()](#67-plusseconds)
+68. [plusMinutes()](#68-plusminutes)
+69. [plusHours()](#69-plushours)
+70. [plusDays()](#70-plusdays)
+71. [plusWeeks()](#71-plusweeks)
+72. [plusMonths()](#72-plusmonths)
+73. [plusYears()](#73-plusyears)
+74. [minusSeconds()](#74-minusseconds)
+75. [minusMinutes()](#75-minusminutes)
+76. [minusHours()](#76-minushours)
+77. [minusDays()](#77-minusdays)
+78. [minusWeeks()](#78-minusweeks)
+79. [minusMonths()](#79-minusmonths)
+80. [minusYears()](#80-minusyears)
+81. [truncateToMicro()](#81-truncatetomicro)
+82. [truncateToMilli()](#82-truncatetomilli)
+83. [truncateToSecond()](#83-truncatetosecond)
+84. [truncateToMinute()](#84-truncatetominute)
+85. [truncateToHour()](#85-truncatetohour)
+86. [truncateToDay()](#86-truncatetoday)
+87. [truncateToMonth()](#87-truncatetomonth)
+88. [truncateToYear()](#88-truncatetoyear)
+89. [withNano()](#89-withnano)
+90. [withMicro()](#90-withmicro)
+91. [withMilli()](#91-withmilli)
+92. [withSecond()](#92-withsecond)
+93. [withMinute()](#93-withminute)
+94. [withHour()](#94-withhour)
+95. [withDay()](#95-withday)
+96. [withDayOfYear()](#96-withdayofyear)
+97. [withMonth()](#97-withmonth)
+98. [withYear()](#98-withyear)
+99. [dayEnd()](#99-dayend)
+100. [monthEnd()](#100-monthend)
+101. [yearEnd()](#101-yearend)
+102. [lengthOfMonth()](#102-lengthofmonth)
+103. [lengthOfYear()](#103-lengthofyear)
+104. [untilInSecond()](#104-untilinsecond)
+105. [untilInMinute()](#105-untilinminute)
+106. [untilInHour()](#106-untilinhour)
+107. [untilInDay()](#107-untilinday)
+108. [untilInMonth()](#108-untilinmonth)
+109. [untilInYear()](#109-untilinyear)
+110. [localToOffsetDate()](#110-localtooffsetdate)
+111. [offsetToLocalDate()](#111-offsettolocaldate)
 
 Format Functions
 
-106. [b64Encode()](#106-b64encode)
-107. [b64EncodeNoPadding()](#107-b64encodenopadding)
-108. [b64MimeEncode()](#108-b64mimeencode)
-109. [b64MimeEncodeNoPadding()](#109-b64mimeencodenopadding)
-110. [b64UrlEncode()](#110-b64urlencode)
-111. [b64UrlEncodeNoPadding()](#111-b64urlencodenopadding)
-112. [b64Decode()](#112-b64decode)
-113. [b64MimeDecode()](#113-b64mimedecode)
-114. [b64UrlDecode()](#114-b64urldecode)
-115. [urlEncode()](#115-urlencode)
-116. [urlDecode()](#116-urldecode)
-117. [if()](#117-if)
-118. [coalesce()](#118-coalesce)
-119. [caseValue()](#119-casevalue)
-120. [caseValueIgnoreCase()](#120-casevalueignorecase)
-121. [cycleValue()](#121-cyclevalue)
-122. [default()](#122-default)
-123. [indexedValue()](#123-indexedvalue)
-124. [formatDate()](#124-formatdate)
-125. [formatNumber()](#125-formatnumber)
-126. [formatText()](#126-formattext)
-127. [formatTexts()](#127-formattexts)
-128. [toNumber()](#128-tonumber)
-129. [toString()](#129-tostring)
-130. [toText()](#130-totext)
-131. [csv()](#131-csv)
-132. [csvShowNull()](#132-csvshownull)
-133. [csvParams()](#133-csvparams)
+112. [b64Encode()](#112-b64encode)
+113. [b64EncodeNoPadding()](#113-b64encodenopadding)
+114. [b64MimeEncode()](#114-b64mimeencode)
+115. [b64MimeEncodeNoPadding()](#115-b64mimeencodenopadding)
+116. [b64UrlEncode()](#116-b64urlencode)
+117. [b64UrlEncodeNoPadding()](#117-b64urlencodenopadding)
+118. [b64Decode()](#118-b64decode)
+119. [b64MimeDecode()](#119-b64mimedecode)
+120. [b64UrlDecode()](#120-b64urldecode)
+121. [urlEncode()](#121-urlencode)
+122. [urlDecode()](#122-urldecode)
+123. [if()](#123-if)
+124. [coalesce()](#124-coalesce)
+125. [caseValue()](#125-casevalue)
+126. [caseValueIgnoreCase()](#126-casevalueignorecase)
+127. [cycleValue()](#127-cyclevalue)
+128. [default()](#128-default)
+129. [indexedValue()](#129-indexedvalue)
+130. [formatDate()](#130-formatdate)
+131. [formatNumber()](#131-formatnumber)
+132. [formatText()](#132-formattext)
+133. [formatTexts()](#133-formattexts)
+134. [toNumber()](#134-tonumber)
+135. [toString()](#135-tostring)
+136. [toText()](#136-totext)
+137. [csv()](#137-csv)
+138. [csvShowNull()](#138-csvshownull)
+139. [csvParams()](#139-csvparams)
 
 Logical Functions
 
-134. [contains()](#134-contains)
-135. [containsIgnoreCase()](#135-containsignorecase)
-136. [notContains()](#136-notcontains)
-137. [notContainsIgnoreCase()](#137-notcontainsignorecase)
-138. [startsWith()](#138-startswith)
-139. [startsWithIgnoreCase()](#139-startswithignorecase)
-140. [notStartsWith()](#140-notstartswith)
-141. [notStartsWithIgnoreCase()](#141-notstartswithignorecase)
-142. [endsWith()](#142-endswith)
-143. [endsWithIgnoreCase()](#143-endswithignorecase)
-144. [notEndsWith()](#144-notendswith)
-145. [notEndsWithIgnoreCase()](#145-notendswithignorecase)
-146. [equals()](#146-equals)
-147. [equalsIgnoreCase()](#147-equalsignorecase)
-148. [notEquals()](#148-notequals)
-149. [notEqualsIgnoreCase()](#149-notequalsignorecase)
-150. [matches()](#150-matches)
-151. [notMatches()](#151-notmatches)
-152. [in()](#152-in)
-153. [inIgnoreCase()](#153-inignorecase)
-154. [notIn()](#154-notin)
-155. [notInIgnoreCase()](#155-notinignorecase)
-156. [isEmpty()](#156-isempty)
-157. [isNotEmpty()](#157-isnotempty)
-158. [isBlank()](#158-isblank)
-159. [isNotBlank()](#159-isnotblank)
-160. [isNull()](#160-isnull)
-161. [isNotNull()](#161-isnotnull)
-162. [isText()](#162-istext)
-163. [isBoolean()](#163-isboolean)
-164. [isNumber()](#164-isnumber)
-165. [isEven()](#165-iseven)
-166. [isOdd()](#166-isodd)
-167. [isArray()](#167-isarray)
-168. [isObject()](#168-isobject)
-169. [isEmptyArray()](#169-isemptyarray)
-170. [isEmptyObject](#170-isemptyobject)
-171. [not()](#171-not)
-172. [isWeekday()](#172-isweekday)
-173. [isWeekend()](#173-isweekend)
-174. [isLeapYear()](#174-isleapyear)
+140. [contains()](#140-contains)
+141. [containsIgnoreCase()](#141-containsignorecase)
+142. [notContains()](#142-notcontains)
+143. [notContainsIgnoreCase()](#143-notcontainsignorecase)
+144. [startsWith()](#144-startswith)
+145. [startsWithIgnoreCase()](#145-startswithignorecase)
+146. [notStartsWith()](#146-notstartswith)
+147. [notStartsWithIgnoreCase()](#147-notstartswithignorecase)
+148. [endsWith()](#148-endswith)
+149. [endsWithIgnoreCase()](#149-endswithignorecase)
+150. [notEndsWith()](#150-notendswith)
+151. [notEndsWithIgnoreCase()](#151-notendswithignorecase)
+152. [equals()](#152-equals)
+153. [equalsIgnoreCase()](#153-equalsignorecase)
+154. [notEquals()](#154-notequals)
+155. [notEqualsIgnoreCase()](#155-notequalsignorecase)
+156. [matches()](#156-matches)
+157. [notMatches()](#157-notmatches)
+158. [in()](#158-in)
+159. [inIgnoreCase()](#159-inignorecase)
+160. [notIn()](#160-notin)
+161. [notInIgnoreCase()](#161-notinignorecase)
+162. [isEmpty()](#162-isempty)
+163. [isNotEmpty()](#163-isnotempty)
+164. [isBlank()](#164-isblank)
+165. [isNotBlank()](#165-isnotblank)
+166. [isNull()](#166-isnull)
+167. [isNotNull()](#167-isnotnull)
+168. [isText()](#168-istext)
+169. [isBoolean()](#169-isboolean)
+170. [isNumber()](#170-isnumber)
+171. [isEven()](#171-iseven)
+172. [isOdd()](#172-isodd)
+173. [isArray()](#173-isarray)
+174. [isObject()](#174-isobject)
+175. [isEmptyArray()](#175-isemptyarray)
+176. [isEmptyObject](#176-isemptyobject)
+177. [not()](#177-not)
+178. [isWeekday()](#178-isweekday)
+179. [isWeekend()](#179-isweekend)
+180. [isLeapYear()](#180-isleapyear)
 
 Array Functions
 
-175. [size()](#175-size)
-176. [lastIndex()](#176-lastindex)
-177. [indexOf()](#177-indexof)
-178. [lastIndexOf()](#178-lastindexof)
-179. [first()](#179-first)
-180. [last()](#180-last)
-181. [max()](#181-max)
-182. [min()](#182-min)
-183. [topN()](#183-topn)
-184. [bottomN()](#184-bottomn)
-185. [sum()](#185-sum)
-186. [avg()](#186-avg)
-187. [count()](#187-count)
-188. [reverse()](#188-reverse)
-189. [slice()](#189-slice)
-190. [sort()](#190-sort)
-191. [distinct()](#191-distinct)
-192. [join()](#192-join)
-193. [findByMax()](#193-findbymax)
-194. [findByMin()](#194-findbymin)
-195. [findByNullOrMax()](#195-findbynullormax)
-196. [findByNullOrMin()](#196-findbynullormin)
-197. [findByMaxOrNull()](#197-findbymaxornull)
-198. [findByMinOrNull()](#198-findbyminornull)
+181. [size()](#181-size)
+182. [lastIndex()](#182-lastindex)
+183. [indexOf()](#183-indexof)
+184. [lastIndexOf()](#184-lastindexof)
+185. [first()](#185-first)
+186. [last()](#186-last)
+187. [max()](#187-max)
+188. [min()](#188-min)
+189. [topN()](#189-topn)
+190. [bottomN()](#190-bottomn)
+191. [sum()](#191-sum)
+192. [avg()](#192-avg)
+193. [count()](#193-count)
+194. [reverse()](#194-reverse)
+195. [slice()](#195-slice)
+196. [sort()](#196-sort)
+197. [distinct()](#197-distinct)
+198. [join()](#198-join)
+199. [findByMax()](#199-findbymax)
+200. [findByMin()](#200-findbymin)
+201. [findByNullOrMax()](#201-findbynullormax)
+202. [findByNullOrMin()](#202-findbynullormin)
+203. [findByMaxOrNull()](#203-findbymaxornull)
+204. [findByMinOrNull()](#204-findbyminornull)
 
 Structural Functions
 
-199. [json()](#199-json)
-200. [entries()](#200-entries)
-201. [keys()](#201-keys)
-202. [toArray()](#202-toarray)
-203. [toObject()](#203-toobject)
-204. [flatten()](#204-flatten)
-205. [map()](#205-map)
-206. [field()](#206-field)
-207. [group()](#207-group)
-208. [unwind()](#208-unwind)
+205. [json()](#205-json)
+206. [entries()](#206-entries)
+207. [keys()](#207-keys)
+208. [toArray()](#208-toarray)
+209. [toObject()](#209-toobject)
+210. [flatten()](#210-flatten)
+211. [map()](#211-map)
+212. [field()](#212-field)
+213. [group()](#213-group)
+214. [unwind()](#214-unwind)
 
 Following are some examples of each function.
 
@@ -1851,7 +1911,47 @@ Following are some examples of each function.
 
     upperCase('cAt') ==> "CAT"
 
-#### 47. singleQuote() / quote() / q()
+#### 47. camelCase()
+
+    'i am  a   man .and..i have_a__pen'.camelCase() ==> "iAmAManAndIHaveAPen"
+
+    ' Text  to__c@mel case '.camelCase() ==> "textToC@melCase"
+
+    ' Text  to__c@mel case '.camelCase(' _.@') ==> "textToCMelCase"
+
+#### 48. upperCamelCase()
+
+    'i am  a   man .and..i have_a__pen'.camelCase() ==> "IAmAManAndIHaveAPen"
+
+    ' Text  to__c@mel case '.camelCase() ==> "TextToC@melCase"
+
+    ' Text  to__c@mel case '.camelCase(' _.@') ==> "TextToCMelCase"
+
+#### 49. snakeCase()
+
+    ' Text  to__snake case '.snakeCase() ==> "Text_to_snake_case"
+
+    'camelToSnakeCase'.snakeCase() ==> "camel_To_Snake_Case"
+
+#### 50. lowerSnakeCase()
+
+    ' Text  to__snake case '.lowerSnakeCase() ==> "text_to_snake_case"
+
+    'camelToSnakeCase'.lowerSnakeCase() ==> "camel_to_snake_case"
+
+#### 51. upperSnakeCase()
+
+    ' Text  to__snake case '.upperSnakeCase() ==> "TEXT_TO_SNAKE_CASE"
+
+    'camelToSnakeCase'.upperSnakeCase() ==> "CAMEL_TO_SNAKE_CASE"
+
+#### 52. camelSnakeCase()
+
+    ' Text  to__snake case '.camelSnakeCase() ==> "Text_To_Snake_Case"
+
+    'camelToSnakeCase'.camelSnakeCase() ==> "Camel_To_Snake_Case"
+
+#### 53. singleQuote() / quote() / q()
 
     'Peggy''s cat'.singleQuote() ==> "'Peggy''s cat'"
 
@@ -1861,7 +1961,7 @@ Following are some examples of each function.
 
     q(True) ==> "'true'"
 
-#### 48. doubleQuote() / qq()
+#### 54. doubleQuote() / qq()
 
     'Peggy\"s cat'.doubleQuote() ==> "\"Peggy\\\"s cat\""
 
@@ -1873,79 +1973,79 @@ Following are some examples of each function.
 
 ### Date Functions
 
-#### 49. amPmOfDay()
+#### 55. amPmOfDay()
 
     '2022-01-02T03:04:05'.amPmOfDay() ==> "AM"
 
     amPmOfDay('2022-02-04T13:14:15') ==> "PM"
 
-#### 50. second()
+#### 56. second()
 
     '2022-01-02T03:04:05'.second() ==> 5
 
     second('2022-02-04T13:14:15') ==> 15
 
-#### 51. secondOfDay()
+#### 57. secondOfDay()
 
     '2022-01-02T03:04:05'.secondOfDay() ==> 11045
 
     secondOfDay('2022-02-04T13:14:15') ==> 47655
 
-#### 52. minute()
+#### 58. minute()
 
     '2022-01-02T03:04:05'.minute() ==> 4
 
     minute('2022-02-04T13:14:15') ==> 14
 
-#### 53. minuteOfDay()
+#### 59. minuteOfDay()
 
     '2022-01-02T03:04:05'.minuteOfDay() ==> 184
 
     minuteOfDay('2022-02-04T13:14:15') ==> 794
 
-#### 54. hourOfAmPm()
+#### 60. hourOfAmPm()
 
     '2022-01-02T03:04:05'.hourOfAmPm() ==> 3
 
     hourOfAmPm('2022-02-04T13:14:15') ==> 1
 
-#### 55. hour()
+#### 61. hour()
 
     '2022-01-02T03:04:05'.hour() ==> 3
 
     hour('2022-02-04T13:14:15') ==> 13
 
-#### 56. dayOfWeek()
+#### 62. dayOfWeek()
 
     '2022-01-02T03:04:05'.dayOfWeek() ==> 7
 
     dayOfWeek('2022-02-04T13:14:15') ==> 5
 
-#### 57. day()
+#### 63. day()
 
     '2022-01-02T03:04:05'.day() ==> 2
 
     day('2022-02-04T13:14:15') ==> 4
 
-#### 58. dayOfYear()
+#### 64. dayOfYear()
 
     '2022-01-02T03:04:05'.dayOfYear() ==> 2
 
     dayOfYear('2022-02-04T13:14:15') ==> 35
 
-#### 59. month()
+#### 65. month()
 
     '2022-01-02T03:04:05'.month() ==> 1
 
     month('2022-02-04T13:14:15') ==> 2
 
-#### 60. year()
+#### 66. year()
 
     '2022-01-02T03:04:05'.year() ==> 2022
 
     year('2022-02-04T13:14:15') ==> 2022
 
-#### 61. plusSeconds()
+#### 67. plusSeconds()
 
     '2022-01-02T03:04:05'.plusSeconds(9) ==> "2022-01-02T03:04:14"
 
@@ -1953,7 +2053,7 @@ Following are some examples of each function.
 
     plusSeconds('2022-02-04T13:14:15', 9) ==> "2022-02-04T13:14:24"
 
-#### 62. plusMinutes()
+#### 68. plusMinutes()
 
     '2022-01-02T03:04:05'.plusMinutes(9) ==> "2022-01-02T03:13:05"
 
@@ -1961,7 +2061,7 @@ Following are some examples of each function.
 
     plusMinutes('2022-02-04T13:14:15', 9) ==> "2022-02-04T13:23:15"
 
-#### 63. plusHours()
+#### 69. plusHours()
 
     '2022-01-02T03:04:05'.plusHours(9) ==> "2022-01-02T12:04:05"
 
@@ -1969,7 +2069,7 @@ Following are some examples of each function.
 
     plusHours('2022-02-04T13:14:15', 9) ==> "2022-02-04T22:14:15"
 
-#### 64. plusDays()
+#### 70. plusDays()
 
     '2022-01-02T03:04:05'.plusDays(9) ==> "2022-01-11T03:04:05"
 
@@ -1977,7 +2077,7 @@ Following are some examples of each function.
 
     plusDays('2022-02-04T13:14:15', 9) ==> "2022-02-13T13:14:15"
 
-#### 65. plusWeeks()
+#### 71. plusWeeks()
 
     '2022-01-02T03:04:05'.plusWeeks(9) ==> "2022-03-06T03:04:05"
 
@@ -1985,7 +2085,7 @@ Following are some examples of each function.
 
     plusWeeks('2022-02-04T13:14:15', 9) ==> "2022-04-08T13:14:15"
 
-#### 66. plusMonths()
+#### 72. plusMonths()
 
     '2022-01-02T03:04:05'.plusMonths(9) ==> "2022-10-02T03:04:05"
 
@@ -1993,7 +2093,7 @@ Following are some examples of each function.
 
     plusMonths('2022-02-04T13:14:15', 9) ==> "2022-11-04T13:14:15"
 
-#### 67. plusYears()
+#### 73. plusYears()
 
     '2022-01-02T03:04:05'.plusYears(9) ==> "2031-01-02T03:04:05"
 
@@ -2001,7 +2101,7 @@ Following are some examples of each function.
 
     plusYears('2022-02-04T13:14:15', 9) ==> "2031-02-04T13:14:15"
 
-#### 68. minusSeconds()
+#### 74. minusSeconds()
 
     '2022-01-02T03:04:05'.minusSeconds(9) ==> "2022-01-02T03:03:56"
 
@@ -2009,7 +2109,7 @@ Following are some examples of each function.
 
     minusSeconds('2022-02-04T13:14:15', 9) ==> "2022-02-04T13:14:06"
 
-#### 69. minusMinutes()
+#### 75. minusMinutes()
 
     '2022-01-02T03:04:05'.minusMinutes(9) ==> "2022-01-02T02:55:05"
 
@@ -2017,7 +2117,7 @@ Following are some examples of each function.
 
     minusMinutes('2022-02-04T13:14:15', 9) ==> "2022-02-04T13:05:15"
 
-#### 70. minusHours()
+#### 76. minusHours()
 
     '2022-01-02T03:04:05'.minusHours(9) ==> "2022-01-01T18:04:05"
 
@@ -2025,7 +2125,7 @@ Following are some examples of each function.
 
     minusHours('2022-02-04T13:14:15', 9) ==> "2022-02-04T04:14:15"
 
-#### 71. minusDays()
+#### 77. minusDays()
 
     '2022-01-02T03:04:05'.minusDays(9) ==> "2021-12-24T03:04:05"
 
@@ -2033,7 +2133,7 @@ Following are some examples of each function.
 
     minusDays('2022-02-04T13:14:15', 9) ==> "2022-01-26T13:14:15"
 
-#### 72. minusWeeks()
+#### 78. minusWeeks()
 
     '2022-01-02T03:04:05'.minusWeeks(9) ==> "2021-10-31T03:04:05"
 
@@ -2041,7 +2141,7 @@ Following are some examples of each function.
 
     minusWeeks('2022-02-04T13:14:15', 9) ==> "2021-12-03T13:14:15"
 
-#### 73. minusMonths()
+#### 79. minusMonths()
 
     '2022-01-02T03:04:05'.minusMonths(9) ==> "2021-04-02T03:04:05"
 
@@ -2049,7 +2149,7 @@ Following are some examples of each function.
 
     minusMonths('2022-02-04T13:14:15', 9) ==> "2021-05-04T13:14:15"
 
-#### 74. minusYears()
+#### 80. minusYears()
 
     '2022-01-02T03:04:05'.minusYears(9) ==> "2013-01-02T03:04:05"
 
@@ -2057,55 +2157,55 @@ Following are some examples of each function.
 
     minusYears('2022-02-04T13:14:15', 9) ==> "2013-02-04T13:14:15"
 
-#### 75. truncateToMicro()
+#### 81. truncateToMicro()
 
     '2022-01-02T03:04:05.229390600'.truncateToMicro() ==> "2022-01-02T03:04:05.229390"
 
     truncateToMicro('2022-02-04T13:14:15.229390600') ==> "2022-02-04T13:14:15.229390"
 
-#### 76. truncateToMilli()
+#### 82. truncateToMilli()
 
     '2022-01-02T03:04:05.229390600'.truncateToMilli() ==> "2022-01-02T03:04:05.229"
 
     truncateToMilli('2022-02-04T13:14:15.229390600') ==> "2022-02-04T13:14:15.229"
 
-#### 77. truncateToSecond()
+#### 83. truncateToSecond()
 
     '2022-01-02T03:04:05.229390600'.truncateToSecond() ==> "2022-01-02T03:04:05"
 
     truncateToSecond('2022-02-04T13:14:15.229390600') ==> "2022-02-04T13:14:15"
 
-#### 78. truncateToMinute()
+#### 84. truncateToMinute()
 
     '2022-01-02T03:04:05.229390600'.truncateToMinute() ==> "2022-01-02T03:04"
 
     truncateToMinute('2022-02-04T13:14:15.229390600') ==> "2022-02-04T13:14"
 
-#### 79. truncateToHour()
+#### 85. truncateToHour()
 
     '2022-01-02T03:04:05.229390600'.truncateToHour() ==> "2022-01-02T03:00"
 
     truncateToHour('2022-02-04T13:14:15.229390600') ==> "2022-02-04T13:00"
 
-#### 80. truncateToDay()
+#### 86. truncateToDay()
 
     '2022-01-02T03:04:05.229390600'.truncateToDay() ==> "2022-01-02T00:00"
 
     truncateToDay('2022-02-04T13:14:15.229390600') ==> "2022-02-04T00:00"
 
-#### 81. truncateToMonth()
+#### 87. truncateToMonth()
 
     '2022-01-02T03:04:05.229390600'.truncateToMonth() ==> "2022-01-01T00:00"
 
     truncateToMonth('2022-02-04T13:14:15.229390600') ==> "2022-02-01T00:00"
 
-#### 82. truncateToYear()
+#### 88. truncateToYear()
 
     '2022-01-02T03:04:05.229390600'.truncateToYear() ==> "2022-01-01T00:00"
 
     truncateToYear('2022-02-04T13:14:15.229390600') ==> "2022-01-01T00:00"
 
-#### 83. withNano()
+#### 89. withNano()
 
     '2022-01-02T03:04'.withNano(789) ==> "2022-01-02T03:04:00.000000789"
 
@@ -2113,7 +2213,7 @@ Following are some examples of each function.
 
     withNano('2022-02-04T13:14', 789) ==> "2022-02-04T13:14:00.000000789"
 
-#### 84. withMicro()
+#### 90. withMicro()
 
     '2022-01-02T03:04'.withMicro(789) ==> "2022-01-02T03:04:00.000789"
 
@@ -2121,7 +2221,7 @@ Following are some examples of each function.
 
     withMicro('2022-02-04T13:14', 789) ==> "2022-02-04T13:14:00.000789"
 
-#### 85. withMilli()
+#### 91. withMilli()
 
     '2022-01-02T03:04'.withMilli(789) ==> "2022-01-02T03:04:00.789"
 
@@ -2129,7 +2229,7 @@ Following are some examples of each function.
 
     withMilli('2022-02-04T13:14', 789) ==> "2022-02-04T13:14:00.789"
 
-#### 86. withSecond()
+#### 92. withSecond()
 
     '2022-01-02T03:04'.withSecond(35) ==> "2022-01-02T03:04:35"
 
@@ -2137,7 +2237,7 @@ Following are some examples of each function.
 
     withSecond('2022-02-04T13:14', 35) ==> "2022-02-04T13:14:35"
 
-#### 87. withMinute()
+#### 93. withMinute()
 
     '2022-01-02T03:04'.withMinute(35) ==> "2022-01-02T03:35"
 
@@ -2145,7 +2245,7 @@ Following are some examples of each function.
 
     withMinute('2022-02-04T13:14', 35) ==> "2022-02-04T13:35"
 
-#### 88. withHour()
+#### 94. withHour()
 
     '2022-01-02T03:04'.withHour(16) ==> "2022-01-02T16:04"
 
@@ -2153,7 +2253,7 @@ Following are some examples of each function.
 
     withHour('2022-02-04T13:14', 16) ==> "2022-02-04T16:14"
 
-#### 89. withDay()
+#### 95. withDay()
 
     '2022-01-02T03:04'.withDay(25) ==> "2022-01-25T03:04"
 
@@ -2161,7 +2261,7 @@ Following are some examples of each function.
 
     withDay('2022-02-04T13:14', 25) ==> "2022-02-25T13:14"
 
-#### 90. withDayOfYear()
+#### 96. withDayOfYear()
 
     '2022-01-02T03:04'.withDayOfYear(123) ==> "2022-05-03T03:04"
 
@@ -2169,7 +2269,7 @@ Following are some examples of each function.
 
     withDayOfYear('2022-02-04T13:14', 123) ==> "2022-05-03T13:14"
 
-#### 91. withMonth()
+#### 97. withMonth()
 
     '2022-01-02T03:04'.withMonth(7) ==> "2022-07-02T03:04"
 
@@ -2177,7 +2277,7 @@ Following are some examples of each function.
 
     withMonth('2022-02-04T13:14', 7) ==> "2022-07-04T13:14"
 
-#### 92. withYear()
+#### 98. withYear()
 
     '2022-01-02T03:04'.withYear(2047) ==> "2047-01-02T03:04"
 
@@ -2185,79 +2285,79 @@ Following are some examples of each function.
 
     withYear('2022-02-04T13:14', 2047) ==> "2047-02-04T13:14"
 
-#### 93. dayEnd()
+#### 99. dayEnd()
 
     '2022-01-02T03:04'.dayEnd() ==> "2022-01-02T23:59:59.999999999"
 
     dayEnd('2022-02-04T13:14') ==> "2022-02-04T23:59:59.999999999"
 
-#### 94. monthEnd()
+#### 100. monthEnd()
 
     '2022-01-02T03:04'.monthEnd() ==> "2022-01-31T23:59:59.999999999"
 
     monthEnd('2022-02-04T13:14') ==> "2022-02-28T23:59:59.999999999"
 
-#### 95. yearEnd()
+#### 101. yearEnd()
 
     '2022-01-02T03:04'.yearEnd() ==> "2022-12-31T23:59:59.999999999"
 
     yearEnd('2022-02-04T13:14') ==> "2022-12-31T23:59:59.999999999"
 
-#### 96. lengthOfMonth()
+#### 102. lengthOfMonth()
 
     '2022-01-02T03:04'.lengthOfMonth() ==> 31
 
     lengthOfMonth('2022-02-04T13:14') ==> 28
 
-#### 97. lengthOfYear()
+#### 103. lengthOfYear()
 
     '2022-01-02T03:04'.lengthOfYear() ==> 365
 
     lengthOfYear('2024-02-04T13:14') ==> 366
 
-#### 98. untilInSecond()
+#### 104. untilInSecond()
 
     '2020-01-02T23:04'.untilInSecond('2022-06-11T01:02') ==> 76903080
 
     untilInSecond('2021-12-12T13:14','2021-03-03T01:00') ==> -24581640
 
-#### 99. untilInMinute()
+#### 105. untilInMinute()
 
     '2020-01-02T23:04'.untilInMinute('2022-06-11T01:02') ==> 1281718
 
     untilInMinute('2021-12-12T13:14','2021-03-03T01:00') ==> -409694
 
-#### 100. untilInHour()
+#### 106. untilInHour()
 
     '2020-01-02T23:04'.untilInHour('2022-06-11T01:02') ==> 21361
 
     untilInHour('2021-12-12T13:14','2021-03-03T01:00') ==> -6828
 
-#### 101. untilInDay()
+#### 107. untilInDay()
 
     '2020-01-02T23:04'.untilInDay('2022-06-11T01:02') ==> 890
 
     untilInDay('2021-12-12T13:14','2021-03-03T01:00') ==> -284
 
-#### 102. untilInMonth()
+#### 108. untilInMonth()
 
     '2020-01-02T23:04'.untilInMonth('2022-06-11T01:02') ==> 29
 
     untilInMonth('2021-12-12T13:14','2021-03-03T01:00') ==> -9
 
-#### 103. untilInYear()
+#### 109. untilInYear()
 
     '2020-01-02T23:04'.untilInYear('2022-06-11T01:02') ==> 2
 
     untilInYear('2021-12-12T13:14','2021-03-03T01:00') ==> 0
 
-#### 104. localToOffsetDate()
+#### 110. localToOffsetDate()
 
     '2022-01-02T03:04:05'.localToOffsetDate() ==> "2022-01-02T03:04:05+08:00"
 
     localToOffsetDate('2022-02-04T13:14:15') ==> "2022-02-04T13:14:15+08:00"
 
-#### 105. offsetToLocalDate()
+#### 111. offsetToLocalDate()
 
     '2022-01-02T03:04:05+08:00'.offsetToLocalDate() ==> "2022-01-02T03:04:05"
 
@@ -2265,43 +2365,43 @@ Following are some examples of each function.
 
 ### Format Functions
 
-#### 106. b64Encode()
+#### 112. b64Encode()
 
     'abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ'.b64Encode()
     ==>
     "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg=="
 
-#### 107. b64EncodeNoPadding()
+#### 113. b64EncodeNoPadding()
 
     b64EncodeNoPadding('abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ')
     ==>
     "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg"
 
-#### 108. b64MimeEncode()
+#### 114. b64MimeEncode()
 
     'abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ'.b64MimeEncode()
     ==>
     "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9Q\r\nUVJTVFVWV1hZWg=="
 
-#### 109. b64MimeEncodeNoPadding()
+#### 115. b64MimeEncodeNoPadding()
 
     b64MimeEncodeNoPadding('abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ')
     ==>
     "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9Q\r\nUVJTVFVWV1hZWg"
 
-#### 110. b64UrlEncode()
+#### 116. b64UrlEncode()
 
     'abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ'.b64UrlEncode()
     ==>
     "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp-IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg=="
 
-#### 111. b64UrlEncodeNoPadding()
+#### 117. b64UrlEncodeNoPadding()
 
     b64UrlEncodeNoPadding('abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ')
     ==>
     "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp-IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg"
 
-#### 112. b64Decode()
+#### 118. b64Decode()
 
     'YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg=='.b64Decode()
     ==>
@@ -2311,7 +2411,7 @@ Following are some examples of each function.
     ==>
     "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-#### 113. b64MimeDecode()
+#### 119. b64MimeDecode()
 
     'YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9Q\nUVJTVFVWV1hZWg=='.b64MimeDecode()
     ==>
@@ -2321,7 +2421,7 @@ Following are some examples of each function.
     ==>
     "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-#### 114. b64UrlDecode()
+#### 120. b64UrlDecode()
 
     'YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp-IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg=='.b64UrlDecode()
     ==>
@@ -2331,19 +2431,19 @@ Following are some examples of each function.
     ==>
     "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-#### 115. urlEncode()
+#### 121. urlEncode()
 
     'www.domain.com?a=1+2&b=3+4'.urlEncode() ==> "www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4"
 
     urlEncode('www.domain.com?a=1+2&b=3+4') ==> "www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4"
 
-#### 116. urlDecode()
+#### 122. urlDecode()
 
     'www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4'.urlDecode() ==> "www.domain.com?a=1+2&b=3+4"
 
     urlDecode('www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4') ==> "www.domain.com?a=1+2&b=3+4"
 
-#### 117. if()
+#### 123. if()
 
     json('{"a":1,"b":2,"c":3}').if(a.isEven(), 'T', 'F') ==> "F"
 
@@ -2357,13 +2457,13 @@ Following are some examples of each function.
 
     json('[1,2,3,4,5]').if(isOdd(), calc(?*2), ?) ==> [ 2.0, 2, 6.0, 4, 10.0 ]
 
-#### 118. coalesce()
+#### 124. coalesce()
 
     json('["abc","",123,false,null]').coalesce('xyz') ==> [ "abc", "", 123, false, "xyz" ]
 
     json('{"a":null,"c":"abc"}').coalesce(a,b,c,'xyz') ==> "abc"
 
-#### 119. caseValue()
+#### 125. caseValue()
 
     'a'.caseValue('A',1,'b',2,'a',3,4) ==> 3
 
@@ -2373,7 +2473,7 @@ Following are some examples of each function.
 
     json('[{"s":1},{"s":null},{"s":3}]').s.caseValue(1,'A',null,'B') ==> [ "A", "B", null ]
 
-#### 120. caseValueIgnoreCase()
+#### 126. caseValueIgnoreCase()
 
     'a'.caseValue('A',1,'b',2,'a',3,4) ==> 1
 
@@ -2381,7 +2481,7 @@ Following are some examples of each function.
 
     'z'.caseValue('A',1,'b',2,'a',3) ==> !unresolvable!
 
-#### 121. cycleValue()
+#### 127. cycleValue()
 
     0.cycleValue('a','b','c','d') ==> "a"
 
@@ -2395,7 +2495,7 @@ Following are some examples of each function.
 
     -6.cycleValue('a','b','c','d') ==> "c"
 
-#### 122. default()
+#### 128. default()
 
     json('{"a":1,"b":"B","c":null}').default(x) ==> ""
 
@@ -2405,7 +2505,7 @@ Following are some examples of each function.
 
     json('{"a":1,"b":"B","c":null}').default(x,null,c,b,a) ==> "B"
 
-#### 123. indexedValue()
+#### 129. indexedValue()
 
     0.indexedValue('a','b','c','d') ==> "a"
 
@@ -2417,7 +2517,7 @@ Following are some examples of each function.
 
     -1.indexedValue('a','b','c','d') ==> !unresolvable!
 
-#### 124. formatDate()
+#### 130. formatDate()
 
     '2022-01-02T03:04:05'.formatDate('dd/MM/yyyy HH:mm:ss') ==> "02/01/2022 03:04:05"
 
@@ -2425,7 +2525,7 @@ Following are some examples of each function.
 
     formatDate('2022-01-02T03:04:05', 'EEE, MMM d, yyyy') ==> "Sun, Jan 2, 2022"
 
-#### 125. formatNumber()
+#### 131. formatNumber()
 
     12345.6.formatNumber('HK$#,##0.00') ==> "HK$12,345.60"
 
@@ -2433,7 +2533,7 @@ Following are some examples of each function.
 
     formatNumber(123.45, '#,##0.#') ==> "123.5"
 
-#### 126. formatText()
+#### 132. formatText()
 
     'Dog'.formatText('[%-5s]') ==> "[Dog  ]"
 
@@ -2441,7 +2541,7 @@ Following are some examples of each function.
 
     formatText('Dog', '[%5s]') ==> "[  Dog]"
 
-#### 127. formatTexts()
+#### 133. formatTexts()
 
     formatTexts('1:%s 2:%s 3:%s', 'a', 'b', 'c') ==> "1:a 2:b 3:c"
 
@@ -2451,7 +2551,7 @@ Following are some examples of each function.
 
     json('[{"a":1,"b":3},{"a":2,"b":4}]').formatTexts('a=%d b=%d',a,b) ==> [ "a=1 b=3", "a=2 b=4" ]
 
-#### 128. toNumber()
+#### 134. toNumber()
 
     '123'.toNumber() ==> 123.0
 
@@ -2465,7 +2565,7 @@ Following are some examples of each function.
 
     toNumber(json('[1,2.0,"a",true,null]')) ==> [ 1, 2.0, 0.0, 1.0, null ]
 
-#### 129. toString()
+#### 135. toString()
 
     123.toString() ==> "123"
 
@@ -2477,7 +2577,7 @@ Following are some examples of each function.
 
     toString(json('[1,2.0,"a",true,null]')) ==> "[1,2.0,\"a\",true,null]"
 
-#### 130. toText()
+#### 136. toText()
 
     123.toText() ==> "123"
 
@@ -2489,19 +2589,19 @@ Following are some examples of each function.
 
     toText(json('[1,2.0,"a",true,null]')) ==> [ "1", "2.0", "a", "true", "null" ]
 
-#### 131. csv()
+#### 137. csv()
 
     json('{"len1":"12.3\"","len2":null,"len3":"64.0\""}').csv() ==> "\"12.3\"\"\",,\"64.0\"\"\""
 
     csv(json('[[[[1,2],["3","4\""]]],{"a":1,"b":[2.0,8.888],"c":{"d":true,"e":null}}]')) ==> "1,2,3,\"4\"\"\",1,2.0,8.888,true,"
 
-#### 132. csvShowNull()
+#### 138. csvShowNull()
 
     json('{"len1":"12.3\"","len2":null,"len3":"64.0\""}').csvShowNull() ==> "12.3\"\"\",null,\"64.0\"\""
 
     csvShowNull(json('[[[[1,2],["3","4\""]]],{"a":1,"b":[2.0,8.888],"c":{"d":true,"e":null}}]')) ==> "1,2,3,\"4\"\"\",1,2.0,8.888,true,null"
 
-#### 133. csvParams()
+#### 139. csvParams()
 
     json('{"len1":"12.3","len2":null,"len3":"64.0\""}').csvParams() ==> "'12.3',null,'64.0\"'"
 
@@ -2509,7 +2609,7 @@ Following are some examples of each function.
 
 ### Logical Functions
 
-#### 134. contains()
+#### 140. contains()
 
     'abcde'.contains('bc') ==> true
 
@@ -2529,7 +2629,7 @@ Following are some examples of each function.
 
     json('{"a":1,"b":2,"c":3}').contains('a') ==> true
 
-#### 135. containsIgnoreCase()
+#### 141. containsIgnoreCase()
 
     'abcde'.containsIgnoreCase('bc') ==> true
 
@@ -2541,7 +2641,7 @@ Following are some examples of each function.
 
     json('{"a":1,"b":2,"c":3}').containsIgnoreCase('A') ==> true
 
-#### 136. notContains()
+#### 142. notContains()
 
     'abcde'.notContains('bc') ==> false
 
@@ -2551,7 +2651,7 @@ Following are some examples of each function.
 
     json('[1,2,null,4]').notContains(null) ==> false
 
-#### 137. notContainsIgnoreCase()
+#### 143. notContainsIgnoreCase()
 
     'abcde'.notContainsIgnoreCase('bc') ==> false
 
@@ -2559,7 +2659,7 @@ Following are some examples of each function.
 
     json('["a","b","c"]').notContainsIgnoreCase(?, 'D') ==> true
 
-#### 138. startsWith()
+#### 144. startsWith()
 
     'abcdef'.startsWith('abc') ==> true
 
@@ -2567,7 +2667,7 @@ Following are some examples of each function.
 
     startsWith('ABCDEF','cde') ==> false
 
-#### 139. startsWithIgnoreCase()
+#### 145. startsWithIgnoreCase()
 
     'abcdef'.startsWithIgnoreCase('abc') ==> true
 
@@ -2575,7 +2675,7 @@ Following are some examples of each function.
 
     startsWithIgnoreCase('ABCDEF','cde') ==> false
 
-#### 140. notStartsWith()
+#### 146. notStartsWith()
 
     'abcdef'.notStartsWith('abc') ==> false
 
@@ -2583,7 +2683,7 @@ Following are some examples of each function.
 
     notStartsWith('ABCDEF','cde') ==> true
 
-#### 141. notStartsWithIgnoreCase()
+#### 147. notStartsWithIgnoreCase()
 
     'abcdef'.notStartsWithIgnoreCase('abc') ==> false
 
@@ -2591,7 +2691,7 @@ Following are some examples of each function.
 
     notStartsWithIgnoreCase('ABCDEF','cde') ==> true
 
-#### 142. endsWith()
+#### 148. endsWith()
 
     'abcdef'.endsWith('def') ==> true
 
@@ -2599,7 +2699,7 @@ Following are some examples of each function.
 
     endsWith('ABCDEF','cde') ==> false
 
-#### 143. endsWithIgnoreCase()
+#### 149. endsWithIgnoreCase()
 
     'abcdef'.endsWithIgnoreCase('def') ==> true
 
@@ -2607,7 +2707,7 @@ Following are some examples of each function.
 
     endsWithIgnoreCase('ABCDEF','cde') ==> false
 
-#### 144. notEndsWith()
+#### 150. notEndsWith()
 
     'abcdef'.notEndsWith('def') ==> false
 
@@ -2615,7 +2715,7 @@ Following are some examples of each function.
 
     notEndsWith('ABCDEF','cde') ==> true
 
-#### 145. notEndsWithIgnoreCase()
+#### 151. notEndsWithIgnoreCase()
 
     'abcdef'.notEndsWithIgnoreCase('def') ==> false
 
@@ -2623,7 +2723,7 @@ Following are some examples of each function.
 
     notEndsWithIgnoreCase('ABCDEF','cde') ==> true
 
-#### 146. equals()
+#### 152. equals()
 
     'abc'.equals('abc') ==> true
 
@@ -2631,7 +2731,7 @@ Following are some examples of each function.
 
     equals('ABC','abc') ==> false
 
-#### 147. equalsIgnoreCase()
+#### 153. equalsIgnoreCase()
 
     'abc'.equalsIgnoreCase('abc') ==> true
 
@@ -2639,7 +2739,7 @@ Following are some examples of each function.
 
     equalsIgnoreCase('ABC','abc') ==> true
 
-#### 148. notEquals()
+#### 154. notEquals()
 
     'abc'.notEquals('abc') ==> false
 
@@ -2647,7 +2747,7 @@ Following are some examples of each function.
 
     notEquals('ABC','abc') ==> true
 
-#### 149. notEqualsIgnoreCase()
+#### 155. notEqualsIgnoreCase()
 
     'abc'.notEqualsIgnoreCase('abcd') ==> true
 
@@ -2655,7 +2755,7 @@ Following are some examples of each function.
 
     notEqualsIgnoreCase('ABC','abc') ==> false
 
-#### 150. matches()
+#### 156. matches()
 
     '123a'.matches('^[0-9]+$') ==> false
 
@@ -2663,7 +2763,7 @@ Following are some examples of each function.
 
     matches('63 56','^[0-9]+$') ==> false
 
-#### 151. notMatches()
+#### 157. notMatches()
 
     '1234-123456'.notMatches('\\d{4}-\\d{6}') ==> false
 
@@ -2671,7 +2771,7 @@ Following are some examples of each function.
 
     notMatches('4444-5555','\\d{4}-\\d{6}') ==> true
 
-#### 152. in()
+#### 158. in()
 
     56.in(12,34,56) ==> true
 
@@ -2679,13 +2779,13 @@ Following are some examples of each function.
 
     'A'.in(json('["a","b","c"]')) ==> false
 
-#### 153. inIgnoreCase()
+#### 159. inIgnoreCase()
 
     'A'.inIgnoreCase('a','b','c') ==> true
 
     'a '.inIgnoreCase('a','b','c') ==> false
 
-#### 154. notIn()
+#### 160. notIn()
 
     56.notIn(12,34,56) ==> false
 
@@ -2693,13 +2793,13 @@ Following are some examples of each function.
 
     'A'.notIn(json('["a","b","c"]')) ==> true
 
-#### 155. notInIgnoreCase()
+#### 161. notInIgnoreCase()
 
     'A'.notInIgnoreCase('a','b','c') ==> false
 
     'a '.notInIgnoreCase('a','b','c') ==> true
 
-#### 156. isEmpty()
+#### 162. isEmpty()
 
     ''.isEmpty() ==> true
 
@@ -2713,7 +2813,7 @@ Following are some examples of each function.
 
     isEmpty(json('[""," ",0,false,null]')) ==> [ true, false, false, false, true ]
 
-#### 157. isNotEmpty()
+#### 163. isNotEmpty()
 
     ''.isNotEmpty() ==> false
 
@@ -2727,7 +2827,7 @@ Following are some examples of each function.
 
     isNotEmpty(json('[""," ",0,false,null]')) ==> [ false, true, true, true, false ]
 
-#### 158. isBlank()
+#### 164. isBlank()
 
     ''.isBlank() ==> true
 
@@ -2735,7 +2835,7 @@ Following are some examples of each function.
 
     isBlank(json('[""," ","X",0,false,null]')) ==> [ true, true, false, false, false, false ]
 
-#### 159. isNotBlank()
+#### 165. isNotBlank()
 
     ''.isNotBlank() ==> false
 
@@ -2743,7 +2843,7 @@ Following are some examples of each function.
 
     isNotBlank(json('[""," ","X",0,false,null]')) ==> [ false, false, true, false, false, false ]
 
-#### 160. isNull()
+#### 166. isNull()
 
     null.isNull() ==> !unresolvable!
 
@@ -2753,7 +2853,7 @@ Following are some examples of each function.
 
     isNull(json('["text",1,true,null]')) ==> [ false, false, false, true ]
 
-#### 161. isNotNull()
+#### 167. isNotNull()
 
     null.isNotNull() ==> !unresolvable!
 
@@ -2763,7 +2863,7 @@ Following are some examples of each function.
 
     isNotNull(json('["text",1,true,null]')) ==> [ true, true, true, false ]
 
-#### 162. isText()
+#### 168. isText()
 
     'text'.isText() ==> true
 
@@ -2773,7 +2873,7 @@ Following are some examples of each function.
 
     isText(json('["text",1,true,null]')) ==> [ true, false, false, false ]
 
-#### 163. isBoolean()
+#### 169. isBoolean()
 
     'text'.isBoolean() ==> false
 
@@ -2783,7 +2883,7 @@ Following are some examples of each function.
 
     isBoolean(json('["text",1,true,null]')) ==> [ false, false, true, false ]
 
-#### 164. isNumber()
+#### 170. isNumber()
 
     'text'.isNumber() ==> false
 
@@ -2793,7 +2893,7 @@ Following are some examples of each function.
 
     isNumber(json('["text",1,true,null]')) ==> [ false, true, false, false ]
 
-#### 165. isEven()
+#### 171. isEven()
 
     1.isEven() ==> false
 
@@ -2801,7 +2901,7 @@ Following are some examples of each function.
 
     isEven(json('["text",1,2,null]')) ==> [ false, false, true, false ]
 
-#### 166. isOdd()
+#### 172. isOdd()
 
     1.isOdd() ==> true
 
@@ -2809,7 +2909,7 @@ Following are some examples of each function.
 
     isOdd(json('["text",1,2,null]')) ==> [ false, true, false, false ]
 
-#### 167. isArray()
+#### 173. isArray()
 
     'text'.isArray() ==> false
 
@@ -2821,7 +2921,7 @@ Following are some examples of each function.
 
     isArray(json('{"a":1}')) ==> false
 
-#### 168. isObject()
+#### 174. isObject()
 
     'text'.isObject() ==> false
 
@@ -2833,19 +2933,19 @@ Following are some examples of each function.
 
     isObject(json('{"a":1}')) ==> true
 
-#### 169. isEmptyArray()
+#### 175. isEmptyArray()
 
     json('[]').isEmptyArray() ==> true
 
     isEmptyArray(json('[0]')) ==> false
 
-#### 170. isEmptyObject()
+#### 176. isEmptyObject()
 
     json('{}').isEmptyObject() ==> true
 
     isEmptyObject(json('{"a":1}')) ==> false
 
-#### 171. not()
+#### 177. not()
 
     true.not() ==> false
 
@@ -2857,19 +2957,19 @@ Following are some examples of each function.
 
     not(null) ==> false
 
-#### 172. isWeekday
+#### 178. isWeekday
 
     '2021-12-31T00:00:00'.isWeekday() ==> true
 
     isWeekday('2022-01-01T00:00:00') ==> false
 
-#### 173. isWeekend
+#### 179. isWeekend
 
     '2021-12-31T00:00:00'.isWeekend() ==> false
 
     isWeekend('2022-01-01T00:00:00') ==> true
 
-#### 174. isLeapYear
+#### 180. isLeapYear
 
     '2020-12-31T00:00:00'.isLeapYear() ==> true
 
@@ -2877,19 +2977,19 @@ Following are some examples of each function.
 
 ### Array Functions
 
-#### 175. size()
+#### 181. size()
 
     json('[7,1,9,null,5,3]').size() ==> 6
 
     size(json('[7,1,9,null,5,3]')) ==> 6
 
-#### 176. lastIndex()
+#### 182. lastIndex()
 
     json('[7,1,9,null,5,3]').lastIndex() ==> 5
 
     lastIndex(json('[7,1,9,null,5,3]')) ==> 5
 
-#### 177. indexOf()
+#### 183. indexOf()
 
     json('[1,1,3,5,null,3,7,3,9]').indexOf(3) ==> 2
 
@@ -2897,7 +2997,7 @@ Following are some examples of each function.
 
     indexOf(json('[1,1,3,5,null,3,7,3,9]'), null) ==> 4
 
-#### 178. lastIndexOf()
+#### 184. lastIndexOf()
 
     json('[1,1,3,5,null,3,7,3,9]').lastIndexOf(3) ==> 7
 
@@ -2905,67 +3005,67 @@ Following are some examples of each function.
 
     lastIndexOf(json('[1,1,3,5,null,3,7,3,9]'), null) ==> 4
 
-#### 179. first()
+#### 185. first()
 
     json('[7,1,9,null,5,3]').first() ==> 7
 
     first(json('[null,7,1,9,5,3]')) ==> null
 
-#### 180. last()
+#### 186. last()
 
     json('[7,1,9,null,5,3]').last() ==> 3
 
     last(json('[7,1,9,5,3,null]')) ==> null
 
-#### 181. max()
+#### 187. max()
 
     json('[7,1,9,null,5,3]').max() ==> 9
 
     max(json('[7,1,9,null,5,3]'), 15, 16) ==> 16
 
-#### 182. min()
+#### 188. min()
 
     json('[7,1,9,null,5,3]').min() ==> 1
 
     min(json('[7,1,9,null,5,3]'), 15, 16) ==> 1
 
-#### 183. topN()
+#### 189. topN()
 
     json('[7,1,9,null,5,3]').topN(2) ==> [ 9, 7 ]
 
     topN(json('[7,1,9,null,5,3]'), 6) ==> [ 9, 7, 5, 3, 1 ]
 
-#### 184. bottomN()
+#### 190. bottomN()
 
     json('[7,1,9,null,5,3]').bottomN(2) ==> [ 1, 3 ]
 
     bottomN(json('[7,1,9,null,5,3]'), 6) ==> [ 1, 3, 5, 7, 9 ]
 
-#### 185. sum()
+#### 191. sum()
 
     json('[7,1,9,null,5,3]').sum() ==> 25.0
 
     sum(json('[7,1,9,null,5,3]'), 15, 16) ==> 56.0
 
-#### 186. avg()
+#### 192. avg()
 
     json('[7,1,9,null,5,3]').avg() ==> 5.0
 
     avg(json('[7,1,9,null,5,3]'), 15, 16) ==> 8.0
 
-#### 187. count()
+#### 193. count()
 
     json('[7,1,9,null,5,3]').count() ==> 5
 
     count(json('[7,1,9,null,5,3]'), 15, 16) ==> 7
 
-#### 188. reverse()
+#### 194. reverse()
 
     json('[7,1,9,null,5,3]').reverse() ==> [ 3, 5, null, 9, 1, 7 ]
 
     reverse(json('[7,1,9,null,5,3]')) ==> [ 3, 5, null, 9, 1, 7 ]
 
-#### 189. slice()
+#### 195. slice()
 
     json('[1,2,3,4,5,6,7,8,9]').slice(3) ==> [ 4, 5, 6, 7, 8, 9 ]
 
@@ -2985,7 +3085,7 @@ Following are some examples of each function.
 
     slice(json('[1,2,3,4,5,6,7,8,9]'),,-5,1) ==> [ 1, 2, 3, 4 ]
 
-#### 190. sort()
+#### 196. sort()
 
     json('[1,1,3,5,3,7,3,9]').sort() ==> [ 1, 1, 3, 3, 3, 5, 7, 9 ]
 
@@ -3023,7 +3123,7 @@ Following are some examples of each function.
       "val" : "B"
     } ]
 
-#### 191. distinct()
+#### 197. distinct()
 
     json('[1,1,3,5,3,7,3,9]').distinct().sort() ==> [ 1.0, 3.0, 5.0, 7.0, 9.0 ]
 
@@ -3031,7 +3131,7 @@ Following are some examples of each function.
 
     distinct(json('["1","1.0",1,1.0,1.00,true,"true",null,"null"]')) ==> [ "1", "1.0", "null", "true", 1.0, true ]
 
-#### 192. join()
+#### 198. join()
 
     json('["Hello", ",", "World", "!"]').join() ==> "Hello,World!"
 
@@ -3039,7 +3139,7 @@ Following are some examples of each function.
 
     join(json('["A",1,"B","2.00","C",3.00,"D",true,null]'),'/') ==> "A/1/B/2.00/C/3.0/D/true"
 
-#### 193. findByMax()
+#### 199. findByMax()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByMax(price)
     ==>
@@ -3055,7 +3155,7 @@ Following are some examples of each function.
       "price" : 5
     }
 
-#### 194. findByMin()
+#### 200. findByMin()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByMin(?,price)
     ==>
@@ -3071,7 +3171,7 @@ Following are some examples of each function.
       "price" : 8
     }
 
-#### 195. findByNullOrMax()
+#### 201. findByNullOrMax()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByNullOrMax(price)
     ==>
@@ -3086,7 +3186,7 @@ Following are some examples of each function.
       "price" : 5
     }
 
-#### 196. findByNullOrMin()
+#### 202. findByNullOrMin()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByNullOrMin(?,price)
     ==>
@@ -3101,7 +3201,7 @@ Following are some examples of each function.
       "price" : 8
     }
 
-#### 197. findByMaxOrNull()
+#### 203. findByMaxOrNull()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByMaxOrNull(price)
     ==>
@@ -3117,7 +3217,7 @@ Following are some examples of each function.
       "price" : 5
     }
 
-#### 198. findByMinOrNull()
+#### 204. findByMinOrNull()
 
     json('[{"code":"A","price":8},{"code":"B"},{"code":"C","price":3},{"code":"D","price":8},{"code":"E","price":5}]').findByMinOrNull(?,price)
     ==>
@@ -3135,7 +3235,7 @@ Following are some examples of each function.
 
 ### Structural Functions
 
-#### 199. json()
+#### 205. json()
 
     json('[1,"2",{"a":1,"b":2}]')
     ==>
@@ -3155,7 +3255,7 @@ Following are some examples of each function.
       }
     }
 
-#### 200. entries()
+#### 206. entries()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').entries()
     ==>
@@ -3173,7 +3273,7 @@ Following are some examples of each function.
       }
     } ]
 
-#### 201. keys()
+#### 207. keys()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').keys() ==> [ "a", "b", "c" ]
 
@@ -3181,7 +3281,7 @@ Following are some examples of each function.
 
     keys(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}'), -1) ==> [ "a", "b", "c", "d", "e" ]
 
-#### 202. toArray()
+#### 208. toArray()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()
     ==>
@@ -3194,7 +3294,7 @@ Following are some examples of each function.
 
     toArray(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()) ==> [ 1, 2, 3, 4, 5 ]
 
-#### 203. toObject()
+#### 209. toObject()
 
     'a'.toObject('text')
     ==>
@@ -3223,7 +3323,7 @@ Following are some examples of each function.
       }
     }
 
-#### 204. flatten()
+#### 210. flatten()
 
     json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()
     ==>
@@ -3237,7 +3337,7 @@ Following are some examples of each function.
     ==>
     [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]
 
-#### 205. map()
+#### 211. map()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').map(c.e,c.d,b,a)
     ==>
@@ -3261,7 +3361,7 @@ Following are some examples of each function.
       }
     }
 
-#### 206. field()
+#### 212 field()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').field(f:6,c:)
     ==>
@@ -3278,7 +3378,7 @@ Following are some examples of each function.
       "name" : "Cyron"
     }
 
-#### 207. group()
+#### 213. group()
 
     json('[{"a":1,"b":"A"},{"a":2,"b":"B"},{"a":3,"b":"C"},{"a":2,"b":"D"},{"a":1,"b":"E"}]').group(a)
     ==>
@@ -3321,7 +3421,7 @@ Following are some examples of each function.
       "bs" : [ "C" ]
     } ]
 
-#### 208. unwind()
+#### 214. unwind()
 
     json('[{"a":1,"bs":["A","E"]},{"a":2,"bs":["B","D"]},{"a":3,"bs":["C"]}]').unwind(b:bs)
     ==>

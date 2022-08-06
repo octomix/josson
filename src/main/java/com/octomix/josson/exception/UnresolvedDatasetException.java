@@ -21,6 +21,9 @@ package com.octomix.josson.exception;
  */
 public class UnresolvedDatasetException extends Exception {
 
+    /**
+     * The unresolvable dataset name.
+     */
     private final String datasetName;
 
     /**

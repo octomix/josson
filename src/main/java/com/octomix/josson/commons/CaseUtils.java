@@ -18,12 +18,34 @@ package com.octomix.josson.commons;
 
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
-public class CaseUtils {
+/**
+ * <p>Case manipulation operations on Strings that contain words.</p>
+ */
+ public class CaseUtils {
 
+    /**
+     * Case types
+     */
     public enum Type {
+
+        /**
+         * Upper case.
+         */
         UPPER,
+
+        /**
+         * Lower case.
+         */
         LOWER,
+
+        /**
+         * Camel case.
+         */
         CAMEL,
+
+        /**
+         * No change case operation.
+         */
         UNDEFINED,
     }
 

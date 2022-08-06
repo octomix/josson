@@ -25,12 +25,25 @@ import static com.octomix.josson.commons.StringUtils.EMPTY;
  */
 public class NoValuePresentException extends Exception {
 
+    /**
+     * The unresolvable dataset names.
+     */
     private final Set<String> datasetNames;
 
+    /**
+     * The unresolvable placeholders.
+     */
     private final Set<String> placeholders;
 
+    /**
+     * The fill-in operation resulting content.
+     * All unresolvable placeholders are quoted with "**" to replace the original "{{" and "}}".
+     */
     private final String content;
 
+    /**
+     * Indicate whether content contains anti-injection markers.
+     */
     private boolean isAntiInject = false;
 
     /**
