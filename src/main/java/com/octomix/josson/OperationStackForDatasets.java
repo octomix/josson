@@ -23,9 +23,9 @@ import com.octomix.josson.exception.UnresolvedDatasetException;
 import java.util.List;
 import java.util.Map;
 
-import static com.octomix.josson.JossonCore.asBoolean;
 import static com.octomix.josson.PatternMatcher.decomposeTernarySteps;
 import static com.octomix.josson.PatternMatcher.matchCombineOperations;
+import static com.octomix.josson.Utils.asBoolean;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**

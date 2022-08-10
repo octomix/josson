@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -137,7 +138,7 @@ final class FuncFormat {
     }
 
     static JsonNode funcCycleValue(final JsonNode node, final String params) {
-        return applyWithArrayNode(node, params, JossonCore::nodeHasValue,
+        return applyWithArrayNode(node, params, Utils::nodeHasValue,
                 (jsonNode, paramArray) -> {
                     final int size = paramArray.size();
                     final int index = jsonNode.asInt() % size;
@@ -180,7 +181,7 @@ final class FuncFormat {
     }
 
     static JsonNode funcFormatText(final JsonNode node, final String params) {
-        return applyWithParams(node, params, 1, 1, JossonCore::nodeHasValue,
+        return applyWithParams(node, params, 1, 1, Utils::nodeHasValue,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
                     final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
@@ -217,7 +218,7 @@ final class FuncFormat {
     }
 
     static JsonNode funcIndexedValue(final JsonNode node, final String params) {
-        return applyWithArrayNode(node, params, JossonCore::nodeHasValue,
+        return applyWithArrayNode(node, params, Utils::nodeHasValue,
                 (jsonNode, paramArray) -> {
                     final int index = jsonNode.asInt();
                     return index >= 0 && index < paramArray.size() ? paramArray.get(index) : null;
@@ -225,7 +226,7 @@ final class FuncFormat {
     }
 
     static JsonNode funcToNumber(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, JossonCore::nodeHasValue,
+        return applyWithoutParam(node, params, Utils::nodeHasValue,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
                     return dataNode.isNumber() ? dataNode : DoubleNode.valueOf(dataNode.asDouble());

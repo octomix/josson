@@ -21,8 +21,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.UnknownFormatConversionException;
 import java.util.function.Function;
 
-import static com.octomix.josson.PatternMatcher.checkElementName;
-import static com.octomix.josson.PatternMatcher.getLastElementName;
+import static com.octomix.josson.Utils.checkElementName;
+import static com.octomix.josson.Utils.getLastElementName;
 
 /**
  * Defines dataset for join and set operation.

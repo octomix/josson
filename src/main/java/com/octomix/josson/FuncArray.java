@@ -28,6 +28,7 @@ import java.util.Set;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
+import static com.octomix.josson.Utils.nodeHasValue;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**

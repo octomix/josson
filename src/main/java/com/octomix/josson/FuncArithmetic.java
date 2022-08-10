@@ -29,6 +29,7 @@ import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
+import static com.octomix.josson.Utils.nodeHasValue;
 
 /**
  * Arithmetic functions.

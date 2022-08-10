@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.Utils.toLocalDateTime;
 
 /**
  * Logical functions.

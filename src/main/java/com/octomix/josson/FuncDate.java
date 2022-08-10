@@ -25,6 +25,7 @@ import java.time.temporal.ChronoUnit;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.Utils.*;
 
 /**
  * Date functions.

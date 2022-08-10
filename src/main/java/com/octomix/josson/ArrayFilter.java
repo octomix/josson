@@ -21,8 +21,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.octomix.josson.commons.StringUtils;
 
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_FIND_FIRST;
-import static com.octomix.josson.JossonCore.asBoolean;
 import static com.octomix.josson.Mapper.MAPPER;
+import static com.octomix.josson.Utils.asBoolean;
 
 /**
  * Stores an array filter details.

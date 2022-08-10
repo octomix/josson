@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.octomix.josson.commons.StringUtils;
 
-import java.util.Map;
 import java.util.function.Function;
 
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_COLLECT_ALL;
@@ -29,6 +28,7 @@ import static com.octomix.josson.CombineOperator.*;
 import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
 import static com.octomix.josson.JossonCore.getNodeByPath;
 import static com.octomix.josson.Mapper.*;
+import static com.octomix.josson.Utils.mergeObjects;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -181,7 +181,9 @@ class CombineOperation {
 
     private static JsonNode concatenate(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isObject() && rightNode.isObject()) {
-            return cloneObjectNode((ObjectNode) leftNode).setAll((ObjectNode) rightNode);
+            ObjectNode concat = leftNode.deepCopy();
+            mergeObjects(concat, rightNode);
+            return concat;
         } else if (leftNode.isArray() && rightNode.isArray()) {
             return cloneArrayNode((ArrayNode) leftNode).addAll((ArrayNode) rightNode);
         }
@@ -191,23 +193,21 @@ class CombineOperation {
     private static JsonNode subtract(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isObject() && rightNode.isObject()) {
             final ObjectNode node = MAPPER.createObjectNode();
-            leftNode.fields().forEachRemaining(
-                    (Map.Entry<String, JsonNode> field) -> {
-                        if (rightNode.has(field.getKey())) {
-                            if (field.getValue().isObject() && rightNode.get(field.getKey()).isObject()
-                                || field.getValue().isArray() && rightNode.get(field.getKey()).isArray()) {
-                                final JsonNode diff = subtract(field.getValue(), rightNode.get(field.getKey()));
-                                if (!diff.isEmpty()) {
-                                    node.set(field.getKey(), diff);
-                                }
-                            } else if (Operator.NE.relationalCompare(field.getValue(), rightNode.get(field.getKey()))) {
-                                node.set(field.getKey(), field.getValue());
-                            }
-                        } else {
-                            node.set(field.getKey(), field.getValue());
+            leftNode.fields().forEachRemaining(field -> {
+                if (rightNode.has(field.getKey())) {
+                    if (field.getValue().isObject() && rightNode.get(field.getKey()).isObject()
+                        || field.getValue().isArray() && rightNode.get(field.getKey()).isArray()) {
+                        final JsonNode diff = subtract(field.getValue(), rightNode.get(field.getKey()));
+                        if (!diff.isEmpty()) {
+                            node.set(field.getKey(), diff);
                         }
+                    } else if (Operator.NE.relationalCompare(field.getValue(), rightNode.get(field.getKey()))) {
+                        node.set(field.getKey(), field.getValue());
                     }
-            );
+                } else {
+                    node.set(field.getKey(), field.getValue());
+                }
+            });
             return node;
         } else if (leftNode.isArray() && rightNode.isArray()) {
             final ArrayNode node = MAPPER.createArrayNode();

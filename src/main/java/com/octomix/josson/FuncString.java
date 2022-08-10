@@ -28,6 +28,8 @@ import java.util.function.Function;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
+import static com.octomix.josson.Utils.nodeHasValue;
+import static com.octomix.josson.Utils.quoteText;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -98,7 +100,7 @@ final class FuncString {
     }
 
     static JsonNode funcDoubleQuote(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, JossonCore::nodeHasValue,
+        return applyWithoutParam(node, params, Utils::nodeHasValue,
                 (data, paramList) -> TextNode.valueOf(String.format("\"%s\"",
                         data.getKey().asText().replace("\"", "\\\"")))
         );
@@ -118,7 +120,7 @@ final class FuncString {
     }
 
     static JsonNode funcLength(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, JossonCore::nodeHasValue,
+        return applyWithoutParam(node, params, Utils::nodeHasValue,
                 (data, paramList) -> IntNode.valueOf(data.getKey().asText().length()));
     }
 
@@ -145,7 +147,7 @@ final class FuncString {
     }
 
     static JsonNode funcPadding(final JsonNode node, final String params, final int alignment) {
-        return applyWithParams(node, params, 1, 2, JossonCore::nodeHasValue,
+        return applyWithParams(node, params, 1, 2, Utils::nodeHasValue,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
                     final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
@@ -188,7 +190,7 @@ final class FuncString {
     }
 
     static JsonNode funcRepeat(final JsonNode node, final String params) {
-        return applyWithParams(node, params, 1, 1, JossonCore::nodeHasValue,
+        return applyWithParams(node, params, 1, 1, Utils::nodeHasValue,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
                     final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
@@ -210,7 +212,7 @@ final class FuncString {
     }
 
     static JsonNode funcSingleQuote(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, JossonCore::nodeHasValue,
+        return applyWithoutParam(node, params, Utils::nodeHasValue,
                 (data, paramList) -> TextNode.valueOf(quoteText(data.getKey().asText()))
         );
     }

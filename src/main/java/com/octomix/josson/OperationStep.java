@@ -26,9 +26,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.JossonsCore.isCacheDataset;
 import static com.octomix.josson.PatternMatcher.matchDatasetQuery;
+import static com.octomix.josson.Utils.literalToValueNode;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**

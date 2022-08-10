@@ -34,6 +34,8 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import static com.octomix.josson.Mapper.MAPPER;
+import static com.octomix.josson.Utils.toLocalDateTime;
+import static com.octomix.josson.Utils.toOffsetDateTime;
 
 /**
  * Josson is a query language for JSON.
@@ -506,7 +508,7 @@ public class Josson {
      */
     public LocalDateTime getIsoLocalDateTime(final String jossonPath) {
         final ValueNode node = getValueNode(jossonPath);
-        return node == null || !node.isTextual() ? null : JossonCore.toLocalDateTime(node);
+        return node == null || !node.isTextual() ? null : toLocalDateTime(node);
     }
 
     /**
@@ -519,7 +521,7 @@ public class Josson {
      */
     public LocalDateTime getRequiredIsoLocalDateTime(final String jossonPath) {
         final ValueNode node = getRequiredValueNode(jossonPath);
-        return !node.isTextual() ? null : JossonCore.toLocalDateTime(node);
+        return !node.isTextual() ? null : toLocalDateTime(node);
     }
 
     /**
@@ -556,7 +558,7 @@ public class Josson {
      */
     public OffsetDateTime getOffsetDateTime(final String jossonPath) {
         final ValueNode node = getValueNode(jossonPath);
-        return node == null || !node.isTextual() ? null : JossonCore.toOffsetDateTime(node);
+        return node == null || !node.isTextual() ? null : toOffsetDateTime(node);
     }
 
     /**
@@ -569,7 +571,7 @@ public class Josson {
      */
     public OffsetDateTime getRequiredOffsetDateTime(final String jossonPath) {
         final ValueNode node = getRequiredValueNode(jossonPath);
-        return !node.isTextual() ? null : JossonCore.toOffsetDateTime(node);
+        return !node.isTextual() ? null : toOffsetDateTime(node);
     }
 
     /**

@@ -23,9 +23,9 @@ import com.octomix.josson.exception.SyntaxErrorException;
 import java.util.LinkedList;
 import java.util.function.BiFunction;
 
-import static com.octomix.josson.JossonCore.asBoolean;
 import static com.octomix.josson.JossonsCore.antiInjectionDecode;
 import static com.octomix.josson.PatternMatcher.decomposeStatement;
+import static com.octomix.josson.Utils.asBoolean;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**

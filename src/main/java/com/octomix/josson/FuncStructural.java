@@ -30,6 +30,8 @@ import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.*;
 import static com.octomix.josson.PatternMatcher.*;
+import static com.octomix.josson.Utils.evaluateNameAndPath;
+import static com.octomix.josson.Utils.mergeObjects;
 
 /**
  * Structural functions.
@@ -47,10 +49,10 @@ final class FuncStructural {
         final ArrayNode array = MAPPER.createArrayNode();
         if (workNode.isArray()) {
             workNode.forEach(elem -> elem.fields()
-                .forEachRemaining((Map.Entry<String, JsonNode> field) ->
+                .forEachRemaining(field ->
                     array.add(Josson.createObjectNode().put("key", field.getKey()).set("value", field.getValue()))));
         } else {
-            workNode.fields().forEachRemaining((Map.Entry<String, JsonNode> field) ->
+            workNode.fields().forEachRemaining(field ->
                 array.add(Josson.createObjectNode().put("key", field.getKey()).set("value", field.getValue())));
         }
         return array;
@@ -175,7 +177,7 @@ final class FuncStructural {
     }
 
     private static void funcKeys(final ArrayNode array, final JsonNode node, final int levels) {
-        node.fields().forEachRemaining((Map.Entry<String, JsonNode> field) -> {
+        node.fields().forEachRemaining(field -> {
             array.add(field.getKey());
             if (levels != 1 && field.getValue().isObject()) {
                 funcKeys(array, field.getValue(), levels - 1);
@@ -206,6 +208,25 @@ final class FuncStructural {
             }
         }
         return base;
+    }
+
+    static ObjectNode funcMergeObjects(final JsonNode node, final String params) {
+        final ArrayNode array = getParamArrayOrItself(node, params);
+        if (array == null) {
+            return null;
+        }
+        ObjectNode result = null;
+        for (int i = 0; i < array.size(); i++) {
+            final JsonNode tryNode = array.get(i);
+            if (tryNode.isObject()) {
+                if (result == null) {
+                    result = tryNode.deepCopy();
+                } else {
+                    mergeObjects(result, tryNode);
+                }
+            }
+        }
+        return result;
     }
 
     static JsonNode funcToArray(final JsonNode node, final String params) {
@@ -269,7 +290,7 @@ final class FuncStructural {
         array.elements().forEachRemaining(
                 element -> {
                     final ObjectNode object = MAPPER.createObjectNode();
-                    node.fields().forEachRemaining((Map.Entry<String, JsonNode> field) -> {
+                    node.fields().forEachRemaining(field -> {
                         if (!field.getKey().equals(nameAndPath.getValue())) {
                             object.set(field.getKey(), field.getValue());
                         }

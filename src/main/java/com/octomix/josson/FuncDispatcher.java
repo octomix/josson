@@ -446,6 +446,8 @@ class FuncDispatcher {
             // Structural
             case "map":
                 return funcMap(node, params);
+            case "mergeobjects":
+                return funcMergeObjects(node, params);
         }
         throw new UnsupportedFunctionException();
     }

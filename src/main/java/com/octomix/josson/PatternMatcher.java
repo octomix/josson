@@ -16,7 +16,6 @@
 
 package com.octomix.josson;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
 
@@ -25,6 +24,8 @@ import java.util.*;
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.JossonCore.*;
+import static com.octomix.josson.Utils.checkElementName;
+import static com.octomix.josson.Utils.getLastElementName;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 import static com.octomix.josson.exception.SyntaxErrorException.POS_AT_THE_END;
 
@@ -567,38 +568,5 @@ final class PatternMatcher {
             }
         }
         return Pair.of(getLastElementName(input), input);
-    }
-
-    static Pair<String, String> evaluateNameAndPath(final Pair<String, String> nameAndPath, final JsonNode node, final int index) {
-        if (nameAndPath.getKey().startsWith(":")) {
-            final String name = getNodeAsText(node, index, nameAndPath.getKey().substring(1));
-            checkElementName(name);
-            return Pair.of(name, nameAndPath.getValue());
-        }
-        return nameAndPath;
-    }
-
-    static String getLastElementName(final String path) {
-        final List<String> paths = decomposePaths(path);
-        if (paths.isEmpty()) {
-            throw new UnknownFormatConversionException("undefined");
-        }
-        String funcName = null;
-        for (int i = paths.size() - 1; i >= 0; i--) {
-            final String[] funcAndArgs = matchFunctionAndArgument(paths.get(i), true);
-            if (funcAndArgs == null) {
-                return matchFilterQuery(paths.get(i)).getNodeName();
-            }
-            if (funcName == null) {
-                funcName = funcAndArgs[0];
-            }
-        }
-        throw new UnknownFormatConversionException("_" + funcName);
-    }
-
-    static void checkElementName(final String name) {
-        if (name.contains(".")) {
-            throw new SyntaxErrorException(name, "Illegal '.' in element name");
-        }
     }
 }

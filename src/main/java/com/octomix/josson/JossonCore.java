@@ -18,20 +18,16 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
+import static com.octomix.josson.Utils.literalToValueNode;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -96,23 +92,11 @@ final class JossonCore {
         return zoneId;
     }
 
-    static String quoteText(final String text) {
-        return String.format("'%s'", text.replace("'", "''"));
-    }
-
-    static String unquoteText(final String quotedText) {
-        final int last = quotedText.length() - 1;
-        if (last < 1 || quotedText.charAt(0) != QUOTE_SYMBOL || quotedText.charAt(last) != QUOTE_SYMBOL) {
-            throw new IllegalArgumentException("Argument is not a valid string literal: " + quotedText);
-        }
-        return quotedText.substring(1, last).replace("''", "'");
-    }
-
-    static boolean isCurrentNodePath(final String path) {
+    private static boolean isCurrentNodePath(final String path) {
         return isPathSymbol(path, CURRENT_NODE);
     }
 
-    static boolean isParentArrayPath(final String path) {
+    private static boolean isParentArrayPath(final String path) {
         return isPathSymbol(path, PARENT_ARRAY_NODE);
     }
 
@@ -124,65 +108,6 @@ final class JossonCore {
             return true;
         }
         return false;
-    }
-
-    static ValueNode literalToValueNode(final String literal) throws NumberFormatException {
-        if (StringUtils.isEmpty(literal)) {
-            return null;
-        }
-        if ("null".equalsIgnoreCase(literal)) {
-            return NullNode.getInstance();
-        }
-        if ("true".equalsIgnoreCase(literal)) {
-            return BooleanNode.TRUE;
-        }
-        if ("false".equalsIgnoreCase(literal)) {
-            return BooleanNode.FALSE;
-        }
-        if (literal.charAt(0) == QUOTE_SYMBOL) {
-            return TextNode.valueOf(unquoteText(literal));
-        }
-        if (literal.indexOf('.') < 0) {
-            return IntNode.valueOf(Integer.parseInt(literal));
-        }
-        return DoubleNode.valueOf(Double.parseDouble(literal));
-    }
-
-    static String valueNodeToLiteral(final JsonNode node) {
-        return node.isTextual() ? quoteText(node.asText()) : node.asText();
-    }
-
-    static boolean asBoolean(final JsonNode node) {
-        return node != null && (node.isContainerNode() ? node.size() > 0 : node.asBoolean());
-    }
-
-    static LocalDateTime toLocalDateTime(final JsonNode node) {
-        try {
-            return LocalDateTime.parse(node.asText());
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
-    }
-
-    static LocalDateTime toLocalDate(final JsonNode node) {
-        return toLocalDateTime(node).truncatedTo(ChronoUnit.DAYS);
-    }
-
-    static LocalDateTime offsetToLocalDateTime(final JsonNode node) {
-        return toOffsetDateTime(node).atZoneSameInstant(zoneId).toLocalDateTime();
-    }
-
-    static OffsetDateTime toOffsetDateTime(final JsonNode node) {
-        try {
-            return OffsetDateTime.parse(node.asText());
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
-    }
-
-    static OffsetDateTime localToOffsetDateTime(final JsonNode node) {
-        final LocalDateTime dateTime = toLocalDateTime(node);
-        return dateTime.atOffset(zoneId.getRules().getOffset(dateTime));
     }
 
     static String getNodeAsText(final JsonNode node, final int index, final String jossonPath) {
@@ -251,43 +176,6 @@ final class JossonCore {
             }
         }
         return getNodeByKeys(node, keys);
-    }
-
-    static boolean nodeHasValue(final JsonNode node) {
-        return node != null && !node.isNull() && node.isValueNode();
-    }
-
-    static Object valueAsObject(final JsonNode node) {
-        if (node.isIntegralNumber()) {
-            return node.asInt();
-        }
-        if (node.isNumber()) {
-            return node.asDouble();
-        }
-        return node.asText();
-    }
-
-    static Object[] valuesAsObjects(JsonNode node, final int index, final List<String> paramList) {
-        Object[] objects = null;
-        final int size = paramList.size();
-        if (size == 0) {
-            if (index >= 0) {
-                node = node.get(index);
-            }
-            if (nodeHasValue(node)) {
-                objects = new Object[]{valueAsObject(node)};
-            }
-        } else {
-            objects = new Object[size];
-            for (int i = 0; i < size; i++) {
-                final JsonNode tryNode = getNodeByPath(node, index, paramList.get(i));
-                if (!nodeHasValue(tryNode)) {
-                    return null;
-                }
-                objects[i] = valueAsObject(tryNode);
-            }
-        }
-        return objects;
     }
 
     private static String toAlphabetIndex(final int number, final int base) {
