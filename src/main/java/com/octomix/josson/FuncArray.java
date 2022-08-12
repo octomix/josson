@@ -39,7 +39,7 @@ final class FuncArray {
     private FuncArray() {
     }
 
-    static ValueNode funcAggregate(final JsonNode node, final String funcId, final String params) {
+    static ValueNode funcNumericAggregate(final JsonNode node, final String funcId, final String params) {
         final ArrayNode array = getParamArrayOrItself(node, params);
         if (array == null) {
             return null;

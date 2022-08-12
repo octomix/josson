@@ -94,7 +94,7 @@ class FuncDispatcher {
                 return funcAbs(node, params);
             // Array
             case "avg":
-                return funcAggregate(node, func, params);
+                return funcNumericAggregate(node, func, params);
             // Date
             case "ampmofday":
                 return funcAmPmOfDay(node, params);
@@ -148,7 +148,7 @@ class FuncDispatcher {
                 return funcCeil(node, params);
             // Array
             case "count":
-                return funcAggregate(node, func, params);
+                return funcNumericAggregate(node, func, params);
             // Format
             case "casevalue":
                 return funcCaseValue(node, params, false);
@@ -575,7 +575,7 @@ class FuncDispatcher {
             case "sort":
                 return funcSort(node, params);
             case "sum":
-                return funcAggregate(node, func, params);
+                return funcNumericAggregate(node, func, params);
             // Date
             case "second":
                 return funcChronometry(node, params, ChronoField.SECOND_OF_MINUTE);

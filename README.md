@@ -20,19 +20,19 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.22</version>
+        <version>1.3.23</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.22'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.23'
 
 ## Features and Capabilities
 
 ### Josson
 
 - Query a JSON dataset.
-- There are 214 internal functions to manipulate and format data.
+- There are 215 internal functions to manipulate and format data.
 - Restructure JSON data and capable of grouping and unwind data.
 - Can be used as an API parameter to trim down the response JSON result.
 
@@ -169,7 +169,7 @@ A path step can...
 
 - Return an element of an object node by key name.
 - Filter an array node, return the first matching element or all matching elements.
-- Perform a transformation action by a [Josson Function](#josson-functions).
+- Perform a transformation operation by a [Josson Function](#josson-functions).
 
 | Step             | Description                                                          |
 |:-----------------|:---------------------------------------------------------------------|
@@ -192,6 +192,7 @@ To specify an array and then apply a filter can be simplified by removing the `.
 The following two are the same.
 
     array.[expression]*
+
     array[expression]*
 
 Filter can also apply to an object node.
@@ -213,11 +214,16 @@ Function `entries()` transform object `{ "name" : <JsonNode> }` into this new st
     }
 
 Therefore, use keyword `key` in a wildcard filter expression to search.
-Even keyword `value` can be used in wildcard filter expression. For example:
+Even keyword `value` can also be used in wildcard filter expression.
+
+For example:
 
     *[key.startsWith('item') & value.isText()]
+
     *[key.matches('^[A-Z]{10}$')]*
+
     *[key =~ '^[A-Z]{10}$']*
+
     entries().[key =~ '^[A-Z]{10}$']*.value
 
 The last 3 examples do the same thing and can be simplified to this syntax:
@@ -226,96 +232,48 @@ The last 3 examples do the same thing and can be simplified to this syntax:
 
 Additional step symbols are available in filter expression and function argument.
 
-| Step | Description                                                              |
-|:-----|:-------------------------------------------------------------------------|
-| `?`  | The node itself for non-array node or an array element for array node    |
-| `@`  | The array node itself if the current node is an array node               |
-| `#`  | Zero-based index of an array element                                     |
-| `##` | One-based index of an array element                                      |
-| `#A` | Uppercase alphabetic index of an array element                           |
-| `#a` | Lowercase alphabetic index of an array element                           |
-| `#R` | Uppercase roman numerals index of an array element                       |
-| `#r` | Lowercase roman numerals index of an array element                       |
+| Step | Operation | Description                                                    |
+|:-----|:----------|:---------------------------------------------------------------|
+| `?`  | Scalar    | The current non-array node itself or array node's each element |
+| `?`  | Aggregate | The current array node                                         |
+| `@`  | Scalar    | The current array node                                         |
+| `#`  | Scalar    | Zero-based index of an array element                           |
+| `##` | Scalar    | One-based index of an array element                            |
+| `#A` | Scalar    | Uppercase alphabetic index of an array element                 |
+| `#a` | Scalar    | Lowercase alphabetic index of an array element                 |
+| `#R` | Scalar    | Uppercase roman numerals index of an array element             |
+| `#r` | Scalar    | Lowercase roman numerals index of an array element             |
 
 ### Path Chart Elements
 
 Josson path chart shows data type changes and data flow along the path.
 Data filtering, transformation and formatting details are not included.
 
-         %              Any JSON node
-
-         [%]            Array node
-
-         {}             Object node
-
-         ""             Text node
-
-         $I             Integer node
-
-         $D             Double node
-
-         $TF            Boolean node
-
-         null           Null node
-
-         $V             Any value node ""|$I|$D|$TF|null
-
-         $V...          Multiple value nodes inside function arguments
-
-         ->             A path step progress
-
-         obj{}          A named object node
-
-         {}.%           Object parent-child relation is connected by a "." (Except the branch's 1st step)
-
-       {}[]->{}         An object with validation filter
-
-       [%]*->[%]        An array node proceeded one step with all its elements
-
-       [%][]->%         An array node with find-first filter
-
-       [%][]*->[%]      An array node with find-all filter
-
-              %->
-             /          An array node with find-all filter and
-       [%][]@           divert each filtered element to separate branch
-             \
-              %->
-
-       ->func()->       A function that manipulate the current node
-
-     ->[%->func()]->    A function that manipulate each element of an array node
-
-        func(?)         Function parameter symbol "?" represents the current node
-
-       .--->---.
-      /         \       Function parameter symbol "@" represents the parent array node
-    []->[%->func(@)]
-
-       [[%]]->[%]       Nested array is flattened each step
-
-            %->
-           /
-      ->[]@             Divert each array element to separate branch
-           \
-            %->
-      ->%
-         \
-          @->[%]        Merge branches into an array
-         /
-      ->%
-
-         ==>%           Final result
-
-      ->%
-         \
-          ==>[%]        Merge branches to a final result
-         /
-      ->%
-
-          !!            The position where the step is unresolvable 
-
-    ==>!unresolvable!   Unable to resolve the result (Returns a Java null value)
+| Element                       | Description                                                                              |
+|-------------------------------|------------------------------------------------------------------------------------------|
+| `→`                           | A progress step                                                                          |
+| `⇒`                           | An end result                                                                            |
+| `""`                          | A text node                                                                              |
+| `$I`                          | An integer node                                                                          |
+| `$D`                          | A double node                                                                            |
+| `$TF`                         | A boolean node                                                                           |
+| `{}`                          | An object node                                                                           |
+| `obj{}`                       | A named object node                                                                      |
+| `[]`                          | An array node                                                                            |
+| `[]@`                         | Divert each array element to separate branches                                           |
+| `array[]*`                    | A named array node                                                                       |
+| `array[]@`                    | A named array node and divert each element to separate branches                          |
+| `array[#]`                    | An indexed array element                                                                 |
+| `[=]`                         | A find-first filter                                                                      |
+| `[=]*`                        | A find-all filter                                                                        |
+| `[=]@`                        | A find-all filter and divert each element to separate branches                           |
+| `\ `<br>&nbsp;`@ → []`<br>`/` | Merge branches into an array                                                             |
+| `func()`                      | A Josson function                                                                        |
+| `(%)`                         | Function argument, the current object's child node                                       |
+| `(?)`                         | Scalar function argument, the current non-array node itself or array node's each element |
+| `(?[])`                       | Aggregate function argument, the current array node                                      |
+| `(@)`                         | Scalar function argument, the current array node                                         |
+| `!!`                          | The position where the step is unresolvable                                              |
 
 ### Tutorial
 
@@ -383,7 +341,7 @@ Below is the JSON for this tutorial.
 
    _Path chart_
 
-        {}->salesPerson ==>""
+        {} → salesPerson ⇒ ""
 
 2. Node name is case-sensitive. Josson returns null value if the path is unresolvable.
 
@@ -393,7 +351,7 @@ Below is the JSON for this tutorial.
 
    _Path chart_
 
-        {}->salesperson!! ==>!unresolvable!
+        {} → salesperson!! ⇒ !unresolvable!
 
 3. To query an object node.
 
@@ -407,7 +365,7 @@ Below is the JSON for this tutorial.
 
    _Path chart_
 
-        {}->customer{} ==>{}
+        {} → customer{} ⇒ {}
 
 4. Parent node and child node are connected by a `.`.
 
@@ -417,7 +375,7 @@ Below is the JSON for this tutorial.
 
    _Path chart_
 
-        {}->customer.name ==>""
+        {} → customer{} → name ⇒ ""
 
 5. Function is constructed by a function name followed by parentheses with optional comma-separated arguments.  
    A function manipulate the current node and produce an output along the path.
@@ -428,7 +386,7 @@ Below is the JSON for this tutorial.
 
    _Path chart_
 
-        {}->customer.name->upperCase() ==>""
+        {} → customer{} → name → upperCase(?) ⇒ ""
 
 6. Function name is case-insensitive.  
    If one more parameter is given in addition to a function's maximum number of argument,
@@ -442,7 +400,7 @@ Below is the JSON for this tutorial.
 
    _Path chart_
 
-        {}->customer{}->UPPERCase($V) ==>""
+        {} → customer{} → upperCase(%) ⇒ ""
 
 7. If the function is the first path step, it works on the root node.
 
@@ -452,7 +410,7 @@ Below is the JSON for this tutorial.
 
    _Path chart_
 
-        {}->upperCase($V) ==>""
+        {} → upperCase(%) ⇒ ""
 
 8. Functions can be nested and the parameters can refer to those child nodes of the same step.
 
@@ -462,7 +420,7 @@ Below is the JSON for this tutorial.
 
    _Path chart_
 
-        {}->customer{}->concat($V...) ==>""
+        {} → customer{} → concat(%) ⇒ ""
 
 9. A path start with numbers override the data and produces an integer node.
 
@@ -472,7 +430,7 @@ Below is the JSON for this tutorial.
 
    _Path chart_
 
-        $I ==>$I
+        $I ⇒ $I
 
 10. A path start with numbers and has `.` produces a double node.
 
@@ -482,7 +440,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        $D ==>$D
+        $D ⇒ $D
 
 11. A path start and end with single quote `'`override the data and produces a text string node.  
     If the string literal contains a single quote, it is replaced by two single quotes.
@@ -493,7 +451,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        "" ==>""
+        "" ⇒ ""
 
 12. A path start with `true` or `false` override the data and produces a boolean node.
 
@@ -503,7 +461,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        $TF->not() ==>$TF
+        $TF → not(?) ⇒ $TF
 
 13. To query an array node.
 
@@ -550,7 +508,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items* ==>[{}]
+        {} → items[]* ⇒ [{}]
 
 14. An array filter is enclosed by square brackets.  
     Directly query an array element by zero-based index value.
@@ -573,7 +531,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[0] ==>{}
+        {} → items[#] ⇒ {}
 
 15. To query a child value node of an array element.
 
@@ -583,7 +541,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[1].name ==>""
+        {} → items[#] → {} → name ⇒ ""
 
 16. To query a child object node of an array element.
 
@@ -596,7 +554,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[2].property{} ==>{}
+        {} → items[#] → {} → property{} ⇒ {}
 
 17. To query all the elements of an array node and output them inside an array node.
 
@@ -606,7 +564,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[qty] ==>[$I]
+        {} → items[]* → [{}] → [qty] ⇒ [$I]
 
 18. A function that manipulates each array element and output all results inside an array node.
 
@@ -616,7 +574,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}->concat($V)] ==>[""]
+        {} → items[]* → [{}] → [concat(%) ⇒ ""] ⇒ [""]
 
 19. If a step is working on an object or value node, `?` represents that node.
 
@@ -626,9 +584,9 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[qty]->[$I->concat(?)] ==>[""]
+        {} → items[]* → [{}] → [qty] → [concat(?) ⇒ ""] ⇒ [""]
 
-20. A function that manipulates an array node and produce a value node.
+20. An aggregate function manipulates an array node and produce a value node.
 
         josson.getNode("items.qty.sum()")
         ==>
@@ -636,7 +594,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[qty]->sum() ==>$D
+        {} → items[]* → [{}] → [qty] → sum(?[]) ⇒ $D
 
 21. Uses Java standard formatting pattern.
 
@@ -646,7 +604,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}]->sum([$V])->formatNumber() ==>""
+        {} → items[]* → [{}] → sum(?[%]) → $D → formatNumber(?) ⇒ ""
 
 22. Find the first matching element by array filter.
 
@@ -656,7 +614,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[itemCode][] ==>""
+        {} → items[]* → [{}] → [itemCode][=] ⇒ ""
 
 23. Filter using relational operators `=`, `!=`, `>`, `>=`, `<` and `<=`.
 
@@ -666,7 +624,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[].name ==>""
+        {} → items[][=] → {} → name ⇒ ""
 
 24. Returns null value if nothing matches the array filter.
 
@@ -676,7 +634,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[]!!.name ==>!unresolvable!
+        {} → items[][=]!! → {} → name ⇒ !unresolvable!
 
 25. To query all matching elements, add a modifier `*` after the array filter.
 
@@ -686,7 +644,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[]*->[name] ==>[""]
+        {} → items[][=]* → [{}] → [name] ⇒ [""]
 
 26. If a step is working on an array node, `#` denotes the zero-based index of an array element.
 
@@ -696,7 +654,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[]*->[itemCode] ==>[""]
+        {} → items[][=]* → [{}] → [itemCode] ⇒ [""]
 
 27. For each path step, a nested array is flattened once.
 
@@ -706,7 +664,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[]*->[tags[]*->[""]] ==>[""]
+        {} → items[][=]* → [{}] → [tags[][=]* ⇒ [""]] ⇒ [""]
 
 28. Path step `array.` is the same as `array[true]*.`.
 
@@ -716,7 +674,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[tags*->[""]] ==>[""]
+        {} → items[]* → [{}] → [tags[]* ⇒ [""]] ⇒ [""]
 
 29. If a step is working on an array node, `?` represents an array element.  
     `=~` matches a regular expression.
@@ -727,7 +685,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[tags[]*->[""]] ==>[""]
+        {} → items[]* → [{}] → [tags[][=]* ⇒ [""]] ⇒ [""]
 
 30. The matching criteria supports logical operators and parentheses.
 
@@ -741,7 +699,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[]*->[name] ==>[""]
+        {} → items[][=]* → [{}] → [name] ⇒ [""]
 
 31. Example of a find-all filter operation with flattened array result.
 
@@ -751,7 +709,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[]*->[tags*->[""]] ==>[""]
+        {} → items[][=]* → [{}] → [tags[]* ⇒ [""]] ⇒ [""]
 
 32. An array filter modifier `@` divert each element to separate branch for upcoming manipulation.  
     The final output merges branches into an array.
@@ -762,11 +720,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                     {}->tags*->[""]
-                    /               \
-        {}->items[]@                 ==>[[""]]
-                    \               /
-                     {}->tags*->[""]
+                         {} → tags[]* → [""]
+                        /                   \
+        {} → items[][=]@                     @ ⇒ [[""]]
+                        \                   /
+                         {} → tags[]* → [""]
 
 33. Some functions work on an array node and produce a value node.
 
@@ -776,7 +734,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[tags*->[""]]->[""]->join() ==>""
+        {} → items[]* → [{}] → [tags[]* ⇒ [""]] → [""] → join(?[]) ⇒ ""
 
 34. An array node can apply the modifier `@` that divert each element to separate branch.
 
@@ -786,11 +744,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                   {}->tags*->[""]->join()->""
-                  /                           \
-        {}->items@                             ==>[""]
-                  \                           /
-                   {}->tags*->[""]->join()->""
+                      {} → tags[]* → [""] → join(?[]) → ""
+                     /                                    \
+        {} → items[]@                                      @ ⇒ [""]
+                     \                                    /
+                      {} → tags[]* → [""] → join(?[]) → ""
 
 35. Syntax `[]@` diverts each element of the current array node.
 
@@ -800,11 +758,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                                   {}->tags*->[""]->join()->""
-                                  /                           \
-        {}->items*->[{}]->join([]@                             =>[""]) ==>""
-                                  \                           /
-                                   {}->tags*->[""]->join()->""
+                                         {} → tags[]* → [""] → join(?[]) → ""
+                                        /                                    \
+        {} → items[]* → [{}] → join(?[]@                                      @ ⇒ [""]) ⇒ ""
+                                        \                                    /
+                                         {} → tags[]* → [""] → join(?[]) → ""
 
 36. Modifier `@` before a function name merges all branch results into a single array before manipulation.
 
@@ -814,11 +772,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                   {}->tags*->[""]->join()->""
-                  /                           \
-        {}->items@                             @->[""]->join() ==>""
-                  \                           /
-                   {}->tags*->[""]->join()->""
+                      {} → tags[]* → [""] → join(?[]) → ""
+                     /                                    \
+        {} → items[]@                                      @ → [""] → join(?[]) ⇒ ""
+                     \                                    /
+                      {} → tags[]* → [""] → join(?[]) → ""
 
 37. Modifier `@` after a function diverts the function output array elements to separate branches.  
     It has the same effect of a path step `.[]@` after a function.
@@ -829,11 +787,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                           ""->split()->[""->calc(?)]->[$D->round()]->[$I]->join()->""->concat()
-                          /                                                                     \
-        ""->split()->[""]@                                                                       @->[""]->join()==>""
-                          \                                                                     /
-                           ""->split()->[""->calc(?)]->[$D->round()]->[$I]->join()->""->concat()
+                              "" → split(?) → [""] → [calc(?) ⇒ $D] → [round(?) ⇒ $I] → join(?[]) → "" → concat(?) → ""
+                             /                                                                                          \
+        "" → split(?) → [""]@                                                                                            @ → [""] → join(?[]) ⇒ ""
+                             \                                                                                          /
+                              "" → split(?) → [""] → [calc(?) ⇒ $D] → [round(?) ⇒ $I] → join(?[]) → "" → concat(?) → ""
 
 38. All function parameters can refer to a child node of the step.
 
@@ -846,11 +804,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                   {}->repeat($V...)->""
-                  /                     \
-        {}->items@                       @->[""]->join()==>""
-                  \                     /
-                   {}->repeat($V...)->""
+                      {} → repeat(%) → ""
+                     /                   \
+        {} → items[]@                     @ → [""] → join(?[]) ⇒ ""
+                     \                   /
+                      {} → repeat(%) → ""
 
 39. Some functions work on array and produce an array, such as `concat()`, manipulate on each element.
 
@@ -862,7 +820,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}->concat(#, $V...)]->join() ==>""
+        {} → items[]* → [{}] → [concat(%) ⇒ ""] → join(?[]) ⇒ ""
 
 40. If a step is working on an array node, `@` represents that array node.  
     `##` denotes the one-based index of an array element.
@@ -875,9 +833,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                                   .----->----.
-                                  /            \
-        {}->items*->[{}]->sort($V)->[{}->concat(@, ##, $V...)]->join() ==>""
+        {} → items[]* → [{}] -> sort(%) → [{}] → [concat(@, %) ⇒ ""] → join(?[]) ⇒ ""
 
 41. An object node with a validation filter.
 
@@ -891,7 +847,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->customer[] ==>{}
+        {} → customer{}[=] ⇒ {}
 
 42. An object node with a validation filter.
 
@@ -901,7 +857,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->customer[]!! ==>!unresolvable!
+        {} → customer{}[=]!! ⇒ !unresolvable!
 
 43. Function `json()` parse a JSON string.
 
@@ -911,7 +867,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        [] ==>[]
+        json("") ⇒ []
 
 44. Relational operator `=` and `!=` support object comparison.
 
@@ -921,7 +877,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->{}[]->{}->isNotNull() ==>$TF
+        {}[=] → {} → isNotNull(?) ⇒ $TF
 
 45. Relational operator `=` and `!=` support root level array values comparison where the position ordering is allowed to be different.
 
@@ -931,7 +887,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->{}[]->{}->isNotNull() ==>$TF
+        {}[=] → {} → isNotNull(?) ⇒ $TF
 
 46. Function `calc()` uses MathParser.org-mXparser library <http://mathparser.org/> to perform calculation.
 
@@ -941,9 +897,9 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}->calc($V...)]->[$D->concat(?, ##)] ==>[""]
+        {} → items[]* → [{}] → [calc(%) ⇒ $D] → [concat(?) ⇒ ""] ⇒ [""]
 
-47. Non-array manipulate functions preserve null element.
+47. Scalar functions preserve null element.
 
         josson.getNode("items.calc(qty * (unitPrice-unitDiscount)).[##<=2]*.concat(##,'=',?)")
         ==>
@@ -951,7 +907,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}->calc($V...)]->[$D][]*->[$D->concat(?, ##)] ==>[""]
+        {} → items[]* → [{}] → [calc(%) ⇒ $D] → [=]* → [concat(?) ⇒ ""] ⇒ [""]
 
 48. An array-to-value transformation function throws away null nodes automatically.
 
@@ -961,7 +917,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}->calc($V...)]->[$D->concat(?, ##)]->join() ==>""
+        {} → items[]* → [{}] → [calc(%) ⇒ $D] → [concat(?) ⇒ ""] → join(?[]) ⇒ ""
 
 49. Array filter can filter out null nodes.
 
@@ -971,7 +927,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}->calc($V...)]->[$D][]*->[$D->concat(?, ##)] ==>[""]
+        {} → items[]* → [{}] → [calc(%) ⇒ $D] → [=]* → [concat(?) ⇒ ""] ⇒ [""]
 
 50. An argument `#A` denotes the uppercase alphabetic array index.
 
@@ -981,7 +937,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}->calc($V...)]->[$D][]*->[$D->concat(?, #A)]->join() ==>""
+        {} → items[]* → [{}] → [calc(%) ⇒ $D] → [=]* → [concat(?) ⇒ ""] → join(?[]) ⇒ ""
 
 51. Merge Diverted branches throws away null nodes automatically.
     An argument `#a` denotes the lowercase alphabetic array index.
@@ -992,11 +948,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                   {}->calc($V...)->$D
-                  /                   \
-        {}->items@                     @->[$D->concat(?, #a)] ==>[""]
-                  \                   /
-                   {}->calc($V...)->$D
+                      {} → calc(%) → $D
+                     /                 \
+        {} → items[]@                   @ → [$D] → [concat(?) ⇒ ""] ⇒ [""]
+                     \                 /
+                      {} → calc(%) → $D
 
 52. mXparser expression accepts single-step path only.
     To apply multi-steps path, function or filter, append arguments with syntax `newVariable:path`.
@@ -1007,7 +963,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}->calc($V...)]->[$D->formatNumber()] ==>[""]
+        {} → items[]* → [{}] → [calc(%) ⇒ $D] → [formatNumber(?) ⇒ ""] ⇒ [""]
 
 53. An argument `#r` and `#R` denotes the lowercase and uppercase roman numerals array index.
 
@@ -1017,7 +973,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[unitPrice]->[$D->calc(?)]->[$D->concat(?)] ==>[""]
+        {} → items[]* → [{}] → [unitPrice ⇒ $D] → [calc(?) ⇒ $D] → [concat(?) ⇒ ""] ⇒ [""]
 
 54. Function `entries()` returns an array of an object's string-keyed property `[{key, value}]` pairs.
 
@@ -1054,7 +1010,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[0]->{}->entries() ==>[{}]
+        {} → items[#] → {} → entries(?) ⇒ [{}]
 
 55. Function `keys()` lists an object's key names.
 
@@ -1064,7 +1020,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->keys() ==>[""]
+        {} → keys(?) ⇒ [""]
 
 56. `keys()` can retrieve nested child object keys for a given levels.
 
@@ -1074,7 +1030,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->keys(?) ==>[""]
+        {} → keys(?) ⇒ [""]
 
 57. Function `toArray()` puts an object's values into an array.
 
@@ -1084,7 +1040,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->customer->toArray() ==>[""]
+        {} → customer{} → toArray(?) ⇒ [""]
 
 58. Furthermore, function `toArray()` puts all arguments (values, object's values, array elements) into a single array.
 
@@ -1094,7 +1050,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->customer->toArray($V...) ==>[""]
+        {} → toArray(%) ⇒ [""]
 
 59. Function `map()` constructs a new object node.
     For multi-steps path, the last element name will become the new element name.
@@ -1114,7 +1070,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->map($V...) ==>{}
+        {} → map(%) ⇒ {}
 
 60. Function `field()` adds, removes and renames field on the current object node.
     To remove an element, use syntax `fieldName:` or `queryThatResolveToName::`.
@@ -1132,7 +1088,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items[]->{}->field($V...) ==>{}
+        {} → items[#] → {} → field(%) ⇒ {}
 
 61. Functions `map()` and `field()` works on array.
 
@@ -1165,7 +1121,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->[{}->field($V...)] ==>[{}]
+        {} → items[]* → [{}] → [field(%) ⇒ {}] ⇒ [{}]
 
 62. Function `group()` works like SQL `group by`. It will build a structure of `[{key, [elements]}]`.
     The first parameter is the grouping key. If it is a function, it will be given a name `key` in the output.
@@ -1196,7 +1152,7 @@ Below is the JSON for this tutorial.
         } ]
 
         josson.getNode(
-            "items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).[]@" +
+            "items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))@" +
             ".concat('Brand : ',brand,'\n',elements.concat('- ',name,' : Qty=',qty,' Amt=',calc(qty*netPrice),'\n').join()," +
             "'> Sub-total : Qty=',elements.sum(qty),' Amt=',elements.sum(calc(qty*netPrice))).@join('\n\n')")
         ==>
@@ -1211,11 +1167,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                                   {}->concat($V...)->""
-                                  /                     \
-        {}->items*->group()->[{}]@                       @->[""]->join()==>""
-                                  \                     /
-                                   {}->concat($V...)->""
+                                                {} → concat(%) → ""
+                                               /                   \
+        {} → items[]* → [{}] → group(%) → [{}]@                     @ → [""] → join(?[]) ⇒ ""
+                                               \                   /
+                                                {} → concat(%) → ""
 
 63. Function `unwind()` works like MongoDB `$unwind` operation. The operation is the reverse of `group()`.
 
@@ -1240,7 +1196,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {}->items*->group()->[{}]->unwind()==>[{}]
+        {} → items[]* → [{}] → group(%) → [{}] → unwind(%) ⇒ [{}]
 
 64. Function `flatten()` flatten an array same as the default path step behavior. But more readable.
 
@@ -1260,11 +1216,44 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                   {}->tags*->[""]
-                  /               \
-        {}->items@                 @->[[""]]->flatten() ==>[""]
-                  \               /
-                   {}->tags*->[""]
+                      {} → tags[]* → [""]
+                     /                   \
+        {} → items[]@                     @ → [[""]] → flatten() ⇒ [""]
+                     \                   /
+                      {} → tags[]* → [""]
+
+65. Functions `map()`,`field()`,`group()`,`unwind()` - key name support evaluation using syntax `keyQuery::valueQuery`.
+
+        josson.getNode("items.map(itemCode::qty)")
+        ==>
+        [ {
+          "B00001" : 2
+        }, {
+          "A00308" : 1
+        }, {
+          "A00201" : 1
+        } ]
+
+    _Path chart_
+
+        {} → items[]* → [{}] → [map(%) ⇒ {}] ⇒ [{}]
+
+66. Function `mergeObjects()` merge all objects in an array into one object.
+
+        josson.getNode("mergeObjects(customer, items.map(itemCode::qty))")
+        ==>
+        {
+          "customerId" : "CU0001",
+          "name" : "Peggy",
+          "phone" : "+852 62000610",
+          "B00001" : 2,
+          "A00308" : 1,
+          "A00201" : 1
+        }
+
+    _Path chart_
+
+        {} → mergeObjects(%) ⇒ {}
 
 ## Josson Functions
 
@@ -1499,11 +1488,12 @@ Structural Functions
 207. [keys()](#207-keys)
 208. [toArray()](#208-toarray)
 209. [toObject()](#209-toobject)
-210. [flatten()](#210-flatten)
-211. [map()](#211-map)
-212. [field()](#212-field)
-213. [group()](#213-group)
-214. [unwind()](#214-unwind)
+210. [mergeObjects()](#210-mergeobjects)
+211. [flatten()](#211-flatten)
+212. [map()](#212-map)
+213. [field()](#213-field)
+214. [group()](#214-group)
+215. [unwind()](#215-unwind)
 
 Following are some examples of each function.
 
@@ -3323,7 +3313,29 @@ Following are some examples of each function.
       }
     }
 
-#### 210. flatten()
+#### 210. mergeObjects()
+
+    json('[{"a":1,"x":11},{"b":2,"y":12},{"c":3,"x":13}]').mergeObjects()
+    ==>
+    {
+      "a" : 1,
+      "x" : 13,
+      "b" : 2,
+      "y" : 12,
+      "c" : 3
+    }
+
+    mergeObjects(json('[{"a":1,"x":11},{"b":2,"y":12}]'), json('{"c":3,"x":13}'))
+    ==>
+    {
+      "a" : 1,
+      "x" : 13,
+      "b" : 2,
+      "y" : 12,
+      "c" : 3
+    }
+
+#### 211. flatten()
 
     json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()
     ==>
@@ -3337,7 +3349,7 @@ Following are some examples of each function.
     ==>
     [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]
 
-#### 211. map()
+#### 212. map()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').map(c.e,c.d,b,a)
     ==>
@@ -3361,7 +3373,7 @@ Following are some examples of each function.
       }
     }
 
-#### 212 field()
+#### 213 field()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').field(f:6,c:)
     ==>
@@ -3378,7 +3390,7 @@ Following are some examples of each function.
       "name" : "Cyron"
     }
 
-#### 213. group()
+#### 214. group()
 
     json('[{"a":1,"b":"A"},{"a":2,"b":"B"},{"a":3,"b":"C"},{"a":2,"b":"D"},{"a":1,"b":"E"}]').group(a)
     ==>
@@ -3421,7 +3433,7 @@ Following are some examples of each function.
       "bs" : [ "C" ]
     } ]
 
-#### 214. unwind()
+#### 215. unwind()
 
     json('[{"a":1,"bs":["A","E"]},{"a":2,"bs":["B","D"]},{"a":3,"bs":["C"]}]').unwind(b:bs)
     ==>

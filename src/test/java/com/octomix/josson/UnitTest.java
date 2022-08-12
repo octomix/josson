@@ -94,8 +94,6 @@ public class UnitTest {
 
         // To query a value node.
         //
-        // {}->salesPerson ==>""
-        //
         evaluate.accept("salesPerson",
                 "Raymond");
 
@@ -104,8 +102,6 @@ public class UnitTest {
                 "!unresolvable!");
 
         // To query an object node.
-        //
-        // {}->customer{} ==>{}
         //
         evaluate.accept("customer",
                 "{\n" +
@@ -116,15 +112,11 @@ public class UnitTest {
 
         // Parent node and child node are connected by a ".".
         //
-        // {}->customer.name ==>""
-        //
         evaluate.accept("customer.name",
                 "Peggy");
 
         // Function is constructed by a function name followed by parentheses with optional comma-separated arguments.
         // A function manipulate the current node and produce an output along the path.
-        //
-        // {}->customer.name->upperCase() ==>""
         //
         evaluate.accept("customer.name.upperCase()",
                 "PEGGY");
@@ -132,35 +124,25 @@ public class UnitTest {
         // Function name is case-insensitive.
         // Function parameter can refer to a child node of the step.
         //
-        // {}->customer{}->UPPERCase($V) ==>""
-        //
         evaluate.accept("customer.UPPERCase(name)",
                 "PEGGY");
 
         // If the function is the first path step, it works on the root node.
-        //
-        // {}->upperCase($V) ==>""
         //
         evaluate.accept("upperCase(customer.name)",
                 "PEGGY");
 
         // Functions can be nested and the parameters can refer to those child nodes of the same step.
         //
-        // {}->customer{}->concat($V...) ==>""
-        //
         evaluate.accept("customer.concat(upperCase(name), ' / ', phone)",
                 "PEGGY / +852 62000610");
 
         // A path start with numbers override the data and produces an integer node.
         //
-        // $I ==>$I
-        //
         evaluate.accept("123",
                 "123");
 
         // A path start with numbers and has "." produces a double node.
-        //
-        // $D ==>$D
         //
         evaluate.accept("123.40",
                 "123.4");
@@ -168,21 +150,15 @@ public class UnitTest {
         // A path start and end with single quote "'" override the data and produces a text string node.
         // If the string literal contains a single quote, it is replaced by two single quotes.
         //
-        // "" ==>""
-        //
         evaluate.accept("'She said, ''Go ahead''.'",
                 "She said, 'Go ahead'.");
 
         // A path start with true or false override the data and produces a boolean node.
         //
-        // $TF->not() ==>$TF
-        //
         evaluate.accept("true.not()",
                 "false");
 
         // To query an array node.
-        //
-        // {}->items* ==>[{}]
         //
         evaluate.accept("items",
                 "[ {\n" +
@@ -227,8 +203,6 @@ public class UnitTest {
         // An array filter is enclosed by square brackets.
         // Directly query an array element by zero-based index value.
         //
-        // {}->items[0] ==>{}
-        //
         evaluate.accept("items[0]",
                 "{\n" +
                         "  \"itemCode\" : \"B00001\",\n" +
@@ -246,14 +220,10 @@ public class UnitTest {
 
         // To query a child value node in an array element.
         //
-        // {}->items[1].name ==>""
-        //
         evaluate.accept("items[1].name",
                 "OctoPlus Tennis Racket - Star");
 
         // To query a child object node in an array element.
-        //
-        // {}->items[2].property{} ==>{}
         //
         evaluate.accept("items[2].property",
                 "{\n" +
@@ -263,49 +233,35 @@ public class UnitTest {
 
         // To query all the elements of an array node and output them inside an array node.
         //
-        // {}->items*->[qty] ==>[$I]
-        //
         evaluate.accept("items.qty",
                 "[ 2, 1, 1 ]");
 
         // A function that manipulates each array element and output all results inside an array node.
-        //
-        // {}->items*->[{}->concat($V)] ==>[""]
         //
         evaluate.accept("items.concat('Qty=',qty)",
                 "[ \"Qty=2\", \"Qty=1\", \"Qty=1\" ]");
 
         // If a step is working on an object or value node, "?" represents that node.
         //
-        // {}->items*->[qty]->[$I->concat(?)] ==>[""]
-        //
         evaluate.accept("items.qty.concat('Qty=',?)",
                 "[ \"Qty=2\", \"Qty=1\", \"Qty=1\" ]");
 
         // A function that manipulates an array node and produce a value node.
-        //
-        // {}->items*->[qty]->sum() ==>$D
         //
         evaluate.accept("items.qty.sum()",
                 "4.0");
 
         // Uses Java standard formatting pattern.
         //
-        // {}->items*->[{}]->sum([$V])->formatNumber() ==>""
-        //
         evaluate.accept("items.sum(qty).formatNumber('#,##0')",
                 "4");
 
         // Find the first matching element by array filter.
         //
-        // {}->items*->[itemCode][] ==>""
-        //
         evaluate.accept("items.itemCode[!startsWith('A')]",
                 "B00001");
 
         // Filter using relational operators "=", "!=", ">", ">=", "<" and "<=".
-        //
-        // {}->items[].name ==>""
         //
         evaluate.accept("items[unitDiscount > 0].name",
                 "OctoPlus Tennis Racket - Star");
@@ -316,27 +272,19 @@ public class UnitTest {
 
         // To query all matching elements, add a modifier "*" after the array filter.
         //
-        // {}->items[]*->[name] ==>[""]
-        //
         evaluate.accept("items[unitDiscount > 0]*.name",
                 "[ \"OctoPlus Tennis Racket - Star\", \"WinWin Sport Shoe - Super\" ]");
 
         // If a step is working on an array node, "#" denotes the zero-based index of an array element.
         //
-        // {}->items[]*->[itemCode] ==>[""]
-        //
         evaluate.accept("items[#.isEven()]*.itemCode", "[ \"B00001\", \"A00201\" ]");
 
         // For each path step, a nested array is flattened once.
-        //
-        // {}->items[]*->[tags[]*->[""]] ==>[""]
         //
         evaluate.accept("items[true]*.tags[true]*",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
         // Path step "array." is the same as "array[true]*.".
-        //
-        // {}->items*->[tags*->[""]] ==>[""]
         //
         evaluate.accept("items.tags",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
@@ -344,22 +292,16 @@ public class UnitTest {
         // If a step is working on an array node, "?" represents an array element.
         // "=~" matches a regular expression.
         //
-        // {}->items*->[tags[]*->[""]] ==>[""]
-        //
         evaluate.accept("items.tags[? =~ '^S.*O.+']*",
                 "[ \"SPORT\", \"SHOE\", \"SPORT\" ]");
 
         // The matching criteria supports logical operators and parentheses.
         // "!" = not, "&" = and, "|" = or
         //
-        // {}->items[]*->[name] ==>[""]
-        //
         evaluate.accept("items[(unitDiscount=null | unitDiscount=0) & !(qty<=1)]*.name",
                 "[ \"WinWin TShirt Series A - 2022\" ]");
 
         // Example of a find-all filter operation with flattened array result.
-        //
-        // {}->items[]*->[tags*->[""]] ==>[""]
         //
         evaluate.accept("items[tags.contains('SPORT')]*.tags",
                 "[ \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
@@ -367,51 +309,25 @@ public class UnitTest {
         // An array filter modifier "@" divert each element to separate branch for upcoming manipulation.
         // The final output merges branches into an array.
         //
-        //              {}->tags*->[""]
-        //             /               \
-        // {}->items[]@                 ==>[[""]]
-        //             \               /
-        //              {}->tags*->[""]
-        //
         evaluate.accept("items[tags.containsIgnoreCase('Women')]@.tags",
                 "[ [ \"SHIRT\", \"WOMEN\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
 
         // Some functions work on an array node and produce a value node.
-        //
-        // {}->items*->[tags*->[""]]->[""]->join() ==>""
         //
         evaluate.accept("items.tags.join('+')",
                 "SHIRT+WOMEN+TENNIS+SPORT+RACKET+SHOE+SPORT+WOMEN");
 
         // An array node can apply the modifier "@" that divert each element to separate branch.
         //
-        //            {}->tags*->[""]->join()->""
-        //           /                           \
-        // {}->items@                             ==>[""]
-        //           \                           /
-        //            {}->tags*->[""]->join()->""
-        //
         evaluate.accept("items@.tags.join('+')",
                 "[ \"SHIRT+WOMEN\", \"TENNIS+SPORT+RACKET\", \"SHOE+SPORT+WOMEN\" ]");
 
         // Syntax "[]@" diverts each element of the current array node.
         //
-        //                            {}->tags*->[""]->join()->""
-        //                           /                           \
-        // {}->items*->[{}]->join([]@                             =>[""]) ==>""
-        //                           \                           /
-        //                            {}->tags*->[""]->join()->""
-        //
         evaluate.accept("items.join([]@.tags.join('+'),' / ')",
                 "SHIRT+WOMEN / TENNIS+SPORT+RACKET / SHOE+SPORT+WOMEN");
 
         // Modifier "@" before a function name merges all branch results into a single array before manipulation.
-        //
-        //            {}->tags*->[""]->join()->""
-        //           /                           \
-        // {}->items@                             @->[""]->join() ==>""
-        //           \                           /
-        //            {}->tags*->[""]->join()->""
         //
         evaluate.accept("items@.tags.join('+').@join(' / ')",
                 "SHIRT+WOMEN / TENNIS+SPORT+RACKET / SHOE+SPORT+WOMEN");
@@ -419,22 +335,10 @@ public class UnitTest {
         // Modifier "@" after a function diverts the function output array elements to separate branches.
         // It has the same effect of a path step ".[]@" after a function.
         //
-        //                    ""->split()->[""->calc(?)]->[$D->round()]->[$I]->join()->""->concat()
-        //                   /                                                                     \
-        // ""->split()->[""]@                                                                       @->[""]->join()==>""
-        //                   \                                                                     /
-        //                    ""->split()->[""->calc(?)]->[$D->round()]->[$I]->join()->""->concat()
-        //
         evaluate.accept("'1+2 | 3+4 | 5+6'.split('|')@.split('+').calc(?*2).round(0).join('+').concat('(',?,')/2').@join(' | ')",
                 "(2+4)/2 | (6+8)/2 | (10+12)/2");
 
         // All function parameters can refer to a child node of the step.
-        //
-        //            {}->repeat($V...)->""
-        //           /                     \
-        // {}->items@                       @->[""]->join()==>""
-        //           \                     /
-        //            {}->repeat($V...)->""
         //
         evaluate.accept("items@.repeat(concat('[',brand,'] ',name,'\n'), qty).@join()",
                 "[WinWin] WinWin TShirt Series A - 2022\n" +
@@ -444,8 +348,6 @@ public class UnitTest {
 
         // Some functions work on array and produce an array, such as "concat()", manipulate on each element.
         //
-        // {}->items*->[{}->concat(#, $V...)]->join() ==>""
-        //
         evaluate.accept("items.concat('Item ',#,': [',itemCode,'] ',qty,unit,' x ',name,' <',property.colors.join(','),'>').join('\n')",
                 "Item 0: [B00001] 2Pcs x WinWin TShirt Series A - 2022 <WHITE,RED>\n" +
                         "Item 1: [A00308] 1Pcs x OctoPlus Tennis Racket - Star <BLACK>\n" +
@@ -454,9 +356,6 @@ public class UnitTest {
         // If a step is working on an array node, "@" represents that array node.
         // "##" denotes the one-based index of an array element.
         //                            .----->----.
-        //                           /            \
-        // {}->items*->[{}]->sort($V)->[{}->concat(@, ##, $V...)]->join() ==>""
-        //
         evaluate.accept("items.sort(itemCode).concat('Item ',##,'/',@.size(),': [',itemCode,'] ',qty,unit,' x ',name,' <',property.colors.join(','),'>').join('\n')",
                 "Item 1/3: [A00201] 1Pair x WinWin Sport Shoe - Super <RED>\n" +
                         "Item 2/3: [A00308] 1Pcs x OctoPlus Tennis Racket - Star <BLACK>\n" +
@@ -485,47 +384,31 @@ public class UnitTest {
 
         // Function "calc" uses MathParser.org-mXparser library <http://mathparser.org/> to perform calculation.
         //
-        // {}->items*->[{}->calc($V...)]->[$D->concat(?, ##)] ==>[""]
-        //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).concat(##,'=',?)",
                 "[ null, \"2=140.0\", \"3=100.0\" ]");
 
         // Non-array manipulate functions preserve null element.
-        //
-        // {}->items*->[{}->calc($V...)]->[$D][]*->[$D->concat(?, ##)] ==>[""]
         //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).[##<=2]*.concat(##,'=',?)",
                 "[ null, \"2=140.0\" ]");
 
         // An array-to-value transformation function throws away null nodes automatically.
         //
-        // {}->items*->[{}->calc($V...)]->[$D->concat(?, ##)]->join() ==>""
-        //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).concat(##,'=',?).join(' / ')",
                 "2=140.0 / 3=100.0");
 
         // Array filter can filter out null nodes.
-        //
-        // {}->items*->[{}->calc($V...)]->[$D][]*->[$D->concat(?, ##)] ==>[""]
         //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).[isNotNull()]*.concat(##,'=',?)",
                 "[ \"1=140.0\", \"2=100.0\" ]");
 
         // An argument "#A" denotes the uppercase alphabetic array index.
         //
-        // {}->items*->[{}->calc($V...)]->[$D][]*->[$D->concat(?, #A)]->join() ==>""
-        //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).[?!=null]*.concat(#A,'=',?).join(' / ')",
                 "A=140.0 / B=100.0");
 
         // Merge Diverted branches throws away null nodes automatically.
         // An argument "#a" denotes the lowercase alphabetic array index.
-        //
-        //            {}->calc($V...)->$D
-        //           /                   \
-        // {}->items@                     @->[$D->concat(?, #a)] ==>[""]
-        //           \                   /
-        //            {}->calc($V...)->$D
         //
         evaluate.accept("items@.calc(qty * (unitPrice-unitDiscount)).@concat(#a,'=',?)",
                 "[ \"a=140.0\", \"b=100.0\" ]");
@@ -661,7 +544,7 @@ public class UnitTest {
                         "  } ]\n" +
                         "} ]");
 
-        evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).[]@" +
+        evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))@" +
                         ".concat('Brand : ',brand,'\n',elements.concat('- ',name,' : Qty=',qty,' Amt=',calc(qty*netPrice),'\n').join()," +
                         "'> Sub-total : Qty=',elements.sum(qty),' Amt=',elements.sum(calc(qty*netPrice))).@join('\n\n')",
                 "Brand : WinWin\n" +
@@ -701,6 +584,25 @@ public class UnitTest {
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
         evaluate.accept("items@.tags.@[true]*",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+        // Functions map(),field(),group(),unwind() - key name support evaluation using syntax "keyQuery::valueQuery"
+        evaluate.accept("items.map(itemCode::qty)",
+                "[ {\n" +
+                        "  \"B00001\" : 2\n" +
+                        "}, {\n" +
+                        "  \"A00308\" : 1\n" +
+                        "}, {\n" +
+                        "  \"A00201\" : 1\n" +
+                        "} ]");
+        // Function "mergeObjects" merge all objects in an array into one object.
+        evaluate.accept("mergeObjects(customer, items.map(itemCode::qty))",
+                "{\n" +
+                        "  \"customerId\" : \"CU0001\",\n" +
+                        "  \"name\" : \"Peggy\",\n" +
+                        "  \"phone\" : \"+852 62000610\",\n" +
+                        "  \"B00001\" : 2,\n" +
+                        "  \"A00308\" : 1,\n" +
+                        "  \"A00201\" : 1\n" +
+                        "}");
 
         josson.setJsonString("{\n" +
                 "    \"a\": [\n" +
@@ -1726,6 +1628,23 @@ public class UnitTest {
                         "    \"a\" : 1,\n" +
                         "    \"b\" : 2\n" +
                         "  }\n" +
+                        "}");
+        // mergeObjects()
+        evaluate.accept("json('[{\"a\":1,\"x\":11},{\"b\":2,\"y\":12},{\"c\":3,\"x\":13}]').mergeObjects()",
+                "{\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"x\" : 13,\n" +
+                        "  \"b\" : 2,\n" +
+                        "  \"y\" : 12,\n" +
+                        "  \"c\" : 3\n" +
+                        "}");
+        evaluate.accept("mergeObjects(json('[{\"a\":1,\"x\":11},{\"b\":2,\"y\":12}]'), json('{\"c\":3,\"x\":13}'))",
+                "{\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"x\" : 13,\n" +
+                        "  \"b\" : 2,\n" +
+                        "  \"y\" : 12,\n" +
+                        "  \"c\" : 3\n" +
                         "}");
         // flatten()
         evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()",
