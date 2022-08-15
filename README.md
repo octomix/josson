@@ -183,7 +183,8 @@ A path step can...
 | `function()`     | A Josson function                                                    |
 | `@function()`    | Merge all branch results into a single array before manipulation     |
 | `function()@`    | Divert the function output array elements to separate branches       |
-| `*`              | Wildcard search to match any object element                          |
+| `*`              | Single wildcard symbol returns the first object element              |
+| `**`             | Double wildcard symbol returns all object elements                   |
 | `*[expression]`  | Wildcard search with filter and returns the first matching element   |
 | `*[expression]*` | Wildcard search with filter and returns all matching elements        |
 | `~'regex'`       | Search by regular expression and returns all matching elements       |
@@ -200,11 +201,11 @@ If the expression is evaluated to `true`, the object itself is returned.
 Otherwise, return `null`.
 
 A wildcard search with filter is actually a combination of 3 steps.
-This is the operation of a wildcard search with filter that returns all matching elements:
+The following query is an operation of a wildcard search with filter that returns all matching elements:
 
     entries().[expression]*.value
 
-Josson function > Array filter > Select element
+Josson function `entries()` > Find-all array filter `[expression]*` > Select element `value`
 
 Function `entries()` transform object `{ "name" : <JsonNode> }` into this new structure:
 
@@ -1257,7 +1258,7 @@ Below is the JSON for this tutorial.
 
 ## Josson Functions
 
-There are 214 functions. They are classified into 7 categories:
+There are 215 functions. They are classified into 7 categories:
 
 Arithmetic Functions
 
@@ -3841,7 +3842,7 @@ ___Template___
 
    _Path chart_
 
-       order->delivery.address->split()->[""->concat()]->join() ==>""
+       order → delivery{} → address → split(?) → [""]  → [concat(?) ⇒ ""] → join(?[]) ⇒ ""
 
 6. Construct two lines for each item. Each item amount is calculated from `qty`, `unitPrice` and `unitDiscount`. 
 
@@ -3860,7 +3861,7 @@ ___Template___
 
    _Path chart_
 
-       order->items*->[{}->concat(##, $V...)]->join() ==>""
+       order → items[]* → [{}] → [concat(%) ⇒ ""] → join(?[]) ⇒ ""
 
 7. If `order->discountPct` is not > 0, the discount line is not printed.
 

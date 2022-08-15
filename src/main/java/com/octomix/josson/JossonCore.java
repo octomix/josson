@@ -231,12 +231,19 @@ final class JossonCore {
         switch (key.charAt(0)) {
             case WILDCARD_SYMBOL:
                 if (key.length() == 1) {
-                    key = "toarray()";
+                    if (!node.isObject() || node.isEmpty())  {
+                        return null;
+                    }
+                    key = node.fieldNames().next();
                 } else {
                     final String wildcardFilter = key.substring(1).trim();
-                    key = "entries()";
-                    keys.add(1, wildcardFilter);
-                    keys.add(2, "value");
+                    if (wildcardFilter.length() == 1 && wildcardFilter.charAt(0) == WILDCARD_SYMBOL) {
+                        key = "toarray()";
+                    } else {
+                        key = "entries()";
+                        keys.add(1, wildcardFilter);
+                        keys.add(2, "value");
+                    }
                 }
                 break;
             case MATCHES_SYMBOL:
