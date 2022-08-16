@@ -230,20 +230,26 @@ final class JossonCore {
         String key = keys.get(0);
         switch (key.charAt(0)) {
             case WILDCARD_SYMBOL:
+                if (!node.isObject() || node.isEmpty())  {
+                    return null;
+                }
                 if (key.length() == 1) {
-                    if (!node.isObject() || node.isEmpty())  {
-                        return null;
+                    keys.remove(0);
+                    for (Iterator<JsonNode> it = node.elements(); it.hasNext(); ) {
+                        final JsonNode elem = getNodeByKeys(it.next(), new ArrayList<>(keys), new ArrayList<>(nextKeys));
+                        if (elem != null && !elem.isNull()) {
+                            return elem;
+                        }
                     }
-                    key = node.fieldNames().next();
+                    return null;
+                }
+                final String wildcardFilter = key.substring(1).trim();
+                if (wildcardFilter.length() == 1 && wildcardFilter.charAt(0) == WILDCARD_SYMBOL) {
+                    key = "toarray()";
                 } else {
-                    final String wildcardFilter = key.substring(1).trim();
-                    if (wildcardFilter.length() == 1 && wildcardFilter.charAt(0) == WILDCARD_SYMBOL) {
-                        key = "toarray()";
-                    } else {
-                        key = "entries()";
-                        keys.add(1, wildcardFilter);
-                        keys.add(2, "value");
-                    }
+                    key = "entries()";
+                    keys.add(1, wildcardFilter);
+                    keys.add(2, "value");
                 }
                 break;
             case MATCHES_SYMBOL:

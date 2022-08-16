@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.23</version>
+        <version>1.3.24</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.23'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.24'
 
 ## Features and Capabilities
 
@@ -171,25 +171,25 @@ A path step can...
 - Filter an array node, return the first matching element or all matching elements.
 - Perform a transformation operation by a [Josson Function](#josson-functions).
 
-| Step             | Description                                                          |
-|:-----------------|:---------------------------------------------------------------------|
-| `key`            | A child element key name                                             |
-| `[number]`       | An array element by zero-based index                                 |
-| `[expression]`   | A boolean filter expression to find the first matching array element |
-| `[expression]*`  | A boolean filter expression to query all matching array elements     |
-| `[expression]@`  | Filter all matching elements and divert each to separate branches    |
-| `[]@`            | Divert each element of the current array node to separate branches   |
-| `array@`         | Divert each array element to separate branches                       |
-| `function()`     | A Josson function                                                    |
-| `@function()`    | Merge all branch results into a single array before manipulation     |
-| `function()@`    | Divert the function output array elements to separate branches       |
-| `*`              | Single wildcard symbol returns the first object element              |
-| `**`             | Double wildcard symbol returns all object elements                   |
-| `*[expression]`  | Wildcard search with filter and returns the first matching element   |
-| `*[expression]*` | Wildcard search with filter and returns all matching elements        |
-| `~'regex'`       | Search by regular expression and returns all matching elements       |
+| Step             | Description                                                           |
+|:-----------------|:----------------------------------------------------------------------|
+| `key`            | A child element key name                                              |
+| `[number]`       | An array element by zero-based index                                  |
+| `[expression]`   | A boolean filter expression to find the first matching array element  |
+| `[expression]*`  | A boolean filter expression to query all matching array elements      |
+| `[expression]@`  | Filter all matching elements and divert each to separate branches     |
+| `[]@`            | Divert each element of the current array node to separate branches    |
+| `array@`         | Divert each array element to separate branches                        |
+| `function()`     | A Josson function                                                     |
+| `@function()`    | Merge all branch results into a single array before manipulation      |
+| `function()@`    | Divert the function output array elements to separate branches        |
+| `*`              | Single wildcard symbol returns the first resolvable non-null result   |
+| `**`             | Double wildcard symbol returns all object elements                    |
+| `*[expression]`  | Wildcard search with filter and returns the first matching element    |
+| `*[expression]*` | Wildcard search with filter and returns all matching elements         |
+| `~'regex'`       | Search by regular expression and returns all matching elements        |
 
-To specify an array and then apply a filter can be simplified by removing the `.` between them.
+To specify an array and then apply an index or a filter can be simplified by removing the `.` between them.
 The following two are the same.
 
     array.[expression]*
@@ -200,12 +200,33 @@ Filter can also apply to an object node.
 If the expression is evaluated to `true`, the object itself is returned.
 Otherwise, return `null`.
 
-A wildcard search with filter is actually a combination of 3 steps.
-The following query is an operation of a wildcard search with filter that returns all matching elements:
+For example:
 
-    entries().[expression]*.value
+    {
+        "a": {
+            "b": {
+                "c": [1, 2, "d"]
+            },
+            "x": {
+                "y": "z"
+            }
+        }
+    }
+
+    a.b.c ==> [1, 2, "d"]
+
+    a.b.c[0] ==> 1
+
+    a.b.c[2].upperCase() ==> "D"
+
+    a.*.y ==> "z"
+
+A wildcard search with filter is actually a combination of 3 steps.
+The following query is the same as a wildcard search with filter that returns all matching elements:
 
 Josson function `entries()` > Find-all array filter `[expression]*` > Select element `value`
+
+    entries().[expression]*.value
 
 Function `entries()` transform object `{ "name" : <JsonNode> }` into this new structure:
 
