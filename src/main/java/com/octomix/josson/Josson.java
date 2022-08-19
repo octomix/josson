@@ -595,6 +595,31 @@ public class Josson {
     /**
      * Convert the content into instance of given value type.
      *
+     * @param type the specific type of the result
+     * @return The generated JSON that converted to the result type
+     * @param <T> the specific type of the result
+     * @throws IOException if conversion fails due to incompatible type
+     */
+    public <T> T readValueFor(final Class<?> type) throws IOException {
+        return MAPPER.readerFor(type).readValue(jsonNode);
+    }
+
+    /**
+     * Convenience method for doing two-step conversion from given value, into instance of given value type.
+     *
+     * @param node the Jackson JsonNode to convert
+     * @param type the specific type of the result
+     * @return The generated JSON that converted to the result type
+     * @param <T> the specific type of the result
+     * @throws IOException if conversion fails due to incompatible type
+     */
+    public static <T> T readValueFor(final JsonNode node, final Class<?> type) throws IOException {
+        return MAPPER.readerFor(type).readValue(node);
+    }
+
+    /**
+     * Convert the content into instance of given value type.
+     *
      * @param <T> the specific type of the result
      * @return The generated JSON that converted to the result type
      * @throws IllegalArgumentException if conversion fails due to incompatible type

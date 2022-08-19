@@ -131,11 +131,11 @@ final class FuncStructural {
             final Pair<String, String> evalNameAndPath = evaluateNameAndPath(nameAndPath, workNode, i);
             final JsonNode valueNode = getNodeByPath(workNode, i, evalNameAndPath.getValue() == null
                     ? evalNameAndPath.getKey() : evalNameAndPath.getValue());
-            if (valueNode != null && valueNode.isValueNode()) {
+            if (valueNode != null) {
                 ArrayNode values = null;
                 final Pair<String, String> evalGrouping = evaluateNameAndPath(grouping, workNode, i);
                 for (int j = 0; j < array.size(); j++) {
-                    if (array.get(j).get(evalNameAndPath.getKey()).equals(valueNode)) {
+                    if (Operator.EQ.relationalCompare(array.get(j).get(evalNameAndPath.getKey()), valueNode)) {
                         values = (ArrayNode) array.get(j).get(evalGrouping.getKey());
                         break;
                     }

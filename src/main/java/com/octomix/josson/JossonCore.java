@@ -244,7 +244,7 @@ final class JossonCore {
                     return null;
                 }
                 final String wildcardFilter = key.substring(1).trim();
-                if (wildcardFilter.length() == 1 && wildcardFilter.charAt(0) == WILDCARD_SYMBOL) {
+                if (wildcardFilter.length() == 1 && wildcardFilter.charAt(0) == FILTRATE_COLLECT_ALL.getSymbol()) {
                     key = "toarray()";
                 } else {
                     key = "entries()";
@@ -253,12 +253,13 @@ final class JossonCore {
                 }
                 break;
             case MATCHES_SYMBOL:
-                final String strLiteral = key.substring(1).trim();
+                final boolean matchAll = key.charAt(key.length() - 1) == FILTRATE_COLLECT_ALL.getSymbol();
+                final String strLiteral = key.substring(1, key.length() - (matchAll ? 1 : 0)).trim();
                 if (strLiteral.charAt(0) != QUOTE_SYMBOL || strLiteral.charAt(strLiteral.length() - 1) != QUOTE_SYMBOL) {
                     throw new SyntaxErrorException(key);
                 }
                 key = "entries()";
-                keys.add(1, "[key.matches(" + strLiteral + ")]*");
+                keys.add(1, "[key.matches(" + strLiteral + ")]" + (matchAll ? FILTRATE_COLLECT_ALL.getSymbol() : ""));
                 keys.add(2, "value");
                 break;
             case COLLECT_BRANCHES_SYMBOL:

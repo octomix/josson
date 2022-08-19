@@ -171,23 +171,24 @@ A path step can...
 - Filter an array node, return the first matching element or all matching elements.
 - Perform a transformation operation by a [Josson Function](#josson-functions).
 
-| Step             | Description                                                           |
-|:-----------------|:----------------------------------------------------------------------|
-| `key`            | A child element key name                                              |
-| `[number]`       | An array element by zero-based index                                  |
-| `[expression]`   | A boolean filter expression to find the first matching array element  |
-| `[expression]*`  | A boolean filter expression to query all matching array elements      |
-| `[expression]@`  | Filter all matching elements and divert each to separate branches     |
-| `[]@`            | Divert each element of the current array node to separate branches    |
-| `array@`         | Divert each array element to separate branches                        |
-| `function()`     | A Josson function                                                     |
-| `@function()`    | Merge all branch results into a single array before manipulation      |
-| `function()@`    | Divert the function output array elements to separate branches        |
-| `*`              | Single wildcard symbol returns the first resolvable non-null result   |
-| `**`             | Double wildcard symbol returns all object elements                    |
-| `*[expression]`  | Wildcard search with filter and returns the first matching element    |
-| `*[expression]*` | Wildcard search with filter and returns all matching elements         |
-| `~'regex'`       | Search by regular expression and returns all matching elements        |
+| Step             | Description                                                          |
+|:-----------------|:---------------------------------------------------------------------|
+| `key`            | A child element key name                                             |
+| `[number]`       | An array element by zero-based index                                 |
+| `[expression]`   | A boolean filter expression to find the first matching array element |
+| `[expression]*`  | A boolean filter expression to query all matching array elements     |
+| `[expression]@`  | Filter all matching elements and divert each to separate branches    |
+| `[]@`            | Divert each element of the current array node to separate branches   |
+| `array@`         | Divert each array element to separate branches                       |
+| `function()`     | A Josson function                                                    |
+| `@function()`    | Merge all branch results into a single array before manipulation     |
+| `function()@`    | Divert the function output array elements to separate branches       |
+| `*`              | Single wildcard symbol returns the first resolvable non-null result  |
+| `**`             | Double wildcard symbol returns all object elements                   |
+| `*[expression]`  | Wildcard search with filter and returns the first matching element   |
+| `*[expression]*` | Wildcard search with filter and returns all matching elements        |
+| `~'regex'`       | Search by regular expression and returns the first matching element  |
+| `~'regex'*`      | Search by regular expression and returns all matching elements       |
 
 To specify an array and then apply an index or a filter can be simplified by removing the `.` between them.
 The following two are the same.
@@ -250,7 +251,7 @@ For example:
 
 The last 3 examples do the same thing and can be simplified to this syntax:
 
-    ~'^[A-Z]{10}$'
+    ~'^[A-Z]{10}$'*
 
 Additional step symbols are available in filter expression and function argument.
 
