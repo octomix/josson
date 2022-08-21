@@ -18,6 +18,7 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
+import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.time.ZoneId;
@@ -230,40 +231,51 @@ final class JossonCore {
         String key = keys.get(0);
         switch (key.charAt(0)) {
             case WILDCARD_SYMBOL:
-                if (!node.isObject() || node.isEmpty())  {
+                if (!node.isContainerNode() || node.isEmpty())  {
                     return null;
                 }
-                if (key.length() == 1) {
+                final String[] levelsAndFilter = matchWildcardLevelsAndFilter(key);
+                if (levelsAndFilter == null) {
                     keys.remove(0);
-                    for (Iterator<JsonNode> it = node.elements(); it.hasNext(); ) {
-                        final JsonNode elem = getNodeByKeys(it.next(), new ArrayList<>(keys), new ArrayList<>(nextKeys));
-                        if (elem != null && !elem.isNull()) {
-                            return elem;
-                        }
+                    if (node.isObject()) {
+                        return wildcardAny(node, keys, nextKeys);
                     }
-                    return null;
+                    return wildcardAny(wildcardArrayNodeToList(node), keys, nextKeys, 1);
                 }
-                final String wildcardFilter = key.substring(1).trim();
-                if (wildcardFilter.length() == 1 && wildcardFilter.charAt(0) == FILTRATE_COLLECT_ALL.getSymbol()) {
-                    key = "toarray()";
+                if (levelsAndFilter[0] != null) {
+                    keys.remove(0);
+                    final int levels = levelsAndFilter[0].isEmpty() ? 1 : getNodeAsInt(node, levelsAndFilter[0]);
+                    return wildcardAny(
+                            node.isObject() ? Collections.singletonList(node) : wildcardArrayNodeToList(node),
+                            keys, nextKeys, levels);
+                }
+                final String filter = levelsAndFilter[1];
+                if (filter.length() == 1) {
+                    if (FILTRATE_COLLECT_ALL.equals(filter.charAt(0))) {
+                        key = "toarray()";
+                    } else {
+                        key = "toarray()@";
+                    }
                 } else {
                     key = "entries()";
-                    keys.add(1, wildcardFilter);
+                    keys.add(1, filter);
                     keys.add(2, "value");
                 }
                 break;
             case MATCHES_SYMBOL:
-                final boolean matchAll = key.charAt(key.length() - 1) == FILTRATE_COLLECT_ALL.getSymbol();
-                final String strLiteral = key.substring(1, key.length() - (matchAll ? 1 : 0)).trim();
+                final char lastChar = key.charAt(key.length() - 1);
+                final String filterMode = FILTRATE_COLLECT_ALL.equals(lastChar) || FILTRATE_DIVERT_ALL.equals(lastChar)
+                        ? String.valueOf(lastChar) : EMPTY;
+                final String strLiteral = StringUtils.strip(key.substring(1, key.length() - filterMode.length()));
                 if (strLiteral.charAt(0) != QUOTE_SYMBOL || strLiteral.charAt(strLiteral.length() - 1) != QUOTE_SYMBOL) {
                     throw new SyntaxErrorException(key);
                 }
                 key = "entries()";
-                keys.add(1, "[key.matches(" + strLiteral + ")]" + (matchAll ? FILTRATE_COLLECT_ALL.getSymbol() : ""));
+                keys.add(1, "[key.matches(" + strLiteral + ")]" + filterMode);
                 keys.add(2, "value");
                 break;
             case COLLECT_BRANCHES_SYMBOL:
-                key = key.substring(1).trim();
+                key = StringUtils.strip(key.substring(1));
                 nextKeys.addAll(keys);
                 if (key.isEmpty()) {
                     nextKeys.remove(0);
@@ -281,7 +293,7 @@ final class JossonCore {
         keys.remove(0);
         final String[] funcAndArgs = matchFunctionAndArgument(key, true);
         if (funcAndArgs != null) {
-            if (key.charAt(key.length()-1) == FILTRATE_DIVERT_ALL.getSymbol()) {
+            if (FILTRATE_DIVERT_ALL.equals(key.charAt(key.length() - 1))) {
                 keys.add(0, "[]" + FILTRATE_DIVERT_ALL.getSymbol());
             }
             return getNodeByKeys(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(node), keys, nextKeys);
@@ -308,6 +320,50 @@ final class JossonCore {
             return forEachElement((ArrayNode) node, null, filter.getMode(), keys, nextKeys);
         }
         return getNodeByKeys(node, keys, nextKeys);
+    }
+
+
+    private static List<JsonNode> wildcardArrayNodeToList(final JsonNode node) {
+        final List<JsonNode> array = new ArrayList<>();
+        for (JsonNode elem : node) {
+            if (elem.isObject()) {
+                array.add(elem);
+            }
+        }
+        return array;
+    }
+
+    private static JsonNode wildcardAny(final JsonNode node, final List<String> keys, final List<String> nextKeys) {
+        for (JsonNode elem : node) {
+            final JsonNode tryNode = getNodeByKeys(elem, new ArrayList<>(keys), new ArrayList<>(nextKeys));
+            if (tryNode != null && !tryNode.isNull()) {
+                return tryNode;
+            }
+        }
+        return null;
+    }
+
+    private static JsonNode wildcardAny(final List<JsonNode> nodes, final List<String> keys,
+                                        final List<String> nextKeys, final int levels) {
+        for (JsonNode node : nodes) {
+            final JsonNode matched = wildcardAny(node, keys, nextKeys);
+            if (matched != null) {
+                return matched;
+            }
+        }
+        if (levels == 1) {
+            return null;
+        }
+        final List<JsonNode> nextLevel = new ArrayList<>();
+        for (JsonNode node : nodes) {
+            for (Iterator<JsonNode> it = node.elements(); it.hasNext(); ) {
+                JsonNode elem = it.next();
+                if (elem.isObject()) {
+                    nextLevel.add(elem);
+                }
+            }
+        }
+        return wildcardAny(nextLevel, keys, nextKeys, levels - 1);
     }
 
     private static JsonNode forEachElement(final ArrayNode node, final String elem, final FilterMode mode,

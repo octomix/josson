@@ -155,11 +155,11 @@ class Utils {
         });
     }
 
-    static Pair<String, String> evaluateNameAndPath(final Pair<String, String> nameAndPath, final JsonNode node, final int index) {
-        if (nameAndPath.getKey().startsWith(":")) {
-            final String name = getNodeAsText(node, index, nameAndPath.getKey().substring(1));
+    static String[] evaluateNameAndPath(final String[] nameAndPath, final JsonNode node, final int index) {
+        if (nameAndPath[0].startsWith(":")) {
+            final String name = getNodeAsText(node, index, nameAndPath[0].substring(1));
             checkElementName(name);
-            return Pair.of(name, nameAndPath.getValue());
+            return new String[]{name, nameAndPath[1]};
         }
         return nameAndPath;
     }

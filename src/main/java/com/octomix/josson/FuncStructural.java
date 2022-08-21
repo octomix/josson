@@ -110,44 +110,44 @@ final class FuncStructural {
             return null;
         }
         final List<String> paramList = nodeAndParams.getValue();
-        Pair<String, String> nameAndPath;
+        String[] nameAndPath;
         try {
             nameAndPath = decomposeNameAndPath(paramList.get(0));
         } catch (UnknownFormatConversionException e) {
-            nameAndPath = Pair.of("key", paramList.get(0));
+            nameAndPath = new String[]{"key", paramList.get(0)};
         }
-        Pair<String, String> grouping;
+        String[] grouping;
         if (paramList.size() > 1) {
             try {
                 grouping = decomposeNameAndPath(paramList.get(1));
             } catch (UnknownFormatConversionException e) {
-                grouping = Pair.of("elements", paramList.get(1));
+                grouping = new String[]{"elements", paramList.get(1)};
             }
         } else {
-            grouping = Pair.of("elements", null);
+            grouping = new String[]{"elements", null};
         }
         final ArrayNode array = MAPPER.createArrayNode();
         for (int i = 0; i < workNode.size(); i++) {
-            final Pair<String, String> evalNameAndPath = evaluateNameAndPath(nameAndPath, workNode, i);
-            final JsonNode valueNode = getNodeByPath(workNode, i, evalNameAndPath.getValue() == null
-                    ? evalNameAndPath.getKey() : evalNameAndPath.getValue());
+            final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, workNode, i);
+            final JsonNode valueNode = getNodeByPath(workNode, i, evalNameAndPath[1] == null
+                    ? evalNameAndPath[0] : evalNameAndPath[1]);
             if (valueNode != null) {
                 ArrayNode values = null;
-                final Pair<String, String> evalGrouping = evaluateNameAndPath(grouping, workNode, i);
+                final String[] evalGrouping = evaluateNameAndPath(grouping, workNode, i);
                 for (int j = 0; j < array.size(); j++) {
-                    if (Operator.EQ.relationalCompare(array.get(j).get(evalNameAndPath.getKey()), valueNode)) {
-                        values = (ArrayNode) array.get(j).get(evalGrouping.getKey());
+                    if (Operator.EQ.relationalCompare(array.get(j).get(evalNameAndPath[0]), valueNode)) {
+                        values = (ArrayNode) array.get(j).get(evalGrouping[0]);
                         break;
                     }
                 }
                 if (values == null) {
                     values = MAPPER.createArrayNode();
                     final ObjectNode entry = Josson.createObjectNode();
-                    entry.set(evalNameAndPath.getKey(), valueNode);
-                    entry.set(evalGrouping.getKey(), values);
+                    entry.set(evalNameAndPath[0], valueNode);
+                    entry.set(evalGrouping[0], values);
                     array.add(entry);
                 }
-                values.add(evalGrouping.getValue() == null ? workNode.get(i) : getNodeByPath(workNode, i, evalGrouping.getValue()));
+                values.add(evalGrouping[1] == null ? workNode.get(i) : getNodeByPath(workNode, i, evalGrouping[1]));
             }
         }
         return array;
@@ -200,11 +200,11 @@ final class FuncStructural {
     private static ObjectNode funcMap(final ObjectNode base, final JsonNode node,
                                       final Map<String, String> args, final int index) {
         for (Map.Entry<String, String> arg : args.entrySet()) {
-            final Pair<String, String> evalNameAndPath = evaluateNameAndPath(Pair.of(arg.getKey(), arg.getValue()), node, index);
-            if (evalNameAndPath.getValue() == null) {
-                base.remove(evalNameAndPath.getKey());
+            final String[] evalNameAndPath = evaluateNameAndPath(new String[]{arg.getKey(), arg.getValue()}, node, index);
+            if (evalNameAndPath[1] == null) {
+                base.remove(evalNameAndPath[0]);
             } else {
-                base.set(evalNameAndPath.getKey(), getNodeByPath(node, index, evalNameAndPath.getValue()));
+                base.set(evalNameAndPath[0], getNodeByPath(node, index, evalNameAndPath[1]));
             }
         }
         return base;
@@ -267,8 +267,8 @@ final class FuncStructural {
         if (workNode == null) {
             return null;
         }
-        final Pair<String, String> nameAndPath = decomposeNameAndPath(nodeAndParams.getValue().get(0));
-        if (nameAndPath.getValue() == null) {
+        final String[] nameAndPath = decomposeNameAndPath(nodeAndParams.getValue().get(0));
+        if (nameAndPath[1] == null) {
             throw new SyntaxErrorException("Missing path '" + params + "'");
         }
         final ArrayNode unwind = MAPPER.createArrayNode();
@@ -282,8 +282,8 @@ final class FuncStructural {
         return unwind;
     }
 
-    private static void funcUnwind(final ArrayNode unwind, final JsonNode node, final Pair<String, String> nameAndPath) {
-        final JsonNode array = getNodeByPath(node, nameAndPath.getValue());
+    private static void funcUnwind(final ArrayNode unwind, final JsonNode node, final String[] nameAndPath) {
+        final JsonNode array = getNodeByPath(node, nameAndPath[1]);
         if (!array.isArray()) {
             return;
         }
@@ -291,14 +291,14 @@ final class FuncStructural {
                 element -> {
                     final ObjectNode object = MAPPER.createObjectNode();
                     node.fields().forEachRemaining(field -> {
-                        if (!field.getKey().equals(nameAndPath.getValue())) {
+                        if (!field.getKey().equals(nameAndPath[1])) {
                             object.set(field.getKey(), field.getValue());
                         }
                     });
                     if (element.isObject()) {
                         object.setAll((ObjectNode) element);
                     } else {
-                        object.set(nameAndPath.getKey(), element);
+                        object.set(nameAndPath[0], element);
                     }
                     unwind.add(object);
                 }

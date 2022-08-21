@@ -17,6 +17,7 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.octomix.josson.commons.StringUtils;
 
 import java.util.UnknownFormatConversionException;
 import java.util.function.Function;
@@ -65,7 +66,7 @@ final class CombineOperand {
                 return e.getConversion();
             }
         }
-        final String arrayName = keys[0].substring(0, pos).trim();
+        final String arrayName = StringUtils.strip(keys[0].substring(0, pos));
         checkElementName(arrayName);
         keys[0] = keys[0].substring(pos + 1);
         return arrayName;

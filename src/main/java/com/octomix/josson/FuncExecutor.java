@@ -68,13 +68,13 @@ final class FuncExecutor {
         final Map<String, String> elements = new LinkedHashMap<>();
         int noNameCount = 0;
         for (String param : paramList) {
-            Pair<String, String> namePath;
+            String[] namePath;
             try {
                 namePath = decomposeNameAndPath(param);
             } catch (UnknownFormatConversionException e) {
-                namePath = Pair.of(e.getConversion() + ++noNameCount, param);
+                namePath = new String[]{e.getConversion() + ++noNameCount, param};
             }
-            elements.put(namePath.getKey(), namePath.getValue());
+            elements.put(namePath[0], namePath[1]);
         }
         return elements;
     }

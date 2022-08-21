@@ -64,21 +64,9 @@ final class PatternMatcher {
     private PatternMatcher() {
     }
 
-    private static boolean isNotSpace(char ch) {
-        switch (ch) {
-            case ' ':
-            case '\n':
-            case '\r':
-            case '\t':
-            case '\f':
-                return false;
-        }
-        return true;
-    }
-
     private static int eatSpaces(final String input, int beg, final int last) {
         for (; beg <= last; beg++) {
-            if (isNotSpace(input.charAt(beg))) {
+            if (!Character.isWhitespace(input.charAt(beg))) {
                 break;
             }
         }
@@ -91,7 +79,7 @@ final class PatternMatcher {
 
     private static String rightTrimOf(final String input, final int beg, int end) {
         for (; end > beg; end--) {
-            if (isNotSpace(input.charAt(end - 1))) {
+            if (!Character.isWhitespace(input.charAt(end - 1))) {
                 break;
             }
         }
@@ -283,6 +271,29 @@ final class PatternMatcher {
         return new ArrayFilter(input, null, FILTRATE_COLLECT_ALL);
     }
 
+    static String[] matchWildcardLevelsAndFilter(final String input) {
+        final int last = input.length() - 1;
+        int beg = eatSpaces(input, 1, last);
+        if (beg > last) {
+            return null;
+        }
+        final int pos = matchParentheses(input, beg, last);
+        if (pos > 0) {
+            final String levels = trimOf(input, beg + 1, pos);
+            beg = eatSpaces(input, pos + 1, last);
+            if (beg > last) {
+                return new String[]{levels, null};
+            }
+        } else {
+            final char ch = input.charAt(beg);
+            if ((beg < last && ch == '[')
+                    || (beg == last && (FILTRATE_COLLECT_ALL.equals(ch) || FILTRATE_DIVERT_ALL.equals(ch)))) {
+                return new String[]{null, input.substring(beg)};
+            }
+        }
+        throw new SyntaxErrorException(input, "Invalid wildcard syntax");
+    }
+
     static String[] matchFunctionAndArgument(final String input, final boolean allowDivert) {
         final int last = input.length() - 1;
         for (int pos = 0; pos <= last; pos++) {
@@ -290,7 +301,7 @@ final class PatternMatcher {
             if (end > 0) {
                 final String ending = trimOf(input, end + 1, last + 1);
                 if (!ending.isEmpty()
-                        && (!allowDivert || ending.length() > 1 || ending.charAt(0) != FILTRATE_DIVERT_ALL.getSymbol())) {
+                        && (!allowDivert || ending.length() > 1 || !FILTRATE_DIVERT_ALL.equals(ending.charAt(0)))) {
                     throw new SyntaxErrorException(input, String.format("Invalid '%s' after function", ending), end);
                 }
                 final String name = rightTrimOf(input, 0, pos);
@@ -546,7 +557,7 @@ final class PatternMatcher {
         return steps;
     }
 
-    static Pair<String, String> decomposeNameAndPath(final String input) throws UnknownFormatConversionException {
+    static String[] decomposeNameAndPath(final String input) throws UnknownFormatConversionException {
         final int len = input.length();
         final int last = len - 1;
         for (int pos = 0; pos < len; pos++) {
@@ -562,11 +573,11 @@ final class PatternMatcher {
                 } else {
                     checkElementName(name);
                 }
-                return Pair.of(name, path.isEmpty() ? null : path);
+                return new String[]{name, path.isEmpty() ? null : path};
             } else {
                 pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
             }
         }
-        return Pair.of(getLastElementName(input), input);
+        return new String[]{getLastElementName(input), input};
     }
 }

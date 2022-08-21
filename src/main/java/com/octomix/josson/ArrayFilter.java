@@ -67,6 +67,10 @@ class ArrayFilter {
         char getSymbol() {
             return symbol;
         }
+
+        boolean equals(final char ch) {
+            return symbol == ch;
+        }
     }
 
     private final String nodeName;
