@@ -225,6 +225,14 @@ final class FuncFormat {
                 });
     }
 
+    static JsonNode funcMarkupEscape(final JsonNode node, final String params, final MarkupLanguage language) {
+        return applyTextNode(node, params, jsonNode -> language.escape(jsonNode.asText()));
+    }
+
+    static JsonNode funcMarkupUnescape(final JsonNode node, final String params, final MarkupLanguage language) {
+        return applyTextNode(node, params, jsonNode -> language.unescape(jsonNode.asText()));
+    }
+
     static JsonNode funcToNumber(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, Utils::nodeHasValue,
                 (data, paramList) -> {

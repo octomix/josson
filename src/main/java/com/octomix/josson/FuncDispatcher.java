@@ -222,6 +222,11 @@ class FuncDispatcher {
                 return funcEquals(node, params, false, false);
             case "equalsignorecase":
                 return funcEquals(node, params, true, false);
+            // Format
+            case "escapehtml":
+                return funcMarkupEscape(node, params, MarkupLanguage.HTML);
+            case "escapexml":
+                return funcMarkupEscape(node, params, MarkupLanguage.XML);
             // Structural
             case "entries":
                 return funcEntries(node, params);
@@ -662,6 +667,10 @@ class FuncDispatcher {
             case "untilinyear":
                 return funcUntil(node, params, ChronoUnit.YEARS);
             // Format
+            case "unescapehtml":
+                return funcMarkupUnescape(node, params, MarkupLanguage.HTML);
+            case "unescapexml":
+                return funcMarkupUnescape(node, params, MarkupLanguage.XML);
             case "urldecode":
                 return funcUrlDecode(node, params);
             case "urlencode":

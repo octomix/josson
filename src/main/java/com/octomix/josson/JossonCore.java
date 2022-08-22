@@ -244,7 +244,7 @@ final class JossonCore {
                 }
                 if (levelsAndFilter[0] != null) {
                     keys.remove(0);
-                    final int levels = levelsAndFilter[0].isEmpty() ? 1 : getNodeAsInt(node, levelsAndFilter[0]);
+                    final int levels = levelsAndFilter[0].isEmpty() ? 0 : getNodeAsInt(node, levelsAndFilter[0]);
                     return wildcardAny(
                             node.isObject() ? Collections.singletonList(node) : wildcardArrayNodeToList(node),
                             keys, nextKeys, levels);

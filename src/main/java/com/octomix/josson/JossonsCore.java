@@ -309,8 +309,15 @@ class JossonsCore {
                     }
                     query = escaping.unescape(rebuild.toString());
                 }
+                query = StringUtils.strip(query);
+                final boolean skipEscape;
+                if (query.charAt(0) == escaping.tagOpen && query.charAt(query.length() - 1) == escaping.tagClose) {
+                    query = StringUtils.strip(query.substring(1, query.length() - 1));
+                    skipEscape = true;
+                } else {
+                    skipEscape = false;
+                }
                 try {
-                    query = StringUtils.strip(query);
                     final JsonNode node = new OperationStackForDatasets(datasets, inIsAntiInject).evaluateQuery(query);
                     if (node == null) {
                         unresolvedPlaceholders.add(query);
@@ -318,7 +325,7 @@ class JossonsCore {
                             datasets.put(query, null);
                         }
                         sb.append(UNRESOLVABLE_PLACEHOLDER_MARK)
-                                .append(escaping.escape(query))
+                                .append(skipEscape ? query : escaping.escape(query))
                                 .append(UNRESOLVABLE_PLACEHOLDER_MARK);
                     } else {
                         final String text;
@@ -329,12 +336,12 @@ class JossonsCore {
                         } else {
                             text = node.toString();
                         }
-                        outIsAntiInject = antiInjectionEncode(sb, escaping.escape(text)) || outIsAntiInject;
+                        outIsAntiInject = antiInjectionEncode(sb, skipEscape ? query : escaping.escape(text)) || outIsAntiInject;
                     }
                 } catch (UnresolvedDatasetException e) {
                     unresolvedDatasets.add(e.getDatasetName());
                     sb.append(PLACEHOLDER_OPEN).append(PLACEHOLDER_OPEN)
-                            .append(escaping.escape(query))
+                            .append(skipEscape ? query : escaping.escape(query))
                             .append(PLACEHOLDER_CLOSE).append(PLACEHOLDER_CLOSE);
                 }
                 placeholderAt = -1;
