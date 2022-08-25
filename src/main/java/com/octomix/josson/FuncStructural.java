@@ -32,6 +32,7 @@ import static com.octomix.josson.Mapper.*;
 import static com.octomix.josson.PatternMatcher.*;
 import static com.octomix.josson.Utils.evaluateNameAndPath;
 import static com.octomix.josson.Utils.mergeObjects;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Structural functions.
@@ -77,16 +78,20 @@ final class FuncStructural {
     static JsonNode funcFlatten(final JsonNode node, final String params) {
         final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 0, 1);
         final JsonNode workNode = nodeAndParams.getKey();
-        if (workNode == null || !workNode.isArray()) {
-            return workNode;
+        if (workNode != null && workNode.isContainerNode()) {
+            final JsonNode param = nodeAndParams.getValue().isEmpty() ? null : getNodeByPath(node, nodeAndParams.getValue().get(0));
+            if (param != null && param.isTextual()) {
+                final ObjectNode object = MAPPER.createObjectNode();
+                funcFlatten(object, EMPTY, workNode, param.asText());
+                return object;
+            }
+            if (workNode.isArray()) {
+                final ArrayNode array = MAPPER.createArrayNode();
+                funcFlatten(array, workNode, param == null ? 0 : param.asInt());
+                return array;
+            }
         }
-        final int levels = nodeAndParams.getValue().size() > 0 ? getNodeAsInt(node, nodeAndParams.getValue().get(0)) : 1;
-        if (levels < 1) {
-            return workNode;
-        }
-        final ArrayNode array = MAPPER.createArrayNode();
-        funcFlatten(array, workNode, levels);
-        return array;
+        return workNode;
     }
 
     private static void funcFlatten(final ArrayNode array, final JsonNode node, final int levels) {
@@ -99,6 +104,22 @@ final class FuncStructural {
                 }
             } else {
                 array.add(node.get(i));
+            }
+        }
+    }
+
+    private static void funcFlatten(final ObjectNode object, final String name, final JsonNode node, final String separator) {
+        if (node.isValueNode()) {
+            object.set(name, node);
+            return;
+        }
+        final String prefix = name.isEmpty() ? EMPTY : name + separator;
+        if (node.isObject()) {
+            node.fields().forEachRemaining(elem ->
+                    funcFlatten(object, prefix + elem.getKey(), elem.getValue(), separator));
+        } else {
+            for (int i = 0; i < node.size(); i++) {
+                funcFlatten(object, prefix + i, node.get(i), separator);
             }
         }
     }
