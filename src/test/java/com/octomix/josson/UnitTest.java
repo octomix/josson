@@ -7,9 +7,7 @@ import com.octomix.josson.exception.NoValuePresentException;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -580,10 +578,55 @@ public class UnitTest {
                 "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
         evaluate.accept("items@.tags.@",
                 "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
-        evaluate.accept("items@.tags.@flatten()",
+        evaluate.accept("items@.tags.@flatten(1)",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
         evaluate.accept("items@.tags.@[true]*",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+        // If the parameter value of "flatten" is textual, it will act as a key name separator to build a flattened object.
+        evaluate.accept("flatten('_')",
+                "{\n" +
+                "  \"salesOrderId\" : \"SO0001\",\n" +
+                "  \"salesDate\" : \"2022-01-01T10:01:23\",\n" +
+                "  \"salesPerson\" : \"Raymond\",\n" +
+                "  \"customer_customerId\" : \"CU0001\",\n" +
+                "  \"customer_name\" : \"Peggy\",\n" +
+                "  \"customer_phone\" : \"+852 62000610\",\n" +
+                "  \"items_0_itemCode\" : \"B00001\",\n" +
+                "  \"items_0_name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                "  \"items_0_brand\" : \"WinWin\",\n" +
+                "  \"items_0_property_size\" : \"M\",\n" +
+                "  \"items_0_property_colors_0\" : \"WHITE\",\n" +
+                "  \"items_0_property_colors_1\" : \"RED\",\n" +
+                "  \"items_0_qty\" : 2,\n" +
+                "  \"items_0_unit\" : \"Pcs\",\n" +
+                "  \"items_0_unitPrice\" : 15.0,\n" +
+                "  \"items_0_tags_0\" : \"SHIRT\",\n" +
+                "  \"items_0_tags_1\" : \"WOMEN\",\n" +
+                "  \"items_1_itemCode\" : \"A00308\",\n" +
+                "  \"items_1_name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                "  \"items_1_brand\" : \"OctoPlus\",\n" +
+                "  \"items_1_property_colors_0\" : \"BLACK\",\n" +
+                "  \"items_1_qty\" : 1,\n" +
+                "  \"items_1_unit\" : \"Pcs\",\n" +
+                "  \"items_1_unitPrice\" : 150.0,\n" +
+                "  \"items_1_unitDiscount\" : 10.0,\n" +
+                "  \"items_1_tags_0\" : \"TENNIS\",\n" +
+                "  \"items_1_tags_1\" : \"SPORT\",\n" +
+                "  \"items_1_tags_2\" : \"RACKET\",\n" +
+                "  \"items_2_itemCode\" : \"A00201\",\n" +
+                "  \"items_2_name\" : \"WinWin Sport Shoe - Super\",\n" +
+                "  \"items_2_brand\" : \"WinWin\",\n" +
+                "  \"items_2_property_size\" : \"35\",\n" +
+                "  \"items_2_property_colors_0\" : \"RED\",\n" +
+                "  \"items_2_qty\" : 1,\n" +
+                "  \"items_2_unit\" : \"Pair\",\n" +
+                "  \"items_2_unitPrice\" : 110.0,\n" +
+                "  \"items_2_unitDiscount\" : 10.0,\n" +
+                "  \"items_2_tags_0\" : \"SHOE\",\n" +
+                "  \"items_2_tags_1\" : \"SPORT\",\n" +
+                "  \"items_2_tags_2\" : \"WOMEN\",\n" +
+                "  \"totalAmount\" : 270.0\n" +
+                "}");
         // Functions map(),field(),group(),unwind() - key name support evaluation using syntax "keyQuery::valueQuery"
         evaluate.accept("items.map(itemCode::qty)",
                 "[ {\n" +
@@ -1145,6 +1188,18 @@ public class UnitTest {
         // urlDecode()
         evaluate.accept("'www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4'.urlDecode()", "www.domain.com?a=1+2&b=3+4");
         evaluate.accept("urlDecode('www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4')", "www.domain.com?a=1+2&b=3+4");
+        // escapeHtml()
+        evaluate.accept("'~!@#$%^&*()<>[]{}+-= \"''\\|_:;,./?'.escapeHtml()",
+                "~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;'\\|_:;,./?");
+        // unescapeHtml()
+        evaluate.accept("'~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;''\\|_:;,./?'.unescapeHtml()",
+                "~!@#$%^&*()<>[]{}+-= \"'\\|_:;,./?");
+        // escapeXml()
+        evaluate.accept("'~!@#$%^&*()<>[]{}+-= \"''\\|_:;,./?'.escapeXml()",
+                "~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;&apos;\\|_:;,./?");
+        // unescapeXml()
+        evaluate.accept("'~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;&apos;\\|_:;,./?'.unescapeXml()",
+                "~!@#$%^&*()<>[]{}+-= \"'\\|_:;,./?");
         // if()
         evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if(a.isEven(), 'T', 'F')", "F");
         evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1], 'T', 'F')", "T");
@@ -1647,10 +1702,12 @@ public class UnitTest {
                         "  \"c\" : 3\n" +
                         "}");
         // flatten()
-        evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()",
+        evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten(1)",
                 "[ [ [ 1, 2 ], [ 3, 4 ] ], [ [ 5, 6 ], [ 7, 8 ] ], [ [ 9, 10 ], [ 11, 12 ] ], [ [ 13, 14 ], [ 15, 16 ] ] ]");
         evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten(2)",
                 "[ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ], [ 7, 8 ], [ 9, 10 ], [ 11, 12 ], [ 13, 14 ], [ 15, 16 ] ]");
+        evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()",
+                "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
         evaluate.accept("flatten(json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]'), 3)",
                 "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
         // map()

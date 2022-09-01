@@ -51,10 +51,10 @@ final class FuncStructural {
         if (workNode.isArray()) {
             workNode.forEach(elem -> elem.fields()
                 .forEachRemaining(field ->
-                    array.add(Josson.createObjectNode().put("key", field.getKey()).set("value", field.getValue()))));
+                    array.add(Josson.createObjectNode().put(ENTRY_KEY_NAME, field.getKey()).set(ENTRY_VALUE_NAME, field.getValue()))));
         } else {
             workNode.fields().forEachRemaining(field ->
-                array.add(Josson.createObjectNode().put("key", field.getKey()).set("value", field.getValue())));
+                array.add(Josson.createObjectNode().put(ENTRY_KEY_NAME, field.getKey()).set(ENTRY_VALUE_NAME, field.getValue())));
         }
         return array;
     }
@@ -80,9 +80,9 @@ final class FuncStructural {
         final JsonNode workNode = nodeAndParams.getKey();
         if (workNode != null && workNode.isContainerNode()) {
             final JsonNode param = nodeAndParams.getValue().isEmpty() ? null : getNodeByPath(node, nodeAndParams.getValue().get(0));
-            if (param != null && param.isTextual()) {
+            if (param != null && (param.isTextual() || param.isNull())) {
                 final ObjectNode object = MAPPER.createObjectNode();
-                funcFlatten(object, EMPTY, workNode, param.asText());
+                funcFlatten(object, null, workNode, param.isNull() ? null : param.asText());
                 return object;
             }
             if (workNode.isArray()) {
@@ -111,13 +111,12 @@ final class FuncStructural {
     private static void funcFlatten(final ObjectNode object, final String name, final JsonNode node, final String separator) {
         if (node.isValueNode()) {
             object.set(name, node);
-            return;
-        }
-        final String prefix = name.isEmpty() ? EMPTY : name + separator;
-        if (node.isObject()) {
+        } else if (node.isObject()) {
+            final String prefix = name == null || separator == null ? EMPTY : name + separator;
             node.fields().forEachRemaining(elem ->
                     funcFlatten(object, prefix + elem.getKey(), elem.getValue(), separator));
         } else {
+            final String prefix = name == null ? EMPTY : separator == null ? name : name + separator;
             for (int i = 0; i < node.size(); i++) {
                 funcFlatten(object, prefix + i, node.get(i), separator);
             }
@@ -135,17 +134,17 @@ final class FuncStructural {
         try {
             nameAndPath = decomposeNameAndPath(paramList.get(0));
         } catch (UnknownFormatConversionException e) {
-            nameAndPath = new String[]{"key", paramList.get(0)};
+            nameAndPath = new String[]{ENTRY_KEY_NAME, paramList.get(0)};
         }
         String[] grouping;
         if (paramList.size() > 1) {
             try {
                 grouping = decomposeNameAndPath(paramList.get(1));
             } catch (UnknownFormatConversionException e) {
-                grouping = new String[]{"elements", paramList.get(1)};
+                grouping = new String[]{GROUP_VALUE_NAME, paramList.get(1)};
             }
         } else {
-            grouping = new String[]{"elements", null};
+            grouping = new String[]{GROUP_VALUE_NAME, null};
         }
         final ArrayNode array = MAPPER.createArrayNode();
         for (int i = 0; i < workNode.size(); i++) {

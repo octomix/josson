@@ -38,6 +38,12 @@ final class JossonCore {
 
     static final char QUOTE_SYMBOL = '\'';
 
+    static final String ENTRY_KEY_NAME = "key";
+
+    static final String ENTRY_VALUE_NAME = "value";
+
+    static final String GROUP_VALUE_NAME = "elements";
+
     static final String CURRENT_NODE = "?";
 
     private static final String PARENT_ARRAY_NODE = "@";
@@ -259,7 +265,7 @@ final class JossonCore {
                 } else {
                     key = "entries()";
                     keys.add(1, filter);
-                    keys.add(2, "value");
+                    keys.add(2, ENTRY_VALUE_NAME);
                 }
                 break;
             case MATCHES_SYMBOL:
@@ -271,8 +277,8 @@ final class JossonCore {
                     throw new SyntaxErrorException(key);
                 }
                 key = "entries()";
-                keys.add(1, "[key.matches(" + strLiteral + ")]" + filterMode);
-                keys.add(2, "value");
+                keys.add(1, "[" + ENTRY_KEY_NAME + ".matches(" + strLiteral + ")]" + filterMode);
+                keys.add(2, ENTRY_VALUE_NAME);
                 break;
             case COLLECT_BRANCHES_SYMBOL:
                 key = StringUtils.strip(key.substring(1));
@@ -298,11 +304,11 @@ final class JossonCore {
             }
             return getNodeByKeys(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(node), keys, nextKeys);
         }
-        if (node.isValueNode()) {
-            return null;
-        }
         final ArrayFilter filter = matchFilterQuery(key);
         if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
+            if (node.isValueNode()) {
+                return null;
+            }
             if (node.isArray()) {
                 return forEachElement((ArrayNode) node, filter.getNodeName(), filter.getMode(), keys, nextKeys);
             }
