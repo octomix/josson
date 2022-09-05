@@ -154,6 +154,8 @@ class FuncDispatcher {
                 return funcCaseValue(node, params, false);
             case "casevalueignorecase":
                 return funcCaseValue(node, params, true);
+            case "coalesce":
+                return funcCoalesce(node, params);
             case "csv":
                 return funcCsv(node, params, false, false);
             case "csvshownull":
@@ -181,8 +183,10 @@ class FuncDispatcher {
             case "concatfree":
                 return funcConcat(node, params, false);
             // Structural
-            case "coalesce":
-                return funcCoalesce(node, params);
+            case "collect":
+                return funcCollect(node, params);
+            case "cumulatecollect":
+                return funcCumulateCollect(node, params);
         }
         throw new UnsupportedFunctionException();
     }

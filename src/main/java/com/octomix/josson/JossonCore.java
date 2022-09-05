@@ -237,7 +237,7 @@ final class JossonCore {
         String key = keys.get(0);
         switch (key.charAt(0)) {
             case WILDCARD_SYMBOL:
-                if (!node.isContainerNode() || node.isEmpty())  {
+                if (node.isEmpty())  {
                     return null;
                 }
                 final String[] levelsAndFilter = matchWildcardLevelsAndFilter(key);

@@ -30,8 +30,7 @@ import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.*;
 import static com.octomix.josson.PatternMatcher.*;
-import static com.octomix.josson.Utils.evaluateNameAndPath;
-import static com.octomix.josson.Utils.mergeObjects;
+import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -40,6 +39,42 @@ import static com.octomix.josson.commons.StringUtils.EMPTY;
 final class FuncStructural {
 
     private FuncStructural() {
+    }
+
+    static JsonNode funcCollect(final JsonNode node, final String params) {
+        return getParamArrayOrItselfIsContainer(node, params);
+    }
+
+    static JsonNode funcCumulateCollect(final JsonNode node, final String params) {
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 2, 2);
+        final JsonNode workNode = nodeAndParams.getKey();
+        final ArrayNode array = MAPPER.createArrayNode();
+        funcCumulateCollect(array, workNode, null, nodeAndParams.getValue().get(0), nodeAndParams.getValue().get(1));
+        return array;
+    }
+
+    private static void funcCumulateCollect(final ArrayNode array, final JsonNode node, final Integer index,
+                                            final String path, final String next) {
+        final JsonNode tryNode;
+        if (index == null) {
+            tryNode = node;
+        } else {
+            tryNode = getNodeByPath(node, index, next);
+            if (tryNode == null || Operator.EQ.relationalCompare(node, tryNode)) {
+                return;
+            }
+        }
+        if (tryNode.isArray()) {
+            for (int i = 0; i < tryNode.size(); i++) {
+                addArrayElement(array, getNodeByPath(tryNode, i, path));
+                funcCumulateCollect(array, tryNode, i, path, next);
+            }
+            return;
+        }
+        addArrayElement(array, getNodeByPath(tryNode, path));
+        if (tryNode.isObject()) {
+            funcCumulateCollect(array, tryNode, NON_ARRAY_INDEX, path, next);
+        }
     }
 
     static JsonNode funcEntries(final JsonNode node, final String params) {

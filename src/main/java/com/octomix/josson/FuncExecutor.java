@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
+import static com.octomix.josson.Utils.addArrayElement;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -112,14 +113,7 @@ final class FuncExecutor {
                     }
                 }
             } else {
-                final JsonNode tryNode = getNodeByPath(node, param);
-                if (tryNode != null) {
-                    if (tryNode.isArray()) {
-                        array.addAll((ArrayNode) tryNode);
-                    } else {
-                        array.add(tryNode);
-                    }
-                }
+                addArrayElement(array, getNodeByPath(node, param));
             }
         }
         return array;

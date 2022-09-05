@@ -155,6 +155,16 @@ class Utils {
         });
     }
 
+    static void addArrayElement(final ArrayNode array, final JsonNode node) {
+        if (node != null) {
+            if (node.isArray()) {
+                array.addAll((ArrayNode) node);
+            } else {
+                array.add(node);
+            }
+        }
+    }
+
     static String[] evaluateNameAndPath(final String[] nameAndPath, final JsonNode node, final int index) {
         if (nameAndPath[0].startsWith(":")) {
             final String name = getNodeAsText(node, index, nameAndPath[0].substring(1));
