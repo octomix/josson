@@ -66,6 +66,11 @@ enum Operator {
     MATCH("=~"),
 
     /**
+     * Matches regular expression.
+     */
+    NOT_MATCH("!=~"),
+
+    /**
      * Not.
      */
     NOT("!"),
@@ -111,11 +116,11 @@ enum Operator {
         if (rightNode == null) {
             rightNode = NullNode.getInstance();
         }
-        if (this == MATCH) {
+        if (this == MATCH || this == NOT_MATCH) {
             if (!leftNode.isValueNode() || !rightNode.isTextual()) {
                 return false;
             }
-            return Pattern.compile(rightNode.asText()).matcher(leftNode.asText()).matches();
+            return this == NOT_MATCH ^ Pattern.compile(rightNode.asText()).matcher(leftNode.asText()).matches();
         }
         if (leftNode.isContainerNode() || rightNode.isContainerNode()) {
             return relationalCompareContainer(leftNode, rightNode);

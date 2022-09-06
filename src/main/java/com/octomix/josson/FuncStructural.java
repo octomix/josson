@@ -47,22 +47,16 @@ final class FuncStructural {
 
     static JsonNode funcCumulateCollect(final JsonNode node, final String params) {
         final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 2, 2);
-        final JsonNode workNode = nodeAndParams.getKey();
         final ArrayNode array = MAPPER.createArrayNode();
-        funcCumulateCollect(array, workNode, null, nodeAndParams.getValue().get(0), nodeAndParams.getValue().get(1));
+        funcCumulateCollect(array, nodeAndParams.getKey(), null, nodeAndParams.getValue().get(0), nodeAndParams.getValue().get(1));
         return array;
     }
 
     private static void funcCumulateCollect(final ArrayNode array, final JsonNode node, final Integer index,
                                             final String path, final String next) {
-        final JsonNode tryNode;
-        if (index == null) {
-            tryNode = node;
-        } else {
-            tryNode = getNodeByPath(node, index, next);
-            if (tryNode == null || Operator.EQ.relationalCompare(node, tryNode)) {
-                return;
-            }
+        final JsonNode tryNode = index == null ? node : getNodeByPath(node, index, next);
+        if (tryNode == null || (index != null && Operator.EQ.relationalCompare(node, tryNode))) {
+            return;
         }
         if (tryNode.isArray()) {
             for (int i = 0; i < tryNode.size(); i++) {
@@ -75,6 +69,25 @@ final class FuncStructural {
         if (tryNode.isObject()) {
             funcCumulateCollect(array, tryNode, NON_ARRAY_INDEX, path, next);
         }
+    }
+
+    static JsonNode funcDepthLimit(final JsonNode node, final String params) {
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
+        final JsonNode workNode = nodeAndParams.getKey();
+        if (workNode == null) {
+            return null;
+        }
+        final int depth = getNodeAsInt(node, nodeAndParams.getValue().get(0));
+        if (depth < 1) {
+            return null;
+        }
+        if (workNode.isObject()) {
+            return deepCopy((ObjectNode) workNode, depth);
+        }
+        if (workNode.isArray()) {
+            return deepCopy((ArrayNode) workNode, depth);
+        }
+        return workNode;
     }
 
     static JsonNode funcEntries(final JsonNode node, final String params) {

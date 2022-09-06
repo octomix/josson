@@ -211,6 +211,9 @@ class FuncDispatcher {
             // String
             case "doublequote":
                 return funcDoubleQuote(node, params);
+            // Structural
+            case "depthlimit":
+                return funcDepthLimit(node, params);
         }
         throw new UnsupportedFunctionException();
     }
