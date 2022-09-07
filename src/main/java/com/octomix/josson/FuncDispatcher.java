@@ -604,7 +604,13 @@ class FuncDispatcher {
             case "snakecase":
                 return funcSnakeCase(node, params, CaseUtils.Type.UNDEFINED);
             case "split":
-                return funcSplit(node, params);
+                return funcSplit(node, params, false);
+            case "splitmax":
+                return funcSplitMax(node, params, false);
+            case "splitbywholeseparator":
+                return funcSplit(node, params, true);
+            case "splitbywholeseparatormax":
+                return funcSplitMax(node, params, true);
             case "strip":
                 return funcStrip(node, params);
             case "stripend":

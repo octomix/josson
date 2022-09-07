@@ -222,14 +222,34 @@ final class FuncString {
                 (data, paramList) -> TextNode.valueOf(CaseUtils.toSnakeCase(data.getKey().asText(), type)));
     }
 
-    static JsonNode funcSplit(final JsonNode node, final String params) {
+    static JsonNode funcSplit(final JsonNode node, final String params, final boolean wholeSeparator) {
         return applyWithParams(node, params, 0, 1, JsonNode::isTextual,
                 (data, paramList) -> {
                     final JsonNode dataNode = data.getKey();
                     final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
                     final String separator = paramList.size() > 0 ? getNodeAsText(paramNode, data.getValue(), paramList.get(0)) : null;
                     final ArrayNode array = MAPPER.createArrayNode();
-                    for (String text : StringUtils.split(dataNode.asText(), separator)) {
+                    for (String text : wholeSeparator
+                            ? StringUtils.splitByWholeSeparator(dataNode.asText(), separator)
+                            : StringUtils.split(dataNode.asText(), separator)) {
+                        array.add(TextNode.valueOf(text));
+                    }
+                    return array;
+                });
+    }
+
+    static JsonNode funcSplitMax(final JsonNode node, final String params, final boolean wholeSeparator) {
+        return applyWithParams(node, params, 0, 3, JsonNode::isTextual,
+                (data, paramList) -> {
+                    final JsonNode dataNode = data.getKey();
+                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                    final String separator = paramList.size() > 0 ? getNodeAsText(paramNode, data.getValue(), paramList.get(0)) : null;
+                    final int max = paramList.size() > 1 ? getNodeAsInt(paramNode, data.getValue(), paramList.get(1)) : -1;
+                    final boolean preserveAllTokens = paramList.size() > 2 && getNodeAsBoolean(paramNode, data.getValue(), paramList.get(2));
+                    final ArrayNode array = MAPPER.createArrayNode();
+                    for (String text : wholeSeparator
+                            ? StringUtils.splitByWholeSeparatorWorker(dataNode.asText(), separator, max, preserveAllTokens)
+                            : StringUtils.splitWorker(dataNode.asText(), separator, max, preserveAllTokens)) {
                         array.add(TextNode.valueOf(text));
                     }
                     return array;

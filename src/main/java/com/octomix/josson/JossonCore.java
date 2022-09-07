@@ -28,6 +28,7 @@ import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
+import static com.octomix.josson.Utils.addArrayElement;
 import static com.octomix.josson.Utils.literalToValueNode;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -122,23 +123,19 @@ final class JossonCore {
         return workNode == null ? EMPTY : workNode.asText();
     }
 
+
+    static boolean getNodeAsBoolean(final JsonNode node, final int index, final String jossonPath) {
+        final JsonNode workNode = getNodeByPath(node, index, jossonPath);
+        return workNode != null && workNode.asBoolean();
+    }
+
     static int getNodeAsInt(final JsonNode node, final String jossonPath) {
         return getNodeAsInt(node, NON_ARRAY_INDEX, jossonPath);
     }
 
     static int getNodeAsInt(final JsonNode node, final int index, final String jossonPath) {
         final JsonNode workNode = getNodeByPath(node, index, jossonPath);
-        if (workNode != null && workNode.isValueNode()) {
-            if (workNode.isTextual()) {
-                try {
-                    return Integer.parseInt(workNode.asText());
-                } catch (NumberFormatException e) {
-                    return 0;
-                }
-            }
-            return workNode.asInt();
-        }
-        return 0;
+        return workNode == null || !workNode.isValueNode() ? 0 : workNode.asInt();
     }
 
     static JsonNode getNodeByPath(final JsonNode node, final String jossonPath) {
@@ -379,11 +376,8 @@ final class JossonCore {
             List<String> nextNextKeys = null;
             for (int i = 0; i < node.size(); i++) {
                 nextNextKeys = new ArrayList<>();
-                final JsonNode addNode = getNodeByKeys(
-                        elem == null ? node.get(i) : node.get(i).get(elem), new ArrayList<>(keys), nextNextKeys);
-                if (addNode != null) {
-                    array.add(addNode);
-                }
+                addArrayElement(array, getNodeByKeys(
+                        elem == null ? node.get(i) : node.get(i).get(elem), new ArrayList<>(keys), nextNextKeys));
             }
             if (nextNextKeys != null) {
                 if (nextKeys.isEmpty() && !nextNextKeys.isEmpty()) {

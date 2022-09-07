@@ -157,11 +157,7 @@ class Utils {
 
     static void addArrayElement(final ArrayNode array, final JsonNode node) {
         if (node != null) {
-            if (node.isArray()) {
-                array.addAll((ArrayNode) node);
-            } else {
-                array.add(node);
-            }
+            array.add(node);
         }
     }
 

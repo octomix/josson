@@ -42,7 +42,10 @@ final class FuncStructural {
     }
 
     static JsonNode funcCollect(final JsonNode node, final String params) {
-        return getParamArrayOrItselfIsContainer(node, params);
+        final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_AND_NO_PATH);
+        final ArrayNode array = MAPPER.createArrayNode();
+        paramList.forEach(param -> addArrayElement(array, getNodeByPath(node, param)));
+        return array;
     }
 
     static JsonNode funcCumulateCollect(final JsonNode node, final String params) {

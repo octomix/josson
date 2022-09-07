@@ -107,13 +107,17 @@ final class FuncExecutor {
         for (String param : paramList) {
             if (node.isArray()) {
                 for (int i = 0; i < node.size(); i++) {
-                    final JsonNode tryNode = getNodeByPath(node, i, param);
-                    if (tryNode != null) {
+                    addArrayElement(array, getNodeByPath(node, i, param));
+                }
+            } else {
+                final JsonNode tryNode = getNodeByPath(node, param);
+                if (tryNode != null) {
+                    if (tryNode.isArray()) {
+                        array.addAll((ArrayNode) tryNode);
+                    } else {
                         array.add(tryNode);
                     }
                 }
-            } else {
-                addArrayElement(array, getNodeByPath(node, param));
             }
         }
         return array;

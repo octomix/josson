@@ -459,6 +459,34 @@ public class UnitTest {
         evaluate.accept("keys(?, 2)",
                 "[ \"salesOrderId\", \"salesDate\", \"salesPerson\", \"customer\", \"customerId\", \"name\", \"phone\", \"items\", \"totalAmount\" ]");
 
+        // Function "collect()" puts all argument values into an array.
+        evaluate.accept("collect(salesDate, customer, items.itemCode)",
+                "[ \"2022-01-01T10:01:23\", {\n" +
+                        "  \"customerId\" : \"CU0001\",\n" +
+                        "  \"name\" : \"Peggy\",\n" +
+                        "  \"phone\" : \"+852 62000610\"\n" +
+                        "}, [ \"B00001\", \"A00308\", \"A00201\" ] ]");
+
+        // Function "cumulateCollect()" require 2 arguments.
+        // The 1st parameter is a query to evaluate a result that will be collected into an array.
+        // The 2nd parameter is a query to evaluate the next dataset that loop back for the 1st parameter evaluation again.
+        // The operation loop will be stopped when the next dataset is null.
+        evaluate.accept("json('{\"id\":1,\"val\":11,\"item\":{\"id\":2,\"val\":22,\"item\":{\"id\":3,\"val\":33,\"item\":{\"id\":4,\"val\":44}}}}')" +
+                        ".cumulateCollect(map(id,val.calc(?*2)), item)",
+                "[ {\n" +
+                        "  \"id\" : 1,\n" +
+                        "  \"val\" : 22.0\n" +
+                        "}, {\n" +
+                        "  \"id\" : 2,\n" +
+                        "  \"val\" : 44.0\n" +
+                        "}, {\n" +
+                        "  \"id\" : 3,\n" +
+                        "  \"val\" : 66.0\n" +
+                        "}, {\n" +
+                        "  \"id\" : 4,\n" +
+                        "  \"val\" : 88.0\n" +
+                        "} ]");
+
         // Function "toArray" puts an object's values into an array.
         evaluate.accept("customer.toArray()",
                 "[ \"CU0001\", \"Peggy\", \"+852 62000610\" ]");
@@ -913,6 +941,15 @@ public class UnitTest {
         evaluate.accept("'abc  def'.split(' ')", "[ \"abc\", \"def\" ]");
         evaluate.accept("' abc  def '.split(?, ' ')", "[ \"abc\", \"def\" ]");
         evaluate.accept("split('ab:cd:ef', ':')", "[ \"ab\", \"cd\", \"ef\" ]");
+        // splitMax()
+        evaluate.accept("'ab:cd:ef'.splitMax(':', 0)", "[ \"ab\", \"cd\", \"ef\" ]");
+        evaluate.accept("splitMax('ab:cd:ef', ':', 2, true)", "[ \"ab\", \"cd:ef\" ]");
+        // splitByWholeSeparator()
+        evaluate.accept("'ab:cd:ef'.splitByWholeSeparator(':')", "[ \"ab\", \"cd\", \"ef\" ]");
+        evaluate.accept("splitByWholeSeparator('ab-!-cd-!-ef', '-!-')", "[ \"ab\", \"cd\", \"ef\" ]");
+        // splitByWholeSeparatorMax()
+        evaluate.accept("'ab:cd:ef'.splitByWholeSeparatorMax(':', 0)", "[ \"ab\", \"cd\", \"ef\" ]");
+        evaluate.accept("splitByWholeSeparatorMax('ab-!-cd-!-ef', '-!-', 2, true)", "[ \"ab\", \"cd-!-ef\" ]");
         // strip()
         evaluate.accept("'  abc  '.strip(' ').concat('>',?,'<')", ">abc<");
         evaluate.accept("'  abcyx'.strip('xyz').concat('>',?,'<')", ">  abc<");
@@ -1654,6 +1691,71 @@ public class UnitTest {
                 "[ \"a\", \"b\", \"c\", \"d\", \"e\" ]");
         evaluate.accept("keys(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}'), -1)",
                 "[ \"a\", \"b\", \"c\", \"d\", \"e\" ]");
+        // depthLimit()
+        evaluate.accept("json('{\"id\":1,\"array\":[{\"id\":2,\"obj\":{\"id\":3,\"array\":[{\"id\":4.1},{\"id\":4.2}]}}]}').depthLimit(1)",
+                "{\n" +
+                        "  \"id\" : 1\n" +
+                        "}");
+        evaluate.accept("json('{\"id\":1,\"array\":[{\"id\":2,\"obj\":{\"id\":3,\"array\":[{\"id\":4.1},{\"id\":4.2}]}}]}').depthLimit(2)",
+                "{\n" +
+                        "  \"id\" : 1,\n" +
+                        "  \"array\" : [ {\n" +
+                        "    \"id\" : 2\n" +
+                        "  } ]\n" +
+                        "}");
+        evaluate.accept("depthLimit(json('{\"id\":1,\"array\":[{\"id\":2,\"obj\":{\"id\":3,\"array\":[{\"id\":4.1},{\"id\":4.2}]}}]}'),3)",
+                "{\n" +
+                        "  \"id\" : 1,\n" +
+                        "  \"array\" : [ {\n" +
+                        "    \"id\" : 2,\n" +
+                        "    \"obj\" : {\n" +
+                        "      \"id\" : 3\n" +
+                        "    }\n" +
+                        "  } ]\n" +
+                        "}");
+        evaluate.accept("depthLimit(json('{\"id\":1,\"array\":[{\"id\":2,\"obj\":{\"id\":3,\"array\":[{\"id\":4.1},{\"id\":4.2}]}}]}'),4)",
+                "{\n" +
+                        "  \"id\" : 1,\n" +
+                        "  \"array\" : [ {\n" +
+                        "    \"id\" : 2,\n" +
+                        "    \"obj\" : {\n" +
+                        "      \"id\" : 3,\n" +
+                        "      \"array\" : [ {\n" +
+                        "        \"id\" : 4.1\n" +
+                        "      }, {\n" +
+                        "        \"id\" : 4.2\n" +
+                        "      } ]\n" +
+                        "    }\n" +
+                        "  } ]\n" +
+                        "}");
+        // collect()
+        evaluate.accept("'Hi'.collect(1,?,true,json('[{\"a\":1,\"x\":11},{\"b\":2,\"y\":12}]'),json('{\"c\":3,\"x\":13}'))",
+                "[ 1, \"Hi\", true, [ {\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"x\" : 11\n" +
+                        "}, {\n" +
+                        "  \"b\" : 2,\n" +
+                        "  \"y\" : 12\n" +
+                        "} ], {\n" +
+                        "  \"c\" : 3,\n" +
+                        "  \"x\" : 13\n" +
+                        "} ]");
+        // cumulateCollect()
+        evaluate.accept("json('{\"id\":1,\"val\":11,\"item\":{\"id\":2,\"val\":22,\"item\":{\"id\":3,\"val\":33,\"item\":{\"id\":4,\"val\":44}}}}')" +
+                        ".cumulateCollect(map(id,val.calc(?*2)), item)",
+                "[ {\n" +
+                        "  \"id\" : 1,\n" +
+                        "  \"val\" : 22.0\n" +
+                        "}, {\n" +
+                        "  \"id\" : 2,\n" +
+                        "  \"val\" : 44.0\n" +
+                        "}, {\n" +
+                        "  \"id\" : 3,\n" +
+                        "  \"val\" : 66.0\n" +
+                        "}, {\n" +
+                        "  \"id\" : 4,\n" +
+                        "  \"val\" : 88.0\n" +
+                        "} ]");
         // toArray()
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').toArray()",
                 "[ 1, [ 2, 3 ], {\n" +
