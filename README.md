@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.25</version>
+        <version>1.3.26</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.25'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.26'
 
 ## Features and Capabilities
 
@@ -1438,8 +1438,8 @@ String Functions
 38. [rightPad()](#38-rightpad)
 39. [split()](#39-split)
 40. [splitMax()](#40-splitmax)
-41. [splitByWholeSeparator](#41-splitbywholeseparator)
-42. [splitByWholeSeparatorMax](#42-splitbywholeseparatormax)
+41. [separate](#41-separate)
+42. [separateMax](#42-separatemax)
 43. [strip()](#43-strip)
 44. [stripEnd()](#44-stripend)
 45. [stripStart()](#45-stripstart)
@@ -1997,17 +1997,17 @@ Following are some examples of each function.
 
     splitMax('ab:cd:ef', ':', 2, true) ==> [ "ab", "cd:ef" ]
 
-#### 41. splitByWholeSeparator()
+#### 41. separate()
 
-    'ab:cd:ef'.splitByWholeSeparator(':') ==> [ "ab", "cd", "ef" ]
+    'ab:cd:ef'.separate(':') ==> [ "ab", "cd", "ef" ]
 
-    splitByWholeSeparator('ab-!-cd-!-ef', '-!-') ==> [ "ab", "cd", "ef" ]
+    separate('ab-!-cd-!-ef', '-!-') ==> [ "ab", "cd", "ef" ]
 
-#### 42. splitByWholeSeparatorMax()
+#### 42. separateMax()
 
-    'ab:cd:ef'.splitByWholeSeparatorMax(':', 0) ==> [ "ab", "cd", "ef" ]
+    'ab:cd:ef'.separateMax(':', 0) ==> [ "ab", "cd", "ef" ]
 
-    splitByWholeSeparatorMax('ab-!-cd-!-ef', '-!-', 2, true) ==> [ "ab", "cd-!-ef" ]
+    separateMax('ab-!-cd-!-ef', '-!-', 2, true) ==> [ "ab", "cd-!-ef" ]
 
 #### 43. strip()
 

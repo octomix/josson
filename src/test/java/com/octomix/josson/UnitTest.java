@@ -944,12 +944,12 @@ public class UnitTest {
         // splitMax()
         evaluate.accept("'ab:cd:ef'.splitMax(':', 0)", "[ \"ab\", \"cd\", \"ef\" ]");
         evaluate.accept("splitMax('ab:cd:ef', ':', 2, true)", "[ \"ab\", \"cd:ef\" ]");
-        // splitByWholeSeparator()
-        evaluate.accept("'ab:cd:ef'.splitByWholeSeparator(':')", "[ \"ab\", \"cd\", \"ef\" ]");
-        evaluate.accept("splitByWholeSeparator('ab-!-cd-!-ef', '-!-')", "[ \"ab\", \"cd\", \"ef\" ]");
-        // splitByWholeSeparatorMax()
-        evaluate.accept("'ab:cd:ef'.splitByWholeSeparatorMax(':', 0)", "[ \"ab\", \"cd\", \"ef\" ]");
-        evaluate.accept("splitByWholeSeparatorMax('ab-!-cd-!-ef', '-!-', 2, true)", "[ \"ab\", \"cd-!-ef\" ]");
+        // separate()
+        evaluate.accept("'ab:cd:ef'.separate(':')", "[ \"ab\", \"cd\", \"ef\" ]");
+        evaluate.accept("separate('ab-!-cd-!-ef', '-!-')", "[ \"ab\", \"cd\", \"ef\" ]");
+        // separateMax()
+        evaluate.accept("'ab:cd:ef'.separateMax(':', 0)", "[ \"ab\", \"cd\", \"ef\" ]");
+        evaluate.accept("separateMax('ab-!-cd-!-ef', '-!-', 2, true)", "[ \"ab\", \"cd-!-ef\" ]");
         // strip()
         evaluate.accept("'  abc  '.strip(' ').concat('>',?,'<')", ">abc<");
         evaluate.accept("'  abcyx'.strip('xyz').concat('>',?,'<')", ">  abc<");

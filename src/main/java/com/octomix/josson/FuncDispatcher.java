@@ -599,6 +599,10 @@ class FuncDispatcher {
             case "startswithignorecase":
                 return funcStartsWith(node, params, true, false);
             // String
+            case "separate":
+                return funcSplit(node, params, true);
+            case "separatemax":
+                return funcSplitMax(node, params, true);
             case "singlequote":
                 return funcSingleQuote(node, params);
             case "snakecase":
@@ -607,10 +611,6 @@ class FuncDispatcher {
                 return funcSplit(node, params, false);
             case "splitmax":
                 return funcSplitMax(node, params, false);
-            case "splitbywholeseparator":
-                return funcSplit(node, params, true);
-            case "splitbywholeseparatormax":
-                return funcSplitMax(node, params, true);
             case "strip":
                 return funcStrip(node, params);
             case "stripend":

@@ -123,6 +123,10 @@ final class JossonCore {
         return workNode == null ? EMPTY : workNode.asText();
     }
 
+    static String getNodeAsTextExceptNull(final JsonNode node, final int index, final String jossonPath) {
+        final JsonNode workNode = getNodeByPath(node, index, jossonPath);
+        return workNode == null || workNode.isNull() ? null : workNode.asText();
+    }
 
     static boolean getNodeAsBoolean(final JsonNode node, final int index, final String jossonPath) {
         final JsonNode workNode = getNodeByPath(node, index, jossonPath);

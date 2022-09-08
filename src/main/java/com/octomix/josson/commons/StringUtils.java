@@ -1889,12 +1889,12 @@ public class StringUtils {
      * A {@code null} separator splits on whitespace.</p>
      *
      * <pre>
-     * StringUtils.splitByWholeSeparator(null, *)               = null
-     * StringUtils.splitByWholeSeparator("", *)                 = []
-     * StringUtils.splitByWholeSeparator("ab de fg", null)      = ["ab", "de", "fg"]
-     * StringUtils.splitByWholeSeparator("ab   de fg", null)    = ["ab", "de", "fg"]
-     * StringUtils.splitByWholeSeparator("ab:cd:ef", ":")       = ["ab", "cd", "ef"]
-     * StringUtils.splitByWholeSeparator("ab-!-cd-!-ef", "-!-") = ["ab", "cd", "ef"]
+     * StringUtils.separate(null, *)               = null
+     * StringUtils.separate("", *)                 = []
+     * StringUtils.separate("ab de fg", null)      = ["ab", "de", "fg"]
+     * StringUtils.separate("ab   de fg", null)    = ["ab", "de", "fg"]
+     * StringUtils.separate("ab:cd:ef", ":")       = ["ab", "cd", "ef"]
+     * StringUtils.separate("ab-!-cd-!-ef", "-!-") = ["ab", "cd", "ef"]
      * </pre>
      *
      * @param str  the String to parse, may be null
@@ -1902,12 +1902,12 @@ public class StringUtils {
      *  {@code null} splits on whitespace
      * @return an array of parsed Strings, {@code null} if null String was input
      */
-    public static String[] splitByWholeSeparator(final String str, final String separator) {
-        return splitByWholeSeparatorWorker(str, separator, -1, false);
+    public static String[] separate(final String str, final String separator) {
+        return separateWorker(str, separator, -1, false);
     }
 
     /**
-     * Performs the logic for the {@code splitByWholeSeparatorPreserveAllTokens} methods.
+     * Performs the logic for the {@code separatePreserveAllTokens} methods.
      *
      * @param str  the String to parse, may be {@code null}
      * @param separator  String containing the String to be used as a delimiter,
@@ -1920,7 +1920,7 @@ public class StringUtils {
      * @return an array of parsed Strings, {@code null} if null String input
      * @since 2.4
      */
-    public static String[] splitByWholeSeparatorWorker(
+    public static String[] separateWorker(
             final String str, final String separator, final int max, final boolean preserveAllTokens) {
         if (str == null) {
             return null;

@@ -226,13 +226,13 @@ final class FuncStructural {
 
     static JsonNode funcJson(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, JsonNode::isTextual,
-                (data, paramList) -> {
-                    try {
-                        return readJsonNode(data.getKey().asText());
-                    } catch (JsonProcessingException e) {
-                        throw new IllegalArgumentException(e.getMessage());
-                    }
-                });
+            (data, paramList) -> {
+                try {
+                    return readJsonNode(data.getKey().asText());
+                } catch (JsonProcessingException e) {
+                    throw new IllegalArgumentException(e.getMessage());
+                }
+            });
     }
 
     static JsonNode funcKeys(final JsonNode node, final String params) {
@@ -359,20 +359,20 @@ final class FuncStructural {
             return;
         }
         array.elements().forEachRemaining(
-                element -> {
-                    final ObjectNode object = MAPPER.createObjectNode();
-                    node.fields().forEachRemaining(field -> {
-                        if (!field.getKey().equals(nameAndPath[1])) {
-                            object.set(field.getKey(), field.getValue());
-                        }
-                    });
-                    if (element.isObject()) {
-                        object.setAll((ObjectNode) element);
-                    } else {
-                        object.set(nameAndPath[0], element);
+            element -> {
+                final ObjectNode object = MAPPER.createObjectNode();
+                node.fields().forEachRemaining(field -> {
+                    if (!field.getKey().equals(nameAndPath[1])) {
+                        object.set(field.getKey(), field.getValue());
                     }
-                    unwind.add(object);
+                });
+                if (element.isObject()) {
+                    object.setAll((ObjectNode) element);
+                } else {
+                    object.set(nameAndPath[0], element);
                 }
+                unwind.add(object);
+            }
         );
     }
 }

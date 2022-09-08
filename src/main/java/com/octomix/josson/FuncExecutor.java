@@ -151,25 +151,23 @@ final class FuncExecutor {
     static JsonNode applyTextNodeToInt(final JsonNode node, final String params,
                                        final Function<JsonNode, Integer> transform) {
         return applyWithoutParam(node, params, JsonNode::isTextual,
-                (data, paramList) -> IntNode.valueOf(transform.apply(data.getKey())));
+            (data, paramList) -> IntNode.valueOf(transform.apply(data.getKey())));
     }
 
     static JsonNode applyTextNodeWithParamAsText(final JsonNode node, final String params,
                                                  final BiFunction<String, String, String> transform) {
         return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
-                (data, paramList) -> {
-                    final String param = getNodeAsText(node, data.getValue(), paramList.get(0));
-                    return TextNode.valueOf(transform.apply(data.getKey().asText(), param));
-                });
+            (data, paramList) -> TextNode.valueOf(
+                transform.apply(data.getKey().asText(), getNodeAsText(node, data.getValue(), paramList.get(0)))
+            ));
     }
 
     static JsonNode applyTextNodeWithParamAsText(final JsonNode node, final String params, final boolean not,
                                                  final BiFunction<String, String, Boolean> transform) {
         return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
-                (data, paramList) -> {
-                    final String param = getNodeAsText(node, data.getValue(), paramList.get(0));
-                    return BooleanNode.valueOf(not ^ transform.apply(data.getKey().asText(), param));
-                });
+            (data, paramList) -> BooleanNode.valueOf(
+                not ^ transform.apply(data.getKey().asText(), getNodeAsText(node, data.getValue(), paramList.get(0)))
+            ));
     }
 
     private static JsonNode applyAction(final JsonNode node, final String path, final Predicate<JsonNode> isValid,

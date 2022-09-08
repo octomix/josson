@@ -52,39 +52,39 @@ final class FuncFormat {
 
     static JsonNode funcCaseValue(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyWithParams(node, params, 2, UNLIMITED_AND_NO_PATH, JsonNode::isValueNode,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final int last = paramList.size() - 1;
-                    int i = 0;
-                    for (; i < last; i += 2) {
-                        final JsonNode caseKey = getNodeByPath(node, data.getValue(), paramList.get(i));
-                        if (dataNode.isNumber() && (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asDouble() == dataNode.asDouble()
-                            || dataNode.isNull() && caseKey.isNull()
-                            || (ignoreCase
-                                ? caseKey.asText().equalsIgnoreCase(dataNode.asText())
-                                : caseKey.asText().equals(dataNode.asText()))) {
-                            return getNodeByPath(node, data.getValue(), paramList.get(i + 1));
-                        }
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final int last = paramList.size() - 1;
+                int i = 0;
+                for (; i < last; i += 2) {
+                    final JsonNode caseKey = getNodeByPath(node, data.getValue(), paramList.get(i));
+                    if (dataNode.isNumber() && (caseKey.isNumber() || caseKey.isTextual()) && caseKey.asDouble() == dataNode.asDouble()
+                        || dataNode.isNull() && caseKey.isNull()
+                        || (ignoreCase
+                            ? caseKey.asText().equalsIgnoreCase(dataNode.asText())
+                            : caseKey.asText().equals(dataNode.asText()))) {
+                        return getNodeByPath(node, data.getValue(), paramList.get(i + 1));
                     }
-                    return i == last ? getNodeByPath(node, data.getValue(), paramList.get(i)) : null;
-                });
+                }
+                return i == last ? getNodeByPath(node, data.getValue(), paramList.get(i)) : null;
+            });
     }
 
     static JsonNode funcCoalesce(final JsonNode node, final String params) {
         return applyWithParams(node, params, 1, UNLIMITED_AND_NO_PATH, null,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    if (nodeHasValue(dataNode)) {
-                        return dataNode;
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                if (nodeHasValue(dataNode)) {
+                    return dataNode;
+                }
+                for (String path : paramList) {
+                    final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
+                    if (tryNode != null && !tryNode.isNull()) {
+                        return tryNode;
                     }
-                    for (String path : paramList) {
-                        final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
-                        if (tryNode != null && !tryNode.isNull()) {
-                            return tryNode;
-                        }
-                    }
-                    return null;
-                });
+                }
+                return null;
+            });
     }
 
     static TextNode funcCsv(final JsonNode node, final String params, final boolean showNull, final boolean forParams) {
@@ -139,90 +139,90 @@ final class FuncFormat {
 
     static JsonNode funcCycleValue(final JsonNode node, final String params) {
         return applyWithArrayNode(node, params, Utils::nodeHasValue,
-                (jsonNode, paramArray) -> {
-                    final int size = paramArray.size();
-                    final int index = jsonNode.asInt() % size;
-                    return paramArray.get(index < 0 ? index + size : index);
-                });
+            (jsonNode, paramArray) -> {
+                final int size = paramArray.size();
+                final int index = jsonNode.asInt() % size;
+                return paramArray.get(index < 0 ? index + size : index);
+            });
     }
 
     static JsonNode funcDefault(final JsonNode node, final String params) {
         return applyWithParams(node, params, 0, UNLIMITED_AND_NO_PATH, null,
-                (data, paramList) -> {
-                    for (String path : paramList) {
-                        final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
-                        if (tryNode != null && !tryNode.isNull()) {
-                            return tryNode;
-                        }
+            (data, paramList) -> {
+                for (String path : paramList) {
+                    final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
+                    if (tryNode != null && !tryNode.isNull()) {
+                        return tryNode;
                     }
-                    return TextNode.valueOf(EMPTY);
-                });
+                }
+                return TextNode.valueOf(EMPTY);
+            });
     }
 
     static JsonNode funcFormatDate(final JsonNode node, final String params) {
         return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final String pattern = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
-                    return TextNode.valueOf(toLocalDateTime(dataNode)
-                            .format(DateTimeFormatter.ofPattern(pattern).withLocale(getLocale()).withZone(getZoneId())));
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final String pattern = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
+                return TextNode.valueOf(toLocalDateTime(dataNode)
+                        .format(DateTimeFormatter.ofPattern(pattern).withLocale(getLocale()).withZone(getZoneId())));
+            });
     }
 
     static JsonNode funcFormatNumber(final JsonNode node, final String params) {
         return applyWithParams(node, params, 1, 1, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final String pattern = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
-                    return TextNode.valueOf(new DecimalFormat(pattern).format(dataNode.asDouble()));
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final String pattern = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
+                return TextNode.valueOf(new DecimalFormat(pattern).format(dataNode.asDouble()));
+            });
     }
 
     static JsonNode funcFormatText(final JsonNode node, final String params) {
         return applyWithParams(node, params, 1, 1, Utils::nodeHasValue,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final String format = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
-                    return TextNode.valueOf(String.format(format, valueAsObject(dataNode)));
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final String format = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
+                return TextNode.valueOf(String.format(format, valueAsObject(dataNode)));
+            });
     }
 
     static JsonNode funcFormatTexts(final JsonNode node, final String params) {
         return applyWithParams(node, params, 2, UNLIMITED_AND_NO_PATH, null,
-                (data, paramList) -> {
-                    final String format = getNodeAsText(node, data.getValue(), paramList.get(0));
-                    if (format == null) {
-                        return null;
-                    }
-                    final Object[] valueObjects = valuesAsObjects(node, data.getValue(), paramList.subList(1, paramList.size()));
-                    if (valueObjects == null) {
-                        return null;
-                    }
-                    return TextNode.valueOf(String.format(format, valueObjects));
-                });
+            (data, paramList) -> {
+                final String format = getNodeAsTextExceptNull(node, data.getValue(), paramList.get(0));
+                if (format == null) {
+                    return null;
+                }
+                final Object[] valueObjects = valuesAsObjects(node, data.getValue(), paramList.subList(1, paramList.size()));
+                if (valueObjects == null) {
+                    return null;
+                }
+                return TextNode.valueOf(String.format(format, valueObjects));
+            });
     }
 
     static JsonNode funcIf(final JsonNode node, final String params) {
         return applyWithParams(node, params, 2, 3, null,
-                (data, paramList) -> {
-                    final JsonNode paramNode = data.getValue() < 0 ? data.getKey() : node;
-                    final String query =
-                            asBoolean(getNodeByPath(paramNode, data.getValue(), paramList.get(0))) ? paramList.get(1)
-                            : paramList.size() > 2 ? paramList.get(2)
-                            : null;
-                    return query == null ? null : getNodeByPath(paramNode, data.getValue(), query);
-                });
+            (data, paramList) -> {
+                final JsonNode paramNode = data.getValue() < 0 ? data.getKey() : node;
+                final String query =
+                        asBoolean(getNodeByPath(paramNode, data.getValue(), paramList.get(0))) ? paramList.get(1)
+                        : paramList.size() > 2 ? paramList.get(2)
+                        : null;
+                return query == null ? null : getNodeByPath(paramNode, data.getValue(), query);
+            });
     }
 
     static JsonNode funcIndexedValue(final JsonNode node, final String params) {
         return applyWithArrayNode(node, params, Utils::nodeHasValue,
-                (jsonNode, paramArray) -> {
-                    final int index = jsonNode.asInt();
-                    return index >= 0 && index < paramArray.size() ? paramArray.get(index) : null;
-                });
+            (jsonNode, paramArray) -> {
+                final int index = jsonNode.asInt();
+                return index >= 0 && index < paramArray.size() ? paramArray.get(index) : null;
+            });
     }
 
     static JsonNode funcMarkupEscape(final JsonNode node, final String params, final MarkupLanguage language) {
@@ -235,45 +235,45 @@ final class FuncFormat {
 
     static JsonNode funcToNumber(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, Utils::nodeHasValue,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    return dataNode.isNumber() ? dataNode : DoubleNode.valueOf(dataNode.asDouble());
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                return dataNode.isNumber() ? dataNode : DoubleNode.valueOf(dataNode.asDouble());
+            });
     }
 
     static JsonNode funcToString(final JsonNode node, final String params) {
         return applyWithoutParam(node, params,
-                jsonNode -> jsonNode.isTextual() ? jsonNode
-                        : TextNode.valueOf(jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString()));
+            jsonNode -> jsonNode.isTextual() ? jsonNode
+                    : TextNode.valueOf(jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString()));
     }
 
     static JsonNode funcToText(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, JsonNode::isValueNode,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    return dataNode.isTextual() ? dataNode : TextNode.valueOf(dataNode.asText());
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                return dataNode.isTextual() ? dataNode : TextNode.valueOf(dataNode.asText());
+            });
     }
 
     static JsonNode funcUrlDecode(final JsonNode node, final String params) {
         return applyTextNode(node, params,
-                jsonNode -> {
-                    try {
-                        return URLDecoder.decode(jsonNode.asText(), StandardCharsets.UTF_8.toString());
-                    } catch (UnsupportedEncodingException e) {
-                        throw new IllegalArgumentException(e.getMessage());
-                    }
-                });
+            jsonNode -> {
+                try {
+                    return URLDecoder.decode(jsonNode.asText(), StandardCharsets.UTF_8.toString());
+                } catch (UnsupportedEncodingException e) {
+                    throw new IllegalArgumentException(e.getMessage());
+                }
+            });
     }
 
     static JsonNode funcUrlEncode(final JsonNode node, final String params) {
         return applyTextNode(node, params,
-                jsonNode -> {
-                    try {
-                        return URLEncoder.encode(jsonNode.asText(), StandardCharsets.UTF_8.toString());
-                    } catch (UnsupportedEncodingException e) {
-                        throw new IllegalArgumentException(e.getMessage());
-                    }
-                });
+            jsonNode -> {
+                try {
+                    return URLEncoder.encode(jsonNode.asText(), StandardCharsets.UTF_8.toString());
+                } catch (UnsupportedEncodingException e) {
+                    throw new IllegalArgumentException(e.getMessage());
+                }
+            });
     }
 }

@@ -136,9 +136,9 @@ final class FuncArray {
 
     static JsonNode funcFirst(final JsonNode node, final String params) {
         return applyWithoutParam(node, params,
-                jsonNode -> !jsonNode.isArray() ? jsonNode
-                        : jsonNode.size() == 0 ? null
-                        : jsonNode.get(0));
+            jsonNode -> !jsonNode.isArray() ? jsonNode
+                    : jsonNode.size() == 0 ? null
+                    : jsonNode.get(0));
     }
 
     static IntNode funcIndexOf(final JsonNode node, final String params, final int step) {
@@ -178,15 +178,15 @@ final class FuncArray {
 
     static JsonNode funcLast(final JsonNode node, final String params) {
         return applyWithoutParam(node, params,
-                jsonNode -> !jsonNode.isArray() ? jsonNode
-                        : jsonNode.size() == 0 ? null
-                        : jsonNode.get(jsonNode.size() - 1)
+            jsonNode -> !jsonNode.isArray() ? jsonNode
+                    : jsonNode.size() == 0 ? null
+                    : jsonNode.get(jsonNode.size() - 1)
         );
     }
 
     static JsonNode funcLastIndex(final JsonNode node, final String params) {
         return applyWithoutParam(node, params,
-                jsonNode -> !jsonNode.isArray() ? null : IntNode.valueOf(jsonNode.size() - 1));
+            jsonNode -> !jsonNode.isArray() ? null : IntNode.valueOf(jsonNode.size() - 1));
     }
 
     static JsonNode funcMaxMin(final JsonNode node, final String params, final boolean isMax) {
@@ -223,21 +223,21 @@ final class FuncArray {
 
     static JsonNode funcReverse(final JsonNode node, final String params) {
         return applyWithoutParam(node, params,
-                jsonNode -> {
-                    if (jsonNode.isTextual()) {
-                        final StringBuilder sb = new StringBuilder(jsonNode.asText());
-                        return TextNode.valueOf(sb.reverse().toString());
-                    }
-                    if (!jsonNode.isArray()) {
-                        return null;
-                    }
-                    final ArrayNode array = MAPPER.createArrayNode();
-                    final int len = jsonNode.size();
-                    for (int i = len - 1; i >= 0; i--) {
-                        array.add(jsonNode.get(i));
-                    }
-                    return array;
-                });
+            jsonNode -> {
+                if (jsonNode.isTextual()) {
+                    final StringBuilder sb = new StringBuilder(jsonNode.asText());
+                    return TextNode.valueOf(sb.reverse().toString());
+                }
+                if (!jsonNode.isArray()) {
+                    return null;
+                }
+                final ArrayNode array = MAPPER.createArrayNode();
+                final int len = jsonNode.size();
+                for (int i = len - 1; i >= 0; i--) {
+                    array.add(jsonNode.get(i));
+                }
+                return array;
+            });
     }
 
     static JsonNode funcSize(final JsonNode node, final String params) {

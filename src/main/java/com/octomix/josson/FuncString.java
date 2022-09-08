@@ -42,19 +42,19 @@ final class FuncString {
 
     static JsonNode funcAbbreviate(final JsonNode node, final String params) {
         return applyWithParams(node, params, 1, 2, JsonNode::isTextual,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    int offset = paramList.get(0).isEmpty() ? 0 : getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
-                    final int maxWidth;
-                    if (paramList.size() > 1) {
-                        maxWidth = getNodeAsInt(paramNode, data.getValue(), paramList.get(1));
-                    } else {
-                        maxWidth = offset;
-                        offset = 0;
-                    }
-                    return TextNode.valueOf(StringUtils.abbreviate(dataNode.asText(), offset, maxWidth));
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                int offset = paramList.get(0).isEmpty() ? 0 : getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
+                final int maxWidth;
+                if (paramList.size() > 1) {
+                    maxWidth = getNodeAsInt(paramNode, data.getValue(), paramList.get(1));
+                } else {
+                    maxWidth = offset;
+                    offset = 0;
+                }
+                return TextNode.valueOf(StringUtils.abbreviate(dataNode.asText(), offset, maxWidth));
+            });
     }
 
     static JsonNode funcAppend(final JsonNode node, final String params) {
@@ -63,20 +63,20 @@ final class FuncString {
 
     static JsonNode funcAppendIfMissing(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyTextNodeWithParamAsText(node, params,
-                (str, param) -> ignoreCase
-                        ? StringUtils.appendIfMissingIgnoreCase(str, param)
-                        : StringUtils.appendIfMissing(str, param)
+            (str, param) -> ignoreCase
+                    ? StringUtils.appendIfMissingIgnoreCase(str, param)
+                    : StringUtils.appendIfMissing(str, param)
         );
     }
 
     static JsonNode funcCamelCase(final JsonNode node, final String params, final boolean capitalizeFirstLetter) {
         return applyWithParams(node, params, 0, 1, JsonNode::isTextual,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final String delimiters = paramList.size() > 0 ? getNodeAsText(paramNode, data.getValue(), paramList.get(0)) : " _.";
-                    return TextNode.valueOf(CaseUtils.toCamelCase(dataNode.asText(), capitalizeFirstLetter, delimiters));
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final String delimiters = paramList.size() > 0 ? getNodeAsText(paramNode, data.getValue(), paramList.get(0)) : " _.";
+                return TextNode.valueOf(CaseUtils.toCamelCase(dataNode.asText(), capitalizeFirstLetter, delimiters));
+            });
     }
 
     static JsonNode funcCapitalize(final JsonNode node, final String params) {
@@ -85,43 +85,43 @@ final class FuncString {
 
     static JsonNode funcConcat(final JsonNode node, final String params, final boolean notNull) {
         return applyWithParams(node, params, 1, UNLIMITED_AND_NO_PATH, null,
-                (data, paramList) -> {
-                    final StringBuilder sb = new StringBuilder();
-                    for (String path : paramList) {
-                        final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
-                        if (nodeHasValue(tryNode)) {
-                            sb.append(tryNode.asText());
-                        } else if (notNull) {
-                            return null;
-                        }
+            (data, paramList) -> {
+                final StringBuilder sb = new StringBuilder();
+                for (String path : paramList) {
+                    final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
+                    if (nodeHasValue(tryNode)) {
+                        sb.append(tryNode.asText());
+                    } else if (notNull) {
+                        return null;
                     }
-                    return TextNode.valueOf(sb.toString());
-                });
+                }
+                return TextNode.valueOf(sb.toString());
+            });
     }
 
     static JsonNode funcDoubleQuote(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, Utils::nodeHasValue,
-                (data, paramList) -> TextNode.valueOf(String.format("\"%s\"",
-                        data.getKey().asText().replace("\"", "\\\"")))
+            (data, paramList) -> TextNode.valueOf(
+                    String.format("\"%s\"", data.getKey().asText().replace("\"", "\\\"")))
         );
     }
 
     static JsonNode funcKeep(final JsonNode node, final String params,
                              final boolean ignoreCase, final boolean after, final boolean last) {
         return applyTextNodeWithParamAsText(node, params,
-                (str, param) -> {
-                    final int pos = last
-                        ? (ignoreCase ? StringUtils.lastIndexOfIgnoreCase(str, param) : StringUtils.lastIndexOf(str, param))
-                        : (ignoreCase ? StringUtils.indexOfIgnoreCase(str, param) : StringUtils.indexOf(str, param));
-                    return pos < 0 ? EMPTY
-                        : after ? str.substring(pos + param.length())
-                        : str.substring(0, pos);
-                });
+            (str, param) -> {
+                final int pos = last
+                    ? (ignoreCase ? StringUtils.lastIndexOfIgnoreCase(str, param) : StringUtils.lastIndexOf(str, param))
+                    : (ignoreCase ? StringUtils.indexOfIgnoreCase(str, param) : StringUtils.indexOf(str, param));
+                return pos < 0 ? EMPTY
+                    : after ? str.substring(pos + param.length())
+                    : str.substring(0, pos);
+            });
     }
 
     static JsonNode funcLength(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, Utils::nodeHasValue,
-                (data, paramList) -> IntNode.valueOf(data.getKey().asText().length()));
+            (data, paramList) -> IntNode.valueOf(data.getKey().asText().length()));
     }
 
     static JsonNode funcLowerCase(final JsonNode node, final String params) {
@@ -131,34 +131,34 @@ final class FuncString {
     static JsonNode funcNotBlankOrEmpty(final JsonNode node, final String params,
                                         final Function<CharSequence, Boolean> transform) {
         return applyWithParams(node, params, 1, UNLIMITED_AND_NO_PATH, null,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    if (dataNode.isTextual() && transform.apply(dataNode.asText())) {
-                        return dataNode;
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                if (dataNode.isTextual() && transform.apply(dataNode.asText())) {
+                    return dataNode;
+                }
+                for (String path : paramList) {
+                    final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
+                    if (tryNode != null && tryNode.isTextual() && transform.apply(tryNode.asText())) {
+                        return tryNode;
                     }
-                    for (String path : paramList) {
-                        final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
-                        if (tryNode != null && tryNode.isTextual() && transform.apply(tryNode.asText())) {
-                            return tryNode;
-                        }
-                    }
-                    return null;
-                });
+                }
+                return null;
+            });
     }
 
     static JsonNode funcPadding(final JsonNode node, final String params, final int alignment) {
         return applyWithParams(node, params, 1, 2, Utils::nodeHasValue,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final int size = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
-                    final String padStr = paramList.size() > 1 ? getNodeAsText(paramNode, data.getValue(), paramList.get(1)) : null;
-                    return TextNode.valueOf(
-                            alignment < 0 ? StringUtils.leftPad(dataNode.asText(), size, padStr)
-                            : alignment > 0 ? StringUtils.rightPad(dataNode.asText(), size, padStr)
-                            : StringUtils.center(dataNode.asText(), size, padStr)
-                    );
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final int size = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
+                final String padStr = paramList.size() > 1 ? getNodeAsTextExceptNull(paramNode, data.getValue(), paramList.get(1)) : null;
+                return TextNode.valueOf(
+                        alignment < 0 ? StringUtils.leftPad(dataNode.asText(), size, padStr)
+                        : alignment > 0 ? StringUtils.rightPad(dataNode.asText(), size, padStr)
+                        : StringUtils.center(dataNode.asText(), size, padStr)
+                );
+            });
     }
 
     static JsonNode funcPrepend(final JsonNode node, final String params) {
@@ -167,93 +167,93 @@ final class FuncString {
 
     static JsonNode funcPrependIfMissing(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyTextNodeWithParamAsText(node, params,
-                (str, param) -> ignoreCase
-                        ? StringUtils.prependIfMissingIgnoreCase(str, param)
-                        : StringUtils.prependIfMissing(str, param)
+            (str, param) -> ignoreCase
+                    ? StringUtils.prependIfMissingIgnoreCase(str, param)
+                    : StringUtils.prependIfMissing(str, param)
         );
     }
 
     static JsonNode funcRemoveEnd(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyTextNodeWithParamAsText(node, params,
-                (str, param) -> ignoreCase
-                        ? StringUtils.removeEndIgnoreCase(str, param)
-                        : StringUtils.removeEnd(str, param)
+            (str, param) -> ignoreCase
+                    ? StringUtils.removeEndIgnoreCase(str, param)
+                    : StringUtils.removeEnd(str, param)
         );
     }
 
     static JsonNode funcRemoveStart(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyTextNodeWithParamAsText(node, params,
-                (str, param) -> ignoreCase
-                        ? StringUtils.removeStartIgnoreCase(str, param)
-                        : StringUtils.removeStart(str, param)
+            (str, param) -> ignoreCase
+                    ? StringUtils.removeStartIgnoreCase(str, param)
+                    : StringUtils.removeStart(str, param)
         );
     }
 
     static JsonNode funcRepeat(final JsonNode node, final String params) {
         return applyWithParams(node, params, 1, 1, Utils::nodeHasValue,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final int param = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
-                    return TextNode.valueOf(StringUtils.repeat(dataNode.asText(), param));
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final int param = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
+                return TextNode.valueOf(StringUtils.repeat(dataNode.asText(), param));
+            });
     }
 
     static JsonNode funcReplace(final JsonNode node, final String params, final boolean ignoreCase) {
         return applyWithParams(node, params, 2, 3, JsonNode::isTextual,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final String searchString = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
-                    final String replacement = getNodeAsText(paramNode, data.getValue(), paramList.get(1));
-                    final int max = paramList.size() > 2 ? getNodeAsInt(paramNode, data.getValue(), paramList.get(2)) : -1;
-                    return TextNode.valueOf(StringUtils.replace(dataNode.asText(), searchString, replacement, max, ignoreCase));
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final String searchString = getNodeAsText(paramNode, data.getValue(), paramList.get(0));
+                final String replacement = getNodeAsText(paramNode, data.getValue(), paramList.get(1));
+                final int max = paramList.size() > 2 ? getNodeAsInt(paramNode, data.getValue(), paramList.get(2)) : -1;
+                return TextNode.valueOf(StringUtils.replace(dataNode.asText(), searchString, replacement, max, ignoreCase));
+            });
     }
 
     static JsonNode funcSingleQuote(final JsonNode node, final String params) {
         return applyWithoutParam(node, params, Utils::nodeHasValue,
-                (data, paramList) -> TextNode.valueOf(quoteText(data.getKey().asText()))
+            (data, paramList) -> TextNode.valueOf(quoteText(data.getKey().asText()))
         );
     }
 
     static JsonNode funcSnakeCase(final JsonNode node, final String params, final CaseUtils.Type type) {
         return applyWithoutParam(node, params, JsonNode::isTextual,
-                (data, paramList) -> TextNode.valueOf(CaseUtils.toSnakeCase(data.getKey().asText(), type)));
+            (data, paramList) -> TextNode.valueOf(CaseUtils.toSnakeCase(data.getKey().asText(), type)));
     }
 
     static JsonNode funcSplit(final JsonNode node, final String params, final boolean wholeSeparator) {
         return applyWithParams(node, params, 0, 1, JsonNode::isTextual,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final String separator = paramList.size() > 0 ? getNodeAsText(paramNode, data.getValue(), paramList.get(0)) : null;
-                    final ArrayNode array = MAPPER.createArrayNode();
-                    for (String text : wholeSeparator
-                            ? StringUtils.splitByWholeSeparator(dataNode.asText(), separator)
-                            : StringUtils.split(dataNode.asText(), separator)) {
-                        array.add(TextNode.valueOf(text));
-                    }
-                    return array;
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final String separator = paramList.size() > 0 ? getNodeAsTextExceptNull(paramNode, data.getValue(), paramList.get(0)) : null;
+                final ArrayNode array = MAPPER.createArrayNode();
+                for (String text : wholeSeparator
+                        ? StringUtils.separate(dataNode.asText(), separator)
+                        : StringUtils.split(dataNode.asText(), separator)) {
+                    array.add(TextNode.valueOf(text));
+                }
+                return array;
+            });
     }
 
     static JsonNode funcSplitMax(final JsonNode node, final String params, final boolean wholeSeparator) {
-        return applyWithParams(node, params, 0, 3, JsonNode::isTextual,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final String separator = paramList.size() > 0 ? getNodeAsText(paramNode, data.getValue(), paramList.get(0)) : null;
-                    final int max = paramList.size() > 1 ? getNodeAsInt(paramNode, data.getValue(), paramList.get(1)) : -1;
-                    final boolean preserveAllTokens = paramList.size() > 2 && getNodeAsBoolean(paramNode, data.getValue(), paramList.get(2));
-                    final ArrayNode array = MAPPER.createArrayNode();
-                    for (String text : wholeSeparator
-                            ? StringUtils.splitByWholeSeparatorWorker(dataNode.asText(), separator, max, preserveAllTokens)
-                            : StringUtils.splitWorker(dataNode.asText(), separator, max, preserveAllTokens)) {
-                        array.add(TextNode.valueOf(text));
-                    }
-                    return array;
-                });
+        return applyWithParams(node, params, 2, 3, JsonNode::isTextual,
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final String separator = getNodeAsTextExceptNull(paramNode, data.getValue(), paramList.get(0));
+                final int max = getNodeAsInt(paramNode, data.getValue(), paramList.get(1));
+                final boolean preserveAllTokens = paramList.size() > 2 && getNodeAsBoolean(paramNode, data.getValue(), paramList.get(2));
+                final ArrayNode array = MAPPER.createArrayNode();
+                for (String text : wholeSeparator
+                        ? StringUtils.separateWorker(dataNode.asText(), separator, max, preserveAllTokens)
+                        : StringUtils.splitWorker(dataNode.asText(), separator, max, preserveAllTokens)) {
+                    array.add(TextNode.valueOf(text));
+                }
+                return array;
+            });
     }
 
     static JsonNode funcStrip(final JsonNode node, final String params) {
@@ -270,13 +270,13 @@ final class FuncString {
 
     static JsonNode funcSubstr(final JsonNode node, final String params) {
         return applyWithParams(node, params, 1, 2, JsonNode::isTextual,
-                (data, paramList) -> {
-                    final JsonNode dataNode = data.getKey();
-                    final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                    final int start = (paramList.get(0)).isEmpty() ? 0 : getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
-                    final int end = paramList.size() > 1 ? getNodeAsInt(paramNode, data.getValue(), paramList.get(1)) : Integer.MAX_VALUE;
-                    return TextNode.valueOf(StringUtils.substring(dataNode.asText(), start, end));
-                });
+            (data, paramList) -> {
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
+                final int start = (paramList.get(0)).isEmpty() ? 0 : getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
+                final int end = paramList.size() > 1 ? getNodeAsInt(paramNode, data.getValue(), paramList.get(1)) : Integer.MAX_VALUE;
+                return TextNode.valueOf(StringUtils.substring(dataNode.asText(), start, end));
+            });
     }
 
     static JsonNode funcTrim(final JsonNode node, final String params) {
