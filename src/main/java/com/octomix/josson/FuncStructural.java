@@ -275,7 +275,12 @@ final class FuncStructural {
             if (evalNameAndPath[1] == null) {
                 base.remove(evalNameAndPath[0]);
             } else {
-                base.set(evalNameAndPath[0], getNodeByPath(node, index, evalNameAndPath[1]));
+                final JsonNode tryNode = getNodeByPath(node, index, evalNameAndPath[1]);
+                if (tryNode == null) {
+                    base.remove(evalNameAndPath[0]);
+                } else {
+                    base.set(evalNameAndPath[0], tryNode);
+                }
             }
         }
         return base;
