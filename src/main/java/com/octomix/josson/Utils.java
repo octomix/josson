@@ -48,6 +48,14 @@ class Utils {
         return quotedText.substring(1, last).replace("''", "'");
     }
 
+    static Integer parseInteger(final String literal) {
+        try {
+            return Integer.parseInt(literal);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     static ValueNode literalToValueNode(final String literal) throws NumberFormatException {
         if (StringUtils.isEmpty(literal)) {
             return null;

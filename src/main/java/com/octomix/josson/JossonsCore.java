@@ -41,6 +41,8 @@ class JossonsCore {
      */
     protected final Map<String, Josson> datasets = new HashMap<>();
 
+    protected boolean needEscapeQuery = true;
+
     protected JossonsCore() {
     }
 
@@ -298,7 +300,7 @@ class JossonsCore {
                     && template.charAt(i) == PLACEHOLDER_CLOSE
                     && template.charAt(i + 1) == PLACEHOLDER_CLOSE) {
                 String query = template.substring(placeholderAt + 2, i);
-                if (escaping.isEscapeQueryRequired()) {
+                if (escaping.isEscapingRequired() && needEscapeQuery) {
                     final StringBuilder rebuild = new StringBuilder();
                     for (String token : escaping.separateTagAndText(query)) {
                         if (token.charAt(0) == escaping.tagOpen) {

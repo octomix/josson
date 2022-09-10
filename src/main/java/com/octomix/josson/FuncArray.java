@@ -165,7 +165,7 @@ final class FuncArray {
             return null;
         }
         final String delimiter = nodeAndParams.getValue().size() > 0
-                ? getNodeAsText(node, NON_ARRAY_INDEX, nodeAndParams.getValue().get(0)) : EMPTY;
+                ? getNodeAsText(node, nodeAndParams.getValue().get(0)) : EMPTY;
         final List<String> texts = new ArrayList<>();
         for (int i = 0; i < workNode.size(); i++) {
             final JsonNode valueNode = workNode.get(i);

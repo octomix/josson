@@ -655,6 +655,35 @@ public class UnitTest {
                 "  \"items_2_tags_2\" : \"WOMEN\",\n" +
                 "  \"totalAmount\" : 270.0\n" +
                 "}");
+        evaluate.accept("items[1].flatten('_').unflatten('_')",
+                "{\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                        "  \"brand\" : \"OctoPlus\",\n" +
+                        "  \"property\" : {\n" +
+                        "    \"colors\" : [ \"BLACK\" ]\n" +
+                        "  },\n" +
+                        "  \"qty\" : 1,\n" +
+                        "  \"unit\" : \"Pcs\",\n" +
+                        "  \"unitPrice\" : 150.0,\n" +
+                        "  \"unitDiscount\" : 10.0,\n" +
+                        "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ]\n" +
+                        "}");
+        evaluate.accept("json('[0,1,[2,3,[4,5,6,[7]],8],9]').flatten('_')",
+                "{\n" +
+                        "  \"0\" : 0,\n" +
+                        "  \"1\" : 1,\n" +
+                        "  \"2_0\" : 2,\n" +
+                        "  \"2_1\" : 3,\n" +
+                        "  \"2_2_0\" : 4,\n" +
+                        "  \"2_2_1\" : 5,\n" +
+                        "  \"2_2_2\" : 6,\n" +
+                        "  \"2_2_3_0\" : 7,\n" +
+                        "  \"2_3\" : 8,\n" +
+                        "  \"3\" : 9\n" +
+                        "}");
+        evaluate.accept("json('[0,1,[2,3,[4,5,6,[7]],8],9]').flatten('_').unflatten('_')",
+                "[ 0, 1, [ 2, 3, [ 4, 5, 6, [ 7 ] ], 8 ], 9 ]");
         // Functions map(),field(),group(),unwind() - key name support evaluation using syntax "keyQuery::valueQuery"
         evaluate.accept("items.map(itemCode::qty)",
                 "[ {\n" +

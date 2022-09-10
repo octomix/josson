@@ -48,30 +48,18 @@ public enum MarkupLanguage {
 
     final char tagClose;
 
-    private boolean needEscapeQuery = true;
-
     MarkupLanguage(char tagOpen, char tagClose) {
         this.tagOpen = tagOpen;
         this.tagClose = tagClose;
     }
 
     /**
-     * <p>To indicate that placeholders in the template are not escaped.</p>
-     *
-     * @return {@code this}
-     */
-    public MarkupLanguage placeholderIsNotEscaped() {
-        needEscapeQuery = false;
-        return this;
-    }
-
-    /**
-     * <p>Whether escaping the query is required.</p>
+     * <p>Whether escaping is required.</p>
      *
      * @return {@code false} for {@code NONE}, otherwise returns {@code true}
      */
-    boolean isEscapeQueryRequired() {
-        return this != NONE && needEscapeQuery;
+    public boolean isEscapingRequired() {
+        return this != NONE;
     }
 
     /**

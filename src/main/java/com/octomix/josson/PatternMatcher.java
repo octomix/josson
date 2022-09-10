@@ -24,8 +24,7 @@ import java.util.*;
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.JossonCore.*;
-import static com.octomix.josson.Utils.checkElementName;
-import static com.octomix.josson.Utils.getLastElementName;
+import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 import static com.octomix.josson.exception.SyntaxErrorException.POS_AT_THE_END;
 
@@ -423,15 +422,10 @@ final class PatternMatcher {
             }
             try {
                 if (isInt == null) {
-                    if (pos > last) {
+                    if (pos > last || parseInteger(path) == null) {
                         paths.add(path);
                     } else {
-                        try {
-                            Integer.parseInt(path);
-                            isInt = path;
-                        } catch (NumberFormatException e) {
-                            paths.add(path);
-                        }
+                        isInt = path;
                     }
                 } else {
                     if (StringUtils.isNumeric(path)) {

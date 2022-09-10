@@ -19,11 +19,11 @@ package com.octomix.josson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
+import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UnknownFormatConversionException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.Josson.readJsonNode;
@@ -334,7 +334,79 @@ final class FuncStructural {
             return null;
         }
         final List<String> paramList = nodeAndParams.getValue();
-        return MAPPER.createObjectNode().set(getNodeAsText(workNode, NON_ARRAY_INDEX, paramList.get(0)), workNode);
+        return MAPPER.createObjectNode().set(getNodeAsText(node, paramList.get(0)), workNode);
+    }
+
+    static JsonNode funcUnflatten(final JsonNode node, final String params) {
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
+        final JsonNode workNode = nodeAndParams.getKey();
+        if (workNode == null || !workNode.isContainerNode()) {
+            return null;
+        }
+        final String separator = getNodeAsText(node, nodeAndParams.getValue().get(0));
+        if (StringUtils.isEmpty(separator)) {
+            return null;
+        }
+        JsonNode root = null;
+        final Iterator<Map.Entry<String, JsonNode>> iterator = workNode.fields();
+        while (iterator.hasNext()) {
+            final Map.Entry<String, JsonNode> entry = iterator.next();
+            final String[] steps = StringUtils.separate(entry.getKey(), separator);
+            if (steps.length > 0) {
+                root = funcUnflatten(root, steps, 0, entry.getValue());
+            }
+        }
+        if (root != null) {
+            funcUnflattenSort(root);
+        }
+        return root;
+    }
+
+    private static JsonNode funcUnflatten(JsonNode parent, final String[] steps, final int pos, JsonNode value) {
+        final String step = steps[pos];
+        final Integer index = parseInteger(step);
+        if (parent == null) {
+            parent = index == null ? MAPPER.createObjectNode() : MAPPER.createArrayNode();
+        } else if ((index == null && parent.isArray()) || (index != null && parent.isObject())) {
+            throw new UnsupportedOperationException("A node cannot be both an object and an array");
+        }
+        final boolean notEnd = pos < steps.length - 1;
+        if (index == null) {
+            ((ObjectNode) parent).set(step, notEnd ? funcUnflatten(parent.get(step), steps, pos + 1, value) : value);
+        } else {
+            JsonNode v = null;
+            if (notEnd) {
+                for (int i = parent.size() - 1; i >= 0; i--) {
+                    final JsonNode elem = parent.get(i);
+                    if (elem.get("i").asInt() == index) {
+                        v = elem.get("v");
+                        break;
+                    }
+                }
+                value = funcUnflatten(v, steps, pos + 1, value);
+            }
+            if (v == null) {
+                ObjectNode elem = MAPPER.createObjectNode();
+                elem.set("i", IntNode.valueOf(index));
+                elem.set("v", value);
+                ((ArrayNode) parent).add(elem);
+            }
+        }
+        return parent;
+    }
+
+    private static void funcUnflattenSort(JsonNode node) {
+        if (!node.isContainerNode()) {
+            return;
+        }
+        if (node.isArray()) {
+            final List<Pair<Integer, JsonNode>> list = new ArrayList<>();
+            node.elements().forEachRemaining(elem -> list.add(Pair.of(elem.get("i").asInt(), elem.get("v"))));
+            list.sort(Comparator.comparingInt(Pair::getKey));
+            ((ArrayNode) node).removeAll();
+            ((ArrayNode) node).addAll(list.stream().map(Pair::getValue).collect(Collectors.toList()));
+        }
+        node.elements().forEachRemaining(FuncStructural::funcUnflattenSort);
     }
 
     static JsonNode funcUnwind(final JsonNode node, final String params) {

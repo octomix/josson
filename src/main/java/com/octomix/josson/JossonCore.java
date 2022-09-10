@@ -118,6 +118,10 @@ final class JossonCore {
         return false;
     }
 
+    static String getNodeAsText(final JsonNode node, final String jossonPath) {
+        return getNodeAsText(node, NON_ARRAY_INDEX, jossonPath);
+    }
+
     static String getNodeAsText(final JsonNode node, final int index, final String jossonPath) {
         final JsonNode workNode = getNodeByPath(node, index, jossonPath);
         return workNode == null ? EMPTY : workNode.asText();

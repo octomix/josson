@@ -698,6 +698,8 @@ class FuncDispatcher {
             case "uppercase":
                 return funcUpperCase(node, params);
             // Structural
+            case "unflatten":
+                return funcUnflatten(node, params);
             case "unwind":
                 return funcUnwind(node, params);
         }

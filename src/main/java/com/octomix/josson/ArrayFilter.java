@@ -23,6 +23,7 @@ import com.octomix.josson.commons.StringUtils;
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_FIND_FIRST;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.Utils.asBoolean;
+import static com.octomix.josson.Utils.parseInteger;
 
 /**
  * Stores an array filter details.
@@ -118,25 +119,22 @@ class ArrayFilter {
         if (node.size() == 0) {
             return null;
         }
-        ArrayNode matchedNodes = null;
-        if (mode != FILTRATE_FIND_FIRST) {
-            matchedNodes = MAPPER.createArrayNode();
-        }
-        try {
-            if (mode == FILTRATE_FIND_FIRST) {
-                return node.get(Integer.parseInt(statement));
+        final ArrayNode matchedNodes = mode == FILTRATE_FIND_FIRST ? null : MAPPER.createArrayNode();
+        final Integer index = parseInteger(statement);
+        if (index != null) {
+            if (matchedNodes == null) {
+                return node.get(index);
             }
-            matchedNodes.add(node.get(Integer.parseInt(statement)));
-            return matchedNodes;
-        } catch (NumberFormatException ignore) {
-        }
-        final OperationStack opStack = new OperationStackForJsonNode(node);
-        for (int i = 0; i < node.size(); i++) {
-            if (asBoolean(opStack.evaluate(statement, i))) {
-                if (mode == FILTRATE_FIND_FIRST) {
-                    return node.get(i);
+            matchedNodes.add(node.get(index));
+        } else {
+            final OperationStack opStack = new OperationStackForJsonNode(node);
+            for (int i = 0; i < node.size(); i++) {
+                if (asBoolean(opStack.evaluate(statement, i))) {
+                    if (matchedNodes == null) {
+                        return node.get(i);
+                    }
+                    matchedNodes.add(node.get(i));
                 }
-                matchedNodes.add(node.get(i));
             }
         }
         return matchedNodes;
