@@ -305,7 +305,9 @@ class FuncDispatcher {
                 return funcIndexOf(node, params, 1);
             // Format
             case "if":
-                return funcIf(node, params);
+                return funcIf(node, params, false);
+            case "ifnot":
+                return funcIf(node, params, true);
             case "indexedvalue":
                 return funcIndexedValue(node, params);
             // Logical

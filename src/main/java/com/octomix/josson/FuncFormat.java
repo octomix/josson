@@ -205,12 +205,12 @@ final class FuncFormat {
             });
     }
 
-    static JsonNode funcIf(final JsonNode node, final String params) {
+    static JsonNode funcIf(final JsonNode node, final String params, final boolean not) {
         return applyWithParams(node, params, 2, 3, null,
             (data, paramList) -> {
                 final JsonNode paramNode = data.getValue() < 0 ? data.getKey() : node;
                 final String query =
-                        asBoolean(getNodeByPath(paramNode, data.getValue(), paramList.get(0))) ? paramList.get(1)
+                        not ^ asBoolean(getNodeByPath(paramNode, data.getValue(), paramList.get(0))) ? paramList.get(1)
                         : paramList.size() > 2 ? paramList.get(2)
                         : null;
                 return query == null ? null : getNodeByPath(paramNode, data.getValue(), query);

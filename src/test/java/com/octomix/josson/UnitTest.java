@@ -655,6 +655,7 @@ public class UnitTest {
                 "  \"items_2_tags_2\" : \"WOMEN\",\n" +
                 "  \"totalAmount\" : 270.0\n" +
                 "}");
+        // Function "unflatten" reverse the operation of "flatten".
         evaluate.accept("items[1].flatten('_').unflatten('_')",
                 "{\n" +
                         "  \"itemCode\" : \"A00308\",\n" +
@@ -669,21 +670,6 @@ public class UnitTest {
                         "  \"unitDiscount\" : 10.0,\n" +
                         "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ]\n" +
                         "}");
-        evaluate.accept("json('[0,1,[2,3,[4,5,6,[7]],8],9]').flatten('_')",
-                "{\n" +
-                        "  \"0\" : 0,\n" +
-                        "  \"1\" : 1,\n" +
-                        "  \"2_0\" : 2,\n" +
-                        "  \"2_1\" : 3,\n" +
-                        "  \"2_2_0\" : 4,\n" +
-                        "  \"2_2_1\" : 5,\n" +
-                        "  \"2_2_2\" : 6,\n" +
-                        "  \"2_2_3_0\" : 7,\n" +
-                        "  \"2_3\" : 8,\n" +
-                        "  \"3\" : 9\n" +
-                        "}");
-        evaluate.accept("json('[0,1,[2,3,[4,5,6,[7]],8],9]').flatten('_').unflatten('_')",
-                "[ 0, 1, [ 2, 3, [ 4, 5, 6, [ 7 ] ], 8 ], 9 ]");
         // Functions map(),field(),group(),unwind() - key name support evaluation using syntax "keyQuery::valueQuery"
         evaluate.accept("items.map(itemCode::qty)",
                 "[ {\n" +
@@ -1273,6 +1259,11 @@ public class UnitTest {
         evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1 & b=3], 'T')", "!unresolvable!");
         evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=b], 'T', if([c=3], 'C', 'F'))", "C");
         evaluate.accept("json('[1,2,3,4,5]').if(isOdd(), calc(?*2), ?)", "[ 2.0, 2, 6.0, 4, 10.0 ]");
+        // ifNot()
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').ifNot(a.isEven(), 'T', 'F')", "T");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').ifNot([a=1 & b=3], 'T')", "T");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').ifNot([a=b], 'T', if([c=3], 'C', 'F'))", "T");
+        evaluate.accept("json('[1,2,3,4,5]').ifNot(isOdd(), calc(?*2), ?)", "[ 1, 4.0, 3, 8.0, 5 ]");
         // caseValue()
         evaluate.accept("'a'.caseValue('A',1,'b',2,'a',3,4)", "3");
         evaluate.accept("'z'.caseValue('A',1,'b',2,'a',3,4)", "4");
@@ -1841,6 +1832,43 @@ public class UnitTest {
                 "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
         evaluate.accept("flatten(json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]'), 3)",
                 "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
+        evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'),'_')",
+                "{\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"b_0\" : 2,\n" +
+                        "  \"b_1\" : 3,\n" +
+                        "  \"c_d\" : 4,\n" +
+                        "  \"c_e_f\" : 5\n" +
+                        "}");
+        evaluate.accept("json('[0,1,[2,3,[4,{\"a\":5},6,[7]],8],9]').flatten('_')",
+                "{\n" +
+                        "  \"0\" : 0,\n" +
+                        "  \"1\" : 1,\n" +
+                        "  \"2_0\" : 2,\n" +
+                        "  \"2_1\" : 3,\n" +
+                        "  \"2_2_0\" : 4,\n" +
+                        "  \"2_2_1_a\" : 5,\n" +
+                        "  \"2_2_2\" : 6,\n" +
+                        "  \"2_2_3_0\" : 7,\n" +
+                        "  \"2_3\" : 8,\n" +
+                        "  \"3\" : 9\n" +
+                        "}");
+        // unflatten()
+        evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'),'_').unflatten('_')",
+                "{\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"b\" : [ 2, 3 ],\n" +
+                        "  \"c\" : {\n" +
+                        "    \"d\" : 4,\n" +
+                        "    \"e\" : {\n" +
+                        "      \"f\" : 5\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}");
+        evaluate.accept("json('[0,1,[2,3,[4,{\"a\":5},6,[7]],8],9]').flatten('_').unflatten('_')",
+                "[ 0, 1, [ 2, 3, [ 4, {\n" +
+                        "  \"a\" : 5\n" +
+                        "}, 6, [ 7 ] ], 8 ], 9 ]");
         // map()
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').map(c.e,c.d,b,a)",
                 "{\n" +
