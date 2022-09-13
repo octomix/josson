@@ -43,16 +43,6 @@ public class Jossons extends JossonsCore {
     }
 
     /**
-     * <p>To indicate that placeholder query in the template is not escaped.</p>
-     *
-     * @return {@code this}
-     */
-    public Jossons placeholderIsNotEscaped() {
-        needEscapeQuery = false;
-        return this;
-    }
-
-    /**
      * <p>Create a Jossons object with given Jackson ObjectNode.
      * Each element of the ObjectNode will become a member of the default dataset mapping.</p>
      *
@@ -124,6 +114,16 @@ public class Jossons extends JossonsCore {
      */
     public Jossons escapingMarkup(final MarkupLanguage markupLanguage) {
         escapingMarkup = markupLanguage;
+        return this;
+    }
+
+    /**
+     * <p>To indicate that placeholder query in the template is not escaped.</p>
+     *
+     * @return {@code this}
+     */
+    public Jossons placeholderIsNotEscaped() {
+        needEscapeQuery = false;
         return this;
     }
 

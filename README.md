@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.26</version>
+        <version>1.3.27</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.26'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.27'
 
 ## Features and Capabilities
 
@@ -90,6 +90,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 
 - [Appendix](#appendix)
   - [MongoDB Adapter](#mongodb-adapter)
+  - [Examples from Stack Overflow Question](#examples-from-stack-overflow-question)
 
 ---
 
@@ -4587,4 +4588,1348 @@ Define `dataFinder()`. Use `MongoTemplate` to query MongoDB directly.
                 return null;
             };
         }
+    }
+
+### Examples from Stack Overflow Question
+
+---
+
+#### 1. How to rearrange json objects within json structure itself? Java
+
+(55934043)
+
+    [{
+        "file": [{
+                "fileRefNo": "AG/CSD/1",
+                "status": "Active"
+            }],
+        "requestNo": "225V49"
+    }, {
+        "file": [{
+                "fileRefNo": "AG/CSD/1",
+                "status": "Inactive"
+            }],
+        "requestNo": "225SRV"
+    }, {
+        "file": [{
+                "fileRefNo": "AG/CSD/2",
+                "status": "Active"
+            }],
+        "requestNo": "225SRV"
+    }]
+
+Josson Query
+
+    group(requestNo, file).field(file.flatten(1))
+
+Output
+
+    [ {
+      "requestNo" : "225V49",
+      "file" : [ {
+        "fileRefNo" : "AG/CSD/1",
+        "status" : "Active"
+      } ]
+    }, {
+      "requestNo" : "225SRV",
+      "file" : [ {
+        "fileRefNo" : "AG/CSD/1",
+        "status" : "Inactive"
+      }, {
+        "fileRefNo" : "AG/CSD/2",
+        "status" : "Active"
+      } ]
+    } ]
+
+---
+
+#### 2. Parse JSON to Java object with dynamics objects in JSON-response
+
+(73362526)
+
+    {
+        "success": 1,
+        "results": [
+            {
+                "FI": "120986750",
+                "event_id": "5164306",
+                "cards": {
+                    "updated_at": "1660559432",
+                    "key": "AAA100",
+                    "sp": {
+                        "cards": {
+                            "id": "1",
+                            "name": "Cards",
+                            "odds": [
+                                {
+                                    "id": "101",
+                                    "odds": "2.200",
+                                    "header": "Over",
+                                    "name": "11"
+                                },
+                                {
+                                    "id": "102",
+                                    "odds": "8.500",
+                                    "header": "Exactly",
+                                    "name": "11"
+                                },
+                                {
+                                    "id": "103",
+                                    "odds": "1.909",
+                                    "header": "Under",
+                                    "name": "11"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "corners": {
+                    "updated_at": "1660559431",
+                    "key": "AAA200",
+                    "sp": {
+                        "corners": {
+                            "id": "2",
+                            "name": "Corners",
+                            "odds": [
+                                {
+                                    "id": "201",
+                                    "odds": "2.200",
+                                    "header": "Over",
+                                    "name": "10"
+                                },
+                                {
+                                    "id": "202",
+                                    "odds": "8.500",
+                                    "header": "Exactly",
+                                    "name": "10"
+                                },
+                                {
+                                    "id": "203",
+                                    "odds": "1.909",
+                                    "header": "Under",
+                                    "name": "10"
+                                }
+                            ]
+                        },
+                        "total_corners": {
+                            "id": "3",
+                            "name": "Total Corners",
+                            "odds": [
+                                {
+                                    "id": "204",
+                                    "odds": "17.000",
+                                    "name": "Under 6"
+                                },
+                                {
+                                    "id": "205",
+                                    "odds": "4.333",
+                                    "name": "6 - 8"
+                                },
+                                {
+                                    "id": "206",
+                                    "odds": "2.750",
+                                    "name": "9 - 11"
+                                },
+                                {
+                                    "id": "207",
+                                    "odds": "3.400",
+                                    "name": "12 - 14"
+                                },
+                                {
+                                    "id": "208",
+                                    "odds": "5.500",
+                                    "name": "Over 14"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        ]
+    }
+
+Josson Query
+
+    results.map(
+        FI,
+        event_id,
+        categories: entries().[value.isObject()]*
+            .map(category: key,
+                 value.updated_at,
+                 value.key,
+                 details: value.sp.**
+                     .map(market_id: id,
+                          market: name,
+                          odds)
+                     .unwind(odds)
+            ).unwind(details)
+    ).unwind(categories)
+
+Output
+
+    [ {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "cards",
+      "updated_at" : "1660559432",
+      "key" : "AAA100",
+      "market_id" : "1",
+      "market" : "Cards",
+      "id" : "101",
+      "odds" : "2.200",
+      "header" : "Over",
+      "name" : "11"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "cards",
+      "updated_at" : "1660559432",
+      "key" : "AAA100",
+      "market_id" : "1",
+      "market" : "Cards",
+      "id" : "102",
+      "odds" : "8.500",
+      "header" : "Exactly",
+      "name" : "11"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "cards",
+      "updated_at" : "1660559432",
+      "key" : "AAA100",
+      "market_id" : "1",
+      "market" : "Cards",
+      "id" : "103",
+      "odds" : "1.909",
+      "header" : "Under",
+      "name" : "11"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "corners",
+      "updated_at" : "1660559431",
+      "key" : "AAA200",
+      "market_id" : "2",
+      "market" : "Corners",
+      "id" : "201",
+      "odds" : "2.200",
+      "header" : "Over",
+      "name" : "10"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "corners",
+      "updated_at" : "1660559431",
+      "key" : "AAA200",
+      "market_id" : "2",
+      "market" : "Corners",
+      "id" : "202",
+      "odds" : "8.500",
+      "header" : "Exactly",
+      "name" : "10"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "corners",
+      "updated_at" : "1660559431",
+      "key" : "AAA200",
+      "market_id" : "2",
+      "market" : "Corners",
+      "id" : "203",
+      "odds" : "1.909",
+      "header" : "Under",
+      "name" : "10"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "corners",
+      "updated_at" : "1660559431",
+      "key" : "AAA200",
+      "market_id" : "3",
+      "market" : "Total Corners",
+      "id" : "204",
+      "odds" : "17.000",
+      "name" : "Under 6"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "corners",
+      "updated_at" : "1660559431",
+      "key" : "AAA200",
+      "market_id" : "3",
+      "market" : "Total Corners",
+      "id" : "205",
+      "odds" : "4.333",
+      "name" : "6 - 8"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "corners",
+      "updated_at" : "1660559431",
+      "key" : "AAA200",
+      "market_id" : "3",
+      "market" : "Total Corners",
+      "id" : "206",
+      "odds" : "2.750",
+      "name" : "9 - 11"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "corners",
+      "updated_at" : "1660559431",
+      "key" : "AAA200",
+      "market_id" : "3",
+      "market" : "Total Corners",
+      "id" : "207",
+      "odds" : "3.400",
+      "name" : "12 - 14"
+    }, {
+      "FI" : "120986750",
+      "event_id" : "5164306",
+      "category" : "corners",
+      "updated_at" : "1660559431",
+      "key" : "AAA200",
+      "market_id" : "3",
+      "market" : "Total Corners",
+      "id" : "208",
+      "odds" : "5.500",
+      "name" : "Over 14"
+    } ]
+
+---
+
+#### 3. How to compare two JSON responses in java irrespective of JSON array sequence?
+
+(73025233)
+
+Dataset `api1`
+
+    {
+        "name": "name1",
+        "address": "",
+        "skillset": [
+            {
+                "lang": "java",
+                "projectName": "project1"
+            },
+            {
+                "lang": "c++",
+                "projectName": "project2"
+            }
+        ]
+    }
+
+Dataset `api2`
+
+    {
+        "name": "name1",
+        "address": "",
+        "skillset": [
+            {
+                "lang": "c++",
+                "projectName": "project2"
+            },
+            {
+                "lang": "java",
+                "projectName": "project1"
+            }
+        ]
+    }
+
+Jossons Query
+
+    api1 = api2
+
+Output
+
+    true
+
+---
+
+#### 4. Splitting json object
+
+(73674131)
+
+    {
+       "idno":6473853,
+       "user":"GCA_GB",
+       "operation":"U",
+       "timestamp":"2022-08-22T13:14:48",
+       "first_name":{
+          "old":"rak",
+          "new":"raki"
+       },
+       "fam_name":{
+          "old":"gow",
+          "new":"gowda"
+       }
+    }
+
+Josson Query
+
+    map(idno, user, operation, timestamp,
+        changes: entries().[value.isObject()]*.map(key::value))
+    .unwind(changes)
+
+Output
+
+    [ {
+      "idno" : 6473853,
+      "user" : "GCA_GB",
+      "operation" : "U",
+      "timestamp" : "2022-08-22T13:14:48",
+      "first_name" : {
+        "old" : "rak",
+        "new" : "raki"
+      }
+    }, {
+      "idno" : 6473853,
+      "user" : "GCA_GB",
+      "operation" : "U",
+      "timestamp" : "2022-08-22T13:14:48",
+      "fam_name" : {
+        "old" : "gow",
+        "new" : "gowda"
+      }
+    } ]
+
+---
+
+#### 5. Splitting json object
+
+(73674131)
+
+    {
+       "idno":6473853,
+       "user":"GCA_GB",
+       "operation":"U",
+       "timestamp":"2022-08-22T13:14:48",
+       "first_name":{
+          "old":"rak",
+          "new":"raki"
+       },
+       "fam_name":{
+          "old":"gow",
+          "new":"gowda"
+       }
+    }
+
+Josson Query
+
+    map(idno, user, operation, timestamp,
+        changes: entries().[value.isObject()]*.map(key::value))
+    .unwind(changes)
+
+Output
+
+    [ {
+      "idno" : 6473853,
+      "user" : "GCA_GB",
+      "operation" : "U",
+      "timestamp" : "2022-08-22T13:14:48",
+      "first_name" : {
+        "old" : "rak",
+        "new" : "raki"
+      }
+    }, {
+      "idno" : 6473853,
+      "user" : "GCA_GB",
+      "operation" : "U",
+      "timestamp" : "2022-08-22T13:14:48",
+      "fam_name" : {
+        "old" : "gow",
+        "new" : "gowda"
+      }
+    } ]
+
+---
+
+#### 6. Filter by inner value of a property (not the name)
+
+(73598200)
+
+    {
+      "id": 11,
+      "item": [
+        {
+          "id": "11_1",
+          "action": "add",
+          "type": {
+            "id": "11_1_xx",
+            "typeName": "xx"
+          },
+          "item": [
+            {
+              "id": "11_1_1",
+              "action": "add",
+              "type": {
+                "id": "11_1_1_zz",
+                "typeName": "zz"
+              },
+              "item": [
+                {
+                  "id": "11_1_1_1",
+                  "action": "add",
+                  "type": {
+                    "id": "11_1_1_1_xx",
+                    "typeName": "xx"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "11_1_2",
+              "action": "add",
+              "type": {
+                "id": "11_1_2_xx",
+                "typeName": "xx"
+              },
+              "item": [
+                {
+                  "id": "11_1_2_1",
+                  "action": "add",
+                  "type": {
+                    "id": "11_1_2_1_zz",
+                    "typeName": "zz"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+Josson Query
+
+    cumulateCollect(item[type.typeName='xx']*.field(item:), item).flatten(1)
+
+Output
+
+    [ {
+      "id" : "11_1",
+      "action" : "add",
+      "type" : {
+        "id" : "11_1_xx",
+        "typeName" : "xx"
+      }
+    }, {
+      "id" : "11_1_2",
+      "action" : "add",
+      "type" : {
+        "id" : "11_1_2_xx",
+        "typeName" : "xx"
+      }
+    }, {
+      "id" : "11_1_1_1",
+      "action" : "add",
+      "type" : {
+        "id" : "11_1_1_1_xx",
+        "typeName" : "xx"
+      }
+    } ]
+
+---
+
+#### 7. Change output name
+
+(72426983)
+
+    {
+        "userId": "1",
+        "age": "20",
+        "firstName": "firstname1",
+        "lastname": "lastname1",
+        "zipCode": "zipcode1",
+        "street": "street1",
+        "city": "city1",
+        "country": "country",
+        "gender": "gender1",
+        "grade": "grade1",
+        "birthday": "birthday1"
+    }
+
+Josson Query
+
+    map(ID:userId, age, firstName, lastname,
+        address:collect(
+                  map(code:'custom-field1',value:zipCode),
+                  map(code:'custom-field2',value:street),
+                  map(code:'custom-field3',value:city),
+                  map(code:'custom-field4',value:country)),
+        gender, grade, birthday)
+
+Output
+
+    {
+      "ID" : "1",
+      "age" : "20",
+      "firstName" : "firstname1",
+      "lastname" : "lastname1",
+      "address" : [ {
+        "code" : "custom-field1",
+        "value" : "zipcode1"
+      }, {
+        "code" : "custom-field2",
+        "value" : "street1"
+      }, {
+        "code" : "custom-field3",
+        "value" : "city1"
+      }, {
+        "code" : "custom-field4",
+        "value" : "country"
+      } ],
+      "gender" : "gender1",
+      "grade" : "grade1",
+      "birthday" : "birthday1"
+    }
+
+---
+
+#### 8. Transform If Else Condition on keys?
+
+(72701610)
+
+    {
+      "treasure": [
+        {
+          "aname": "FOO",
+          "bname": "BAR"
+        }
+      ]
+    }
+
+Josson Query
+
+    treasure
+    .entries()
+    .map(if([key='aname'], if([value='FOO'],'fname',key), 'sname')::value)
+    .mergeObjects()
+
+Output
+
+    {
+      "fname" : "FOO",
+      "sname" : "BAR"
+    }
+
+---
+
+#### 9. Spring query convert to a nested JSON structure
+
+(73616066)
+
+    [
+        {
+            "names": "Car",
+            "values": "Toyota"
+        },
+        {
+            "names": "Bike",
+            "values": "Schwinn"
+        },
+        {
+            "names": "Scooter",
+            "values": "Razor"
+        },
+        {
+            "names": "A0",
+            "values": "11"
+        },
+        {
+            "names": "A1",
+            "values": "12"
+        },
+        {
+            "names": "A2",
+            "values": "13"
+        },
+        {
+            "names": "B0",
+            "values": "2000"
+        },
+        {
+            "names": "B1",
+            "values": "4000"
+        },
+        {
+            "names": "B2",
+            "values": "22000"
+        }
+    ]
+
+Josson Query
+
+    toObject('a')
+    .collect(a[names !=~ '\\D\\d+']*
+             .map(names::values)
+            ,a[names =~ '\\D\\d+']*
+             .group(names.substr(1), map(names::values))@
+             .elements
+             .mergeObjects()
+             .@toObject('Data')
+    )
+    .flatten(1)
+    .mergeObjects()
+
+Output
+
+    {
+      "Car" : "Toyota",
+      "Bike" : "Schwinn",
+      "Scooter" : "Razor",
+      "Data" : [ {
+        "A0" : "11",
+        "B0" : "2000"
+      }, {
+        "A1" : "12",
+        "B1" : "4000"
+      }, {
+        "A2" : "13",
+        "B2" : "22000"
+      } ]
+    }
+
+---
+
+#### 10. How to merge two JSON string
+
+(72272928)
+
+Dataset `resp1`
+
+    {
+        "data": {
+            "values": {
+                "name": "kiran",
+                "age": "24"
+            }
+        }
+    }
+
+Dataset `resp2`
+
+    {
+        "data": {
+            "values": {
+                "name": "Mamu",
+                "age": "26"
+            }
+        }
+    }
+
+Jossons Query
+
+    resp1->data.toArray() <+< resp2->data.toArray()
+
+Output `mergeResult`
+
+    [ {
+      "name" : "kiran",
+      "age" : "24"
+    }, {
+      "name" : "Mamu",
+      "age" : "26"
+    } ]
+
+Josson Query
+
+    toObject('values').toObject('data')
+
+Output
+
+    {
+      "data" : {
+        "values" : [ {
+          "name" : "kiran",
+          "age" : "24"
+        }, {
+          "name" : "Mamu",
+          "age" : "26"
+        } ]
+      }
+    }
+
+---
+
+#### 11. How to rearrange the json array based on id in java
+
+(47427518)
+
+    [
+        {
+            "router_id": "1101",
+            "floor_id": "20",
+            "building_id": "2",
+            "router_name": "1101"
+        },
+        {
+            "router_id": "1102",
+            "floor_id": "20",
+            "building_id": "2",
+            "router_name": "1102"
+        },
+        {
+            "router_id": "0",
+            "floor_id": "20",
+            "building_id": "2",
+            "router_name": "pancoordinator"
+        },
+        {
+            "router_id": "1104",
+            "floor_id": "20",
+            "building_id": "2",
+            "router_name": "1104"
+        }
+    ]
+
+Josson Query
+
+    group(building_id).map(
+        building_id,
+        floors: elements.group(floor_id).map(
+            floor_id,
+            routers: elements.map(
+                router_id, router_name)
+        )
+    )
+    .toObject('buildings')
+
+Output
+
+    {
+      "buildings" : [ {
+        "building_id" : "2",
+        "floors" : [ {
+          "floor_id" : "20",
+          "routers" : [ {
+            "router_id" : "1101",
+            "router_name" : "1101"
+          }, {
+            "router_id" : "1102",
+            "router_name" : "1102"
+          }, {
+            "router_id" : "0",
+            "router_name" : "pancoordinator"
+          }, {
+            "router_id" : "1104",
+            "router_name" : "1104"
+          } ]
+        } ]
+      } ]
+    }
+
+---
+
+#### 12. Json object, convert json array into a json object in java
+
+(51576987)
+
+    {
+        "values": [
+            {
+                "locale": "en_US",
+                "source_key": "book_format",
+                "value": "Hardback",
+                "display_attr_name": "Book Format",
+                "source_value": "Hardback",
+                "isPrimary": "true"
+            },
+            {
+                "isFacetValue": "true",
+                "facet_version": "1.1",
+                "locale": "en_US",
+                "value": "Hardcover"
+            }
+        ]
+    }
+
+Josson Query
+
+    values.mergeObjects()
+
+Output
+
+    {
+      "locale" : "en_US",
+      "source_key" : "book_format",
+      "value" : "Hardcover",
+      "display_attr_name" : "Book Format",
+      "source_value" : "Hardback",
+      "isPrimary" : "true",
+      "isFacetValue" : "true",
+      "facet_version" : "1.1"
+    }
+
+---
+
+#### 13. How to use "set" with a predicate
+
+(73506183)
+
+    [ {
+      "count" : 15,
+      "_id" : {
+        "DB User Name" : "admin",
+        "Session Activity Type" : "LOGOFF"
+      }
+    }, {
+      "count" : 16,
+      "_id" : {
+        "DB User Name" : "dbuser",
+        "Session Activity Type" : "LOGON"
+      }
+    }, {
+      "count" : 17,
+      "_id" : {
+        "DB User Name" : "dbuser",
+        "Session Activity Type" : "LOGOFF"
+      }
+    }, {
+      "count" : 18,
+      "_id" : {
+        "DB User Name" : "admin",
+        "Session Activity Type" : "LOGON"
+      }
+    } ]
+
+Josson Query
+
+    field(_id.field(DB User Name.if(equals('dbuser'),'updated-Admin',?)))
+
+Output
+
+    [ {
+      "count" : 15,
+      "_id" : {
+        "DB User Name" : "admin",
+        "Session Activity Type" : "LOGOFF"
+      }
+    }, {
+      "count" : 16,
+      "_id" : {
+        "DB User Name" : "updated-Admin",
+        "Session Activity Type" : "LOGON"
+      }
+    }, {
+      "count" : 17,
+      "_id" : {
+        "DB User Name" : "updated-Admin",
+        "Session Activity Type" : "LOGOFF"
+      }
+    }, {
+      "count" : 18,
+      "_id" : {
+        "DB User Name" : "admin",
+        "Session Activity Type" : "LOGON"
+      }
+    } ]
+
+---
+
+#### 14. How to groupby json value like python in java?
+
+(72790475)
+
+    [
+        {
+            "ID": "id1",
+            "ref": "ref1",
+            "categ": "CATEG_A",
+            "pagenb": 1
+        },
+        {
+            "ID": "id2",
+            "ref": "ref1",
+            "categ": "CATEG_A",
+            "pagenb": 2
+        },
+        {
+            "ID": "id3",
+            "ref": "ref1",
+            "categ": "CATEG_B",
+            "pagenb": 3
+        }
+    ]
+
+Josson Query
+
+    group(map(ref, categ), ID).map(ID, key.ref, key.categ)
+
+Output
+
+    [ {
+      "ID" : [ "id1", "id2" ],
+      "ref" : "ref1",
+      "categ" : "CATEG_A"
+    }, {
+      "ID" : [ "id3" ],
+      "ref" : "ref1",
+      "categ" : "CATEG_B"
+    } ]
+
+---
+
+#### 15. Correct way to transform a response into DTO
+
+(73405994)
+
+    {
+      "cnpj": {
+        "numeroCNPJ": "string"
+      },
+      "codigoCNES": {
+        "codigo": "string"
+      },
+      "codigoUnidade": {
+        "codigo": "string"
+      },
+     
+      "diretor": {
+        "cpf": {
+          "numeroCPF": "string"
+        },
+        "nome": {
+          "nome": "string"
+        }
+      },
+      "nomeEmpresarial": {
+        "nome": "string"
+      },
+      "nomeFantasia": {
+        "nome": "string"
+      }
+    }
+
+Josson Query
+
+    entries().map(
+        key::value.if([size()=1], *, **.mergeObjects())
+    )
+
+Output
+
+    {
+      "cnpj" : "string",
+      "codigoCNES" : "string",
+      "codigoUnidade" : "string",
+      "diretor" : {
+        "numeroCPF" : "string",
+        "nome" : "string"
+      },
+      "nomeEmpresarial" : "string",
+      "nomeFantasia" : "string"
+    }
+
+---
+
+#### 16. How transform a json in another json using java
+
+(35438323)
+
+    [
+        {
+            "name": "Team Wolf",
+            "www": "http://www.teamwolf.qqq",
+            "department": "department1",
+            "team1": "team1"
+        },
+        {
+            "name": "Team Fox",
+            "www": "http://www.teamfox.qqq",
+            "department": "department1",
+            "team2": "team2"
+        },
+        {
+            "name": "Team Falcon",
+            "www": "http://www.teamfalcon.qqq",
+            "department": "department1",
+            "team3": "team3"
+        }
+    ]
+
+Josson Query
+
+        group(department).map(
+            department:: elements.map(
+                ~'^team.*':: map(
+                    name, www
+                )
+            )
+            .mergeObjects()
+
+Output
+
+    [ {
+      "department1" : {
+        "team1" : {
+          "name" : "Team Wolf",
+          "www" : "http://www.teamwolf.qqq"
+        },
+        "team2" : {
+          "name" : "Team Fox",
+          "www" : "http://www.teamfox.qqq"
+        },
+        "team3" : {
+          "name" : "Team Falcon",
+          "www" : "http://www.teamfalcon.qqq"
+        }
+      }
+    } ]
+
+---
+
+#### 17. Variable api JSON responses to bind to Java Object using Jackson
+
+(73397763)
+
+    {
+        "errorCount": 2,
+        "errorIndices": [
+            0,
+            1
+        ],
+        "data": [
+            {
+                "errorCode": 901,
+                "errorMessage": "IBad data: Check the data",
+                "errorData": "xxxx"
+            },
+            {
+                "errorCode": 901,
+                "errorMessage": "IBad data: Check the data",
+                "errorData": "XZY"
+            },
+            "fun now"
+        ]
+    }
+
+Josson Query
+
+    field(data[isText()]*, errors: data[isObject()]*)
+
+Output
+
+    {
+      "errorCount" : 2,
+      "errorIndices" : [ 0, 1 ],
+      "data" : [ "fun now" ],
+      "errors" : [ {
+        "errorCode" : 901,
+        "errorMessage" : "IBad data: Check the data",
+        "errorData" : "xxxx"
+      }, {
+        "errorCode" : 901,
+        "errorMessage" : "IBad data: Check the data",
+        "errorData" : "XZY"
+      } ]
+    }
+
+---
+
+#### 18. How to convert JSONArray of objects to a json string message
+
+(73224582)
+
+    {
+        "header": [
+            {
+                "key": "numberOfRecords",
+                "value": "122",
+                "valueDataType": "string"
+            },
+            {
+                "key": "g_udit",
+                "value": "1",
+                "valueDataType": "string"
+            },
+            {
+                "key": "userNameId",
+                "value": "155",
+                "valueDataType": "string"
+            }
+        ]
+    }
+
+Josson Query
+
+    map(header.map(key::value).mergeObjects())
+
+Output
+
+    {
+      "header" : {
+        "numberOfRecords" : "122",
+        "g_udit" : "1",
+        "userNameId" : "155"
+      }
+    }
+
+---
+
+#### 19. Java copy properties with condition
+
+(73200231)
+
+    {
+      "data": {
+        "myProp": true,
+        "myAnother": true,
+        "myAnotherOne": false
+      }
+    }
+
+Josson Query
+
+    map(values: data.entries().[value]*.key.upperSnakeCase())
+
+Output
+
+    {
+      "values" : [ "MY_PROP", "MY_ANOTHER" ]
+    }
+
+---
+
+#### 20. Array input JSON
+
+(73190751)
+
+    {
+        "data": [
+            {
+                "fieldname": "Name",
+                "fieldvalue": [
+                    "John Doe"
+                ]
+            },
+            {
+                "fieldname": "Title",
+                "fieldvalue": [
+                    "Manager"
+                ]
+            },
+            {
+                "fieldname": "Company",
+                "fieldvalue": [
+                    "Walmart"
+                ]
+            }
+        ]
+    }
+
+Josson Query
+
+    map(
+      finalPayload: map(
+        PI: map(
+          EmpName: data[fieldname='Name'].fieldvalue[0],
+          EmpRole: data[fieldname='Title'].fieldvalue[0]
+        ),
+        Company: data[fieldname='Company'].fieldvalue[0]
+      )
+    )
+
+Output
+
+    {
+      "finalPayload" : {
+        "PI" : {
+          "EmpName" : "JohnDoe",
+          "EmpRole" : "Manager"
+        },
+        "Company" : "Walmart"
+      }
+    }
+
+---
+
+#### 21. Compare nested JSON object with Java with differences
+
+(73131799)
+
+Dataset `left`
+
+    {
+        "package": {
+            "institution": [
+                {
+                    "school": "TP"
+                }
+            ],
+            "people": [
+                {
+                    "age": 32,
+                    "name": "Bob"
+                },
+                {
+                    "age": 16,
+                    "name": "Amanda"
+                }
+            ],
+            "details": [
+                {
+                    "course": "Humanities",
+                    "duration": 4,
+                    "description": "Students in Computer Sci"
+                }
+            ]
+        }
+    }
+
+Dataset `right`
+
+    {
+        "package": {
+            "institution": [
+                {
+                    "school": "MIT"
+                }
+            ],
+            "people": [
+                {
+                    "age": 32,
+                    "name": "Bob"
+                },
+                {
+                    "age": 16,
+                    "name": "Samantha"
+                },
+                {
+                    "age": 20,
+                    "name": "Dylan"
+                }
+            ],
+            "details": [
+                {
+                    "course": "Computer Sci",
+                    "duration": 4,
+                    "description": "Students in Computer Sci"
+                }
+            ]
+        }
+    }
+
+Jossons Query
+
+    left->package >-> right->package
+
+Output
+
+    {
+      "institution" : [ {
+        "school" : "MIT"
+      } ],
+      "people" : [ {
+        "age" : 16,
+        "name" : "Samantha"
+      }, {
+        "age" : 20,
+        "name" : "Dylan"
+      } ],
+      "details" : [ {
+        "course" : "Computer Sci",
+        "duration" : 4,
+        "description" : "Students in Computer Sci"
+      } ]
     }
