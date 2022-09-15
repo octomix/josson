@@ -28,8 +28,7 @@ import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
-import static com.octomix.josson.Utils.addArrayElement;
-import static com.octomix.josson.Utils.literalToValueNode;
+import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -129,7 +128,7 @@ final class JossonCore {
 
     static String getNodeAsTextExceptNull(final JsonNode node, final int index, final String jossonPath) {
         final JsonNode workNode = getNodeByPath(node, index, jossonPath);
-        return workNode == null || workNode.isNull() ? null : workNode.asText();
+        return nodeIsNull(workNode) ? null : workNode.asText();
     }
 
     static boolean getNodeAsBoolean(final JsonNode node, final int index, final String jossonPath) {
@@ -233,11 +232,8 @@ final class JossonCore {
     }
 
     private static JsonNode getNodeByKeys(JsonNode node, final List<String> keys, final List<String> nextKeys) {
-        if (keys == null || keys.isEmpty()) {
+        if (keys == null || keys.isEmpty() || node == null) {
             return node;
-        }
-        if (node == null || node.isNull()) {
-            return null;
         }
         String key = keys.get(0);
         switch (key.charAt(0)) {
@@ -347,7 +343,7 @@ final class JossonCore {
     private static JsonNode wildcardAny(final JsonNode node, final List<String> keys, final List<String> nextKeys) {
         for (JsonNode elem : node) {
             final JsonNode tryNode = getNodeByKeys(elem, new ArrayList<>(keys), new ArrayList<>(nextKeys));
-            if (tryNode != null && !tryNode.isNull()) {
+            if (!nodeIsNull(tryNode)) {
                 return tryNode;
             }
         }

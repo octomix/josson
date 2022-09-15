@@ -34,8 +34,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.Utils.toLocalDateTime;
-import static com.octomix.josson.Utils.toOffsetDateTime;
+import static com.octomix.josson.Utils.*;
 
 /**
  * Josson is a query language for JSON.
@@ -388,7 +387,7 @@ public class Josson {
      */
     public String getString(final String jossonPath) {
         final JsonNode node = getNode(jossonPath);
-        return node == null || node.isNull() ? null : node.isValueNode() ? node.asText() : node.toString();
+        return nodeIsNull(node) ? null : node.isValueNode() ? node.asText() : node.toString();
     }
 
     /**
@@ -412,7 +411,7 @@ public class Josson {
      */
     public Long getLong(final String jossonPath) {
         final ValueNode node = getValueNode(jossonPath);
-        return node == null || node.isNull() ? null : node.asLong();
+        return nodeIsNull(node) ? null : node.asLong();
     }
 
     /**
@@ -436,7 +435,7 @@ public class Josson {
      */
     public Integer getInteger(final String jossonPath) {
         final ValueNode node = getValueNode(jossonPath);
-        return node == null || node.isNull() ? null : node.asInt();
+        return nodeIsNull(node) ? null : node.asInt();
     }
 
     /**
@@ -460,7 +459,7 @@ public class Josson {
      */
     public Double getDouble(final String jossonPath) {
         final ValueNode node = getValueNode(jossonPath);
-        return node == null || node.isNull() ? null : node.asDouble();
+        return nodeIsNull(node) ? null : node.asDouble();
     }
 
     /**
@@ -484,7 +483,7 @@ public class Josson {
      */
     public Boolean getBoolean(final String jossonPath) {
         final ValueNode node = getValueNode(jossonPath);
-        return node == null || node.isNull() ? null : node.asBoolean();
+        return nodeIsNull(node) ? null : node.asBoolean();
     }
 
     /**

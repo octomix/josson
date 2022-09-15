@@ -3044,7 +3044,7 @@ Following are some examples of each function.
 
 #### 174. isNull()
 
-    null.isNull() ==> !unresolvable!
+    null.isNull() ==> true
 
     isNull(null) ==> true
 
@@ -3054,7 +3054,7 @@ Following are some examples of each function.
 
 #### 175. isNotNull()
 
-    null.isNotNull() ==> !unresolvable!
+    null.isNotNull() ==> false
 
     isNotNull(null) ==> false
 
@@ -3638,11 +3638,11 @@ Following are some examples of each function.
     ==>
     [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]
 
-    flatten(json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]'), 3)
+    flatten(json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]'), 3, null)
     ==>
     [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]
 
-    flatten(json('{"a":1,"b":[2,3],"c":{"d":4,"e":{"f":5}}}'),'_')
+    flatten(json('{"a":1,"b":[2,3],"c":{"d":4,"e":{"f":5}}}'), '_', null)
     ==>
     {
       "a" : 1,
@@ -3667,9 +3667,34 @@ Following are some examples of each function.
       "3" : 9
     }
 
+    flatten(json('{"a":1,"b":[2,3],"c":{"d":4,"e":{"f":5}}}'), '.', '[%d]')
+    ==>
+    {
+      "a" : 1,
+      "b[0]" : 2,
+      "b[1]" : 3,
+      "c.d" : 4,
+      "c.e.f" : 5
+    }
+
+    json('[0,1,[2,3,[4,{"a":5},6,[7]],8],9]').flatten('.', '[%d]')
+    ==>
+    {
+      "[0]" : 0,
+      "[1]" : 1,
+      "[2][0]" : 2,
+      "[2][1]" : 3,
+      "[2][2][0]" : 4,
+      "[2][2][1].a" : 5,
+      "[2][2][2]" : 6,
+      "[2][2][3][0]" : 7,
+      "[2][3]" : 8,
+      "[3]" : 9
+    }
+
 #### 223. unflatten()
 
-    flatten(json('{"a":1,"b":[2,3],"c":{"d":4,"e":{"f":5}}}'),'_').unflatten('_')
+    flatten(json('{"a":1,"b":[2,3],"c":{"d":4,"e":{"f":5}}}'),'_',null).unflatten('_')
     ==>
     {
       "a" : 1,
@@ -3683,6 +3708,23 @@ Following are some examples of each function.
     }
 
     json('[0,1,[2,3,[4,{"a":5},6,[7]],8],9]').flatten('_').unflatten('_')
+    ==>
+    [ 0, 1, [ 2, 3, [ 4, {"a":5}, 6, [ 7 ] ], 8 ], 9 ]
+
+    flatten(json('{"a":1,"b":[2,3],"c":{"d":4,"e":{"f":5}}}'),'.','[%d]').unflatten('.[]')
+    ==>
+    {
+      "a" : 1,
+      "b" : [ 2, 3 ],
+      "c" : {
+        "d" : 4,
+        "e" : {
+          "f" : 5
+        }
+      }
+    }
+
+    json('[0,1,[2,3,[4,{"a":5},6,[7]],8],9]').flatten('.','[%d]').unflatten('.[]')
     ==>
     [ 0, 1, [ 2, 3, [ 4, {"a":5}, 6, [ 7 ] ], 8 ], 9 ]
 
@@ -4995,52 +5037,50 @@ Output
 
 ---
 
-#### 5. Splitting json object
+#### 5. Java - Need to convert Flat Map<String, Object> to Nested Object
 
-(73674131)
+(73456238)
 
     {
-       "idno":6473853,
-       "user":"GCA_GB",
-       "operation":"U",
-       "timestamp":"2022-08-22T13:14:48",
-       "first_name":{
-          "old":"rak",
-          "new":"raki"
-       },
-       "fam_name":{
-          "old":"gow",
-          "new":"gowda"
-       }
+        "test": "t",
+        "testInt": 1,
+        "b": {
+            "testDouble": 1.1,
+            "c": [{
+                "testFloat": 1.2
+            }]
+        }
     }
 
 Josson Query
 
-    map(idno, user, operation, timestamp,
-        changes: entries().[value.isObject()]*.map(key::value))
-    .unwind(changes)
+    flatten('_')
 
-Output
+Output `flattened `
 
-    [ {
-      "idno" : 6473853,
-      "user" : "GCA_GB",
-      "operation" : "U",
-      "timestamp" : "2022-08-22T13:14:48",
-      "first_name" : {
-        "old" : "rak",
-        "new" : "raki"
+    {
+      "test" : "t",
+      "testInt" : 1,
+      "b_testDouble" : 1.1,
+      "b_c_0_testFloat" : 1.2
+    }
+
+Josson Query
+
+    unflatten('_')
+
+Output `unflatten`
+
+    {
+      "test" : "t",
+      "testInt" : 1,
+      "b" : {
+        "testDouble" : 1.1,
+        "c" : [ {
+          "testFloat" : 1.2
+        } ]
       }
-    }, {
-      "idno" : 6473853,
-      "user" : "GCA_GB",
-      "operation" : "U",
-      "timestamp" : "2022-08-22T13:14:48",
-      "fam_name" : {
-        "old" : "gow",
-        "new" : "gowda"
-      }
-    } ]
+    }
 
 ---
 
@@ -5584,7 +5624,6 @@ Output
       "codigoUnidade": {
         "codigo": "string"
       },
-     
       "diretor": {
         "cpf": {
           "numeroCPF": "string"
@@ -5932,4 +5971,122 @@ Output
         "duration" : 4,
         "description" : "Students in Computer Sci"
       } ]
+    }
+
+---
+
+#### 22. Build array of objects grouping attributes in the same object
+
+(72442001)
+
+    {
+      "new": {
+        "bc_sku_partner": [
+          "Amazon",
+          "Ebay"
+        ],
+        "bc_sku_channel": [
+          "Partner",
+          "Online",
+          "Store"
+        ],
+        "cc_sku_channel": [
+          "Store"
+        ]
+      }
+    }
+
+Josson Query
+
+        new
+        .entries()
+        .unwind(value)
+        .[key='bc_sku_partner' | value!='Partner']*
+        .map(catalog:key.substr(0,2).upperCase(),
+             channel:if([key='bc_sku_partner'],'Partner',value),
+             partner:if([key='bc_sku_partner'],value))
+        .toObject('catalogs')
+
+Output
+
+    {
+      "catalogs" : [ {
+        "catalog" : "BC",
+        "channel" : "Partner",
+        "partner" : "Amazon"
+      }, {
+        "catalog" : "BC",
+        "channel" : "Partner",
+        "partner" : "Ebay"
+      }, {
+        "catalog" : "BC",
+        "channel" : "Online"
+      }, {
+        "catalog" : "BC",
+        "channel" : "Store"
+      }, {
+        "catalog" : "CC",
+        "channel" : "Store"
+      } ]
+    }
+
+---
+
+#### 23. Flatten array and nested object with default values for missing array elements
+
+(72442443)
+
+    {
+      "id": "1234",
+      "recordType": "E",
+      "receiveDate": "2009-01-01",
+      "receiveTime": "09:55:00",
+      "releaseDate": "2009-01-02",
+      "releaseTime": "08:30:00",
+      "classifications": [
+        {
+          "reportType": 1031435,
+          "description": {
+            "string": "Progress Report"
+          }
+        },
+        {
+          "reportType": 8888888,
+          "description": {
+            "string": "Net Tangible Asset Backing"
+          }
+        }
+      ],
+      "type": "ASX"
+    }
+
+Josson Query
+
+    map(id,
+        recordType,
+        classifications
+         .map(reportType, description:description.string)
+         .toObject('a')
+         .collect(a,
+                  ifNot(a[reportType=8888888], json('{"reportType":8888888,"description":"Default item"}')),
+                  ifNot(a[reportType=9999999], json('{"reportType":9999999,"description":"Default item"}')))
+         .flatten(1),
+        type)
+
+Output
+
+    {
+      "id" : "1234",
+      "recordType" : "E",
+      "classifications" : [ {
+        "reportType" : 1031435,
+        "description" : "Progress Report"
+      }, {
+        "reportType" : 8888888,
+        "description" : "Net Tangible Asset Backing"
+      }, {
+        "reportType" : 9999999,
+        "description" : "Default item"
+      } ],
+      "type" : "ASX"
     }

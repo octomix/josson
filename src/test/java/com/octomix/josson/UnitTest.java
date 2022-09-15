@@ -1447,12 +1447,12 @@ public class UnitTest {
         evaluate.accept("isNotBlank(' ')", "false");
         evaluate.accept("isNotBlank(json('[\"\",\" \",\"X\",0,false,null]'))", "[ false, false, true, false, false, false ]");
         // isNull()
-        evaluate.accept("null.isNull()", "!unresolvable!");
+        evaluate.accept("null.isNull()", "true");
         evaluate.accept("isNull(null)", "true");
         evaluate.accept("isNull('')", "false");
         evaluate.accept("isNull(json('[\"text\",1,true,null]'))", "[ false, false, false, true ]");
         // isNotNull()
-        evaluate.accept("null.isNotNull()", "!unresolvable!");
+        evaluate.accept("null.isNotNull()", "false");
         evaluate.accept("isNotNull(null)", "false");
         evaluate.accept("isNotNull('')", "true");
         evaluate.accept("isNotNull(json('[\"text\",1,true,null]'))", "[ true, true, true, false ]");
@@ -1830,9 +1830,9 @@ public class UnitTest {
                 "[ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ], [ 7, 8 ], [ 9, 10 ], [ 11, 12 ], [ 13, 14 ], [ 15, 16 ] ]");
         evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()",
                 "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
-        evaluate.accept("flatten(json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]'), 3)",
+        evaluate.accept("flatten(json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]'), 3, null)",
                 "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
-        evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'),'_')",
+        evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'), '_', null)",
                 "{\n" +
                         "  \"a\" : 1,\n" +
                         "  \"b_0\" : 2,\n" +
@@ -1853,8 +1853,29 @@ public class UnitTest {
                         "  \"2_3\" : 8,\n" +
                         "  \"3\" : 9\n" +
                         "}");
+        evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'), '.', '[%d]')",
+                "{\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"b[0]\" : 2,\n" +
+                        "  \"b[1]\" : 3,\n" +
+                        "  \"c.d\" : 4,\n" +
+                        "  \"c.e.f\" : 5\n" +
+                        "}");
+        evaluate.accept("json('[0,1,[2,3,[4,{\"a\":5},6,[7]],8],9]').flatten('.', '[%d]')",
+                "{\n" +
+                        "  \"[0]\" : 0,\n" +
+                        "  \"[1]\" : 1,\n" +
+                        "  \"[2][0]\" : 2,\n" +
+                        "  \"[2][1]\" : 3,\n" +
+                        "  \"[2][2][0]\" : 4,\n" +
+                        "  \"[2][2][1].a\" : 5,\n" +
+                        "  \"[2][2][2]\" : 6,\n" +
+                        "  \"[2][2][3][0]\" : 7,\n" +
+                        "  \"[2][3]\" : 8,\n" +
+                        "  \"[3]\" : 9\n" +
+                        "}");
         // unflatten()
-        evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'),'_').unflatten('_')",
+        evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'),'_',null).unflatten('_')",
                 "{\n" +
                         "  \"a\" : 1,\n" +
                         "  \"b\" : [ 2, 3 ],\n" +
@@ -1866,6 +1887,21 @@ public class UnitTest {
                         "  }\n" +
                         "}");
         evaluate.accept("json('[0,1,[2,3,[4,{\"a\":5},6,[7]],8],9]').flatten('_').unflatten('_')",
+                "[ 0, 1, [ 2, 3, [ 4, {\n" +
+                        "  \"a\" : 5\n" +
+                        "}, 6, [ 7 ] ], 8 ], 9 ]");
+        evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'),'.','[%d]').unflatten('.[]')",
+                "{\n" +
+                        "  \"a\" : 1,\n" +
+                        "  \"b\" : [ 2, 3 ],\n" +
+                        "  \"c\" : {\n" +
+                        "    \"d\" : 4,\n" +
+                        "    \"e\" : {\n" +
+                        "      \"f\" : 5\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}");
+        evaluate.accept("json('[0,1,[2,3,[4,{\"a\":5},6,[7]],8],9]').flatten('.','[%d]').unflatten('.[]')",
                 "[ 0, 1, [ 2, 3, [ 4, {\n" +
                         "  \"a\" : 5\n" +
                         "}, 6, [ 7 ] ], 8 ], 9 ]");

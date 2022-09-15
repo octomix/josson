@@ -115,8 +115,12 @@ class Utils {
         return dateTime.atOffset(getZoneId().getRules().getOffset(dateTime));
     }
 
+    static boolean nodeIsNull(final JsonNode node) {
+        return node == null || node.isNull();
+    }
+
     static boolean nodeHasValue(final JsonNode node) {
-        return node != null && !node.isNull() && node.isValueNode();
+        return !nodeIsNull(node) && node.isValueNode();
     }
 
     static Object valueAsObject(final JsonNode node) {

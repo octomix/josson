@@ -127,13 +127,16 @@ final class FuncStructural {
     }
 
     static JsonNode funcFlatten(final JsonNode node, final String params) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 0, 1);
+        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 0, 2);
         final JsonNode workNode = nodeAndParams.getKey();
         if (workNode != null && workNode.isContainerNode()) {
-            final JsonNode param = nodeAndParams.getValue().isEmpty() ? null : getNodeByPath(node, nodeAndParams.getValue().get(0));
-            if (param != null && (param.isTextual() || param.isNull())) {
+            final List<String> paramList = nodeAndParams.getValue();
+            final JsonNode param = paramList.size() > 0 ? getNodeByPath(node, paramList.get(0)) : null;
+            final JsonNode indexFormat = paramList.size() > 1 ? getNodeByPath(node, paramList.get(1)) : null;
+            if (param != null && (param.isTextual() || param.isNull() || !nodeIsNull(indexFormat))) {
                 final ObjectNode object = MAPPER.createObjectNode();
-                funcFlatten(object, null, workNode, param.isNull() ? null : param.asText());
+                funcFlatten(object, null, workNode, param.isNull() ? null : param.asText(),
+                        nodeIsNull(indexFormat) ? null : indexFormat.asText());
                 return object;
             }
             if (workNode.isArray()) {
@@ -159,17 +162,23 @@ final class FuncStructural {
         }
     }
 
-    private static void funcFlatten(final ObjectNode object, final String name, final JsonNode node, final String separator) {
+    private static void funcFlatten(final ObjectNode object, final String name, final JsonNode node,
+                                    final String separator, final String indexFormat) {
         if (node.isValueNode()) {
             object.set(name, node);
         } else if (node.isObject()) {
             final String prefix = name == null || separator == null ? EMPTY : name + separator;
             node.fields().forEachRemaining(elem ->
-                    funcFlatten(object, prefix + elem.getKey(), elem.getValue(), separator));
-        } else {
+                    funcFlatten(object, prefix + elem.getKey(), elem.getValue(), separator, indexFormat));
+        } else if (indexFormat == null) {
             final String prefix = name == null ? EMPTY : separator == null ? name : name + separator;
             for (int i = 0; i < node.size(); i++) {
-                funcFlatten(object, prefix + i, node.get(i), separator);
+                funcFlatten(object, prefix + i, node.get(i), separator, null);
+            }
+        } else {
+            final String prefix = name == null ? EMPTY : name;
+            for (int i = 0; i < node.size(); i++) {
+                funcFlatten(object, prefix + String.format(indexFormat, i), node.get(i), separator, indexFormat);
             }
         }
     }
@@ -351,7 +360,7 @@ final class FuncStructural {
         final Iterator<Map.Entry<String, JsonNode>> iterator = workNode.fields();
         while (iterator.hasNext()) {
             final Map.Entry<String, JsonNode> entry = iterator.next();
-            final String[] steps = StringUtils.separate(entry.getKey(), separator);
+            final String[] steps = StringUtils.split(entry.getKey(), separator);
             if (steps.length > 0) {
                 root = funcUnflatten(root, steps, 0, entry.getValue());
             }

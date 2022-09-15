@@ -79,7 +79,7 @@ final class FuncFormat {
                 }
                 for (String path : paramList) {
                     final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
-                    if (tryNode != null && !tryNode.isNull()) {
+                    if (!nodeIsNull(tryNode)) {
                         return tryNode;
                     }
                 }
@@ -151,7 +151,7 @@ final class FuncFormat {
             (data, paramList) -> {
                 for (String path : paramList) {
                     final JsonNode tryNode = getNodeByPath(node, data.getValue(), path);
-                    if (tryNode != null && !tryNode.isNull()) {
+                    if (!nodeIsNull(tryNode)) {
                         return tryNode;
                     }
                 }

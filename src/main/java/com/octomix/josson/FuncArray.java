@@ -29,6 +29,7 @@ import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.Utils.nodeHasValue;
+import static com.octomix.josson.Utils.nodeIsNull;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -104,7 +105,7 @@ final class FuncArray {
         String maxMinString = null;
         for (int i = 0; i < workNode.size(); i++) {
             final JsonNode tryNode = getNodeByPath(workNode.get(i), path);
-            if (tryNode == null || tryNode.isNull()) {
+            if (nodeIsNull(tryNode)) {
                 if (nullPriority > 0) {
                     return workNode.get(i);
                 }

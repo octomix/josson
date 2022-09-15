@@ -338,7 +338,7 @@ class JossonsCore {
                         } else {
                             text = node.toString();
                         }
-                        outIsAntiInject = antiInjectionEncode(sb, skipEscape ? query : escaping.escape(text)) || outIsAntiInject;
+                        outIsAntiInject = antiInjectionEncode(sb, skipEscape ? text : escaping.escape(text)) || outIsAntiInject;
                     }
                 } catch (UnresolvedDatasetException e) {
                     unresolvedDatasets.add(e.getDatasetName());

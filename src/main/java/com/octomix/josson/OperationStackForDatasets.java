@@ -26,6 +26,7 @@ import java.util.Map;
 import static com.octomix.josson.PatternMatcher.decomposeTernarySteps;
 import static com.octomix.josson.PatternMatcher.matchCombineOperations;
 import static com.octomix.josson.Utils.asBoolean;
+import static com.octomix.josson.Utils.nodeIsNull;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -87,13 +88,13 @@ class OperationStackForDatasets extends OperationStack {
         }
         for (TernaryStep step : decomposeTernarySteps(query)) {
             final JsonNode node = evaluateStatement(step.getStatement());
-            if ((node == null || node.isNull()) && EMPTY.equals(step.getIfTrueValue())) {
+            if (nodeIsNull(node) && EMPTY.equals(step.getIfTrueValue())) {
                 continue;
             }
             if (step.getIfTrueValue() == null) {
                 return node;
             }
-            if (node != null && !node.isNull()) {
+            if (!nodeIsNull(node)) {
                 if (step.getIfTrueValue().isEmpty()) {
                     if (!(node.isTextual() && node.textValue().isEmpty())) {
                         return node;
