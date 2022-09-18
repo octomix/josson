@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.octomix.josson.commons.StringUtils;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Function;
 
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_COLLECT_ALL;
@@ -184,53 +186,61 @@ class CombineOperation {
             ObjectNode concat = leftNode.deepCopy();
             mergeObjects(concat, rightNode);
             return concat;
-        } else if (leftNode.isArray() && rightNode.isArray()) {
+        }
+        if (leftNode.isArray() && rightNode.isArray()) {
             return cloneArrayNode((ArrayNode) leftNode).addAll((ArrayNode) rightNode);
         }
         throw new IllegalArgumentException("cannot concatenate an object and an array");
     }
 
-    private static JsonNode subtract(final JsonNode leftNode, final JsonNode rightNode) {
+    private static JsonNode subtract(JsonNode leftNode, JsonNode rightNode) {
         if (leftNode.isObject() && rightNode.isObject()) {
             final ObjectNode node = MAPPER.createObjectNode();
-            leftNode.fields().forEachRemaining(field -> {
-                if (rightNode.has(field.getKey())) {
-                    if (field.getValue().isObject() && rightNode.get(field.getKey()).isObject()
-                        || field.getValue().isArray() && rightNode.get(field.getKey()).isArray()) {
-                        final JsonNode diff = subtract(field.getValue(), rightNode.get(field.getKey()));
+            final Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
+            while (iterator.hasNext()) {
+                final Map.Entry<String, JsonNode> entry = iterator.next();
+                if (rightNode.has(entry.getKey())) {
+                    if (entry.getValue().isObject() && rightNode.get(entry.getKey()).isObject()
+                        || entry.getValue().isArray() && rightNode.get(entry.getKey()).isArray()) {
+                        final JsonNode diff = subtract(entry.getValue(), rightNode.get(entry.getKey()));
                         if (!diff.isEmpty()) {
-                            node.set(field.getKey(), diff);
+                            node.set(entry.getKey(), diff);
                         }
-                    } else if (Operator.NE.relationalCompare(field.getValue(), rightNode.get(field.getKey()))) {
-                        node.set(field.getKey(), field.getValue());
+                    } else if (Operator.NE.relationalCompare(entry.getValue(), rightNode.get(entry.getKey()))) {
+                        node.set(entry.getKey(), entry.getValue());
                     }
                 } else {
-                    node.set(field.getKey(), field.getValue());
-                }
-            });
-            return node;
-        } else if (leftNode.isArray() && rightNode.isArray()) {
-            final ArrayNode node = MAPPER.createArrayNode();
-            for (int i = 0; i < leftNode.size(); i++) {
-                int j = rightNode.size() - 1;
-                for (; j >= 0 ; j--) {
-                    if (Operator.EQ.relationalCompare(leftNode.get(i), rightNode.get(j))) {
-                        break;
-                    }
-                }
-                if (j < 0) {
-                    node.add(leftNode.get(i));
+                    node.set(entry.getKey(), entry.getValue());
                 }
             }
             return node;
         }
-        throw new IllegalArgumentException("cannot subtract between an object and an array");
+        if (leftNode.isObject()) {
+            leftNode = MAPPER.createArrayNode().add(leftNode);
+        }
+        if (rightNode.isObject()) {
+            rightNode = MAPPER.createArrayNode().add(rightNode);
+        }
+        final ArrayNode node = MAPPER.createArrayNode();
+        for (int i = 0; i < leftNode.size(); i++) {
+            int j = rightNode.size() - 1;
+            for (; j >= 0 ; j--) {
+                if (Operator.EQ.relationalCompare(leftNode.get(i), rightNode.get(j))) {
+                    break;
+                }
+            }
+            if (j < 0) {
+                node.add(leftNode.get(i));
+            }
+        }
+        return node;
     }
 
     private static JsonNode symmetricDifference(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isObject() && rightNode.isObject()) {
             return ((ObjectNode) subtract(leftNode, rightNode)).setAll((ObjectNode) subtract(rightNode, leftNode));
-        } else if (leftNode.isArray() && rightNode.isArray()) {
+        }
+        if (leftNode.isArray() && rightNode.isArray()) {
             return ((ArrayNode) subtract(leftNode, rightNode)).addAll((ArrayNode) subtract(rightNode, leftNode));
         }
         throw new IllegalArgumentException("cannot operate difference between an object and an array");
