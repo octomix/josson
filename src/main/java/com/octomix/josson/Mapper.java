@@ -36,12 +36,16 @@ class Mapper extends ObjectMapper {
         this.setDateFormat(DateFormat.getInstance());
     }
 
-    static ObjectNode cloneObjectNode(final ObjectNode objectNode) {
+    static ObjectNode cloneObject(final ObjectNode objectNode) {
         return MAPPER.createObjectNode().setAll(objectNode);
     }
 
-    static ArrayNode cloneArrayNode(final ArrayNode arrayNode) {
+    static ArrayNode cloneArray(final ArrayNode arrayNode) {
         return MAPPER.createArrayNode().addAll(arrayNode);
+    }
+
+    static ArrayNode intoNewArray(final JsonNode jsonNode) {
+        return MAPPER.createArrayNode().add(jsonNode);
     }
 
     static ObjectNode deepCopy(final ObjectNode object, final int depth) {

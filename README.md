@@ -3993,24 +3993,28 @@ Set operations do not need matching key.
 - _Left Concatenate_ `<+<`
 
   Concatenate right into left. Works on two objects or two arrays.
+  If one is object and the other is array, the object will be put into an array before manipulation.
 
       "leftQuery <+< rightQuery"
 
 - _Right Concatenate_ `>+>`
 
   Concatenate left into right. Works on two objects or two arrays.
+  If one is object and the other is array, the object will be put into an array before manipulation.
 
       "leftQuery >+> rightQuery"
 
 - _Subtract Right From Left_ `<-<`
 
   Set of elements in the left set that are not in the right set. Works on two objects or two arrays.
+  If one is object and the other is array, the object will be put into an array before manipulation.
 
       "leftQuery <-< rightQuery"
 
 - _Subtract Left From Right_ `>->`
 
   Set of elements in the right set that are not in the left set. Works on two objects or two arrays.
+  If one is object and the other is array, the object will be put into an array before manipulation.
 
       "leftQuery >-> rightQuery"
 
@@ -5696,6 +5700,7 @@ Josson Query
                 )
             )
             .mergeObjects()
+        )
 
 Output
 
@@ -5998,14 +6003,14 @@ Output
 
 Josson Query
 
-        new
-        .entries()
-        .unwind(value)
-        .[key='bc_sku_partner' | value!='Partner']*
-        .map(catalog:key.substr(0,2).upperCase(),
-             channel:if([key='bc_sku_partner'],'Partner',value),
-             partner:if([key='bc_sku_partner'],value))
-        .toObject('catalogs')
+    new
+    .entries()
+    .unwind(value)
+    .[key='bc_sku_partner' | value!='Partner']*
+    .map(catalog:key.substr(0,2).upperCase(),
+         channel:if([key='bc_sku_partner'],'Partner',value),
+         partner:if([key='bc_sku_partner'],value))
+    .toObject('catalogs')
 
 Output
 
@@ -6090,3 +6095,134 @@ Output
       } ],
       "type" : "ASX"
     }
+
+---
+
+#### 24. Merge Array of multi Objects
+
+(70753154)
+
+    {
+      \"group\": [
+        {
+          \"schema\": \"file\"
+        },
+        {
+          \"key1\": \"val1\",
+          \"key2\": \"val2\"
+        },
+        {
+          \"schema\": \"folder\"
+        },
+        {
+          \"key1\": \"val1\",
+          \"key2\": \"val2\",
+          \"key3\": \"val3\"
+        },
+        {
+          \"schema\": \"dir\"
+        },
+        {
+          \"key1\": \"val1\",
+          \"key2\": \"val2\",
+          \"key3\": \"val3\",
+          \"key4\": \"val4\"
+        }
+      ]
+    }
+
+Josson Query
+
+    group
+    .group(#.floor(calc(?/2)))@
+    .mergeObjects(elements)
+    .@toObject('group')
+
+Output
+
+    {
+      "group" : [ {
+        "schema" : "file",
+        "key1" : "val1",
+        "key2" : "val2"
+      }, {
+        "schema" : "folder",
+        "key1" : "val1",
+        "key2" : "val2",
+        "key3" : "val3"
+      }, {
+        "schema" : "dir",
+        "key1" : "val1",
+        "key2" : "val2",
+        "key3" : "val3",
+        "key4" : "val4"
+      } ]
+    }
+
+---
+
+#### 25. Transform by condition
+
+(54502431)
+
+    {
+      "entry": [
+        {
+          "resource": {
+            "id": "car-1",
+            "type": "vehicle",
+            "color": "red",
+            "owner": {
+              "ref": "Person/person-1"
+            }
+          }
+        },
+        {
+          "resource": {
+            "id": "car-2",
+            "type": "vehicle",
+            "color": "blue",
+            "owner": {
+              "ref": "Person/person-2"
+            }
+          }
+        },
+        {
+          "resource": {
+            "id": "person-1",
+            "type": "Person",
+            "name": "john"
+          }
+        },
+        {
+          "resource": {
+            "id": "person-2",
+            "type": "Person",
+            "name": "wick"
+          }
+        }
+      ]
+    }
+
+Josson Query
+
+    entry
+    .resource
+    .group(if([type='vehicle'], owner.ref.removeStart('Person/'), id),
+           if([type='vehicle'], field(owner:), map(ownername:name)))@
+    .elements
+    .mergeObjects()
+
+Output
+
+    [ {
+      "id" : "car-1",
+      "type" : "vehicle",
+      "color" : "red",
+      "ownername" : "john"
+    }, {
+      "id" : "car-2",
+      "type" : "vehicle",
+      "color" : "blue",
+      "ownername" : "wick"
+    } ]

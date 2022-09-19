@@ -113,13 +113,13 @@ final class FuncStructural {
     static JsonNode funcField(final JsonNode node, final String params) {
         final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
         if (node.isObject()) {
-            return funcMap(cloneObjectNode((ObjectNode) node), node, args, NON_ARRAY_INDEX);
+            return funcMap(cloneObject((ObjectNode) node), node, args, NON_ARRAY_INDEX);
         }
         if (node.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < node.size(); i++) {
                 final JsonNode elem = node.get(i);
-                array.add(elem.isObject() ? funcMap(cloneObjectNode((ObjectNode) elem), node, args, i) : null);
+                array.add(elem.isObject() ? funcMap(cloneObject((ObjectNode) elem), node, args, i) : null);
             }
             return array;
         }

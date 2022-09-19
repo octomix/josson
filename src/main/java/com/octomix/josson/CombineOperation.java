@@ -164,7 +164,7 @@ class CombineOperation {
         if (operator == LEFT_JOIN_MANY) {
             final JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.getSymbol());
             if (rightToJoin != null) {
-                return cloneObjectNode(leftObject).set(arrayName, rightToJoin);
+                return cloneObject(leftObject).set(arrayName, rightToJoin);
             }
         } else {
             final JsonNode rightToJoin = getNodeByPath(rightArray, path);
@@ -173,7 +173,7 @@ class CombineOperation {
                     return null;
                 }
             } else if (rightToJoin != null && rightToJoin.isObject()) {
-                return cloneObjectNode(leftObject).setAll((ObjectNode) rightToJoin);
+                return cloneObject(leftObject).setAll((ObjectNode) rightToJoin);
             } else if (operator == INNER_JOIN) {
                 return null;
             }
@@ -182,18 +182,21 @@ class CombineOperation {
     }
 
     private static JsonNode concatenate(final JsonNode leftNode, final JsonNode rightNode) {
-        if (leftNode.isObject() && rightNode.isObject()) {
-            ObjectNode concat = leftNode.deepCopy();
-            mergeObjects(concat, rightNode);
-            return concat;
+        if (rightNode.isObject()) {
+            if (leftNode.isObject()) {
+                ObjectNode concat = leftNode.deepCopy();
+                mergeObjects(concat, rightNode);
+                return concat;
+            }
+            return cloneArray((ArrayNode) leftNode).add(leftNode);
         }
-        if (leftNode.isArray() && rightNode.isArray()) {
-            return cloneArrayNode((ArrayNode) leftNode).addAll((ArrayNode) rightNode);
+        if (leftNode.isObject()) {
+            return intoNewArray(leftNode).addAll((ArrayNode) rightNode);
         }
-        throw new IllegalArgumentException("cannot concatenate an object and an array");
+        return cloneArray((ArrayNode) leftNode).addAll((ArrayNode) rightNode);
     }
 
-    private static JsonNode subtract(JsonNode leftNode, JsonNode rightNode) {
+    private static JsonNode subtract(final JsonNode leftNode, JsonNode rightNode) {
         if (leftNode.isObject() && rightNode.isObject()) {
             final ObjectNode node = MAPPER.createObjectNode();
             final Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
@@ -215,22 +218,19 @@ class CombineOperation {
             }
             return node;
         }
-        if (leftNode.isObject()) {
-            leftNode = MAPPER.createArrayNode().add(leftNode);
-        }
         if (rightNode.isObject()) {
-            rightNode = MAPPER.createArrayNode().add(rightNode);
+            rightNode = intoNewArray(rightNode);
         }
         final ArrayNode node = MAPPER.createArrayNode();
-        for (int i = 0; i < leftNode.size(); i++) {
-            int j = rightNode.size() - 1;
-            for (; j >= 0 ; j--) {
-                if (Operator.EQ.relationalCompare(leftNode.get(i), rightNode.get(j))) {
+        for (JsonNode leftElem : leftNode.isObject() ? intoNewArray(leftNode) : leftNode) {
+            int i = rightNode.size() - 1;
+            for (; i >= 0 ; i--) {
+                if (Operator.EQ.relationalCompare(leftElem, rightNode.get(i))) {
                     break;
                 }
             }
-            if (j < 0) {
-                node.add(leftNode.get(i));
+            if (i < 0) {
+                node.add(leftElem);
             }
         }
         return node;
@@ -248,7 +248,7 @@ class CombineOperation {
 
     private static ArrayNode union(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isArray() && rightNode.isArray()) {
-            return cloneArrayNode((ArrayNode) rightNode).addAll((ArrayNode) subtract(leftNode, rightNode));
+            return cloneArray((ArrayNode) rightNode).addAll((ArrayNode) subtract(leftNode, rightNode));
         }
         throw new IllegalArgumentException("cannot operate union on object");
     }

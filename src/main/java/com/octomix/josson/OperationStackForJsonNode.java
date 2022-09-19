@@ -18,7 +18,7 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import static com.octomix.josson.Mapper.MAPPER;
+import static com.octomix.josson.Mapper.intoNewArray;
 
 /**
  * Logical operations on a stack of OperationStep for JsonNode.
@@ -29,9 +29,7 @@ class OperationStackForJsonNode extends OperationStack {
 
     OperationStackForJsonNode(final JsonNode node) {
         super(false);
-        this.arrayNode = node.isArray()
-                ? Josson.create(node)
-                : Josson.create(MAPPER.createArrayNode().add(node));
+        this.arrayNode = node.isArray() ? Josson.create(node) : Josson.create(intoNewArray(node));
     }
 
     protected JsonNode evaluateExpression(final OperationStep step, final int arrayIndex) {
