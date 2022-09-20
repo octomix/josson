@@ -731,6 +731,9 @@ class FuncDispatcher {
                 return funcDateWith(node, params, ChronoField.MONTH_OF_YEAR);
             case "withyear":
                 return funcDateWith(node, params, ChronoField.YEAR);
+            // Structural
+            case "wrap":
+                return funcWrap(node, params);
         }
         throw new UnsupportedFunctionException();
     }

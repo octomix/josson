@@ -32,7 +32,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 ### Josson
 
 - Query a JSON dataset.
-- There are 227 internal functions to manipulate and format data.
+- There are 228 internal functions to manipulate and format data.
 - Restructure JSON data and capable of grouping and unwind data.
 - Can be used as an API parameter to trim down the response JSON result.
 
@@ -1079,6 +1079,7 @@ Below is the JSON for this tutorial.
         {} → keys(?) ⇒ [""]
 
 57. Function `collect()` puts all argument values into an array.
+    Function `wrap()` is equivalent to `collect(?)` which is wrap the node inside an array.
 
         josson.getNode("collect(salesDate, customer, items.itemCode)")
         ==>
@@ -1310,6 +1311,7 @@ Below is the JSON for this tutorial.
 
 67. If the parameter value of `flatten()` is textual, it will act as a key name separator to build a flattened object.
     If the separator is `null`, the standalone end node name will be used instead.
+    The second parameter is optional and is the string format for array index, usually use with this combination `('.', '[%d]')`.
 
         josson.getNode("flatten('_')")
         ==>
@@ -1410,7 +1412,7 @@ Below is the JSON for this tutorial.
 
 ## Josson Functions
 
-There are 227 functions. They are classified into 7 categories:
+There are 228 functions. They are classified into 7 categories:
 
 Arithmetic Functions
 
@@ -1650,15 +1652,16 @@ Structural Functions
 216. [depthLimit()](#216-depthlimit)
 217. [collect()](#217-collect)
 218. [cumulateCollect()](#218-cumulatecollect)
-219. [toArray()](#219-toarray)
-220. [toObject()](#220-toobject)
-221. [mergeObjects()](#221-mergeobjects)
-222. [flatten()](#222-flatten)
-223. [unflatten()](#223-unflatten)
-224. [map()](#224-map)
-225. [field()](#225-field)
-226. [group()](#226-group)
-227. [unwind()](#227-unwind)
+219. [wrap()](#219-wrap)
+220. [toArray()](#220-toarray)
+221. [toObject()](#221-toobject)
+222. [mergeObjects()](#222-mergeobjects)
+223. [flatten()](#223-flatten)
+224. [unflatten()](#224-unflatten)
+225. [map()](#225-map)
+226. [field()](#226-field)
+227. [group()](#227-group)
+228. [unwind()](#228-unwind)
 
 Following are some examples of each function.
 
@@ -3560,7 +3563,17 @@ Following are some examples of each function.
       "val" : 88.0
     } ]
 
-#### 219. toArray()
+#### 219. wrap()
+
+    json('["Hi"]').wrap() ==> [ [ "Hi" ] ]
+
+    wrap(json('{"a":1}'))
+    ==>
+    [ {
+      "a" : 1
+    } ]
+
+#### 220. toArray()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()
     ==>
@@ -3573,7 +3586,7 @@ Following are some examples of each function.
 
     toArray(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()) ==> [ 1, 2, 3, 4, 5 ]
 
-#### 220. toObject()
+#### 221. toObject()
 
     'a'.toObject('text')
     ==>
@@ -3602,7 +3615,7 @@ Following are some examples of each function.
       }
     }
 
-#### 221. mergeObjects()
+#### 222. mergeObjects()
 
     json('[{"a":1,"x":11},{"b":2,"y":12},{"c":3,"x":13}]').mergeObjects()
     ==>
@@ -3624,7 +3637,7 @@ Following are some examples of each function.
       "c" : 3
     }
 
-#### 222. flatten()
+#### 223. flatten()
 
     json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten(1)
     ==>
@@ -3692,7 +3705,7 @@ Following are some examples of each function.
       "[3]" : 9
     }
 
-#### 223. unflatten()
+#### 224. unflatten()
 
     flatten(json('{"a":1,"b":[2,3],"c":{"d":4,"e":{"f":5}}}'),'_',null).unflatten('_')
     ==>
@@ -3728,7 +3741,7 @@ Following are some examples of each function.
     ==>
     [ 0, 1, [ 2, 3, [ 4, {"a":5}, 6, [ 7 ] ], 8 ], 9 ]
 
-#### 224. map()
+#### 225. map()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').map(c.e,c.d,b,a)
     ==>
@@ -3752,7 +3765,7 @@ Following are some examples of each function.
       }
     }
 
-#### 225 field()
+#### 226 field()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').field(f:6,c:)
     ==>
@@ -3769,7 +3782,7 @@ Following are some examples of each function.
       "name" : "Cyron"
     }
 
-#### 226. group()
+#### 227. group()
 
     json('[{"a":1,"b":"A"},{"a":2,"b":"B"},{"a":3,"b":"C"},{"a":2,"b":"D"},{"a":1,"b":"E"}]').group(a)
     ==>
@@ -3812,7 +3825,7 @@ Following are some examples of each function.
       "bs" : [ "C" ]
     } ]
 
-#### 227. unwind()
+#### 228. unwind()
 
     json('[{"a":1,"bs":["A","E"]},{"a":2,"bs":["B","D"]},{"a":3,"bs":["C"]}]').unwind(b:bs)
     ==>
@@ -5304,10 +5317,9 @@ Output
 
 Josson Query
 
-    toObject('a')
-    .collect(a[names !=~ '\\D\\d+']*
+    @collect([names !=~ '\D\d+']*
              .map(names::values)
-            ,a[names =~ '\\D\\d+']*
+            ,[names =~ '\D\d+']*
              .group(names.substr(1), map(names::values))@
              .elements
              .mergeObjects()

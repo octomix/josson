@@ -461,4 +461,12 @@ final class FuncStructural {
             }
         );
     }
+
+    static JsonNode funcWrap(final JsonNode node, final String params) {
+        final JsonNode workNode = getParamNode(node, params);
+        if (workNode == null) {
+            return null;
+        }
+        return MAPPER.createArrayNode().add(workNode);
+    }
 }

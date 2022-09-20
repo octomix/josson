@@ -46,8 +46,6 @@ final class JossonCore {
 
     static final String CURRENT_NODE = "?";
 
-    private static final String PARENT_ARRAY_NODE = "@";
-
     private static final char WILDCARD_SYMBOL = '*';
 
     private static final char MATCHES_SYMBOL = '~';
@@ -55,6 +53,8 @@ final class JossonCore {
     private static final char COLLECT_BRANCHES_SYMBOL = '@';
 
     private static final char INDEX_PREFIX_SYMBOL = '#';
+
+    private static final String PARENT_ARRAY_NODE = "@";
 
     private static final String ZERO_BASED_INDEX = INDEX_PREFIX_SYMBOL + "";
 
@@ -97,24 +97,6 @@ final class JossonCore {
 
     static ZoneId getZoneId() {
         return zoneId;
-    }
-
-    private static boolean isCurrentNodePath(final String path) {
-        return isPathSymbol(path, CURRENT_NODE);
-    }
-
-    private static boolean isParentArrayPath(final String path) {
-        return isPathSymbol(path, PARENT_ARRAY_NODE);
-    }
-
-    private static boolean isPathSymbol(final String path, final String pathSymbol) {
-        if (path.startsWith(pathSymbol)) {
-            if (path.length() > 1) {
-                throw new SyntaxErrorException(path);
-            }
-            return true;
-        }
-        return false;
     }
 
     static String getNodeAsText(final JsonNode node, final String jossonPath) {
@@ -176,7 +158,7 @@ final class JossonCore {
             }
             throw new IllegalArgumentException("Invalid index type: " + indexType);
         }
-        if (isParentArrayPath(key)) {
+        if (PARENT_ARRAY_NODE.equals(key)) {
             keys.remove(0);
         } else {
             if (isCurrentNodePath(key)) {
@@ -187,6 +169,16 @@ final class JossonCore {
             }
         }
         return getNodeByKeys(node, keys);
+    }
+
+    private static boolean isCurrentNodePath(final String path) {
+        if (!path.startsWith(CURRENT_NODE)) {
+            return false;
+        }
+        if (path.length() > 1) {
+            throw new SyntaxErrorException(path);
+        }
+        return true;
     }
 
     private static String toAlphabetIndex(final int number, final int base) {

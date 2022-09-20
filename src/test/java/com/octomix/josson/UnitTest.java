@@ -1776,6 +1776,12 @@ public class UnitTest {
                         "  \"id\" : 4,\n" +
                         "  \"val\" : 88.0\n" +
                         "} ]");
+        // wrap()
+        evaluate.accept("json('[\"Hi\"]').wrap()", "[ [ \"Hi\" ] ]");
+        evaluate.accept("wrap(json('{\"a\":1}'))",
+                "[ {\n" +
+                        "  \"a\" : 1\n" +
+                        "} ]");
         // toArray()
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').toArray()",
                 "[ 1, [ 2, 3 ], {\n" +
