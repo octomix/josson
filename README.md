@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.27</version>
+        <version>1.3.28</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.27'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.28'
 
 ## Features and Capabilities
 
@@ -6083,10 +6083,10 @@ Josson Query
         recordType,
         classifications
          .map(reportType, description:description.string)
-         .toObject('a')
-         .collect(a,
-                  ifNot(a[reportType=8888888], json('{"reportType":8888888,"description":"Default item"}')),
-                  ifNot(a[reportType=9999999], json('{"reportType":9999999,"description":"Default item"}')))
+         .wrap()
+         .collect([0],
+                  ifNot([reportType=8888888], json('{"reportType":8888888,"description":"Default item"}')),
+                  ifNot([reportType=9999999], json('{"reportType":9999999,"description":"Default item"}')))
          .flatten(1),
         type)
 

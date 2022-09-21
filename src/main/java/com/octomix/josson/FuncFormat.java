@@ -208,7 +208,8 @@ final class FuncFormat {
     static JsonNode funcIf(final JsonNode node, final String params, final boolean not) {
         return applyWithParams(node, params, 2, 3, null,
             (data, paramList) -> {
-                final JsonNode paramNode = data.getValue() < 0 ? data.getKey() : node;
+                final JsonNode dataNode = data.getKey();
+                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
                 final String query =
                         not ^ asBoolean(getNodeByPath(paramNode, data.getValue(), paramList.get(0))) ? paramList.get(1)
                         : paramList.size() > 2 ? paramList.get(2)
