@@ -47,8 +47,7 @@ final class FuncArray {
         }
         double sum = 0;
         int count = 0;
-        for (int i = array.size() - 1; i >= 0; i--) {
-            final JsonNode tryNode = array.get(i);
+        for (JsonNode tryNode : array) {
             if (nodeHasValue(tryNode)) {
                 sum += tryNode.asDouble();
                 count++;
@@ -76,16 +75,15 @@ final class FuncArray {
         final Set<String> texts = new HashSet<>();
         final Set<Double> doubles = new HashSet<>();
         final Set<Boolean> booleans = new HashSet<>();
-        for (int i = 0; i < array.size(); i++) {
-            final JsonNode tryNode = array.get(i);
-            if (tryNode.isTextual()) {
-                texts.add(tryNode.asText());
-            } else if (tryNode.isNumber()) {
-                doubles.add(tryNode.asDouble());
-            } else if (tryNode.isBoolean()) {
-                booleans.add(tryNode.asBoolean());
+        array.forEach(elem -> {
+            if (elem.isTextual()) {
+                texts.add(elem.asText());
+            } else if (elem.isNumber()) {
+                doubles.add(elem.asDouble());
+            } else if (elem.isBoolean()) {
+                booleans.add(elem.asBoolean());
             }
-        }
+        });
         final ArrayNode result = MAPPER.createArrayNode();
         texts.forEach(value -> result.add(TextNode.valueOf(value)));
         doubles.forEach(value -> result.add(DoubleNode.valueOf(value)));
@@ -168,12 +166,11 @@ final class FuncArray {
         final String delimiter = nodeAndParams.getValue().size() > 0
                 ? getNodeAsText(node, nodeAndParams.getValue().get(0)) : EMPTY;
         final List<String> texts = new ArrayList<>();
-        for (int i = 0; i < workNode.size(); i++) {
-            final JsonNode valueNode = workNode.get(i);
-            if (nodeHasValue(valueNode)) {
-                texts.add(valueNode.asText());
+        workNode.forEach(elem -> {
+            if (nodeHasValue(elem)) {
+                texts.add(elem.asText());
             }
-        }
+        });
         return TextNode.valueOf(String.join(delimiter, texts));
     }
 
@@ -300,13 +297,9 @@ final class FuncArray {
         final String path = param;
         final boolean asc = ordering >= 0;
         final List<JsonNode> nodeList = new ArrayList<>();
-        for (int i = 0; i < workNode.size(); i++) {
-            nodeList.add(workNode.get(i));
-        }
+        workNode.forEach(nodeList::add);
         nodeList.sort((o1, o2) -> jsonNodeComparator(o1, o2, path, asc));
-        final ArrayNode array = MAPPER.createArrayNode();
-        array.addAll(nodeList);
-        return array;
+        return MAPPER.createArrayNode().addAll(nodeList);
     }
 
     private static int jsonNodeComparator(JsonNode o1, JsonNode o2, final String path, final boolean asc) {

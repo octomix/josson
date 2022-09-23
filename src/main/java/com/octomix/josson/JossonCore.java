@@ -36,6 +36,10 @@ import static com.octomix.josson.commons.StringUtils.EMPTY;
  */
 final class JossonCore {
 
+    static final TextNode EMPTY_STRING_NODE = new TextNode(EMPTY);
+
+    static final int NON_ARRAY_INDEX = -1;
+
     static final char QUOTE_SYMBOL = '\'';
 
     static final String ENTRY_KEY_NAME = "key";
@@ -73,8 +77,6 @@ final class JossonCore {
     private static Locale locale = Locale.getDefault();
 
     private static ZoneId zoneId = ZoneId.systemDefault();
-
-    static final int NON_ARRAY_INDEX = -1;
 
     private JossonCore() {
     }
@@ -368,24 +370,9 @@ final class JossonCore {
     private static JsonNode forEachElement(final ArrayNode node, final String elem, final FilterMode mode,
                                            final List<String> keys, final List<String> nextKeys) {
         final ArrayNode array = MAPPER.createArrayNode();
-        if (mode == FILTRATE_DIVERT_ALL) {
-            List<String> nextNextKeys = null;
-            for (int i = 0; i < node.size(); i++) {
-                nextNextKeys = new ArrayList<>();
-                addArrayElement(array, getNodeByKeys(
-                        elem == null ? node.get(i) : node.get(i).get(elem), new ArrayList<>(keys), nextNextKeys));
-            }
-            if (nextNextKeys != null) {
-                if (nextKeys.isEmpty() && !nextNextKeys.isEmpty()) {
-                    nextKeys.addAll(nextNextKeys);
-                }
-                keys.clear();
-                keys.addAll(nextKeys);
-                nextKeys.clear();
-            }
-        } else {
-            for (int i = 0; i < node.size(); i++) {
-                final JsonNode addNode = elem == null ? node.get(i) : node.get(i).get(elem);
+        if (mode != FILTRATE_DIVERT_ALL) {
+            for (JsonNode each : node) {
+                final JsonNode addNode = elem == null ? each : each.get(elem);
                 if (addNode != null) {
                     if (mode == FILTRATE_COLLECT_ALL && addNode.isArray()) {
                         array.addAll((ArrayNode) addNode);
@@ -394,6 +381,21 @@ final class JossonCore {
                     }
                 }
             }
+        } else if (!node.isEmpty()) {
+            List<String> nextNextKeys = null;
+            for (JsonNode each : node) {
+                final List<String> tempKeys = new ArrayList<>();
+                addArrayElement(array, getNodeByKeys(elem == null ? each : each.get(elem), new ArrayList<>(keys), tempKeys));
+                if (!tempKeys.isEmpty()) {
+                    nextNextKeys = tempKeys;
+                }
+            }
+            if (nextKeys.isEmpty() && nextNextKeys != null) {
+                nextKeys.addAll(nextNextKeys);
+            }
+            keys.clear();
+            keys.addAll(nextKeys);
+            nextKeys.clear();
         }
         return getNodeByKeys(array, keys, nextKeys);
     }

@@ -149,17 +149,15 @@ final class FuncStructural {
     }
 
     private static void funcFlatten(final ArrayNode array, final JsonNode node, final int levels) {
-        for (int i = 0; i < node.size(); i++) {
-            if (node.get(i).isArray()) {
-                if (levels == 1) {
-                    array.addAll((ArrayNode) node.get(i));
-                } else {
-                    funcFlatten(array, node.get(i), levels - 1);
-                }
+        node.forEach(elem -> {
+            if (!elem.isArray()) {
+                array.add(elem);
+            } else if (levels == 1) {
+                array.addAll((ArrayNode) elem);
             } else {
-                array.add(node.get(i));
+                funcFlatten(array, elem, levels - 1);
             }
-        }
+        });
     }
 
     private static void funcFlatten(final ObjectNode object, final String name, final JsonNode node,
@@ -214,9 +212,9 @@ final class FuncStructural {
             if (valueNode != null) {
                 ArrayNode values = null;
                 final String[] evalGrouping = evaluateNameAndPath(grouping, workNode, i);
-                for (int j = 0; j < array.size(); j++) {
-                    if (Operator.EQ.relationalCompare(array.get(j).get(evalNameAndPath[0]), valueNode)) {
-                        values = (ArrayNode) array.get(j).get(evalGrouping[0]);
+                for (JsonNode elem : array) {
+                    if (Operator.EQ.relationalCompare(elem.get(evalNameAndPath[0]), valueNode)) {
+                        values = (ArrayNode) elem.get(evalGrouping[0]);
                         break;
                     }
                 }
@@ -301,8 +299,7 @@ final class FuncStructural {
             return null;
         }
         ObjectNode result = null;
-        for (int i = 0; i < array.size(); i++) {
-            final JsonNode tryNode = array.get(i);
+        for (JsonNode tryNode : array) {
             if (tryNode.isObject()) {
                 if (result == null) {
                     result = tryNode.deepCopy();
@@ -321,15 +318,15 @@ final class FuncStructural {
         }
         final ArrayNode array = MAPPER.createArrayNode();
         if (container.isArray()) {
-            for (int i = 0; i < container.size(); i++) {
-                if (container.get(i).isArray()) {
-                    array.addAll((ArrayNode) container.get(i));
-                } else if (container.get(i).isObject()) {
-                    container.get(i).forEach(array::add);
+            container.forEach(elem -> {
+                if (elem.isArray()) {
+                    array.addAll((ArrayNode) elem);
+                } else if (elem.isObject()) {
+                    elem.forEach(array::add);
                 } else {
-                    array.add(container.get(i));
+                    array.add(elem);
                 }
-            }
+            });
         } else {
             container.forEach(array::add);
         }

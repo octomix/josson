@@ -205,9 +205,7 @@ enum Operator {
         }
         if (leftNode.isArray()) {
             final List<JsonNode> rightArray = new ArrayList<>();
-            for (int j = 0; j < size; j++) {
-                rightArray.add(rightNode.get(j));
-            }
+            rightNode.forEach(rightArray::add);
             for (int i = size - 1; i >= 0; i--) {
                 final JsonNode leftElem = leftNode.get(i);
                 int j = i;

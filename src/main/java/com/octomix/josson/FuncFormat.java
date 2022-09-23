@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Utils.*;
-import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Format functions.
@@ -105,19 +104,18 @@ final class FuncFormat {
                 if (elem.isContainerNode()) {
                     funcCsvCollectValues(values, elem, showNull);
                 } else {
-                    values.add(showNull || !elem.isNull() ? elem : TextNode.valueOf(EMPTY));
+                    values.add(showNull || !elem.isNull() ? elem : EMPTY_STRING_NODE);
                 }
             });
             return;
         }
-        for (int i = 0; i < node.size(); i++) {
-            final JsonNode tryNode = node.get(i);
-            if (tryNode.isContainerNode()) {
-                funcCsvCollectValues(values, tryNode, showNull);
+        node.forEach(elem -> {
+            if (elem.isContainerNode()) {
+                funcCsvCollectValues(values, elem, showNull);
             } else {
-                values.add(showNull || !tryNode.isNull() ? tryNode : TextNode.valueOf(EMPTY));
+                values.add(showNull || !elem.isNull() ? elem : EMPTY_STRING_NODE);
             }
-        }
+        });
     }
 
     private static String funcCsvQuote(final String input) {
@@ -155,7 +153,7 @@ final class FuncFormat {
                         return tryNode;
                     }
                 }
-                return TextNode.valueOf(EMPTY);
+                return EMPTY_STRING_NODE;
             });
     }
 

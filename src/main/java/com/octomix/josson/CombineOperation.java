@@ -30,6 +30,7 @@ import static com.octomix.josson.CombineOperator.*;
 import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
 import static com.octomix.josson.JossonCore.getNodeByPath;
 import static com.octomix.josson.Mapper.*;
+import static com.octomix.josson.Utils.addArrayElement;
 import static com.octomix.josson.Utils.mergeObjects;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -130,13 +131,10 @@ class CombineOperation {
             return joinedObject;
         }
         final ArrayNode joinedArray = MAPPER.createArrayNode();
-        for (int i = 0; i < left.getNode().size(); i++) {
-            if (left.getNode().get(i).isObject()) {
-                final ObjectNode joinedNode = joinToObjectNode(
-                        (ObjectNode) left.getNode().get(i), left.getKeys(), operator, rightArray, right.getKeys(), arrayName);
-                if (joinedNode != null) {
-                    joinedArray.add(joinedNode);
-                }
+        for (JsonNode elem : left.getNode()) {
+            if (elem.isObject()) {
+                addArrayElement(joinedArray, joinToObjectNode(
+                        (ObjectNode) elem, left.getKeys(), operator, rightArray, right.getKeys(), arrayName));
             }
         }
         if (operator == OUTER_EXCLUDING_JOIN) {
@@ -256,10 +254,10 @@ class CombineOperation {
     private static ArrayNode intersection(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isArray() && rightNode.isArray()) {
             final ArrayNode node = MAPPER.createArrayNode();
-            for (int i = 0; i < leftNode.size(); i++) {
-                for (int j = 0; j < rightNode.size(); j++) {
-                    if (Operator.EQ.relationalCompare(leftNode.get(i), rightNode.get(j))) {
-                        node.add(leftNode.get(i));
+            for (JsonNode leftElem : leftNode) {
+                for (JsonNode rightElem : rightNode) {
+                    if (Operator.EQ.relationalCompare(leftElem, rightElem)) {
+                        node.add(leftElem);
                         break;
                     }
                 }

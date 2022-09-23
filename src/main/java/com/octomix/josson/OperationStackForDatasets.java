@@ -17,12 +17,12 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
 import java.util.List;
 import java.util.Map;
 
+import static com.octomix.josson.JossonCore.EMPTY_STRING_NODE;
 import static com.octomix.josson.PatternMatcher.decomposeTernarySteps;
 import static com.octomix.josson.PatternMatcher.matchCombineOperations;
 import static com.octomix.josson.Utils.asBoolean;
@@ -104,6 +104,6 @@ class OperationStackForDatasets extends OperationStack {
                 }
             }
         }
-        return TextNode.valueOf(EMPTY);
+        return EMPTY_STRING_NODE;
     }
 }

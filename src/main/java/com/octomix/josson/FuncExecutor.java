@@ -201,9 +201,7 @@ final class FuncExecutor {
         }
         if (node.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                array.add(applyAction(node.get(i), isValid, action, paramArray));
-            }
+            node.forEach(elem -> array.add(applyAction(elem, isValid, action, paramArray)));
             return array;
         }
         return applyAction(node, isValid, action, paramArray);

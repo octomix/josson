@@ -51,8 +51,7 @@ final class FuncLogical {
         if (valueNode.isNumber()) {
             final double value = valueNode.asDouble();
             if (workNode.isArray()) {
-                for (int i = 0; i < workNode.size(); i++) {
-                    final JsonNode elem = workNode.get(i);
+                for (JsonNode elem : workNode) {
                     if ((elem.isNumber() || elem.isTextual()) && elem.asDouble() == value) {
                         return BooleanNode.valueOf(!not);
                     }
@@ -62,8 +61,8 @@ final class FuncLogical {
         }
         if (valueNode.isNull()) {
             if (workNode.isArray()) {
-                for (int i = 0; i < workNode.size(); i++) {
-                    if (workNode.get(i).isNull()) {
+                for (JsonNode elem : workNode) {
+                    if (elem.isNull()) {
                         return BooleanNode.valueOf(!not);
                     }
                 }
@@ -83,8 +82,7 @@ final class FuncLogical {
             return BooleanNode.valueOf(not ^ workNode.get(value) != null);
         }
         if (workNode.isArray()) {
-            for (int i = 0; i < workNode.size(); i++) {
-                final JsonNode elem = workNode.get(i);
+            for (JsonNode elem : workNode) {
                 if (elem.isTextual() || elem.isNumber()) {
                     if (ignoreCase) {
                         if (value.equalsIgnoreCase(elem.asText())) {
@@ -124,8 +122,7 @@ final class FuncLogical {
             (jsonNode, arrayNode) -> {
                 if (jsonNode.isNumber()) {
                     final double num = jsonNode.asDouble();
-                    for (int i = arrayNode.size() - 1; i >= 0; i--) {
-                        final JsonNode value = arrayNode.get(i);
+                    for (JsonNode value : arrayNode) {
                         if ((value.isNumber() || value.isTextual()) && value.asDouble() == num) {
                             return BooleanNode.valueOf(!not);
                         }
@@ -133,8 +130,7 @@ final class FuncLogical {
                     return BooleanNode.valueOf(not);
                 } else if (jsonNode.isValueNode()) {
                     final String text = jsonNode.asText();
-                    for (int i = arrayNode.size() - 1; i >= 0; i--) {
-                        final JsonNode value = arrayNode.get(i);
+                    for (JsonNode value : arrayNode) {
                         if (value.isTextual() || value.isNumber()) {
                             if (ignoreCase) {
                                 if (value.asText().equalsIgnoreCase(text)) {
