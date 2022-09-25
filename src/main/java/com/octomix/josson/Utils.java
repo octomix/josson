@@ -158,9 +158,11 @@ class Utils {
 
     static void mergeObjects(final ObjectNode o1, final JsonNode o2) {
         o2.fields().forEachRemaining(field -> {
-            JsonNode o1value = o1.get(field.getKey());
+            final JsonNode o1value = o1.get(field.getKey());
             if (o1value != null && o1value.isObject() && field.getValue().isObject()) {
                 mergeObjects((ObjectNode) o1value, field.getValue());
+            } else if (o1value != null && o1value.isArray() && field.getValue().isArray()) {
+                ((ArrayNode) o1value).addAll((ArrayNode) field.getValue());
             } else {
                 o1.set(field.getKey(), field.getValue());
             }

@@ -94,7 +94,17 @@ enum CombineOperator {
     /**
      * Intersection, works on two arrays.
      */
-    INTERSECTION(">n<");
+    INTERSECTION(">n<"),
+
+    /**
+     * Equals, works on two objects or two arrays. Returns true or false.
+     */
+    EQUALS("<==>"),
+
+    /**
+     * Not equals, works on two objects or two arrays. Returns true or false.
+     */
+    NOT_EQUALS("<!=>");
 
     private final String symbol;
 

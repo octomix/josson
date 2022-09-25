@@ -18,6 +18,7 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.octomix.josson.commons.StringUtils;
 
@@ -55,6 +56,8 @@ class CombineOperation {
             case SYMMETRIC_DIFFERENCE:
             case UNION:
             case INTERSECTION:
+            case EQUALS:
+            case NOT_EQUALS:
                 if (leftOperand.getKeys() != null || rightOperand.getKeys() != null) {
                     throw new IllegalArgumentException("Set operation does not need join key");
                 }
@@ -107,6 +110,10 @@ class CombineOperation {
                 return union(rightOperand.getNode(), leftOperand.getNode());
             case INTERSECTION:
                 return intersection(rightOperand.getNode(), leftOperand.getNode());
+            case EQUALS:
+                return BooleanNode.valueOf(equals(leftOperand.getNode(), rightOperand.getNode()));
+            case NOT_EQUALS:
+                return BooleanNode.valueOf(!equals(leftOperand.getNode(), rightOperand.getNode()));
             default:
                 break;
         }
@@ -194,7 +201,11 @@ class CombineOperation {
         return cloneArray((ArrayNode) leftNode).addAll((ArrayNode) rightNode);
     }
 
-    private static JsonNode subtract(final JsonNode leftNode, JsonNode rightNode) {
+    private static JsonNode subtract(final JsonNode leftNode, final JsonNode rightNode) {
+        return subtract(leftNode, rightNode, false);
+    }
+
+    private static JsonNode subtract(final JsonNode leftNode, final JsonNode rightNode, final boolean detectEqual) {
         if (leftNode.isObject() && rightNode.isObject()) {
             final ObjectNode node = MAPPER.createObjectNode();
             final Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
@@ -203,40 +214,52 @@ class CombineOperation {
                 if (rightNode.has(entry.getKey())) {
                     if (entry.getValue().isObject() && rightNode.get(entry.getKey()).isObject()
                         || entry.getValue().isArray() && rightNode.get(entry.getKey()).isArray()) {
-                        final JsonNode diff = subtract(entry.getValue(), rightNode.get(entry.getKey()));
-                        if (!diff.isEmpty()) {
+                        final JsonNode diff = subtract(entry.getValue(), rightNode.get(entry.getKey()), detectEqual);
+                        if (detectEqual) {
+                            if (!diff.asBoolean()) {
+                                return BooleanNode.FALSE;
+                            }
+                        } else if (!diff.isEmpty()) {
                             node.set(entry.getKey(), diff);
                         }
-                    } else if (Operator.NE.relationalCompare(entry.getValue(), rightNode.get(entry.getKey()))) {
-                        node.set(entry.getKey(), entry.getValue());
+                        continue;
                     }
+                    if (Operator.EQ.relationalCompare(entry.getValue(), rightNode.get(entry.getKey()))) {
+                        continue;
+                    }
+                }
+                if (detectEqual) {
+                    return BooleanNode.FALSE;
                 } else {
                     node.set(entry.getKey(), entry.getValue());
                 }
             }
-            return node;
+            return detectEqual ? BooleanNode.TRUE : node;
         }
-        if (rightNode.isObject()) {
-            rightNode = intoNewArray(rightNode);
-        }
+        final JsonNode rightArray = rightNode.isArray() ? rightNode : intoNewArray(rightNode);
         final ArrayNode node = MAPPER.createArrayNode();
         for (JsonNode leftElem : leftNode.isObject() ? intoNewArray(leftNode) : leftNode) {
-            int i = rightNode.size() - 1;
+            int i = rightArray.size() - 1;
             for (; i >= 0 ; i--) {
-                if (Operator.EQ.relationalCompare(leftElem, rightNode.get(i))) {
+                if (Operator.EQ.relationalCompare(leftElem, rightArray.get(i))) {
                     break;
                 }
             }
             if (i < 0) {
+                if (detectEqual) {
+                    return BooleanNode.FALSE;
+                }
                 node.add(leftElem);
             }
         }
-        return node;
+        return detectEqual ? BooleanNode.TRUE : node;
     }
 
     private static JsonNode symmetricDifference(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isObject() && rightNode.isObject()) {
-            return ((ObjectNode) subtract(leftNode, rightNode)).setAll((ObjectNode) subtract(rightNode, leftNode));
+            final ObjectNode diff = (ObjectNode) subtract(leftNode, rightNode);
+            mergeObjects(diff, subtract(rightNode, leftNode));
+            return diff;
         }
         if (leftNode.isArray() && rightNode.isArray()) {
             return ((ArrayNode) subtract(leftNode, rightNode)).addAll((ArrayNode) subtract(rightNode, leftNode));
@@ -265,5 +288,13 @@ class CombineOperation {
             return node;
         }
         throw new IllegalArgumentException("cannot operate intersection on object");
+    }
+
+    private static boolean equals(final JsonNode leftNode, final JsonNode rightNode) {
+        if (leftNode.isObject() && rightNode.isObject() || leftNode.isArray() && rightNode.isArray()) {
+            return subtract(leftNode, rightNode, true).asBoolean()
+                && subtract(rightNode, leftNode, true).asBoolean();
+        }
+        throw new IllegalArgumentException("cannot operate equals between an object and an array");
     }
 }

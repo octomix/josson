@@ -392,7 +392,7 @@ final class FuncStructural {
                 value = funcUnflatten(v, steps, pos + 1, value);
             }
             if (v == null) {
-                ObjectNode elem = MAPPER.createObjectNode();
+                final ObjectNode elem = MAPPER.createObjectNode();
                 elem.set("i", IntNode.valueOf(index));
                 elem.set("v", value);
                 ((ArrayNode) parent).add(elem);
@@ -401,7 +401,7 @@ final class FuncStructural {
         return parent;
     }
 
-    private static void funcUnflattenSort(JsonNode node) {
+    private static void funcUnflattenSort(final JsonNode node) {
         if (!node.isContainerNode()) {
             return;
         }
