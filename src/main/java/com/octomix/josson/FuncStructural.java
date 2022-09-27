@@ -311,6 +311,25 @@ final class FuncStructural {
         return result;
     }
 
+    static ArrayNode funcSplitObject(final JsonNode node, final String params) {
+        final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
+        if (!node.isObject()) {
+            return null;
+        }
+        final ArrayNode array = MAPPER.createArrayNode();
+        paramList.forEach(each -> array.add(MAPPER.createObjectNode()));
+        node.fields().forEachRemaining(field -> {
+            final ObjectNode entry = MAPPER.createObjectNode().set(field.getKey(), field.getValue());
+            for (int i = 0; i < paramList.size(); i++) {
+                if (getNodeByPath(entry, paramList.get(i)) != null) {
+                    ((ObjectNode) array.get(i)).setAll(entry);
+                    return;
+                }
+            }
+        });
+        return array;
+    }
+
     static JsonNode funcToArray(final JsonNode node, final String params) {
         final JsonNode container = getParamArrayOrItselfIsContainer(node, params);
         if (container == null) {

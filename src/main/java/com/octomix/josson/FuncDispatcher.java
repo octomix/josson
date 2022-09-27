@@ -621,6 +621,9 @@ class FuncDispatcher {
                 return funcStripStart(node, params);
             case "substr":
                 return funcSubstr(node, params);
+            // Structural
+            case "splitobject":
+                return funcSplitObject(node, params);
         }
         throw new UnsupportedFunctionException();
     }
