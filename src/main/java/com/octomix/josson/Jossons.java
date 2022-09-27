@@ -123,7 +123,7 @@ public class Jossons extends JossonsCore {
      * @return {@code this}
      */
     public Jossons placeholderIsNotEscaped() {
-        needEscapeQuery = false;
+        needUnescapeQuery = false;
         return this;
     }
 

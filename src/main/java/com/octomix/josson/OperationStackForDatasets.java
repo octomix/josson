@@ -17,6 +17,7 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.UnresolvedDatasetException;
 
 import java.util.List;
@@ -65,6 +66,9 @@ class OperationStackForDatasets extends OperationStack {
     }
 
     JsonNode evaluateQuery(final String query) throws UnresolvedDatasetException {
+        if (StringUtils.isBlank(query)) {
+            return EMPTY_STRING_NODE;
+        }
         final List<CombineOperation> operations = matchCombineOperations(query);
         if (operations != null) {
             JsonNode combined = null;

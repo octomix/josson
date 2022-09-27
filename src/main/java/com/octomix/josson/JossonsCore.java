@@ -14,6 +14,7 @@ import java.util.function.Function;
 import static com.octomix.josson.FuncExecutor.UNLIMITED_WITH_PATH;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.*;
+import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
  * Core functions for Jossons.
@@ -41,7 +42,7 @@ class JossonsCore {
      */
     protected final Map<String, Josson> datasets = new HashMap<>();
 
-    protected boolean needEscapeQuery = true;
+    protected boolean needUnescapeQuery = true;
 
     protected JossonsCore() {
     }
@@ -300,7 +301,7 @@ class JossonsCore {
                     && template.charAt(i) == PLACEHOLDER_CLOSE
                     && template.charAt(i + 1) == PLACEHOLDER_CLOSE) {
                 String query = template.substring(placeholderAt + 2, i);
-                if (escaping.isEscapingRequired() && needEscapeQuery) {
+                if (escaping.isEscapingApplicable() && needUnescapeQuery) {
                     final StringBuilder rebuild = new StringBuilder();
                     for (String token : escaping.separateTagAndText(query)) {
                         if (token.charAt(0) == escaping.tagOpen) {
@@ -313,7 +314,8 @@ class JossonsCore {
                 }
                 query = StringUtils.strip(query);
                 final boolean skipEscape;
-                if (query.charAt(0) == escaping.tagOpen && query.charAt(query.length() - 1) == escaping.tagClose) {
+                if (!query.isEmpty()
+                        && query.charAt(0) == escaping.tagOpen && query.charAt(query.length() - 1) == escaping.tagClose) {
                     query = StringUtils.strip(query.substring(1, query.length() - 1));
                     skipEscape = true;
                 } else {
@@ -327,7 +329,7 @@ class JossonsCore {
                             datasets.put(query, null);
                         }
                         sb.append(UNRESOLVABLE_PLACEHOLDER_MARK)
-                                .append(skipEscape ? query : escaping.escape(query))
+                                .append(needUnescapeQuery ? escaping.escape(query) : query)
                                 .append(UNRESOLVABLE_PLACEHOLDER_MARK);
                     } else {
                         final String text;
@@ -343,7 +345,9 @@ class JossonsCore {
                 } catch (UnresolvedDatasetException e) {
                     unresolvedDatasets.add(e.getDatasetName());
                     sb.append(PLACEHOLDER_OPEN).append(PLACEHOLDER_OPEN)
-                            .append(skipEscape ? query : escaping.escape(query))
+                            .append(skipEscape ? escaping.tagOpen : EMPTY)
+                            .append(needUnescapeQuery ? escaping.escape(query) : query)
+                            .append(skipEscape ? escaping.tagClose : EMPTY)
                             .append(PLACEHOLDER_CLOSE).append(PLACEHOLDER_CLOSE);
                 }
                 placeholderAt = -1;

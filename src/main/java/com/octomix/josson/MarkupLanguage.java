@@ -54,11 +54,11 @@ public enum MarkupLanguage {
     }
 
     /**
-     * <p>Whether escaping is required.</p>
+     * <p>Whether escaping is applicable.</p>
      *
      * @return {@code false} for {@code NONE}, otherwise returns {@code true}
      */
-    public boolean isEscapingRequired() {
+    public boolean isEscapingApplicable() {
         return this != NONE;
     }
 
