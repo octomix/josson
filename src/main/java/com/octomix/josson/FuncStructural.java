@@ -41,6 +41,56 @@ final class FuncStructural {
     private FuncStructural() {
     }
 
+    static ArrayNode funcAssort(final JsonNode node, final String params) {
+        final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
+        if (!node.isContainerNode()) {
+            return null;
+        }
+        final boolean notAssorted;
+        if (paramList.isEmpty()) {
+            notAssorted = true;
+        } else if (VAR_ARGS.equals(paramList.get(paramList.size() - 1))) {
+            notAssorted = true;
+            paramList.remove(paramList.size() - 1);
+        } else {
+            notAssorted = false;
+        }
+        final ArrayNode array = MAPPER.createArrayNode();
+        if (node.isObject()) {
+            paramList.forEach(each -> array.add(MAPPER.createObjectNode()));
+            node.fields().forEachRemaining(field -> {
+                final ObjectNode entry = MAPPER.createObjectNode().set(field.getKey(), field.getValue());
+                for (int i = 0; i < paramList.size(); i++) {
+                    if (getNodeByPath(entry, paramList.get(i)) != null) {
+                        ((ObjectNode) array.get(i)).setAll(entry);
+                        return;
+                    }
+                }
+                if (notAssorted) {
+                    array.add(entry);
+                }
+            });
+        } else {
+            final ArrayNode notMatched = MAPPER.createArrayNode();
+            paramList.forEach(each -> array.add(MAPPER.createArrayNode()));
+            node.elements().forEachRemaining(elem -> {
+                for (int i = 0; i < paramList.size(); i++) {
+                    if (getNodeByPath(elem, paramList.get(i)) != null) {
+                        ((ArrayNode) array.get(i)).add(elem);
+                        return;
+                    }
+                }
+                if (notAssorted) {
+                    notMatched.add(elem);
+                }
+            });
+            if (!notMatched.isEmpty()) {
+                array.add(notMatched);
+            }
+        }
+        return array;
+    }
+
     static JsonNode funcCollect(final JsonNode node, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_AND_NO_PATH);
         final ArrayNode array = MAPPER.createArrayNode();
@@ -309,25 +359,6 @@ final class FuncStructural {
             }
         }
         return result;
-    }
-
-    static ArrayNode funcSplitObject(final JsonNode node, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
-        if (!node.isObject()) {
-            return null;
-        }
-        final ArrayNode array = MAPPER.createArrayNode();
-        paramList.forEach(each -> array.add(MAPPER.createObjectNode()));
-        node.fields().forEachRemaining(field -> {
-            final ObjectNode entry = MAPPER.createObjectNode().set(field.getKey(), field.getValue());
-            for (int i = 0; i < paramList.size(); i++) {
-                if (getNodeByPath(entry, paramList.get(i)) != null) {
-                    ((ObjectNode) array.get(i)).setAll(entry);
-                    return;
-                }
-            }
-        });
-        return array;
     }
 
     static JsonNode funcToArray(final JsonNode node, final String params) {

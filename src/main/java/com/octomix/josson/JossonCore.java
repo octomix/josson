@@ -50,6 +50,8 @@ final class JossonCore {
 
     static final String CURRENT_NODE = "?";
 
+    static final String VAR_ARGS = "...";
+
     private static final char WILDCARD_SYMBOL = '*';
 
     private static final char MATCHES_SYMBOL = '~';

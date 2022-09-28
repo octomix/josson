@@ -107,6 +107,9 @@ class FuncDispatcher {
                 return funcAppendIfMissing(node, params, false);
             case "appendifmissingignorecase":
                 return funcAppendIfMissing(node, params, true);
+            // Structural
+            case "assort":
+                return funcAssort(node, params);
         }
         throw new UnsupportedFunctionException();
     }
@@ -621,9 +624,6 @@ class FuncDispatcher {
                 return funcStripStart(node, params);
             case "substr":
                 return funcSubstr(node, params);
-            // Structural
-            case "splitobject":
-                return funcSplitObject(node, params);
         }
         throw new UnsupportedFunctionException();
     }
