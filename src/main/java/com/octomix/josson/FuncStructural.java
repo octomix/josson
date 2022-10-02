@@ -61,7 +61,7 @@ final class FuncStructural {
             node.fields().forEachRemaining(field -> {
                 final ObjectNode entry = MAPPER.createObjectNode().set(field.getKey(), field.getValue());
                 for (int i = 0; i < paramList.size(); i++) {
-                    if (getNodeByPath(entry, paramList.get(i)) != null) {
+                    if (!nodeIsNull(getNodeByPath(entry, paramList.get(i)))) {
                         ((ObjectNode) array.get(i)).setAll(entry);
                         return;
                     }
@@ -71,22 +71,18 @@ final class FuncStructural {
                 }
             });
         } else {
-            final ArrayNode notMatched = MAPPER.createArrayNode();
             paramList.forEach(each -> array.add(MAPPER.createArrayNode()));
             node.elements().forEachRemaining(elem -> {
                 for (int i = 0; i < paramList.size(); i++) {
-                    if (getNodeByPath(elem, paramList.get(i)) != null) {
+                    if (!nodeIsNull(getNodeByPath(elem, paramList.get(i)))) {
                         ((ArrayNode) array.get(i)).add(elem);
                         return;
                     }
                 }
                 if (notAssorted) {
-                    notMatched.add(elem);
+                    array.add(MAPPER.createArrayNode().add(elem));
                 }
             });
-            if (!notMatched.isEmpty()) {
-                array.add(notMatched);
-            }
         }
         return array;
     }

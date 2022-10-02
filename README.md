@@ -20,19 +20,19 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.28</version>
+        <version>1.3.29</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.28'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.29'
 
 ## Features and Capabilities
 
 ### Josson
 
 - Query a JSON dataset.
-- There are 228 internal functions to manipulate and format data.
+- There are 229 internal functions to manipulate and format data.
 - Restructure JSON data and capable of grouping and unwind data.
 - Can be used as an API parameter to trim down the response JSON result.
 
@@ -52,7 +52,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 
 - [Operator Summary](#operator-summary)
   - [Relational and Logical Operators](#relational-and-logical-operators)
-  - [Join and Set Operators](#join-and-set-operators)
+  - [Join, Set and Compare Operators](#join-set-and-compare-operators)
 
 - [Josson Basic](#josson-basic)
 
@@ -114,26 +114,28 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 | &amp;    | Logical AND                             |
 | &#124;   | Logical OR                              |
 
-### Join and Set Operators
+### Join, Set and Compare Operators
 
-| Operator      | Description              |
-|:--------------|:-------------------------|
-| &gt;=&lt;     | Inner join               |
-| &lt;=&lt;     | Left join one            |
-| &gt;=&gt;     | Right join one           |
-| &lt;=&lt;&lt; | Left join many           |
-| &gt;&gt;=&gt; | Right join many          |
-| &lt;!&lt;     | Left excluding join      |
-| &gt;!&gt;     | Right excluding join     |
-| &lt;!&gt;     | Outer excluding join     |
-| &lt;+&lt;     | Left concatenate         |
-| &gt;+&gt;     | Right concatenate        |
-| &lt;-&lt;     | Subtract right from left |
-| &gt;-&gt;     | Subtract left from right |
-| &lt;-&gt;     | Symmetric difference     |
-| &lt;u&gt;     | Union                    |
-| &gt;n&lt;     | Intersection             |
-| &#124;        | Chaining pipe            |
+| Operator      | Description                      |
+|:--------------|:---------------------------------|
+| &gt;=&lt;     | Inner join                       |
+| &lt;=&lt;     | Left join one                    |
+| &gt;=&gt;     | Right join one                   |
+| &lt;=&lt;&lt; | Left join many                   |
+| &gt;&gt;=&gt; | Right join many                  |
+| &lt;!&lt;     | Left excluding join              |
+| &gt;!&gt;     | Right excluding join             |
+| &lt;!&gt;     | Outer excluding join             |
+| &lt;+&lt;     | Left concatenate                 |
+| &gt;+&gt;     | Right concatenate                |
+| &lt;-&lt;     | Subtract right from left         |
+| &gt;-&gt;     | Subtract left from right         |
+| &lt;-&gt;     | Symmetric difference             |
+| &lt;u&gt;     | Union                            |
+| &gt;n&lt;     | Intersection                     |
+| &#124;        | Chaining pipe                    |
+| &lt;==&gt;    | Equals (returns BooleanNode)     |
+| &lt;!=&gt;    | Not equals (returns BooleanNode) |
 
 ## Josson Basic
 
@@ -1410,9 +1412,106 @@ Below is the JSON for this tutorial.
 
         {} → mergeObjects(%) ⇒ {}
 
+71. Function `assort()` separates an object's entries according to different path conditions in sequence,
+    and put them into the corresponding array if the evaluated result is not null.
+    Entries will be removed if no condition can be matched.
+    If the last argument is `...`, each of the remaining entry will be added to the end of result array separately.
+    If no argument is provided, each entry will be added to the result array separately.
+
+        josson.getNode("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
+                       ".assort(*.[isEven()], ~'xy.*', ~'ab.*', *)")
+        ==>
+        [ {
+          "xy2" : 2,
+          "ab2" : 4,
+          "zz1" : 6
+        }, {
+          "xy1" : 1,
+          "xy3" : 7
+        }, {
+          "ab1" : 3,
+          "ab3" : 5
+        }, {
+          "zz2" : 9,
+          "zz3" : {
+            "k" : 10
+          }
+        } ]
+
+        josson.getNode("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}')" +
+                       ".assort(*.[isEven()], ~'xy.*', ~'ab.*')")
+        ==>
+        [ {
+          "xy2" : 2,
+          "ab2" : 4,
+          "zz1" : 6
+        }, {
+          "xy1" : 1,
+          "xy3" : 7
+        }, {
+          "ab1" : 3,
+          "ab3" : 5
+        } ]
+
+        josson.getNode("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
+                       ".assort(*.[isEven()], ~'xy.*', ~'ab.*', ...)")
+        ==>
+        [ {
+          "xy2" : 2,
+          "ab2" : 4,
+          "zz1" : 6
+        }, {
+          "xy1" : 1,
+          "xy3" : 7
+        }, {
+          "ab1" : 3,
+          "ab3" : 5
+        }, {
+          "zz2" : 9
+        }, {
+          "zz3" : {
+            "k" : 10
+          }
+        } ]
+
+        josson.getNode("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
+                       ".assort()")
+        ==>
+        [ {
+          "xy1" : 1
+        }, {
+          "xy2" : 2
+        }, {
+          "ab1" : 3
+        }, {
+          "ab2" : 4
+        }, {
+          "ab3" : 5
+        }, {
+          "zz1" : 6
+        }, {
+          "xy3" : 7
+        }, {
+          "zz2" : 9
+        }, {
+          "zz3" : {
+            "k" : 10
+          }
+        } ]
+
+72. Function `assort` also works for array. The result is an array of arrays.
+
+        josson.getNode("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)")
+        ==>
+        [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]
+
+        josson.getNode("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ...)")
+        ==>
+        [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]
+
 ## Josson Functions
 
-There are 228 functions. They are classified into 7 categories:
+There are 229 functions. They are classified into 7 categories:
 
 Arithmetic Functions
 
@@ -1662,6 +1761,7 @@ Structural Functions
 226. [field()](#226-field)
 227. [group()](#227-group)
 228. [unwind()](#228-unwind)
+229. [assort()](#229-assort)
 
 Following are some examples of each function.
 
@@ -3845,6 +3945,32 @@ Following are some examples of each function.
       "a" : 3,
       "b" : "C"
     } ]
+
+#### 229. assort()
+
+    json('{"xy1": 1,"xy2": 2,"ab1": 3,"ab2": 4,"ab3": 5,"zz1": 6,"xy3": 7,"zz2": 9,"zz3": {"k":10}}}').assort(*.[isEven()], ~'xy.*', ~'ab.*', ...)
+    ==>
+    [ {
+      "xy2" : 2,
+      "ab2" : 4,
+      "zz1" : 6
+    }, {
+      "xy1" : 1,
+      "xy3" : 7
+    }, {
+      "ab1" : 3,
+      "ab3" : 5
+    }, {
+      "zz2" : 9
+    }, {
+      "zz3" : {
+        "k" : 10
+      }
+    } ]
+
+    json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)
+    ==>
+    [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]
 
 ---
 
@@ -6237,4 +6363,49 @@ Output
       "type" : "vehicle",
       "color" : "blue",
       "ownername" : "wick"
+    } ]
+
+---
+
+#### 26. Apply some condition on jsonnode and filter resultset in Java
+
+(73884462)
+
+    [
+     {
+       "coupon": "VAR",
+       "currency": "USD",
+       "sip": "94989WAX5",
+       "lastModifiedDate": "2022-09-23T08:16:25Z"
+      },
+      {
+       "coupon": "VAR1",
+       "currency": "USD",
+       "sip": "94989WAX5",
+       "lastModifiedDate": "2022-09-21T08:16:25Z"
+      },
+      {
+       "coupon": "VAR3",
+       "currency": "USD",
+       "sip": "XHBRYWEB1",
+       "lastModifiedDate": "2022-09-20T08:16:25Z"
+      }
+     ]
+
+Josson Query
+
+    group(sip)@.elements.findByMax(lastModifiedDate)
+
+Output
+
+    [ {
+      "coupon" : "VAR",
+      "currency" : "USD",
+      "sip" : "94989WAX5",
+      "lastModifiedDate" : "2022-09-23T08:16:25Z"
+    }, {
+      "coupon" : "VAR3",
+      "currency" : "USD",
+      "sip" : "XHBRYWEB1",
+      "lastModifiedDate" : "2022-09-20T08:16:25Z"
     } ]

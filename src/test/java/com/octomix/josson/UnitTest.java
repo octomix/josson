@@ -689,6 +689,89 @@ public class UnitTest {
                         "  \"A00308\" : 1,\n" +
                         "  \"A00201\" : 1\n" +
                         "}");
+        // Function "assort" separates an object's entries according to different path conditions in sequence,
+        // and put them into the corresponding array if the evaluated result is not null.
+        // Entries will be removed if no condition can be matched.
+        // If the last argument is "...", each of the remaining entry will be added to the end of result array separately.
+        // If no argument is provided, each entry will be added to the result array separately.
+        evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
+                        ".assort(*.[isEven()], ~'xy.*', ~'ab.*', *)",
+                "[ {\n" +
+                        "  \"xy2\" : 2,\n" +
+                        "  \"ab2\" : 4,\n" +
+                        "  \"zz1\" : 6\n" +
+                        "}, {\n" +
+                        "  \"xy1\" : 1,\n" +
+                        "  \"xy3\" : 7\n" +
+                        "}, {\n" +
+                        "  \"ab1\" : 3,\n" +
+                        "  \"ab3\" : 5\n" +
+                        "}, {\n" +
+                        "  \"zz2\" : 9,\n" +
+                        "  \"zz3\" : {\n" +
+                        "    \"k\" : 10\n" +
+                        "  }\n" +
+                        "} ]");
+        evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}')" +
+                        ".assort(*.[isEven()], ~'xy.*', ~'ab.*')",
+                "[ {\n" +
+                        "  \"xy2\" : 2,\n" +
+                        "  \"ab2\" : 4,\n" +
+                        "  \"zz1\" : 6\n" +
+                        "}, {\n" +
+                        "  \"xy1\" : 1,\n" +
+                        "  \"xy3\" : 7\n" +
+                        "}, {\n" +
+                        "  \"ab1\" : 3,\n" +
+                        "  \"ab3\" : 5\n" +
+                        "} ]");
+        evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
+                        ".assort(*.[isEven()], ~'xy.*', ~'ab.*', ...)",
+                "[ {\n" +
+                        "  \"xy2\" : 2,\n" +
+                        "  \"ab2\" : 4,\n" +
+                        "  \"zz1\" : 6\n" +
+                        "}, {\n" +
+                        "  \"xy1\" : 1,\n" +
+                        "  \"xy3\" : 7\n" +
+                        "}, {\n" +
+                        "  \"ab1\" : 3,\n" +
+                        "  \"ab3\" : 5\n" +
+                        "}, {\n" +
+                        "  \"zz2\" : 9\n" +
+                        "}, {\n" +
+                        "  \"zz3\" : {\n" +
+                        "    \"k\" : 10\n" +
+                        "  }\n" +
+                        "} ]");
+        evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
+                        ".assort()",
+                "[ {\n" +
+                        "  \"xy1\" : 1\n" +
+                        "}, {\n" +
+                        "  \"xy2\" : 2\n" +
+                        "}, {\n" +
+                        "  \"ab1\" : 3\n" +
+                        "}, {\n" +
+                        "  \"ab2\" : 4\n" +
+                        "}, {\n" +
+                        "  \"ab3\" : 5\n" +
+                        "}, {\n" +
+                        "  \"zz1\" : 6\n" +
+                        "}, {\n" +
+                        "  \"xy3\" : 7\n" +
+                        "}, {\n" +
+                        "  \"zz2\" : 9\n" +
+                        "}, {\n" +
+                        "  \"zz3\" : {\n" +
+                        "    \"k\" : 10\n" +
+                        "  }\n" +
+                        "} ]");
+        // Function "assort" also works for array. The result is an array of arrays.
+        evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)",
+                "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]");
+        evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ...)",
+                "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]");
 
         josson.setJsonString("{\n" +
                 "    \"a\": [\n" +
