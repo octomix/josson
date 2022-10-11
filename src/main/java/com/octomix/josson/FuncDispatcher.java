@@ -223,6 +223,11 @@ class FuncDispatcher {
 
     private JsonNode applyE(final JsonNode node, final String func) {
         switch (func) {
+            // Format
+            case "escapehtml":
+                return funcMarkupEscape(node, params, MarkupLanguage.HTML);
+            case "escapexml":
+                return funcMarkupEscape(node, params, MarkupLanguage.XML);
             // Logical
             case "endswith":
                 return funcEndsWith(node, params, false, false);
@@ -232,11 +237,6 @@ class FuncDispatcher {
                 return funcEquals(node, params, false, false);
             case "equalsignorecase":
                 return funcEquals(node, params, true, false);
-            // Format
-            case "escapehtml":
-                return funcMarkupEscape(node, params, MarkupLanguage.HTML);
-            case "escapexml":
-                return funcMarkupEscape(node, params, MarkupLanguage.XML);
             // Structural
             case "entries":
                 return funcEntries(node, params);
@@ -412,6 +412,10 @@ class FuncDispatcher {
                 return funcLengthOfYear(node, params);
             case "localtooffsetdate":
                 return funcLocalToOffsetDate(node, params);
+            case "localdatetomillis":
+                return funcLocalDateToEpochMilli(node, params);
+            case "localdatetoseconds":
+                return funcLocalDateToEpochSecond(node, params);
             // String
             case "leftpad":
                 return funcPadding(node, params, -1);
@@ -435,6 +439,10 @@ class FuncDispatcher {
             case "mod":
                 return funcMod(node, params);
             // Date
+            case "millistolocaldate":
+                return funcEpochMilliToLocalDate(node, params);
+            case "millistooffsetdate":
+                return funcEpochMilliToOffsetDate(node, params);
             case "minute":
                 return funcChronometry(node, params, ChronoField.MINUTE_OF_HOUR);
             case "minuteofday":
@@ -471,6 +479,9 @@ class FuncDispatcher {
 
     private JsonNode applyN(final JsonNode node, final String func) {
         switch (func) {
+            // Date
+            case "now":
+                return funcNow(node, params);
             // Logical
             case "notcontains":
                 return funcContains(node, params, false, true);
@@ -506,9 +517,14 @@ class FuncDispatcher {
     }
 
     private JsonNode applyO(final JsonNode node, final String func) {
-        // Date
-        if ("offsettolocaldate".equals(func)) {
-            return funcOffsetToLocalDate(node, params);
+        switch (func) {
+            // Date
+            case "offsettolocaldate":
+                return funcOffsetToLocalDate(node, params);
+            case "offsetdatetomillis":
+                return funcOffsetDateToEpochMilli(node, params);
+            case "offsetdatetoseconds":
+                return funcOffsetDateToEpochSecond(node, params);
         }
         throw new UnsupportedFunctionException();
     }
@@ -598,6 +614,10 @@ class FuncDispatcher {
                 return funcChronometry(node, params, ChronoField.SECOND_OF_MINUTE);
             case "secondofday":
                 return funcChronometry(node, params, ChronoField.SECOND_OF_DAY);
+            case "secondstolocaldate":
+                return funcEpochSecondToLocalDate(node, params);
+            case "secondstooffsetdate":
+                return funcEpochSecondToOffsetDate(node, params);
             // Logical
             case "startswith":
                 return funcStartsWith(node, params, false, false);

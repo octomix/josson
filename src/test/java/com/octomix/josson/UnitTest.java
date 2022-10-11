@@ -1282,6 +1282,30 @@ public class UnitTest {
         // offsetToLocalDate()
         evaluate.accept("'2022-01-02T03:04:05+08:00'.offsetToLocalDate()", "2022-01-02T03:04:05");
         evaluate.accept("offsetToLocalDate('2022-02-04T13:14:15+08:00')", "2022-02-04T13:14:15");
+        // localDateToMillis()
+        evaluate.accept("'2022-01-02T03:04:05.12345'.localDateToMillis()", "1641063845123");
+        evaluate.accept("localDateToMillis('2022-02-04T13:14:15.12345')", "1643951655123");
+        // localDateToSeconds()
+        evaluate.accept("'2022-01-02T03:04:05.12345'.localDateToSeconds()", "1641063845");
+        evaluate.accept("localDateToSeconds('2022-02-04T13:14:15.12345')", "1643951655");
+        // millisToLocalDate()
+        evaluate.accept("1641063845123.millisToLocalDate()", "2022-01-02T03:04:05.123");
+        evaluate.accept("millisToLocalDate(1643951655123)", "2022-02-04T13:14:15.123");
+        // millisToOffsetDate()
+        evaluate.accept("1641063845123.millisToOffsetDate()", "2022-01-02T03:04:05.123+08:00");
+        evaluate.accept("millisToOffsetDate(1643951655123)", "2022-02-04T13:14:15.123+08:00");
+        // offsetDateToMillis()
+        evaluate.accept("'2022-01-02T03:04:05.12345+08:00'.offsetDateToMillis()", "1641063845123");
+        evaluate.accept("offsetDateToMillis('2022-02-04T13:14:15.12345+08:00')", "1643951655123");
+        // offsetDateToSeconds()
+        evaluate.accept("'2022-01-02T03:04:05.12345+08:00'.offsetDateToSeconds()", "1641063845");
+        evaluate.accept("offsetDateToSeconds('2022-02-04T13:14:15.12345+08:00')", "1643951655");
+        // secondsToLocalDate()
+        evaluate.accept("1641063845.secondsToLocalDate()", "2022-01-02T03:04:05");
+        evaluate.accept("secondsToLocalDate(1643951655)", "2022-02-04T13:14:15");
+        // secondsToOffsetDate()
+        evaluate.accept("1641063845.secondsToOffsetDate()", "2022-01-02T03:04:05+08:00");
+        evaluate.accept("secondsToOffsetDate(1643951655)", "2022-02-04T13:14:15+08:00");
 
         // Format functions
         // b64Encode()

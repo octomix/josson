@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
@@ -72,10 +73,14 @@ class Utils {
         if (literal.charAt(0) == QUOTE_SYMBOL) {
             return TextNode.valueOf(unquoteText(literal));
         }
-        if (literal.indexOf('.') < 0) {
-            return IntNode.valueOf(Integer.parseInt(literal));
+        if (literal.indexOf('.') >= 0) {
+            return DoubleNode.valueOf(Double.parseDouble(literal));
         }
-        return DoubleNode.valueOf(Double.parseDouble(literal));
+        try {
+            return IntNode.valueOf(Integer.parseInt(literal));
+        } catch (NumberFormatException e) {
+            return LongNode.valueOf(Long.parseLong(literal));
+        }
     }
 
     static String valueNodeToLiteral(final JsonNode node) {
@@ -102,6 +107,14 @@ class Utils {
         return toOffsetDateTime(node).atZoneSameInstant(getZoneId()).toLocalDateTime();
     }
 
+    static LocalDateTime epochMilliToLocalDateTime(final JsonNode node) {
+        return Instant.ofEpochMilli(node.asLong()).atZone(getZoneId()).toLocalDateTime();
+    }
+
+    static LocalDateTime epochSecondToLocalDateTime(final JsonNode node) {
+        return Instant.ofEpochSecond(node.asLong()).atZone(getZoneId()).toLocalDateTime();
+    }
+
     static OffsetDateTime toOffsetDateTime(final JsonNode node) {
         try {
             return OffsetDateTime.parse(node.asText());
@@ -115,6 +128,30 @@ class Utils {
         return dateTime.atOffset(getZoneId().getRules().getOffset(dateTime));
     }
 
+    static OffsetDateTime epochMilliToOffsetDateTime(final JsonNode node) {
+        return Instant.ofEpochMilli(node.asLong()).atZone(getZoneId()).toOffsetDateTime();
+    }
+
+    static OffsetDateTime epochSecondToOffsetDateTime(final JsonNode node) {
+        return Instant.ofEpochSecond(node.asLong()).atZone(getZoneId()).toOffsetDateTime();
+    }
+
+    static long localDateTimeToEpochMilli(final JsonNode node) {
+        return toLocalDateTime(node).atZone(getZoneId()).toInstant().toEpochMilli();
+    }
+
+    static long offsetDateTimeToEpochMilli(final JsonNode node) {
+        return toOffsetDateTime(node).toInstant().toEpochMilli();
+    }
+
+    static long localDateTimeToEpochSecond(final JsonNode node) {
+        return toLocalDateTime(node).atZone(getZoneId()).toEpochSecond();
+    }
+
+    static long offsetDateTimeToEpochSecond(final JsonNode node) {
+        return toOffsetDateTime(node).toEpochSecond();
+    }
+
     static boolean nodeIsNull(final JsonNode node) {
         return node == null || node.isNull();
     }
@@ -124,8 +161,11 @@ class Utils {
     }
 
     static Object valueAsObject(final JsonNode node) {
-        if (node.isIntegralNumber()) {
+        if (node.isInt()) {
             return node.asInt();
+        }
+        if (node.isLong()) {
+            return node.asLong();
         }
         if (node.isNumber()) {
             return node.asDouble();

@@ -104,13 +104,11 @@ final class FuncArithmetic {
     }
 
     static JsonNode funcCeil(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-            (data, paramList) -> IntNode.valueOf((int) Math.ceil(data.getKey().asDouble())));
+        return applyNumberNodeToInt(node, params, jsonNode -> (int) Math.ceil(jsonNode.asDouble()));
     }
 
     static JsonNode funcFloor(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-            (data, paramList) -> IntNode.valueOf((int) Math.floor(data.getKey().asDouble())));
+        return applyNumberNodeToInt(node, params, jsonNode -> (int) Math.floor(jsonNode.asDouble()));
     }
 
     static JsonNode funcMod(final JsonNode node, final String params) {

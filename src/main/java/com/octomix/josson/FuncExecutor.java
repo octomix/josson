@@ -17,10 +17,7 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.*;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -152,6 +149,24 @@ final class FuncExecutor {
                                        final Function<JsonNode, Integer> transform) {
         return applyWithoutParam(node, params, JsonNode::isTextual,
             (data, paramList) -> IntNode.valueOf(transform.apply(data.getKey())));
+    }
+
+    static JsonNode applyTextNodeToLong(final JsonNode node, final String params,
+                                        final Function<JsonNode, Long> transform) {
+        return applyWithoutParam(node, params, JsonNode::isTextual,
+                (data, paramList) -> LongNode.valueOf(transform.apply(data.getKey())));
+    }
+
+    static JsonNode applyNumberNodeToText(final JsonNode node, final String params,
+                                          final Function<JsonNode, String> transform) {
+        return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                (data, paramList) -> TextNode.valueOf(transform.apply(data.getKey())));
+    }
+
+    static JsonNode applyNumberNodeToInt(final JsonNode node, final String params,
+                                         final Function<JsonNode, Integer> transform) {
+        return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
+                (data, paramList) -> IntNode.valueOf(transform.apply(data.getKey())));
     }
 
     static JsonNode applyTextNodeWithParamAsText(final JsonNode node, final String params,
