@@ -1,5 +1,6 @@
 package com.octomix.josson;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -71,8 +72,15 @@ class JossonsCore {
         progress.addResolvingStep(name, query);
         JsonNode node;
         try {
-            node = new OperationStackForDatasets(datasets).evaluateQuery(query);
-        } catch (IllegalArgumentException e) {
+            final int end = query.length() - 1;
+            if (end > 0
+                && (query.charAt(0) == '{' && query.charAt(end) == '}'
+                    || query.charAt(0) == '[' && query.charAt(end) == ']')) {
+                node = MAPPER.readTree(query);
+            } else {
+                node = new OperationStackForDatasets(datasets).evaluateQuery(query);
+            }
+        } catch (IllegalArgumentException | JsonProcessingException e) {
             node = null;
             progress.addMessageStep(e.getMessage());
         } catch (UnresolvedDatasetException e) {
@@ -201,7 +209,7 @@ class JossonsCore {
                 template = fillInPlaceholderLoop(template, escaping, isAntiInject);
                 break;
             } catch (NoValuePresentException e) {
-                isAntiInject = e.isAntiInject();
+                isAntiInject = isAntiInject || e.isAntiInject();
                 if (e.getPlaceholders() == null) {
                     unresolvedDatasetNames.clear();
                 } else {
@@ -256,7 +264,7 @@ class JossonsCore {
                                           final Set<String> unresolvedDatasetNames, final boolean isAntiInject) {
         try {
             unresolvedDatasetNames.remove(name);
-            final String filled = fillInPlaceholderLoop(query, MarkupLanguage.NONE, isAntiInject);
+            final String filled = fillInPlaceholderLoop(query, MarkupLanguage.NONE, isAntiInject).trim();
             if (evaluateDbQuery(name, filled, dataFinder, progress)) {
                 return true;
             }
