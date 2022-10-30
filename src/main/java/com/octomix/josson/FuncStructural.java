@@ -484,7 +484,7 @@ final class FuncStructural {
 
     private static void funcUnwind(final ArrayNode unwind, final JsonNode node, final String[] nameAndPath) {
         final JsonNode array = getNodeByPath(node, nameAndPath[1]);
-        if (!array.isArray()) {
+        if (array == null || !array.isArray()) {
             return;
         }
         array.elements().forEachRemaining(

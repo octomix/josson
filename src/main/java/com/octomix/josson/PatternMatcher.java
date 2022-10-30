@@ -51,14 +51,24 @@ final class PatternMatcher {
         /**
          * Enclosed by ().
          */
-        PARENTHESES;
+        PARENTHESES,
+
+        /**
+         * Enclosed by "".
+         */
+        ESCAPE_PATH_NAME;
 
         static final Enclosure[] ALL_KINDS = new Enclosure[]{
             STRING_LITERAL,
             SQUARE_BRACKETS,
             PARENTHESES,
+            ESCAPE_PATH_NAME,
         };
     }
+
+    private static final char ESCAPE_SYMBOL = '\\';
+
+    private static final char ESCAPE_PATH_NAME_SYMBOL = '"';
 
     private PatternMatcher() {
     }
@@ -98,12 +108,38 @@ final class PatternMatcher {
                 case PARENTHESES:
                     end = matchParentheses(input, pos, last);
                     break;
+                case ESCAPE_PATH_NAME:
+                    end = matchEscapePathName(input, pos, last);
+                    break;
             }
             if (end > 0) {
                 return end;
             }
         }
         return pos;
+    }
+
+    private static int matchEscapePathName(final String input, int pos, final int last) {
+        if (input.charAt(0) != ESCAPE_PATH_NAME_SYMBOL) {
+            return 0;
+        }
+        while (++pos <= last) {
+            if (input.charAt(pos) == ESCAPE_PATH_NAME_SYMBOL) {
+                return pos;
+            }
+            if (input.charAt(pos) == ESCAPE_SYMBOL) {
+                if (pos == last) {
+                    break;
+                }
+                switch (input.charAt(pos + 1)) {
+                    case ESCAPE_SYMBOL:
+                    case ESCAPE_PATH_NAME_SYMBOL:
+                        pos++;
+                        break;
+                }
+            }
+        }
+        throw new SyntaxErrorException(input, String.format("Expected quote symbol (%c)", ESCAPE_PATH_NAME_SYMBOL), pos);
     }
 
     private static int matchStringLiteral(final String input, int pos, final int last) {
@@ -414,8 +450,8 @@ final class PatternMatcher {
                 if (input.charAt(pos) == '.') {
                     break;
                 }
-                pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
-            } while (++pos <= last);
+                pos = eatSpaces(input, skipEnclosure(input, pos, last, Enclosure.ALL_KINDS) + 1, last);
+            } while (pos <= last);
             final String path = trimOf(input, beg, pos);
             if (path.isEmpty()) {
                 throw new SyntaxErrorException(input, "Invalid '.'", pos);
@@ -423,7 +459,14 @@ final class PatternMatcher {
             try {
                 if (isInt == null) {
                     if (pos > last || parseInteger(path) == null) {
-                        paths.add(path);
+                        if (path.charAt(0) == ESCAPE_PATH_NAME_SYMBOL) {
+                            final String unescapedPath = unescapePath(path);
+                            if (unescapedPath != null) {
+                                paths.add(unescapedPath);
+                            }
+                        } else {
+                            paths.add(path);
+                        }
                     } else {
                         isInt = path;
                     }
@@ -573,5 +616,23 @@ final class PatternMatcher {
             }
         }
         return new String[]{getLastElementName(input), input};
+    }
+
+    static String unescapePath(final String input) {
+        final int end = input.length() - 1;
+        final char[] unescape = new char[end - 1];
+        int count = 0;
+        for (int i = 1; i < end; i++) {
+            char ch = input.charAt(i);
+            if (ch == ESCAPE_SYMBOL) {
+                final char escaped = input.charAt(i + 1);
+                if (escaped == ESCAPE_SYMBOL || escaped == ESCAPE_PATH_NAME_SYMBOL) {
+                    ch = escaped;
+                    i++;
+                }
+            }
+            unescape[count++] = ch;
+        }
+        return count == 0 ? null : new String(unescape, 0, count);
     }
 }
