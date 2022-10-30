@@ -120,7 +120,7 @@ final class PatternMatcher {
     }
 
     private static int matchEscapePathName(final String input, int pos, final int last) {
-        if (input.charAt(0) != ESCAPE_PATH_NAME_SYMBOL) {
+        if (input.charAt(pos) != ESCAPE_PATH_NAME_SYMBOL) {
             return 0;
         }
         while (++pos <= last) {
