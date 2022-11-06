@@ -82,17 +82,21 @@ final class PatternMatcher {
         return beg;
     }
 
+    private static int eatRightSpaces(final String input, final int beg, int last) {
+        for (; last > beg; last--) {
+            if (!Character.isWhitespace(input.charAt(last - 1))) {
+                break;
+            }
+        }
+        return last;
+    }
+
     private static String trimOf(final String input, final int beg, final int end) {
         return rightTrimOf(input, eatSpaces(input, beg, end - 1), end);
     }
 
-    private static String rightTrimOf(final String input, final int beg, int end) {
-        for (; end > beg; end--) {
-            if (!Character.isWhitespace(input.charAt(end - 1))) {
-                break;
-            }
-        }
-        return input.substring(beg, end);
+    private static String rightTrimOf(final String input, final int beg, final int end) {
+        return input.substring(beg, eatRightSpaces(input, beg, end));
     }
 
     private static int skipEnclosure(final String input, final int pos, final int last, final Enclosure... enclosures) {
@@ -272,6 +276,23 @@ final class PatternMatcher {
             }
         }
         return null;
+    }
+
+    static boolean matchObjectOrArrayJson(final String input) {
+        final int last = input.length() - 1;
+        if (last >= 1) {
+            final int beg = eatSpaces(input, 0, last);
+            if (beg < last) {
+                final char charBeg = input.charAt(beg);
+                if (charBeg == '{' || charBeg == '[') {
+                    final int end = eatRightSpaces(input, beg, last);
+                    if (end > beg) {
+                        return charBeg == '{' && input.charAt(end) == '}' || charBeg == '[' && input.charAt(end) == ']';
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     static ArrayFilter matchFilterQuery(final String input) {

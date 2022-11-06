@@ -67,20 +67,29 @@ class JossonsCore {
         return true;
     }
 
+    private boolean parseObjectOrArrayJson(final String name, final String query, final ResolverProgress progress) {
+        if (!matchObjectOrArrayJson(query)) {
+            return false;
+        }
+        JsonNode node;
+        try {
+            node = MAPPER.readTree(query);
+        } catch (JsonProcessingException e) {
+            node = null;
+            progress.addMessageStep(e.getMessage());
+        }
+        datasets.put(name, node == null ? null : Josson.create(node));
+        progress.addResolvedNode(name, node);
+        return true;
+    }
+
     private boolean evaluateQuery(final String name, final String query, final ResolverProgress progress,
                                   final Set<String> unresolvedDatasetNames) {
         progress.addResolvingStep(name, query);
         JsonNode node;
         try {
-            final int end = query.length() - 1;
-            if (end > 0
-                && (query.charAt(0) == '{' && query.charAt(end) == '}'
-                    || query.charAt(0) == '[' && query.charAt(end) == ']')) {
-                node = MAPPER.readTree(query);
-            } else {
-                node = new OperationStackForDatasets(datasets).evaluateQuery(query);
-            }
-        } catch (IllegalArgumentException | JsonProcessingException e) {
+            node = new OperationStackForDatasets(datasets).evaluateQuery(query);
+        } catch (IllegalArgumentException e) {
             node = null;
             progress.addMessageStep(e.getMessage());
         } catch (UnresolvedDatasetException e) {
@@ -180,7 +189,8 @@ class JossonsCore {
                         ex.getPlaceholders().forEach(datasets::remove);
                     }
                     if (findQuery != null) {
-                        if (evaluateDbQuery(name, findQuery, dataFinder, progress)) {
+                        if (evaluateDbQuery(name, findQuery, dataFinder, progress)
+                            || parseObjectOrArrayJson(name, findQuery, progress)) {
                             continue;
                         }
                         node = evaluateQueryWithResolverLoop(findQuery, dictionaryFinder, dataFinder, progress);
@@ -265,7 +275,7 @@ class JossonsCore {
         try {
             unresolvedDatasetNames.remove(name);
             final String filled = fillInPlaceholderLoop(query, MarkupLanguage.NONE, isAntiInject).trim();
-            if (evaluateDbQuery(name, filled, dataFinder, progress)) {
+            if (evaluateDbQuery(name, filled, dataFinder, progress) || parseObjectOrArrayJson(name, filled, progress)) {
                 return true;
             }
             if (batchEvaluate == null || datasets.containsKey(DICTIONARY_FUNCTION_PARAMS)) {
