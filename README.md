@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.30</version>
+        <version>1.3.31</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.30'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.31'
 
 ## Features and Capabilities
 

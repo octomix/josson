@@ -28,7 +28,7 @@ class Pair<K, V> {
 
     private final V value;
 
-    Pair(final K key, final V value) {
+    private Pair(final K key, final V value) {
         this.key = key;
         this.value = value;
     }
