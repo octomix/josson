@@ -195,7 +195,7 @@ final class FuncExecutor {
         if (target.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < target.size(); i++) {
-                array.add(applyAction(target.get(i), path == null ? NON_ARRAY_INDEX : i, isValid, action, paramList));
+                array.add(applyAction(target.get(i), i, isValid, action, paramList));
             }
             return array;
         }
