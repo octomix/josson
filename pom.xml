@@ -39,7 +39,7 @@
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Josson &amp; Jossons.
-        Josson is a query language for JSON.
+        Josson is a complete query and transformation language for JSON.
         Jossons is a template engine to generate text output.</description>
     <url>https://github.com/octomix/josson</url>
 
@@ -161,7 +161,7 @@
         <dependency>
             <groupId>org.mariuszgromada.math</groupId>
             <artifactId>MathParser.org-mXparser</artifactId>
-            <version>5.0.7</version>
+            <version>5.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

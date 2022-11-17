@@ -143,6 +143,17 @@ public class ResolverProgress {
     }
 
     /**
+     * Reset the resolution progress steps.
+     * The given subject is added and to be the 1st progress step entry.
+     *
+     * @param subject the 1st progress step entry
+     */
+    public void reset(final String subject) {
+        reset();
+        steps.add(new Step(StepType.SUBJECT, 0, null, subject, null));
+    }
+
+    /**
      * Goto next round.
      */
     void nextRound() {
