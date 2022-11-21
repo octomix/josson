@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.3.31</version>
+        <version>1.3.32</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.31'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.3.32'
 
 ## Features and Capabilities
 
@@ -309,31 +309,32 @@ Additional step symbols are available in filter expression and function argument
 Josson path chart shows data type changes and data flow along the path.
 Data filtering, transformation and formatting details are not included.
 
-| Element                       | Description                                                                              |
-|-------------------------------|------------------------------------------------------------------------------------------|
-| `→`                           | A progress step                                                                          |
-| `⇒`                           | An end result                                                                            |
-| `""`                          | A text node                                                                              |
-| `$I`                          | An integer node                                                                          |
-| `$D`                          | A double node                                                                            |
-| `$TF`                         | A boolean node                                                                           |
-| `{}`                          | An object node                                                                           |
-| `obj{}`                       | A named object node                                                                      |
-| `[]`                          | An array node                                                                            |
-| `[]@`                         | Divert each array element to separate branches                                           |
-| `array[]*`                    | A named array node                                                                       |
-| `array[]@`                    | A named array node and divert each element to separate branches                          |
-| `array[#]`                    | An indexed array element                                                                 |
-| `[=]`                         | A find-first filter                                                                      |
-| `[=]*`                        | A find-all filter                                                                        |
-| `[=]@`                        | A find-all filter and divert each element to separate branches                           |
-| `\ `<br>&nbsp;`@ → []`<br>`/` | Merge branches into an array                                                             |
-| `func()`                      | A Josson function                                                                        |
-| `(%)`                         | Function argument, the current object's child node                                       |
-| `(?)`                         | Scalar function argument, the current non-array node itself or array node's each element |
-| `(?[])`                       | Aggregate function argument, the current array node                                      |
-| `(@)`                         | Scalar function argument, the current array node                                         |
-| `!!`                          | The position where the step is unresolvable                                              |
+| Element                                    | Description                                                                              |
+|--------------------------------------------|------------------------------------------------------------------------------------------|
+| `→`                                        | A progress step                                                                          |
+| `⇒`                                        | An end result                                                                            |
+| `""`                                       | A text node                                                                              |
+| `$I`                                       | An integer node                                                                          |
+| `$D`                                       | A double node                                                                            |
+| `$TF`                                      | A boolean node                                                                           |
+| `{}`                                       | An object node                                                                           |
+| `obj{}`                                    | A named object node                                                                      |
+| `[]`                                       | An array node                                                                            |
+| `[]@`                                      | Divert each array element to separate branches                                           |
+| `array[]*`                                 | A named array node                                                                       |
+| `array[]@`                                 | A named array node and divert each element to separate branches                          |
+| `array[#]`                                 | An indexed array element                                                                 |
+| `[=]`                                      | A find-first filter                                                                      |
+| `[=]*`                                     | A find-all filter                                                                        |
+| `[=]@`                                     | A find-all filter and divert each element to separate branches                           |
+| &nbsp;&nbsp;`/`<br>`@`<br>&nbsp;&nbsp;`\ ` | Divert to separate branches                                                              |
+| `\ `<br>&nbsp;`@ → []`<br>`/`              | Merge branches into an array                                                             |
+| `func()`                                   | A Josson function                                                                        |
+| `(%)`                                      | Function argument, the current object's child node                                       |
+| `(?)`                                      | Scalar function argument, the current non-array node itself or array node's each element |
+| `(?[])`                                    | Aggregate function argument, the current array node                                      |
+| `(@)`                                      | Scalar function argument, the current array node                                         |
+| `!!`                                       | The position where the step is unresolvable                                              |
 
 ### Tutorial
 
