@@ -19,7 +19,6 @@ package com.octomix.josson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
-import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -152,8 +151,16 @@ class Utils {
         return toOffsetDateTime(node).toEpochSecond();
     }
 
+    static boolean nodeIsNull(final PathTrace path) {
+        return path == null || path.node() == null || path.node().isNull();
+    }
+
     static boolean nodeIsNull(final JsonNode node) {
         return node == null || node.isNull();
+    }
+
+    static boolean nodeHasValue(final PathTrace path) {
+        return path != null && nodeHasValue(path.node());
     }
 
     static boolean nodeHasValue(final JsonNode node) {
@@ -173,24 +180,24 @@ class Utils {
         return node.asText();
     }
 
-    static Object[] valuesAsObjects(JsonNode node, final int index, final List<String> paramList) {
+    static Object[] valuesAsObjects(PathTrace path, final int index, final List<String> paramList) {
         Object[] objects = null;
         final int size = paramList.size();
         if (size == 0) {
             if (index >= 0) {
-                node = node.get(index);
+                path = path.push(path.node().get(index));
             }
-            if (nodeHasValue(node)) {
-                objects = new Object[]{valueAsObject(node)};
+            if (nodeHasValue(path)) {
+                objects = new Object[]{valueAsObject(path.node())};
             }
         } else {
             objects = new Object[size];
             for (int i = 0; i < size; i++) {
-                final JsonNode tryNode = getNodeByPath(node, index, paramList.get(i));
-                if (!nodeHasValue(tryNode)) {
+                final PathTrace result = getPathByExpression(path, index, paramList.get(i));
+                if (!nodeHasValue(result)) {
                     return null;
                 }
-                objects[i] = valueAsObject(tryNode);
+                objects[i] = valueAsObject(result.node());
             }
         }
         return objects;
@@ -209,42 +216,34 @@ class Utils {
         });
     }
 
-    static void addArrayElement(final ArrayNode array, final JsonNode node) {
-        if (node != null) {
-            array.add(node);
+    static void addArrayElement(final ArrayNode array, final PathTrace path) {
+        if (path != null && path.node() != null) {
+            array.add(path.node());
         }
     }
 
-    static String[] evaluateNameAndPath(final String[] nameAndPath, final JsonNode node, final int index) {
+    static String[] evaluateNameAndPath(final String[] nameAndPath, final PathTrace path, final int index) {
         if (nameAndPath[0].startsWith(":")) {
-            final String name = getNodeAsText(node, index, nameAndPath[0].substring(1));
-            checkElementName(name);
-            return new String[]{name, nameAndPath[1]};
+            return new String[]{getNodeAsText(path, index, nameAndPath[0].substring(1)), nameAndPath[1]};
         }
         return nameAndPath;
     }
 
     static String getLastElementName(final String path) {
-        final List<String> paths = decomposePaths(path);
-        if (paths.isEmpty()) {
+        final List<String> steps = decomposePath(path);
+        if (steps.isEmpty()) {
             throw new UnknownFormatConversionException("undefined");
         }
         String funcName = null;
-        for (int i = paths.size() - 1; i >= 0; i--) {
-            final String[] funcAndArgs = matchFunctionAndArgument(paths.get(i), true);
+        for (int i = steps.size() - 1; i >= 0; i--) {
+            final String[] funcAndArgs = matchFunctionAndArgument(steps.get(i), true);
             if (funcAndArgs == null) {
-                return matchFilterQuery(paths.get(i)).getNodeName();
+                return matchFilterQuery(steps.get(i)).getNodeName();
             }
             if (funcName == null) {
                 funcName = funcAndArgs[0];
             }
         }
         throw new UnknownFormatConversionException("_" + funcName);
-    }
-
-    static void checkElementName(final String name) {
-        if (name.contains(".")) {
-            throw new SyntaxErrorException(name, "Illegal '.' in element name");
-        }
     }
 }

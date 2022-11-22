@@ -41,9 +41,9 @@ final class FuncStructural {
     private FuncStructural() {
     }
 
-    static ArrayNode funcAssort(final JsonNode node, final String params) {
+    static PathTrace funcAssort(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
-        if (!node.isContainerNode()) {
+        if (!path.node().isContainerNode()) {
             return null;
         }
         final boolean notAssorted;
@@ -56,12 +56,12 @@ final class FuncStructural {
             notAssorted = false;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        if (node.isObject()) {
+        if (path.node().isObject()) {
             paramList.forEach(each -> array.add(MAPPER.createObjectNode()));
-            node.fields().forEachRemaining(field -> {
+            path.node().fields().forEachRemaining(field -> {
                 final ObjectNode entry = MAPPER.createObjectNode().set(field.getKey(), field.getValue());
                 for (int i = 0; i < paramList.size(); i++) {
-                    if (!nodeIsNull(getNodeByPath(entry, paramList.get(i)))) {
+                    if (!nodeIsNull(getPathByExpression(path.push(entry), paramList.get(i)))) {
                         ((ObjectNode) array.get(i)).setAll(entry);
                         return;
                     }
@@ -72,9 +72,9 @@ final class FuncStructural {
             });
         } else {
             paramList.forEach(each -> array.add(MAPPER.createArrayNode()));
-            node.elements().forEachRemaining(elem -> {
+            path.node().elements().forEachRemaining(elem -> {
                 for (int i = 0; i < paramList.size(); i++) {
-                    if (!nodeIsNull(getNodeByPath(elem, paramList.get(i)))) {
+                    if (!nodeIsNull(getPathByExpression(path.push(elem), paramList.get(i)))) {
                         ((ArrayNode) array.get(i)).add(elem);
                         return;
                     }
@@ -84,114 +84,114 @@ final class FuncStructural {
                 }
             });
         }
-        return array;
+        return path.push(array);
     }
 
-    static JsonNode funcCollect(final JsonNode node, final String params) {
+    static PathTrace funcCollect(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_AND_NO_PATH);
         final ArrayNode array = MAPPER.createArrayNode();
-        paramList.forEach(param -> addArrayElement(array, getNodeByPath(node, param)));
-        return array;
+        paramList.forEach(param -> addArrayElement(array, getPathByExpression(path, param)));
+        return path.push(array);
     }
 
-    static JsonNode funcCumulateCollect(final JsonNode node, final String params) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 2, 2);
+    static PathTrace funcCumulateCollect(final PathTrace path, final String params) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 2, 2);
         final ArrayNode array = MAPPER.createArrayNode();
-        funcCumulateCollect(array, nodeAndParams.getKey(), null, nodeAndParams.getValue().get(0), nodeAndParams.getValue().get(1));
-        return array;
+        funcCumulateCollect(array, pathAndParams.getKey(), null, pathAndParams.getValue().get(0), pathAndParams.getValue().get(1));
+        return path.push(array);
     }
 
-    private static void funcCumulateCollect(final ArrayNode array, final JsonNode node, final Integer index,
-                                            final String path, final String next) {
-        final JsonNode tryNode = index == null ? node : getNodeByPath(node, index, next);
-        if (tryNode == null || (index != null && Operator.EQ.relationalCompare(node, tryNode))) {
+    private static void funcCumulateCollect(final ArrayNode array, final PathTrace node, final Integer index,
+                                            final String expression, final String next) {
+        final PathTrace result = index == null ? node : getPathByExpression(node, index, next);
+        if (result == null || (index != null && Operator.EQ.relationalCompare(node.node(), result.node()))) {
             return;
         }
-        if (tryNode.isArray()) {
-            for (int i = 0; i < tryNode.size(); i++) {
-                addArrayElement(array, getNodeByPath(tryNode, i, path));
-                funcCumulateCollect(array, tryNode, i, path, next);
+        if (result.node().isArray()) {
+            for (int i = 0; i < result.node().size(); i++) {
+                addArrayElement(array, getPathByExpression(result, i, expression));
+                funcCumulateCollect(array, result, i, expression, next);
             }
             return;
         }
-        addArrayElement(array, getNodeByPath(tryNode, path));
-        if (tryNode.isObject()) {
-            funcCumulateCollect(array, tryNode, NON_ARRAY_INDEX, path, next);
+        addArrayElement(array, getPathByExpression(result, expression));
+        if (result.node().isObject()) {
+            funcCumulateCollect(array, result, NON_ARRAY_INDEX, expression, next);
         }
     }
 
-    static JsonNode funcDepthLimit(final JsonNode node, final String params) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
-        final JsonNode workNode = nodeAndParams.getKey();
-        if (workNode == null) {
+    static PathTrace funcDepthLimit(final PathTrace path, final String params) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 1);
+        final PathTrace dataPath = pathAndParams.getKey();
+        if (dataPath == null) {
             return null;
         }
-        final int depth = getNodeAsInt(node, nodeAndParams.getValue().get(0));
+        final int depth = getNodeAsInt(path, pathAndParams.getValue().get(0));
         if (depth < 1) {
             return null;
         }
-        if (workNode.isObject()) {
-            return deepCopy((ObjectNode) workNode, depth);
+        if (dataPath.node().isObject()) {
+            return path.push(deepCopy((ObjectNode) dataPath.node(), depth));
         }
-        if (workNode.isArray()) {
-            return deepCopy((ArrayNode) workNode, depth);
+        if (dataPath.node().isArray()) {
+            return path.push(deepCopy((ArrayNode) dataPath.node(), depth));
         }
-        return workNode;
+        return dataPath;
     }
 
-    static JsonNode funcEntries(final JsonNode node, final String params) {
-        final JsonNode workNode = getParamNode(node, params);
-        if (workNode == null || !workNode.isContainerNode()) {
+    static PathTrace funcEntries(final PathTrace path, final String params) {
+        final PathTrace paramPath = getParamPath(path, params);
+        if (paramPath == null || !paramPath.node().isContainerNode()) {
             return null;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        if (workNode.isArray()) {
-            workNode.forEach(elem -> elem.fields()
+        if (paramPath.node().isArray()) {
+            paramPath.node().forEach(elem -> elem.fields()
                 .forEachRemaining(field ->
                     array.add(Josson.createObjectNode().put(ENTRY_KEY_NAME, field.getKey()).set(ENTRY_VALUE_NAME, field.getValue()))));
         } else {
-            workNode.fields().forEachRemaining(field ->
+            paramPath.node().fields().forEachRemaining(field ->
                 array.add(Josson.createObjectNode().put(ENTRY_KEY_NAME, field.getKey()).set(ENTRY_VALUE_NAME, field.getValue())));
         }
-        return array;
+        return path.push(array);
     }
 
-    static JsonNode funcField(final JsonNode node, final String params) {
+    static PathTrace funcField(final PathTrace path, final String params) {
         final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
-        if (node.isObject()) {
-            return funcMap(cloneObject((ObjectNode) node), node, args, NON_ARRAY_INDEX);
+        if (path.node().isObject()) {
+            return path.push(funcMap(cloneObject((ObjectNode) path.node()), path, args, NON_ARRAY_INDEX));
         }
-        if (node.isArray()) {
+        if (path.node().isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < node.size(); i++) {
-                final JsonNode elem = node.get(i);
-                array.add(elem.isObject() ? funcMap(cloneObject((ObjectNode) elem), node, args, i) : null);
+            for (int i = 0; i < path.node().size(); i++) {
+                final JsonNode elem = path.node().get(i);
+                array.add(elem.isObject() ? funcMap(cloneObject((ObjectNode) elem), path, args, i) : null);
             }
-            return array;
+            return path.push(array);
         }
         return null;
     }
 
-    static JsonNode funcFlatten(final JsonNode node, final String params) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 0, 2);
-        final JsonNode workNode = nodeAndParams.getKey();
-        if (workNode != null && workNode.isContainerNode()) {
-            final List<String> paramList = nodeAndParams.getValue();
-            final JsonNode param = paramList.size() > 0 ? getNodeByPath(node, paramList.get(0)) : null;
-            final JsonNode indexFormat = paramList.size() > 1 ? getNodeByPath(node, paramList.get(1)) : null;
+    static PathTrace funcFlatten(final PathTrace path, final String params) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 0, 2);
+        final PathTrace dataPath = pathAndParams.getKey();
+        if (dataPath != null && dataPath.node().isContainerNode()) {
+            final List<String> paramList = pathAndParams.getValue();
+            final JsonNode param = paramList.size() > 0 ? getNodeByExpression(path, paramList.get(0)) : null;
+            final JsonNode indexFormat = paramList.size() > 1 ? getNodeByExpression(path, paramList.get(1)) : null;
             if (param != null && (param.isTextual() || param.isNull() || !nodeIsNull(indexFormat))) {
                 final ObjectNode object = MAPPER.createObjectNode();
-                funcFlatten(object, null, workNode, param.isNull() ? null : param.asText(),
+                funcFlatten(object, null, dataPath.node(), param.isNull() ? null : param.asText(),
                         nodeIsNull(indexFormat) ? null : indexFormat.asText());
-                return object;
+                return path.push(object);
             }
-            if (workNode.isArray()) {
+            if (dataPath.node().isArray()) {
                 final ArrayNode array = MAPPER.createArrayNode();
-                funcFlatten(array, workNode, param == null ? 0 : param.asInt());
-                return array;
+                funcFlatten(array, dataPath.node(), param == null ? 0 : param.asInt());
+                return path.push(array);
             }
         }
-        return workNode;
+        return dataPath;
     }
 
     private static void funcFlatten(final ArrayNode array, final JsonNode node, final int levels) {
@@ -227,13 +227,13 @@ final class FuncStructural {
         }
     }
 
-    static JsonNode funcGroup(final JsonNode node, final String params) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 2);
-        final JsonNode workNode = nodeAndParams.getKey();
-        if (workNode == null || !workNode.isArray()) {
+    static PathTrace funcGroup(final PathTrace path, final String params) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 2);
+        final PathTrace dataPath = pathAndParams.getKey();
+        if (dataPath == null || !dataPath.node().isArray()) {
             return null;
         }
-        final List<String> paramList = nodeAndParams.getValue();
+        final List<String> paramList = pathAndParams.getValue();
         String[] nameAndPath;
         try {
             nameAndPath = decomposeNameAndPath(paramList.get(0));
@@ -251,15 +251,14 @@ final class FuncStructural {
             grouping = new String[]{GROUP_VALUE_NAME, null};
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        for (int i = 0; i < workNode.size(); i++) {
-            final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, workNode, i);
-            final JsonNode valueNode = getNodeByPath(workNode, i, evalNameAndPath[1] == null
-                    ? evalNameAndPath[0] : evalNameAndPath[1]);
-            if (valueNode != null) {
+        for (int i = 0; i < dataPath.node().size(); i++) {
+            final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, dataPath, i);
+            final JsonNode key = getNodeByExpression(dataPath, i, evalNameAndPath[evalNameAndPath[1] == null ? 0 : 1]);
+            if (key != null) {
                 ArrayNode values = null;
-                final String[] evalGrouping = evaluateNameAndPath(grouping, workNode, i);
+                final String[] evalGrouping = evaluateNameAndPath(grouping, dataPath, i);
                 for (JsonNode elem : array) {
-                    if (Operator.EQ.relationalCompare(elem.get(evalNameAndPath[0]), valueNode)) {
+                    if (Operator.EQ.relationalCompare(elem.get(evalNameAndPath[0]), key)) {
                         values = (ArrayNode) elem.get(evalGrouping[0]);
                         break;
                     }
@@ -267,37 +266,37 @@ final class FuncStructural {
                 if (values == null) {
                     values = MAPPER.createArrayNode();
                     final ObjectNode entry = Josson.createObjectNode();
-                    entry.set(evalNameAndPath[0], valueNode);
+                    entry.set(evalNameAndPath[0], key);
                     entry.set(evalGrouping[0], values);
                     array.add(entry);
                 }
-                values.add(evalGrouping[1] == null ? workNode.get(i) : getNodeByPath(workNode, i, evalGrouping[1]));
+                values.add(evalGrouping[1] == null ? dataPath.node().get(i) : getNodeByExpression(dataPath, i, evalGrouping[1]));
             }
         }
-        return array;
+        return path.push(array);
     }
 
-    static JsonNode funcJson(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, JsonNode::isTextual,
+    static PathTrace funcJson(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, JsonNode::isTextual,
             (data, paramList) -> {
                 try {
-                    return readJsonNode(data.getKey().asText());
+                    return path.push(readJsonNode(data.getKey().node().asText()));
                 } catch (JsonProcessingException e) {
                     throw new IllegalArgumentException(e.getMessage());
                 }
             });
     }
 
-    static JsonNode funcKeys(final JsonNode node, final String params) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 0, 1);
-        final JsonNode workNode = nodeAndParams.getKey();
-        if (workNode == null || !workNode.isObject()) {
+    static PathTrace funcKeys(final PathTrace path, final String params) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 0, 1);
+        final PathTrace dataPath = pathAndParams.getKey();
+        if (dataPath == null || !dataPath.node().isObject()) {
             return null;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        funcKeys(array, workNode,
-                nodeAndParams.getValue().size() > 0 ? getNodeAsInt(workNode, nodeAndParams.getValue().get(0)) : 1);
-        return array;
+        funcKeys(array, dataPath.node(),
+                pathAndParams.getValue().size() > 0 ? getNodeAsInt(dataPath, pathAndParams.getValue().get(0)) : 1);
+        return path.push(array);
     }
 
     private static void funcKeys(final ArrayNode array, final JsonNode node, final int levels) {
@@ -309,62 +308,66 @@ final class FuncStructural {
         });
     }
 
-    static JsonNode funcMap(final JsonNode node, final String params) {
-        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
-        if (!node.isArray()) {
-            return funcMap(MAPPER.createObjectNode(), node, args, NON_ARRAY_INDEX);
-        }
-        final ArrayNode array = MAPPER.createArrayNode();
-        for (int i = 0; i < node.size(); i++) {
-            array.add(funcMap(MAPPER.createObjectNode(), node, args, i));
-        }
-        return array;
+    static PathTrace funcLevel(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, dataPath -> path.push(IntNode.valueOf(dataPath.level())));
     }
 
-    private static ObjectNode funcMap(final ObjectNode base, final JsonNode node,
+    static PathTrace funcMap(final PathTrace path, final String params) {
+        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        if (!path.node().isArray()) {
+            return path.push(funcMap(MAPPER.createObjectNode(), path, args, NON_ARRAY_INDEX));
+        }
+        final ArrayNode array = MAPPER.createArrayNode();
+        for (int i = 0; i < path.node().size(); i++) {
+            array.add(funcMap(MAPPER.createObjectNode(), path, args, i));
+        }
+        return path.push(array);
+    }
+
+    private static ObjectNode funcMap(final ObjectNode base, final PathTrace node,
                                       final Map<String, String> args, final int index) {
         for (Map.Entry<String, String> arg : args.entrySet()) {
             final String[] evalNameAndPath = evaluateNameAndPath(new String[]{arg.getKey(), arg.getValue()}, node, index);
             if (evalNameAndPath[1] == null) {
                 base.remove(evalNameAndPath[0]);
             } else {
-                final JsonNode tryNode = getNodeByPath(node, index, evalNameAndPath[1]);
-                if (tryNode == null) {
+                final PathTrace result = getPathByExpression(node, index, evalNameAndPath[1]);
+                if (result == null) {
                     base.remove(evalNameAndPath[0]);
                 } else {
-                    base.set(evalNameAndPath[0], tryNode);
+                    base.set(evalNameAndPath[0], result.node());
                 }
             }
         }
         return base;
     }
 
-    static ObjectNode funcMergeObjects(final JsonNode node, final String params) {
-        final ArrayNode array = getParamArrayOrItself(node, params);
+    static PathTrace funcMergeObjects(final PathTrace path, final String params) {
+        final PathTrace array = getParamArrayOrItself(path, params);
         if (array == null) {
             return null;
         }
         ObjectNode result = null;
-        for (JsonNode tryNode : array) {
-            if (tryNode.isObject()) {
+        for (JsonNode elem : array.node()) {
+            if (elem.isObject()) {
                 if (result == null) {
-                    result = tryNode.deepCopy();
+                    result = elem.deepCopy();
                 } else {
-                    mergeObjects(result, tryNode);
+                    mergeObjects(result, elem);
                 }
             }
         }
-        return result;
+        return path.push(result);
     }
 
-    static JsonNode funcToArray(final JsonNode node, final String params) {
-        final JsonNode container = getParamArrayOrItselfIsContainer(node, params);
+    static PathTrace funcToArray(final PathTrace path, final String params) {
+        final PathTrace container = getParamArrayOrItselfIsContainer(path, params);
         if (container == null) {
             return null;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        if (container.isArray()) {
-            container.forEach(elem -> {
+        if (container.node().isArray()) {
+            container.node().forEach(elem -> {
                 if (elem.isArray()) {
                     array.addAll((ArrayNode) elem);
                 } else if (elem.isObject()) {
@@ -374,33 +377,33 @@ final class FuncStructural {
                 }
             });
         } else {
-            container.forEach(array::add);
+            container.node().forEach(array::add);
         }
-        return array;
+        return path.push(array);
     }
 
-    static JsonNode funcToObject(final JsonNode node, final String params) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
-        final JsonNode workNode = nodeAndParams.getKey();
-        if (workNode == null) {
+    static PathTrace funcToObject(final PathTrace path, final String params) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 1);
+        final PathTrace dataPath = pathAndParams.getKey();
+        if (dataPath == null) {
             return null;
         }
-        final List<String> paramList = nodeAndParams.getValue();
-        return MAPPER.createObjectNode().set(getNodeAsText(node, paramList.get(0)), workNode);
+        final List<String> paramList = pathAndParams.getValue();
+        return path.push(MAPPER.createObjectNode().set(getNodeAsText(path, paramList.get(0)), dataPath.node()));
     }
 
-    static JsonNode funcUnflatten(final JsonNode node, final String params) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
-        final JsonNode workNode = nodeAndParams.getKey();
-        if (workNode == null || !workNode.isContainerNode()) {
+    static PathTrace funcUnflatten(final PathTrace path, final String params) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 1);
+        final PathTrace dataPath = pathAndParams.getKey();
+        if (dataPath == null || !dataPath.node().isContainerNode()) {
             return null;
         }
-        final String separator = getNodeAsText(node, nodeAndParams.getValue().get(0));
+        final String separator = getNodeAsText(path, pathAndParams.getValue().get(0));
         if (StringUtils.isEmpty(separator)) {
             return null;
         }
         JsonNode root = null;
-        final Iterator<Map.Entry<String, JsonNode>> iterator = workNode.fields();
+        final Iterator<Map.Entry<String, JsonNode>> iterator = dataPath.node().fields();
         while (iterator.hasNext()) {
             final Map.Entry<String, JsonNode> entry = iterator.next();
             final String[] steps = StringUtils.split(entry.getKey(), separator);
@@ -411,7 +414,7 @@ final class FuncStructural {
         if (root != null) {
             funcUnflattenSort(root);
         }
-        return root;
+        return path.push(root);
     }
 
     private static JsonNode funcUnflatten(JsonNode parent, final String[] steps, final int pos, JsonNode value) {
@@ -461,55 +464,55 @@ final class FuncStructural {
         node.elements().forEachRemaining(FuncStructural::funcUnflattenSort);
     }
 
-    static JsonNode funcUnwind(final JsonNode node, final String params) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
-        final JsonNode workNode = nodeAndParams.getKey();
-        if (workNode == null) {
+    static PathTrace funcUnwind(final PathTrace path, final String params) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 1);
+        final PathTrace dataPath = pathAndParams.getKey();
+        if (dataPath == null) {
             return null;
         }
-        final String[] nameAndPath = decomposeNameAndPath(nodeAndParams.getValue().get(0));
+        final String[] nameAndPath = decomposeNameAndPath(pathAndParams.getValue().get(0));
         if (nameAndPath[1] == null) {
             throw new SyntaxErrorException("Missing path '" + params + "'");
         }
         final ArrayNode unwind = MAPPER.createArrayNode();
-        if (workNode.isObject()) {
-            funcUnwind(unwind, workNode, evaluateNameAndPath(nameAndPath, workNode, NON_ARRAY_INDEX));
-        } else if (workNode.isArray()) {
-            for (int i = 0; i < workNode.size(); i++) {
-                funcUnwind(unwind, workNode.get(i), evaluateNameAndPath(nameAndPath, workNode, i));
+        if (dataPath.node().isObject()) {
+            funcUnwind(unwind, dataPath, evaluateNameAndPath(nameAndPath, dataPath, NON_ARRAY_INDEX));
+        } else if (dataPath.node().isArray()) {
+            for (int i = 0; i < dataPath.node().size(); i++) {
+                funcUnwind(unwind, dataPath.push(dataPath.node().get(i)), evaluateNameAndPath(nameAndPath, dataPath, i));
             }
         }
-        return unwind;
+        return path.push(unwind);
     }
 
-    private static void funcUnwind(final ArrayNode unwind, final JsonNode node, final String[] nameAndPath) {
-        final JsonNode array = getNodeByPath(node, nameAndPath[1]);
-        if (array == null || !array.isArray()) {
+    private static void funcUnwind(final ArrayNode unwind, final PathTrace path, final String[] nameAndPath) {
+        final PathTrace array = getPathByExpression(path, nameAndPath[1]);
+        if (array == null || !array.node().isArray()) {
             return;
         }
-        array.elements().forEachRemaining(
-            element -> {
+        array.node().elements().forEachRemaining(
+            elem -> {
                 final ObjectNode object = MAPPER.createObjectNode();
-                node.fields().forEachRemaining(field -> {
+                path.node().fields().forEachRemaining(field -> {
                     if (!field.getKey().equals(nameAndPath[1])) {
                         object.set(field.getKey(), field.getValue());
                     }
                 });
-                if (element.isObject()) {
-                    object.setAll((ObjectNode) element);
+                if (elem.isObject()) {
+                    object.setAll((ObjectNode) elem);
                 } else {
-                    object.set(nameAndPath[0], element);
+                    object.set(nameAndPath[0], elem);
                 }
                 unwind.add(object);
             }
         );
     }
 
-    static JsonNode funcWrap(final JsonNode node, final String params) {
-        final JsonNode workNode = getParamNode(node, params);
-        if (workNode == null) {
+    static PathTrace funcWrap(final PathTrace path, final String params) {
+        final PathTrace paramPath = getParamPath(path, params);
+        if (paramPath == null) {
             return null;
         }
-        return MAPPER.createArrayNode().add(workNode);
+        return path.push(MAPPER.createArrayNode().add(paramPath.node()));
     }
 }

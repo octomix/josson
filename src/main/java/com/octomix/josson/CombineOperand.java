@@ -22,7 +22,6 @@ import com.octomix.josson.commons.StringUtils;
 import java.util.UnknownFormatConversionException;
 import java.util.function.Function;
 
-import static com.octomix.josson.Utils.checkElementName;
 import static com.octomix.josson.Utils.getLastElementName;
 
 /**
@@ -67,7 +66,6 @@ final class CombineOperand {
             }
         }
         final String arrayName = StringUtils.strip(keys[0].substring(0, pos));
-        checkElementName(arrayName);
         keys[0] = keys[0].substring(pos + 1);
         return arrayName;
     }

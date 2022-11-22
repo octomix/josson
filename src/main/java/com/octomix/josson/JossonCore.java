@@ -40,6 +40,8 @@ final class JossonCore {
 
     static final int NON_ARRAY_INDEX = -1;
 
+    static final char PATH_DELIMITER = '.';
+
     static final char QUOTE_SYMBOL = '\'';
 
     static final String ENTRY_KEY_NAME = "key";
@@ -59,6 +61,8 @@ final class JossonCore {
     private static final char COLLECT_BRANCHES_SYMBOL = '@';
 
     private static final char INDEX_PREFIX_SYMBOL = '#';
+
+    private static final String ROOT_NODE = "$";
 
     private static final String PARENT_ARRAY_NODE = "@";
 
@@ -103,86 +107,100 @@ final class JossonCore {
         return zoneId;
     }
 
-    static String getNodeAsText(final JsonNode node, final String jossonPath) {
-        return getNodeAsText(node, NON_ARRAY_INDEX, jossonPath);
+    static String getNodeAsText(final PathTrace path, final String expression) {
+        return getNodeAsText(path, NON_ARRAY_INDEX, expression);
     }
 
-    static String getNodeAsText(final JsonNode node, final int index, final String jossonPath) {
-        final JsonNode workNode = getNodeByPath(node, index, jossonPath);
-        return workNode == null ? EMPTY : workNode.asText();
+    static String getNodeAsText(final PathTrace path, final int index, final String expression) {
+        final PathTrace result = getPathByExpression(path, index, expression);
+        return result == null ? EMPTY : result.node().asText();
     }
 
-    static String getNodeAsTextExceptNull(final JsonNode node, final int index, final String jossonPath) {
-        final JsonNode workNode = getNodeByPath(node, index, jossonPath);
-        return nodeIsNull(workNode) ? null : workNode.asText();
+    static String getNodeAsTextExceptNull(final PathTrace path, final int index, final String expression) {
+        final PathTrace result = getPathByExpression(path, index, expression);
+        return nodeIsNull(result) ? null : result.node().asText();
     }
 
-    static boolean getNodeAsBoolean(final JsonNode node, final int index, final String jossonPath) {
-        final JsonNode workNode = getNodeByPath(node, index, jossonPath);
-        return workNode != null && workNode.asBoolean();
+    static boolean getNodeAsBoolean(final PathTrace path, final int index, final String expression) {
+        final PathTrace result = getPathByExpression(path, index, expression);
+        return result != null && result.node().asBoolean();
     }
 
-    static int getNodeAsInt(final JsonNode node, final String jossonPath) {
-        return getNodeAsInt(node, NON_ARRAY_INDEX, jossonPath);
+    static int getNodeAsInt(final PathTrace path, final String expression) {
+        return getNodeAsInt(path, NON_ARRAY_INDEX, expression);
     }
 
-    static int getNodeAsInt(final JsonNode node, final int index, final String jossonPath) {
-        final JsonNode workNode = getNodeByPath(node, index, jossonPath);
-        return workNode == null || !workNode.isValueNode() ? 0 : workNode.asInt();
+    static int getNodeAsInt(final PathTrace path, final int index, final String expression) {
+        final PathTrace result = getPathByExpression(path, index, expression);
+        return result == null || !result.node().isValueNode() ? 0 : result.node().asInt();
     }
 
-    static JsonNode getNodeByPath(final JsonNode node, final String jossonPath) {
-        return getNodeByPath(node, NON_ARRAY_INDEX, jossonPath);
+    static JsonNode getNodeByExpression(final JsonNode node, final String expression) {
+        return getNodeByExpression(node, NON_ARRAY_INDEX, expression);
     }
 
-    static JsonNode getNodeByPath(JsonNode node, final int index, final String jossonPath) {
-        if (node == null) {
+    static JsonNode getNodeByExpression(final JsonNode node, final int index, final String expression) {
+        PathTrace path = getPathByExpression(PathTrace.from(node), index, expression);
+        return path == null ? null : path.node();
+    }
+
+    static JsonNode getNodeByExpression(final PathTrace path, final String expression) {
+        PathTrace result = getPathByExpression(path, expression);
+        return result == null ? null : result.node();
+    }
+
+    static JsonNode getNodeByExpression(final PathTrace path, final int index, final String expression) {
+        PathTrace result = getPathByExpression(path, index, expression);
+        return result == null ? null : result.node();
+    }
+
+    static PathTrace getPathByExpression(final PathTrace path, final String expression) {
+        return getPathByExpression(path, NON_ARRAY_INDEX, expression);
+    }
+
+    static PathTrace getPathByExpression(final PathTrace path, final int index, final String expression) {
+        if (path == null) {
             return null;
         }
-        final List<String> keys = decomposePaths(jossonPath);
-        if (keys.isEmpty()) {
-            return index >= 0 && node.isArray() ? node.get(index) : node;
+        final List<String> steps = decomposePath(expression);
+        if (steps.isEmpty()) {
+            return index >= 0 && path.node().isArray() ? path.push(path.node().get(index)) : path;
         }
-        final String key = keys.get(0);
-        if (key.charAt(0) == INDEX_PREFIX_SYMBOL) {
-            final String indexType = keys.remove(0);
+        final String step = steps.get(0);
+        switch (step) {
+            case ROOT_NODE:
+                steps.remove(0);
+                return getPathBySteps(path.root(), steps);
+            case PARENT_ARRAY_NODE:
+                steps.remove(0);
+                return getPathBySteps(path, steps);
+        }
+        if (step.charAt(0) == PATH_DELIMITER) {
+            steps.remove(0);
+            return getPathBySteps(path.pop(step.length()), steps);
+        }
+        if (step.charAt(0) == INDEX_PREFIX_SYMBOL) {
+            final String indexType = steps.remove(0);
             switch (indexType) {
                 case ZERO_BASED_INDEX:
-                    return getNodeByKeys(IntNode.valueOf(index), keys);
+                    return getPathBySteps(PathTrace.from(IntNode.valueOf(index)), steps);
                 case ONE_BASED_INDEX:
-                    return getNodeByKeys(IntNode.valueOf(index + 1), keys);
+                    return getPathBySteps(PathTrace.from(IntNode.valueOf(index + 1)), steps);
                 case UPPERCASE_INDEX:
-                    return getNodeByKeys(TextNode.valueOf(toAlphabetIndex(index, 'A')), keys);
+                    return getPathBySteps(PathTrace.from(TextNode.valueOf(toAlphabetIndex(index, 'A'))), steps);
                 case LOWERCASE_INDEX:
-                    return getNodeByKeys(TextNode.valueOf(toAlphabetIndex(index, 'a')), keys);
+                    return getPathBySteps(PathTrace.from(TextNode.valueOf(toAlphabetIndex(index, 'a'))), steps);
                 case UPPER_ROMAN_INDEX:
-                    return getNodeByKeys(TextNode.valueOf(toRomanIndex(index, true)), keys);
+                    return getPathBySteps(PathTrace.from(TextNode.valueOf(toRomanIndex(index, true))), steps);
                 case LOWER_ROMAN_INDEX:
-                    return getNodeByKeys(TextNode.valueOf(toRomanIndex(index, false)), keys);
+                    return getPathBySteps(PathTrace.from(TextNode.valueOf(toRomanIndex(index, false))), steps);
             }
             throw new IllegalArgumentException("Invalid index type: " + indexType);
         }
-        if (PARENT_ARRAY_NODE.equals(key)) {
-            keys.remove(0);
-        } else {
-            if (isCurrentNodePath(key)) {
-                keys.remove(0);
-            }
-            if (index >= 0 && node.isArray()) {
-                node = node.get(index);
-            }
+        if (index >= 0 && path.node().isArray()) {
+            return getPathBySteps(path.push(path.node().get(index)), steps);
         }
-        return getNodeByKeys(node, keys);
-    }
-
-    private static boolean isCurrentNodePath(final String path) {
-        if (!path.startsWith(CURRENT_NODE)) {
-            return false;
-        }
-        if (path.length() > 1) {
-            throw new SyntaxErrorException(path);
-        }
-        return true;
+        return getPathBySteps(path, steps);
     }
 
     private static String toAlphabetIndex(final int number, final int base) {
@@ -211,145 +229,145 @@ final class JossonCore {
         return result.toString();
     }
 
-    private static JsonNode getNodeByKeys(JsonNode node, List<String> keys) {
-        if (node != null && !keys.isEmpty()) {
+    private static PathTrace getPathBySteps(PathTrace path, List<String> steps) {
+        if (path != null && !steps.isEmpty()) {
             try {
-                node = literalToValueNode(keys.get(0));
-                keys.remove(0);
+                path = path.push(literalToValueNode(steps.get(0)));
+                steps.remove(0);
             } catch (NumberFormatException ignore) {
             }
-            while (node != null && !keys.isEmpty()) {
-                final List<String> nextKeys = new ArrayList<>();
-                node = getNodeByKeys(node, keys, nextKeys);
-                keys = nextKeys;
+            while (path != null && path.node() != null && !steps.isEmpty()) {
+                final List<String> nextSteps = new ArrayList<>();
+                path = getPathBySteps(path, steps, nextSteps);
+                steps = nextSteps;
             }
         }
-        return node;
+        if (path != null && path.node() == null) {
+            return null;
+        }
+        return path;
     }
 
-    private static JsonNode getNodeByKeys(JsonNode node, final List<String> keys, final List<String> nextKeys) {
-        if (keys == null || keys.isEmpty() || node == null) {
-            return node;
+    private static PathTrace getPathBySteps(PathTrace path, final List<String> steps, final List<String> nextSteps) {
+        if (steps == null || steps.isEmpty() || path == null) {
+            return path;
         }
-        String key = keys.get(0);
-        switch (key.charAt(0)) {
+        String step = steps.get(0);
+        switch (step.charAt(0)) {
             case WILDCARD_SYMBOL:
-                if (node.isEmpty())  {
+                if (path.node().isEmpty())  {
                     return null;
                 }
-                final String[] levelsAndFilter = matchWildcardLevelsAndFilter(key);
+                final String[] levelsAndFilter = matchWildcardLevelsAndFilter(step);
                 if (levelsAndFilter == null) {
-                    keys.remove(0);
-                    if (node.isObject()) {
-                        return wildcardAny(node, keys, nextKeys);
+                    steps.remove(0);
+                    if (path.node().isObject()) {
+                        return wildcardAny(path, steps, nextSteps);
                     }
-                    return wildcardAny(wildcardArrayNodeToList(node), keys, nextKeys, 1);
+                    return wildcardAny(wildcardArrayNodeToList(path), steps, nextSteps, 1);
                 }
                 if (levelsAndFilter[0] != null) {
-                    keys.remove(0);
-                    final int levels = levelsAndFilter[0].isEmpty() ? 0 : getNodeAsInt(node, levelsAndFilter[0]);
+                    steps.remove(0);
+                    final int levels = levelsAndFilter[0].isEmpty() ? 0 : getNodeAsInt(path, levelsAndFilter[0]);
                     return wildcardAny(
-                            node.isObject() ? Collections.singletonList(node) : wildcardArrayNodeToList(node),
-                            keys, nextKeys, levels);
+                            path.node().isObject() ? Collections.singletonList(path) : wildcardArrayNodeToList(path),
+                            steps, nextSteps, levels);
                 }
                 final String filter = levelsAndFilter[1];
                 if (filter.length() == 1) {
                     if (FILTRATE_COLLECT_ALL.equals(filter.charAt(0))) {
-                        key = "toarray()";
+                        step = "toarray()";
                     } else {
-                        key = "toarray()@";
+                        step = "toarray()@";
                     }
                 } else {
-                    key = "entries()";
-                    keys.add(1, filter);
-                    keys.add(2, ENTRY_VALUE_NAME);
+                    step = "entries()";
+                    steps.add(1, filter);
+                    steps.add(2, ENTRY_VALUE_NAME);
                 }
                 break;
             case MATCHES_SYMBOL:
-                final char lastChar = key.charAt(key.length() - 1);
+                final char lastChar = step.charAt(step.length() - 1);
                 final String filterMode = FILTRATE_COLLECT_ALL.equals(lastChar) || FILTRATE_DIVERT_ALL.equals(lastChar)
                         ? String.valueOf(lastChar) : EMPTY;
-                final String strLiteral = StringUtils.strip(key.substring(1, key.length() - filterMode.length()));
+                final String strLiteral = StringUtils.strip(step.substring(1, step.length() - filterMode.length()));
                 if (strLiteral.charAt(0) != QUOTE_SYMBOL || strLiteral.charAt(strLiteral.length() - 1) != QUOTE_SYMBOL) {
-                    throw new SyntaxErrorException(key);
+                    throw new SyntaxErrorException(step);
                 }
-                key = "entries()";
-                keys.add(1, "[" + ENTRY_KEY_NAME + ".matches(" + strLiteral + ")]" + filterMode);
-                keys.add(2, ENTRY_VALUE_NAME);
+                step = "entries()";
+                steps.add(1, "[" + ENTRY_KEY_NAME + ".matches(" + strLiteral + ")]" + filterMode);
+                steps.add(2, ENTRY_VALUE_NAME);
                 break;
             case COLLECT_BRANCHES_SYMBOL:
-                key = StringUtils.strip(key.substring(1));
-                nextKeys.addAll(keys);
-                if (key.isEmpty()) {
-                    nextKeys.remove(0);
+                step = StringUtils.strip(step.substring(1));
+                nextSteps.addAll(steps);
+                if (step.isEmpty()) {
+                    nextSteps.remove(0);
                 } else {
-                    nextKeys.set(0, key);
+                    nextSteps.set(0, step);
                 }
-                keys.clear();
-                return node;
+                steps.clear();
+                return path;
             case INDEX_PREFIX_SYMBOL:
-                throw new SyntaxErrorException(key);
+                throw new SyntaxErrorException(step);
         }
-        if (isCurrentNodePath(key)) {
-            throw new SyntaxErrorException(key);
-        }
-        keys.remove(0);
-        final String[] funcAndArgs = matchFunctionAndArgument(key, true);
+        steps.remove(0);
+        final String[] funcAndArgs = matchFunctionAndArgument(step, true);
         if (funcAndArgs != null) {
-            if (FILTRATE_DIVERT_ALL.equals(key.charAt(key.length() - 1))) {
-                keys.add(0, "[]" + FILTRATE_DIVERT_ALL.getSymbol());
+            if (FILTRATE_DIVERT_ALL.equals(step.charAt(step.length() - 1))) {
+                steps.add(0, "[]" + FILTRATE_DIVERT_ALL.getSymbol());
             }
-            return getNodeByKeys(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(node), keys, nextKeys);
+            return getPathBySteps(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(path), steps, nextSteps);
         }
-        final ArrayFilter filter = matchFilterQuery(key);
+        final ArrayFilter filter = matchFilterQuery(step);
         if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
-            if (node.isValueNode()) {
+            if (path.node().isValueNode()) {
                 return null;
             }
-            if (node.isArray()) {
-                return forEachElement((ArrayNode) node, filter.getNodeName(), filter.getMode(), keys, nextKeys);
+            if (path.node().isArray()) {
+                return forEachElement(path, filter.getNodeName(), filter.getMode(), steps, nextSteps);
             }
-            node = node.get(filter.getNodeName());
+            path = path.push(path.node().get(filter.getNodeName()));
         } else {
             if (!filter.getNodeName().isEmpty()) {
-                node = getNodeByPath(node, filter.getNodeName());
+                path = getPathByExpression(path, filter.getNodeName());
             }
-            node = filter.evaluateFilter(node, filter.getFilter());
+            path = path.push(filter.evaluateFilter(path.node(), filter.getFilter()));
         }
-        if (node == null) {
+        if (path == null || path.node() == null) {
             return null;
         }
-        if (node.isArray()) {
-            return forEachElement((ArrayNode) node, null, filter.getMode(), keys, nextKeys);
+        if (path.node().isArray()) {
+            return forEachElement(path, null, filter.getMode(), steps, nextSteps);
         }
-        return getNodeByKeys(node, keys, nextKeys);
+        return getPathBySteps(path, steps, nextSteps);
     }
 
 
-    private static List<JsonNode> wildcardArrayNodeToList(final JsonNode node) {
-        final List<JsonNode> array = new ArrayList<>();
-        for (JsonNode elem : node) {
+    private static List<PathTrace> wildcardArrayNodeToList(final PathTrace path) {
+        final List<PathTrace> array = new ArrayList<>();
+        for (JsonNode elem : path.node()) {
             if (elem.isObject()) {
-                array.add(elem);
+                array.add(path.push(elem));
             }
         }
         return array;
     }
 
-    private static JsonNode wildcardAny(final JsonNode node, final List<String> keys, final List<String> nextKeys) {
-        for (JsonNode elem : node) {
-            final JsonNode tryNode = getNodeByKeys(elem, new ArrayList<>(keys), new ArrayList<>(nextKeys));
-            if (!nodeIsNull(tryNode)) {
-                return tryNode;
+    private static PathTrace wildcardAny(final PathTrace path, final List<String> steps, final List<String> nextSteps) {
+        for (JsonNode elem : path.node()) {
+            final PathTrace result = getPathBySteps(path.push(elem), new ArrayList<>(steps), new ArrayList<>(nextSteps));
+            if (!nodeIsNull(result)) {
+                return result;
             }
         }
         return null;
     }
 
-    private static JsonNode wildcardAny(final List<JsonNode> nodes, final List<String> keys,
-                                        final List<String> nextKeys, final int levels) {
-        for (JsonNode node : nodes) {
-            final JsonNode matched = wildcardAny(node, keys, nextKeys);
+    private static PathTrace wildcardAny(final List<PathTrace> paths, final List<String> steps,
+                                         final List<String> nextSteps, final int levels) {
+        for (PathTrace path : paths) {
+            final PathTrace matched = wildcardAny(path, steps, nextSteps);
             if (matched != null) {
                 return matched;
             }
@@ -357,23 +375,23 @@ final class JossonCore {
         if (levels == 1) {
             return null;
         }
-        final List<JsonNode> nextLevel = new ArrayList<>();
-        for (JsonNode node : nodes) {
-            for (Iterator<JsonNode> it = node.elements(); it.hasNext(); ) {
+        final List<PathTrace> nextLevel = new ArrayList<>();
+        for (PathTrace path : paths) {
+            for (Iterator<JsonNode> it = path.node().elements(); it.hasNext(); ) {
                 JsonNode elem = it.next();
                 if (elem.isObject()) {
-                    nextLevel.add(elem);
+                    nextLevel.add(path.push(elem));
                 }
             }
         }
-        return wildcardAny(nextLevel, keys, nextKeys, levels - 1);
+        return wildcardAny(nextLevel, steps, nextSteps, levels - 1);
     }
 
-    private static JsonNode forEachElement(final ArrayNode node, final String elem, final FilterMode mode,
-                                           final List<String> keys, final List<String> nextKeys) {
+    private static PathTrace forEachElement(final PathTrace path, final String elem, final FilterMode mode,
+                                            final List<String> steps, final List<String> nextSteps) {
         final ArrayNode array = MAPPER.createArrayNode();
         if (mode != FILTRATE_DIVERT_ALL) {
-            for (JsonNode each : node) {
+            for (JsonNode each : path.node()) {
                 final JsonNode addNode = elem == null ? each : each.get(elem);
                 if (addNode != null) {
                     if (mode == FILTRATE_COLLECT_ALL && addNode.isArray()) {
@@ -383,22 +401,22 @@ final class JossonCore {
                     }
                 }
             }
-        } else if (!node.isEmpty()) {
+        } else if (!path.node().isEmpty()) {
             List<String> nextNextKeys = null;
-            for (JsonNode each : node) {
+            for (JsonNode each : path.node()) {
                 final List<String> tempKeys = new ArrayList<>();
-                addArrayElement(array, getNodeByKeys(elem == null ? each : each.get(elem), new ArrayList<>(keys), tempKeys));
+                addArrayElement(array, getPathBySteps(path.push(elem == null ? each : each.get(elem)), new ArrayList<>(steps), tempKeys));
                 if (!tempKeys.isEmpty()) {
                     nextNextKeys = tempKeys;
                 }
             }
-            if (nextKeys.isEmpty() && nextNextKeys != null) {
-                nextKeys.addAll(nextNextKeys);
+            if (nextSteps.isEmpty() && nextNextKeys != null) {
+                nextSteps.addAll(nextNextKeys);
             }
-            keys.clear();
-            keys.addAll(nextKeys);
-            nextKeys.clear();
+            steps.clear();
+            steps.addAll(nextSteps);
+            nextSteps.clear();
         }
-        return getNodeByKeys(array, keys, nextKeys);
+        return getPathBySteps(path.push(array), steps, nextSteps);
     }
 }

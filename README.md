@@ -161,7 +161,7 @@ To create a Josson object from a JSON string.
 
 To apply a Josson query path and get the result JsonNode.
 
-    JsonNode node = josson.getNode(jossonPath);
+    JsonNode node = josson.getNode(expression);
 
 ## Josson Query Language
 

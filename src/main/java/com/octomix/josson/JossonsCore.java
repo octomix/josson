@@ -54,7 +54,7 @@ class JossonsCore {
         if (tokens == null) {
             return false;
         }
-        progress.addResolvingStep(name, query);
+        progress.addDataFinderStep(name, query);
         final Josson dataset;
         if (dataFinder == null) {
             dataset = null;
@@ -173,7 +173,7 @@ class JossonsCore {
                 JsonNode node = null;
                 String findQuery = dictionaryFinderApply(name, dictionaryFinder, dataFinder, progress);
                 if (findQuery != null) {
-                    progress.addResolvingStep(name, findQuery);
+                    progress.addDictionaryStep(name);
                     try {
                         findQuery = fillInPlaceholderWithResolver(
                                 findQuery, dictionaryFinder, dataFinder, MarkupLanguage.NONE, progress);
