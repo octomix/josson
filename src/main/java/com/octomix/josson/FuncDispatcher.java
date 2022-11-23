@@ -425,6 +425,8 @@ class FuncDispatcher {
             case "lowercase":
                 return funcLowerCase(path, params);
             // Structural
+            case "let":
+                return funcLet(path, params);
             case "level":
                 return funcLevel(path, params);
         }

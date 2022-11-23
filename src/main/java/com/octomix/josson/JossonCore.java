@@ -42,6 +42,8 @@ final class JossonCore {
 
     static final char PATH_DELIMITER = '.';
 
+    static final char VARIABLE_PREFIX_SYMBOL = '$';
+
     static final char QUOTE_SYMBOL = '\'';
 
     static final String ENTRY_KEY_NAME = "key";
@@ -175,27 +177,31 @@ final class JossonCore {
                 steps.remove(0);
                 return getPathBySteps(path, steps);
         }
-        if (step.charAt(0) == PATH_DELIMITER) {
-            steps.remove(0);
-            return getPathBySteps(path.pop(step.length()), steps);
-        }
-        if (step.charAt(0) == INDEX_PREFIX_SYMBOL) {
-            final String indexType = steps.remove(0);
-            switch (indexType) {
-                case ZERO_BASED_INDEX:
-                    return getPathBySteps(PathTrace.from(IntNode.valueOf(index)), steps);
-                case ONE_BASED_INDEX:
-                    return getPathBySteps(PathTrace.from(IntNode.valueOf(index + 1)), steps);
-                case UPPERCASE_INDEX:
-                    return getPathBySteps(PathTrace.from(TextNode.valueOf(toAlphabetIndex(index, 'A'))), steps);
-                case LOWERCASE_INDEX:
-                    return getPathBySteps(PathTrace.from(TextNode.valueOf(toAlphabetIndex(index, 'a'))), steps);
-                case UPPER_ROMAN_INDEX:
-                    return getPathBySteps(PathTrace.from(TextNode.valueOf(toRomanIndex(index, true))), steps);
-                case LOWER_ROMAN_INDEX:
-                    return getPathBySteps(PathTrace.from(TextNode.valueOf(toRomanIndex(index, false))), steps);
-            }
-            throw new IllegalArgumentException("Invalid index type: " + indexType);
+        switch (step.charAt(0)) {
+            case PATH_DELIMITER:
+                steps.remove(0);
+                return getPathBySteps(path.pop(step.length()), steps);
+            case VARIABLE_PREFIX_SYMBOL:
+                steps.remove(0);
+                JsonNode value = path.getVariable(step);
+                return getPathBySteps(PathTrace.from(value == null ? NullNode.getInstance() : value), steps);
+            case INDEX_PREFIX_SYMBOL:
+                steps.remove(0);
+                switch (step) {
+                    case ZERO_BASED_INDEX:
+                        return getPathBySteps(PathTrace.from(IntNode.valueOf(index)), steps);
+                    case ONE_BASED_INDEX:
+                        return getPathBySteps(PathTrace.from(IntNode.valueOf(index + 1)), steps);
+                    case UPPERCASE_INDEX:
+                        return getPathBySteps(PathTrace.from(TextNode.valueOf(toAlphabetIndex(index, 'A'))), steps);
+                    case LOWERCASE_INDEX:
+                        return getPathBySteps(PathTrace.from(TextNode.valueOf(toAlphabetIndex(index, 'a'))), steps);
+                    case UPPER_ROMAN_INDEX:
+                        return getPathBySteps(PathTrace.from(TextNode.valueOf(toRomanIndex(index, true))), steps);
+                    case LOWER_ROMAN_INDEX:
+                        return getPathBySteps(PathTrace.from(TextNode.valueOf(toRomanIndex(index, false))), steps);
+                }
+                throw new IllegalArgumentException("Invalid index type: " + step);
         }
         if (index >= 0 && path.node().isArray()) {
             return getPathBySteps(path.push(path.node().get(index)), steps);

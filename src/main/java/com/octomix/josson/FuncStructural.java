@@ -308,6 +308,16 @@ final class FuncStructural {
         });
     }
 
+    static PathTrace funcLet(final PathTrace path, final String params) {
+        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        for (Map.Entry<String, String> arg : args.entrySet()) {
+            final String[] evalNameAndPath = evaluateNameAndPath(new String[]{arg.getKey(), arg.getValue()}, path, NON_ARRAY_INDEX);
+            final PathTrace result = getPathByExpression(path, NON_ARRAY_INDEX, evalNameAndPath[1]);
+            path.setVariable(evalNameAndPath[0], result == null ? null : result.node());
+        }
+        return path;
+    }
+
     static PathTrace funcLevel(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, dataPath -> path.push(IntNode.valueOf(dataPath.level())));
     }
