@@ -326,6 +326,7 @@ final class JossonCore {
             return getPathBySteps(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(path), steps, nextSteps);
         }
         final ArrayFilter filter = matchFilterQuery(step);
+        final JsonNode node;
         if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
             if (path.node().isValueNode()) {
                 return null;
@@ -333,22 +334,21 @@ final class JossonCore {
             if (path.node().isArray()) {
                 return forEachElement(path, filter.getNodeName(), filter.getMode(), steps, nextSteps);
             }
-            path = path.push(path.node().get(filter.getNodeName()));
+            node = path.node().get(filter.getNodeName());
         } else {
             if (!filter.getNodeName().isEmpty()) {
                 path = getPathByExpression(path, filter.getNodeName());
             }
-            path = path.push(filter.evaluateFilter(path.node(), filter.getFilter()));
+            node = filter.evaluateFilter(path, filter.getFilter());
         }
-        if (path == null || path.node() == null) {
+        if (node == null) {
             return null;
         }
-        if (path.node().isArray()) {
-            return forEachElement(path, null, filter.getMode(), steps, nextSteps);
+        if (node.isArray()) {
+            return forEachElement(path.push(node), null, filter.getMode(), steps, nextSteps);
         }
-        return getPathBySteps(path, steps, nextSteps);
+        return getPathBySteps(path.push(node), steps, nextSteps);
     }
-
 
     private static List<PathTrace> wildcardArrayNodeToList(final PathTrace path) {
         final List<PathTrace> array = new ArrayList<>();

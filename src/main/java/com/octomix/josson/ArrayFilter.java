@@ -101,39 +101,39 @@ class ArrayFilter {
     /**
      * Find an element or filter an array node.
      *
-     * @param node      the Jackson JsonNode to be processed
+     * @param path      the Jackson JsonNode to be processed
      * @param statement multiple relational operations combined with logical operators
      * @return The 1st matched element for {@code FILTRATE_FIRST_FOUND} or
      *         all matched elements in an array node for {@code FILTRATE_COLLECT_ALL} and {@code FILTRATE_DIVERT_ALL}
      */
-    JsonNode evaluateFilter(final JsonNode node, final String statement) {
-        if (node == null) {
+    JsonNode evaluateFilter(final PathTrace path, final String statement) {
+        if (path == null) {
             return null;
         }
         if (StringUtils.isEmpty(statement)) {
-            return node;
+            return path.node();
         }
-        if (!node.isArray()) {
-            return asBoolean(new OperationStackForJsonNode(node).evaluateStatement(statement)) ? node : null;
+        if (!path.node().isArray()) {
+            return asBoolean(new OperationStackForJsonNode(path).evaluateStatement(statement)) ? path.node() : null;
         }
-        if (node.size() == 0) {
+        if (path.node().size() == 0) {
             return null;
         }
         final ArrayNode matchedNodes = mode == FILTRATE_FIND_FIRST ? null : MAPPER.createArrayNode();
         final Integer index = parseInteger(statement);
         if (index != null) {
             if (matchedNodes == null) {
-                return node.get(index);
+                return path.node().get(index);
             }
-            matchedNodes.add(node.get(index));
+            matchedNodes.add(path.node().get(index));
         } else {
-            final OperationStack opStack = new OperationStackForJsonNode(node);
-            for (int i = 0; i < node.size(); i++) {
+            final OperationStack opStack = new OperationStackForJsonNode(path);
+            for (int i = 0; i < path.node().size(); i++) {
                 if (asBoolean(opStack.evaluate(statement, i))) {
                     if (matchedNodes == null) {
-                        return node.get(i);
+                        return path.node().get(i);
                     }
-                    matchedNodes.add(node.get(i));
+                    matchedNodes.add(path.node().get(i));
                 }
             }
         }

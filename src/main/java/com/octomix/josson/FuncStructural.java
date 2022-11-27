@@ -101,10 +101,10 @@ final class FuncStructural {
         return path.push(array);
     }
 
-    private static void funcCumulateCollect(final ArrayNode array, final PathTrace node, final Integer index,
+    private static void funcCumulateCollect(final ArrayNode array, final PathTrace path, final Integer index,
                                             final String expression, final String next) {
-        final PathTrace result = index == null ? node : getPathByExpression(node, index, next);
-        if (result == null || (index != null && Operator.EQ.relationalCompare(node.node(), result.node()))) {
+        final PathTrace result = index == null ? path : getPathByExpression(path, index, next);
+        if (result == null || (index != null && Operator.EQ.relationalCompare(path.node(), result.node()))) {
             return;
         }
         if (result.node().isArray()) {

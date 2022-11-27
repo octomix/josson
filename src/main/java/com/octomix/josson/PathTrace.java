@@ -79,6 +79,6 @@ class PathTrace {
     }
 
     JsonNode getVariable(final String name) {
-        return variables.get(name);
+        return variables == null ? null : variables.get(name);
     }
 }
