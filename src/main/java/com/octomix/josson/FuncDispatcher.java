@@ -475,6 +475,8 @@ class FuncDispatcher {
             // Structural
             case "map":
                 return funcMap(path, params);
+            case "mergearrays":
+                return funcMergeArrays(path, params);
             case "mergeobjects":
                 return funcMergeObjects(path, params);
         }
@@ -535,6 +537,9 @@ class FuncDispatcher {
 
     private PathTrace applyP(final PathTrace path, final String func) {
         switch (func) {
+            // Array
+            case "push":
+                return funcPush(path, params);
             // Date
             case "plusseconds":
                 return funcDatePlus(path, params, ChronoUnit.SECONDS);

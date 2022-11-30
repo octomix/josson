@@ -157,30 +157,30 @@ class CombineOperation {
                                                final String arrayName) {
         final String[] relationalOps = new String[leftKeys.length];
         for (int j = leftKeys.length - 1; j >= 0; j--) {
-            final PathTrace leftValue = JossonCore.getPathByExpression(PathTrace.from(leftObject), leftKeys[j]);
-            if (leftValue == null || !leftValue.node().isValueNode()) {
+            final JsonNode leftValue = JossonCore.getNodeByExpression(PathTrace.from(leftObject), leftKeys[j]);
+            if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
             relationalOps[j] = rightKeys[j] + Operator.EQ.getSymbol()
-                    + (leftValue.node().isTextual() ? QUOTE_SYMBOL : EMPTY)
-                    + leftValue.node().asText().replace("'", "''")
-                    + (leftValue.node().isTextual() ? QUOTE_SYMBOL : EMPTY);
+                    + (leftValue.isTextual() ? QUOTE_SYMBOL : EMPTY)
+                    + leftValue.asText().replace("'", "''")
+                    + (leftValue.isTextual() ? QUOTE_SYMBOL : EMPTY);
         }
         final String path = String.format("[%s]", StringUtils.join(relationalOps, Operator.AND.getSymbol()));
         if (operator == LEFT_JOIN_MANY) {
-            final PathTrace rightToJoin = JossonCore.getPathByExpression(
+            final JsonNode rightToJoin = JossonCore.getNodeByExpression(
                     PathTrace.from(rightArray), path + FILTRATE_COLLECT_ALL.getSymbol());
             if (rightToJoin != null) {
-                return cloneObject(leftObject).set(arrayName, rightToJoin.node());
+                return cloneObject(leftObject).set(arrayName, rightToJoin);
             }
         } else {
-            final PathTrace rightToJoin = JossonCore.getPathByExpression(PathTrace.from(rightArray), path);
+            final JsonNode rightToJoin = JossonCore.getNodeByExpression(PathTrace.from(rightArray), path);
             if (operator == LEFT_EXCLUDING_JOIN || operator == OUTER_EXCLUDING_JOIN) {
                 if (rightToJoin != null) {
                     return null;
                 }
-            } else if (rightToJoin != null && rightToJoin.node().isObject()) {
-                return cloneObject(leftObject).setAll((ObjectNode) rightToJoin.node());
+            } else if (rightToJoin != null && rightToJoin.isObject()) {
+                return cloneObject(leftObject).setAll((ObjectNode) rightToJoin);
             } else if (operator == INNER_JOIN) {
                 return null;
             }

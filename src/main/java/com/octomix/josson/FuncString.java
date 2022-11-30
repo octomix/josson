@@ -86,9 +86,9 @@ final class FuncString {
             (data, paramList) -> {
                 final StringBuilder sb = new StringBuilder();
                 for (String expression : paramList) {
-                    final PathTrace result = getPathByExpression(path, data.getValue(), expression);
+                    final JsonNode result = getNodeByExpression(path, data.getValue(), expression);
                     if (nodeHasValue(result)) {
-                        sb.append(result.node().asText());
+                        sb.append(result.asText());
                     } else if (notNull) {
                         return null;
                     }

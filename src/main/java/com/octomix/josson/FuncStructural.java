@@ -61,7 +61,7 @@ final class FuncStructural {
             path.node().fields().forEachRemaining(field -> {
                 final ObjectNode entry = MAPPER.createObjectNode().set(field.getKey(), field.getValue());
                 for (int i = 0; i < paramList.size(); i++) {
-                    if (!nodeIsNull(getPathByExpression(path.push(entry), paramList.get(i)))) {
+                    if (!nodeIsNull(getNodeByExpression(path.push(entry), paramList.get(i)))) {
                         ((ObjectNode) array.get(i)).setAll(entry);
                         return;
                     }
@@ -74,7 +74,7 @@ final class FuncStructural {
             paramList.forEach(each -> array.add(MAPPER.createArrayNode()));
             path.node().elements().forEachRemaining(elem -> {
                 for (int i = 0; i < paramList.size(); i++) {
-                    if (!nodeIsNull(getPathByExpression(path.push(elem), paramList.get(i)))) {
+                    if (!nodeIsNull(getNodeByExpression(path.push(elem), paramList.get(i)))) {
                         ((ArrayNode) array.get(i)).add(elem);
                         return;
                     }
@@ -90,7 +90,7 @@ final class FuncStructural {
     static PathTrace funcCollect(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_AND_NO_PATH);
         final ArrayNode array = MAPPER.createArrayNode();
-        paramList.forEach(param -> addArrayElement(array, getPathByExpression(path, param)));
+        paramList.forEach(param -> addArrayElement(array, getNodeByExpression(path, param)));
         return path.push(array);
     }
 
@@ -109,12 +109,12 @@ final class FuncStructural {
         }
         if (result.node().isArray()) {
             for (int i = 0; i < result.node().size(); i++) {
-                addArrayElement(array, getPathByExpression(result, i, expression));
+                addArrayElement(array, getNodeByExpression(result, i, expression));
                 funcCumulateCollect(array, result, i, expression, next);
             }
             return;
         }
-        addArrayElement(array, getPathByExpression(result, expression));
+        addArrayElement(array, getNodeByExpression(result, expression));
         if (result.node().isObject()) {
             funcCumulateCollect(array, result, NON_ARRAY_INDEX, expression, next);
         }
@@ -312,8 +312,8 @@ final class FuncStructural {
         final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
         for (Map.Entry<String, String> arg : args.entrySet()) {
             final String[] evalNameAndPath = evaluateNameAndPath(new String[]{arg.getKey(), arg.getValue()}, path, NON_ARRAY_INDEX);
-            final PathTrace result = getPathByExpression(path, NON_ARRAY_INDEX, evalNameAndPath[1]);
-            path.setVariable(evalNameAndPath[0], result == null ? null : result.node());
+            final JsonNode result = getNodeByExpression(path, NON_ARRAY_INDEX, evalNameAndPath[1]);
+            path.setVariable(evalNameAndPath[0], result);
         }
         return path;
     }
@@ -341,15 +341,36 @@ final class FuncStructural {
             if (evalNameAndPath[1] == null) {
                 base.remove(evalNameAndPath[0]);
             } else {
-                final PathTrace result = getPathByExpression(node, index, evalNameAndPath[1]);
+                final JsonNode result = getNodeByExpression(node, index, evalNameAndPath[1]);
                 if (result == null) {
                     base.remove(evalNameAndPath[0]);
                 } else {
-                    base.set(evalNameAndPath[0], result.node());
+                    base.set(evalNameAndPath[0], result);
                 }
             }
         }
         return base;
+    }
+
+    static PathTrace funcMergeArrays(final PathTrace path, final String params) {
+        final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH);
+        final ArrayNode array = MAPPER.createArrayNode();
+        for (String param : paramList) {
+            if (path.node().isArray()) {
+                for (int i = 0; i < path.node().size(); i++) {
+                    final JsonNode result = getNodeByExpression(path, i, param);
+                    if (result != null && result.isArray()) {
+                        array.addAll((ArrayNode) result);
+                    }
+                }
+            } else {
+                final JsonNode result = getNodeByExpression(path, param);
+                if (result != null && result.isArray()) {
+                    array.addAll((ArrayNode) result);
+                }
+            }
+        }
+        return path.push(array);
     }
 
     static PathTrace funcMergeObjects(final PathTrace path, final String params) {
@@ -496,11 +517,11 @@ final class FuncStructural {
     }
 
     private static void funcUnwind(final ArrayNode unwind, final PathTrace path, final String[] nameAndPath) {
-        final PathTrace array = getPathByExpression(path, nameAndPath[1]);
-        if (array == null || !array.node().isArray()) {
+        final JsonNode array = getNodeByExpression(path, nameAndPath[1]);
+        if (array == null || !array.isArray()) {
             return;
         }
-        array.node().elements().forEachRemaining(
+        array.elements().forEachRemaining(
             elem -> {
                 final ObjectNode object = MAPPER.createObjectNode();
                 path.node().fields().forEachRemaining(field -> {

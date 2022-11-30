@@ -44,12 +44,12 @@ final class FuncLogical {
         if (dataPath == null) {
             return path.push(BooleanNode.FALSE);
         }
-        final PathTrace result = getPathByExpression(path, pathAndParams.getValue().get(0));
-        if (result == null || result.node().isContainerNode()) {
+        final JsonNode result = getNodeByExpression(path, pathAndParams.getValue().get(0));
+        if (result == null || result.isContainerNode()) {
             return path.push(BooleanNode.FALSE);
         }
-        if (result.node().isNumber()) {
-            final double value = result.node().asDouble();
+        if (result.isNumber()) {
+            final double value = result.asDouble();
             if (dataPath.node().isArray()) {
                 for (JsonNode elem : dataPath.node()) {
                     if ((elem.isNumber() || elem.isTextual()) && elem.asDouble() == value) {
@@ -59,7 +59,7 @@ final class FuncLogical {
             }
             return path.push(BooleanNode.valueOf(not));
         }
-        if (result.node().isNull()) {
+        if (result.isNull()) {
             if (dataPath.node().isArray()) {
                 for (JsonNode elem : dataPath.node()) {
                     if (elem.isNull()) {
@@ -69,7 +69,7 @@ final class FuncLogical {
             }
             return path.push(BooleanNode.valueOf(not));
         }
-        final String value = result.node().asText();
+        final String value = result.asText();
         if (dataPath.node().isObject()) {
             if (ignoreCase) {
                 for (Iterator<String> it = dataPath.node().fieldNames(); it.hasNext();) {

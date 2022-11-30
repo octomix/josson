@@ -115,8 +115,11 @@ final class FuncDate {
             (data, paramList) -> {
                 final PathTrace dataPath = data.getKey();
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
-                final PathTrace later = getPathByExpression(paramPath, data.getValue(), paramList.get(0));
-                return path.push(LongNode.valueOf(toLocalDateTime(dataPath.node()).until(toLocalDateTime(later.node()), unit)));
+                final JsonNode later = getNodeByExpression(paramPath, data.getValue(), paramList.get(0));
+                if (nodeIsNull(later)) {
+                    return null;
+                }
+                return path.push(LongNode.valueOf(toLocalDateTime(dataPath.node()).until(toLocalDateTime(later), unit)));
             });
     }
 
@@ -169,7 +172,7 @@ final class FuncDate {
                 if (type == null || type.equalsIgnoreCase("local")) {
                     return path.push(TextNode.valueOf(LocalDateTime.now().toString()));
                 }
-                switch (type) {
+                switch (type.toLowerCase()) {
                     case "offset":
                         return path.push(TextNode.valueOf(OffsetDateTime.now().toString()));
                     case "millis":

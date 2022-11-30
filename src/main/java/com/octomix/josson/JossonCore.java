@@ -114,18 +114,18 @@ final class JossonCore {
     }
 
     static String getNodeAsText(final PathTrace path, final int index, final String expression) {
-        final PathTrace result = getPathByExpression(path, index, expression);
-        return result == null ? EMPTY : result.node().asText();
+        final JsonNode result = getNodeByExpression(path, index, expression);
+        return result == null ? EMPTY : result.asText();
     }
 
     static String getNodeAsTextExceptNull(final PathTrace path, final int index, final String expression) {
-        final PathTrace result = getPathByExpression(path, index, expression);
-        return nodeIsNull(result) ? null : result.node().asText();
+        final JsonNode result = getNodeByExpression(path, index, expression);
+        return nodeIsNull(result) ? null : result.asText();
     }
 
     static boolean getNodeAsBoolean(final PathTrace path, final int index, final String expression) {
-        final PathTrace result = getPathByExpression(path, index, expression);
-        return result != null && result.node().asBoolean();
+        final JsonNode result = getNodeByExpression(path, index, expression);
+        return result != null && result.asBoolean();
     }
 
     static int getNodeAsInt(final PathTrace path, final String expression) {
@@ -133,8 +133,8 @@ final class JossonCore {
     }
 
     static int getNodeAsInt(final PathTrace path, final int index, final String expression) {
-        final PathTrace result = getPathByExpression(path, index, expression);
-        return result == null || !result.node().isValueNode() ? 0 : result.node().asInt();
+        final JsonNode result = getNodeByExpression(path, index, expression);
+        return result == null || !result.isValueNode() ? 0 : result.asInt();
     }
 
     static JsonNode getNodeByExpression(final JsonNode node, final String expression) {
@@ -411,7 +411,11 @@ final class JossonCore {
             List<String> nextNextKeys = null;
             for (JsonNode each : path.node()) {
                 final List<String> tempKeys = new ArrayList<>();
-                addArrayElement(array, getPathBySteps(path.push(elem == null ? each : each.get(elem)), new ArrayList<>(steps), tempKeys));
+                final PathTrace result =
+                        getPathBySteps(path.push(elem == null ? each : each.get(elem)), new ArrayList<>(steps), tempKeys);
+                if (result != null) {
+                    addArrayElement(array, result.node());
+                }
                 if (!tempKeys.isEmpty()) {
                     nextNextKeys = tempKeys;
                 }

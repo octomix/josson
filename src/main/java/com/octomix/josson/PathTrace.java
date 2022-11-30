@@ -48,6 +48,9 @@ class PathTrace {
     }
 
     PathTrace push(final JsonNode node) {
+        if (node == null) {
+            return null;
+        }
         final PathTrace clone = new PathTrace(steps.length + 1, variables);
         System.arraycopy(steps, 0, clone.steps, 0, steps.length);
         clone.steps[steps.length] = node;

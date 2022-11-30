@@ -28,8 +28,8 @@ import java.util.Set;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.Utils.nodeHasValue;
-import static com.octomix.josson.Utils.nodeIsNull;
+import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
+import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -102,7 +102,7 @@ final class FuncArray {
         Double maxMinNum = null;
         String maxMinStr = null;
         for (int i = 0; i < dataPath.node().size(); i++) {
-            final PathTrace result = getPathByExpression(dataPath.push(dataPath.node().get(i)), expression);
+            final JsonNode result = getNodeByExpression(dataPath.push(dataPath.node().get(i)), expression);
             if (nodeIsNull(result)) {
                 if (nullPriority > 0) {
                     return path.push(dataPath.node().get(i));
@@ -112,17 +112,17 @@ final class FuncArray {
                 }
                 continue;
             }
-            if (result.node().isContainerNode()) {
+            if (result.isContainerNode()) {
                 continue;
             }
-            if (result.node().isNumber()) {
-                final double value = result.node().asDouble();
+            if (result.isNumber()) {
+                final double value = result.asDouble();
                 if (maxMinNum == null || (isMax ? value > maxMinNum : value < maxMinNum)) {
                     maxMinNum = value;
                     foundIndex = i;
                 }
             } else if (maxMinNum == null) {
-                final String value = result.node().asText();
+                final String value = result.asText();
                 if (maxMinStr == null || (isMax ? value.compareTo(maxMinStr) > 0 : value.compareTo(maxMinStr) < 0)) {
                     maxMinStr = value;
                     foundIndex = i;
@@ -145,11 +145,11 @@ final class FuncArray {
         if (dataPath == null || !dataPath.node().isArray()) {
             return null;
         }
-        final PathTrace result = getPathByExpression(path, pathAndParams.getValue().get(0));
+        final JsonNode result = getNodeByExpression(path, pathAndParams.getValue().get(0));
         int i = step > 0 ? 0 : dataPath.node().size() - 1;
         final int end = step > 0 ? dataPath.node().size() : -1;
         for (; i != end; i += step) {
-            if (Operator.EQ.relationalCompare(result.node(), dataPath.node().get(i))) {
+            if (Operator.EQ.relationalCompare(result, dataPath.node().get(i))) {
                 return path.push(IntNode.valueOf(i));
             }
         }
@@ -214,6 +214,23 @@ final class FuncArray {
             }
         }
         return path.push(result);
+    }
+
+    static PathTrace funcPush(final PathTrace path, final String params) {
+        final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH);
+        final ArrayNode array = MAPPER.createArrayNode();
+        if (path.node().isArray()) {
+            array.addAll((ArrayNode) path.node());
+        } else {
+            array.add(path.node());
+        }
+        for (String param : paramList) {
+            final JsonNode result = getNodeByExpression(path, param);
+            if (result != null) {
+                array.add(result);
+            }
+        }
+        return path.push(array);
     }
 
     static PathTrace funcReverse(final PathTrace path, final String params) {

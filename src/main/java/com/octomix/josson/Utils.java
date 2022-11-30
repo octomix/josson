@@ -164,7 +164,7 @@ class Utils {
     }
 
     static boolean nodeHasValue(final JsonNode node) {
-        return !nodeIsNull(node) && node.isValueNode();
+        return node != null && node.isValueNode() && !node.isNull();
     }
 
     static Object valueAsObject(final JsonNode node) {
@@ -193,11 +193,11 @@ class Utils {
         } else {
             objects = new Object[size];
             for (int i = 0; i < size; i++) {
-                final PathTrace result = getPathByExpression(path, index, paramList.get(i));
+                final JsonNode result = getNodeByExpression(path, index, paramList.get(i));
                 if (!nodeHasValue(result)) {
                     return null;
                 }
-                objects[i] = valueAsObject(result.node());
+                objects[i] = valueAsObject(result);
             }
         }
         return objects;
@@ -216,9 +216,9 @@ class Utils {
         });
     }
 
-    static void addArrayElement(final ArrayNode array, final PathTrace path) {
-        if (path != null && path.node() != null) {
-            array.add(path.node());
+    static void addArrayElement(final ArrayNode array, final JsonNode node) {
+        if (node != null) {
+            array.add(node);
         }
     }
 

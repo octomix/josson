@@ -16,6 +16,7 @@
 
 package com.octomix.josson;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import org.mariuszgromada.math.mxparser.Argument;
 import org.mariuszgromada.math.mxparser.Expression;
@@ -71,19 +72,19 @@ final class FuncArithmetic {
             if (expression == null) {
                 continue;
             }
-            final PathTrace argPath = getPathByExpression(path, index, expression);
-            if (!nodeHasValue(argPath)) {
+            final JsonNode argNode = getNodeByExpression(path, index, expression);
+            if (!nodeHasValue(argNode)) {
                 return null;
             }
-            calcExpr.addArguments(new Argument(arg.getKey(), argPath.node().asDouble()));
+            calcExpr.addArguments(new Argument(arg.getKey(), argNode.asDouble()));
         }
         if (!calcExpr.checkSyntax()) {
             for (String missingArg : calcExpr.getMissingUserDefinedArguments()) {
-                final PathTrace argPath = getPathByExpression(path, index, missingArg);
-                if (!nodeHasValue(argPath)) {
+                final JsonNode argNode = getNodeByExpression(path, index, missingArg);
+                if (!nodeHasValue(argNode)) {
                     return null;
                 }
-                calcExpr.addArguments(new Argument(missingArg, argPath.node().asDouble()));
+                calcExpr.addArguments(new Argument(missingArg, argNode.asDouble()));
             }
         }
         if (calcExpr.checkSyntax()) {

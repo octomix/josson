@@ -105,15 +105,15 @@ final class FuncExecutor {
         for (String param : paramList) {
             if (path.node().isArray()) {
                 for (int i = 0; i < path.node().size(); i++) {
-                    addArrayElement(array, getPathByExpression(path, i, param));
+                    addArrayElement(array, getNodeByExpression(path, i, param));
                 }
             } else {
-                final PathTrace result = getPathByExpression(path, param);
+                final JsonNode result = getNodeByExpression(path, param);
                 if (result != null) {
-                    if (result.node().isArray()) {
-                        array.addAll((ArrayNode) result.node());
+                    if (result.isArray()) {
+                        array.addAll((ArrayNode) result);
                     } else {
-                        array.add(result.node());
+                        array.add(result);
                     }
                 }
             }
