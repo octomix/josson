@@ -110,30 +110,31 @@ class ArrayFilter {
         if (path == null) {
             return null;
         }
+        final JsonNode node = path.node();
         if (StringUtils.isEmpty(statement)) {
-            return path.node();
+            return node;
         }
-        if (!path.node().isArray()) {
-            return asBoolean(new OperationStackForJsonNode(path).evaluateStatement(statement)) ? path.node() : null;
+        if (!node.isArray()) {
+            return asBoolean(new OperationStackForJsonNode(path).evaluateStatement(statement)) ? node : null;
         }
-        if (path.node().size() == 0) {
+        if (node.size() == 0) {
             return null;
         }
         final ArrayNode matchedNodes = mode == FILTRATE_FIND_FIRST ? null : MAPPER.createArrayNode();
         final Integer index = parseInteger(statement);
         if (index != null) {
             if (matchedNodes == null) {
-                return path.node().get(index);
+                return node.get(index);
             }
-            matchedNodes.add(path.node().get(index));
+            matchedNodes.add(node.get(index));
         } else {
             final OperationStack opStack = new OperationStackForJsonNode(path);
-            for (int i = 0; i < path.node().size(); i++) {
+            for (int i = 0; i < node.size(); i++) {
                 if (asBoolean(opStack.evaluate(statement, i))) {
                     if (matchedNodes == null) {
-                        return path.node().get(i);
+                        return node.get(i);
                     }
-                    matchedNodes.add(path.node().get(i));
+                    matchedNodes.add(node.get(i));
                 }
             }
         }

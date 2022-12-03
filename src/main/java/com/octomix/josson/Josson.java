@@ -260,7 +260,7 @@ public class Josson {
      * Get an {@code ArrayNode} element if the content is an {@code ArrayNode}.
      *
      * @param index index of the specific {@code ArrayNode} element
-     * @return The specific {@code ArrayNode} element. {@code null} if the of is not an {@code ArrayNode}.
+     * @return The specific {@code ArrayNode} element. {@code null} if the root is not an {@code ArrayNode}.
      */
     public JsonNode getNode(final int index) {
         return jsonNode != null && jsonNode.isArray() ? jsonNode.get(index) : null;

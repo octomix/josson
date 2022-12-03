@@ -128,11 +128,11 @@ final class FuncDate {
     }
 
     static PathTrace funcLocalDateToEpochMilli(final PathTrace path, final String params) {
-        return applyTextNodeToLong(path, params, dataPath -> Utils.localDateTimeToEpochMilli(dataPath.node()));
+        return applyTextNodeToLong(path, params, dataPath -> localDateTimeToEpochMilli(dataPath.node()));
     }
 
     static PathTrace funcLocalDateToEpochSecond(final PathTrace path, final String params) {
-        return applyTextNodeToLong(path, params, dataPath -> Utils.localDateTimeToEpochSecond(dataPath.node()));
+        return applyTextNodeToLong(path, params, dataPath -> localDateTimeToEpochSecond(dataPath.node()));
     }
 
     static PathTrace funcOffsetToLocalDate(final PathTrace path, final String params) {
@@ -140,11 +140,11 @@ final class FuncDate {
     }
 
     static PathTrace funcOffsetDateToEpochMilli(final PathTrace path, final String params) {
-        return applyTextNodeToLong(path, params, dataPath -> Utils.offsetDateTimeToEpochMilli(dataPath.node()));
+        return applyTextNodeToLong(path, params, dataPath -> offsetDateTimeToEpochMilli(dataPath.node()));
     }
 
     static PathTrace funcOffsetDateToEpochSecond(final PathTrace path, final String params) {
-        return applyTextNodeToLong(path, params, dataPath -> Utils.offsetDateTimeToEpochSecond(dataPath.node()));
+        return applyTextNodeToLong(path, params, dataPath -> offsetDateTimeToEpochSecond(dataPath.node()));
     }
 
     static PathTrace funcEpochMilliToLocalDate(final PathTrace path, final String params) {

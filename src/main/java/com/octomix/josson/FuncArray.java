@@ -136,7 +136,7 @@ final class FuncArray {
         return applyWithoutParam(path, params,
             dataPath -> !dataPath.node().isArray() ? dataPath
                 : dataPath.node().size() == 0 ? null
-                : dataPath.push(dataPath.node().get(0)));
+                : path.push(dataPath.node().get(0)));
     }
 
     static PathTrace funcIndexOf(final PathTrace path, final String params, final int step) {
@@ -253,7 +253,7 @@ final class FuncArray {
     }
 
     static PathTrace funcSize(final PathTrace path, final String params) {
-        return applyWithoutParam(path, params, dataPath -> dataPath.push(IntNode.valueOf(dataPath.node().size())));
+        return applyWithoutParam(path, params, dataPath -> path.push(IntNode.valueOf(dataPath.node().size())));
     }
 
     static PathTrace funcSlice(final PathTrace path, final String params) {
