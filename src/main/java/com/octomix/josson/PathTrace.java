@@ -57,9 +57,9 @@ class PathTrace {
         return clone;
     }
 
-    PathTrace pop(final int levels) {
-        final PathTrace clone = new PathTrace(steps.length - levels, variables);
-        System.arraycopy(steps, 0, clone.steps, 0, steps.length - levels);
+    PathTrace pop(final int steps) {
+        final PathTrace clone = new PathTrace(this.steps.length - steps, variables);
+        System.arraycopy(this.steps, 0, clone.steps, 0, this.steps.length - steps);
         return clone;
     }
 
@@ -67,7 +67,7 @@ class PathTrace {
         return steps[steps.length - 1];
     }
 
-    int level() {
+    int steps() {
         return steps.length - 1;
     }
 

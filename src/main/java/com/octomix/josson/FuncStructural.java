@@ -318,10 +318,6 @@ final class FuncStructural {
         return path;
     }
 
-    static PathTrace funcLevel(final PathTrace path, final String params) {
-        return applyWithoutParam(path, params, dataPath -> path.push(IntNode.valueOf(dataPath.level())));
-    }
-
     static PathTrace funcMap(final PathTrace path, final String params) {
         final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
         if (!path.node().isArray()) {
@@ -389,6 +385,10 @@ final class FuncStructural {
             }
         }
         return path.push(result);
+    }
+
+    static PathTrace funcSteps(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, dataPath -> path.push(IntNode.valueOf(dataPath.steps())));
     }
 
     static PathTrace funcToArray(final PathTrace path, final String params) {

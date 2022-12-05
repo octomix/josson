@@ -427,8 +427,6 @@ class FuncDispatcher {
             // Structural
             case "let":
                 return funcLet(path, params);
-            case "level":
-                return funcLevel(path, params);
         }
         throw new UnsupportedFunctionException();
     }
@@ -653,6 +651,9 @@ class FuncDispatcher {
                 return funcStripStart(path, params);
             case "substr":
                 return funcSubstr(path, params);
+            // Structural
+            case "steps":
+                return funcSteps(path, params);
         }
         throw new UnsupportedFunctionException();
     }

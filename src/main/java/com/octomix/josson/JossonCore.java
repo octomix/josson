@@ -254,7 +254,7 @@ final class JossonCore {
         return path;
     }
 
-    private static PathTrace getPathBySteps(PathTrace path, final List<String> steps, final List<String> nextSteps) {
+    private static PathTrace getPathBySteps(final PathTrace path, final List<String> steps, final List<String> nextSteps) {
         if (steps == null || steps.isEmpty() || path == null) {
             return path;
         }
@@ -326,26 +326,26 @@ final class JossonCore {
             return getPathBySteps(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(path), steps, nextSteps);
         }
         final ArrayFilter filter = matchFilterQuery(step);
-        final JsonNode node;
+        JsonNode node;
         if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
             if (path.node().isValueNode()) {
                 return null;
             }
             if (path.node().isArray()) {
-                return forEachElement(path, filter.getNodeName(), filter.getMode(), steps, nextSteps);
+                node = forEachElement(path, filter.getNodeName(), filter.getMode(), steps, nextSteps);
+                return getPathBySteps(path.push(node), steps, nextSteps);
             }
             node = path.node().get(filter.getNodeName());
+        } else if (!filter.getNodeName().isEmpty()) {
+            node = filter.evaluateFilter(getPathByExpression(path, filter.getNodeName()), filter.getFilter());
         } else {
-            if (!filter.getNodeName().isEmpty()) {
-                path = getPathByExpression(path, filter.getNodeName());
-            }
             node = filter.evaluateFilter(path, filter.getFilter());
         }
         if (node == null) {
             return null;
         }
         if (node.isArray()) {
-            return forEachElement(path.push(node), null, filter.getMode(), steps, nextSteps);
+            node = forEachElement(path.push(node), null, filter.getMode(), steps, nextSteps);
         }
         return getPathBySteps(path.push(node), steps, nextSteps);
     }
@@ -393,7 +393,7 @@ final class JossonCore {
         return wildcardAny(nextLevel, steps, nextSteps, levels - 1);
     }
 
-    private static PathTrace forEachElement(final PathTrace path, final String elem, final FilterMode mode,
+    private static ArrayNode forEachElement(final PathTrace path, final String elem, final FilterMode mode,
                                             final List<String> steps, final List<String> nextSteps) {
         final ArrayNode array = MAPPER.createArrayNode();
         if (mode != FILTRATE_DIVERT_ALL) {
@@ -427,6 +427,6 @@ final class JossonCore {
             steps.addAll(nextSteps);
             nextSteps.clear();
         }
-        return getPathBySteps(path.push(array), steps, nextSteps);
+        return array;
     }
 }
