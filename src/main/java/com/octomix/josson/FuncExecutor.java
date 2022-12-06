@@ -51,15 +51,16 @@ final class FuncExecutor {
     private FuncExecutor() {
     }
 
-    static JsonNode getParamNode(final JsonNode node, final String params) {
+    static PathTrace getParamPath(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, 1);
-        return paramList.isEmpty() ? node : getNodeByPath(node, paramList.get(0));
+        return paramList.isEmpty() ? path : getPathByExpression(path, paramList.get(0));
     }
 
-    static Pair<JsonNode, List<String>> getParamNodeAndStrings(final JsonNode node, final String params, final int min, final int max) {
+    static Pair<PathTrace, List<String>> getParamPathAndStrings(final PathTrace path, final String params,
+                                                                final int min, final int max) {
         final List<String> paramList = decomposeFunctionParameters(params, min, max + 1);
-        final String path = max <= UNLIMITED_AND_NO_PATH ? EMPTY : paramList.size() > max ? paramList.remove(0) : null;
-        return Pair.of(path == null ? node : getNodeByPath(node, path), paramList);
+        final String expression = max <= UNLIMITED_AND_NO_PATH ? EMPTY : paramList.size() > max ? paramList.remove(0) : null;
+        return Pair.of(expression == null ? path : getPathByExpression(path, expression), paramList);
     }
 
     static Map<String, String> getParamNamePath(final List<String> paramList) {
@@ -77,154 +78,158 @@ final class FuncExecutor {
         return elements;
     }
 
-    static JsonNode getParamArrayOrItselfIsContainer(final JsonNode node, final String params) {
+    static PathTrace getParamArrayOrItselfIsContainer(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
-            if (node.isContainerNode()) {
-                return node;
+            if (path.node().isContainerNode()) {
+                return path;
             }
             return null;
         }
-        return getParamArray(node, paramList);
+        return getParamArray(path, paramList);
     }
 
-    static ArrayNode getParamArrayOrItself(final JsonNode node, final String params) {
+    static PathTrace getParamArrayOrItself(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
-            if (node.isArray()) {
-                return (ArrayNode) node;
+            if (path.node().isArray()) {
+                return path;
             }
             return null;
         }
-        return getParamArray(node, paramList);
+        return getParamArray(path, paramList);
     }
 
-    private static ArrayNode getParamArray(final JsonNode node, final List<String> paramList) {
+    private static PathTrace getParamArray(final PathTrace path, final List<String> paramList) {
         final ArrayNode array = MAPPER.createArrayNode();
         for (String param : paramList) {
-            if (node.isArray()) {
-                for (int i = 0; i < node.size(); i++) {
-                    addArrayElement(array, getNodeByPath(node, i, param));
+            if (path.node().isArray()) {
+                for (int i = 0; i < path.node().size(); i++) {
+                    addArrayElement(array, getNodeByExpression(path, i, param));
                 }
             } else {
-                final JsonNode tryNode = getNodeByPath(node, param);
-                if (tryNode != null) {
-                    if (tryNode.isArray()) {
-                        array.addAll((ArrayNode) tryNode);
+                final JsonNode result = getNodeByExpression(path, param);
+                if (result != null) {
+                    if (result.isArray()) {
+                        array.addAll((ArrayNode) result);
                     } else {
-                        array.add(tryNode);
+                        array.add(result);
                     }
                 }
             }
         }
-        return array;
+        return path.push(array);
     }
 
-    static JsonNode applyWithoutParam(final JsonNode node, final String params, final Function<JsonNode, JsonNode> action) {
-        final JsonNode workNode = getParamNode(node, params);
+    static PathTrace applyWithoutParam(final PathTrace path, final String params, final Function<PathTrace, PathTrace> action) {
+        final PathTrace workNode = getParamPath(path, params);
         return workNode == null ? null : action.apply(workNode);
     }
 
-    static JsonNode applyWithoutParam(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
-                                      final BiFunction<Pair<JsonNode, Integer>, List<String>, JsonNode> action) {
+    static PathTrace applyWithoutParam(final PathTrace path, final String params, final Predicate<JsonNode> isValid,
+                                       final BiFunction<Pair<PathTrace, Integer>, List<String>, PathTrace> action) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, 1);
-        return applyAction(node, paramList.isEmpty() ? null : paramList.get(0), isValid, action, null);
+        return applyAction(path, paramList.isEmpty() ? null : paramList.get(0), isValid, action, null);
     }
 
-    static JsonNode applyWithParams(final JsonNode node, final String params, final int min, final int max,
-                                    final Predicate<JsonNode> isValid,
-                                    final BiFunction<Pair<JsonNode, Integer>, List<String>, JsonNode> action) {
+    static PathTrace applyWithParams(final PathTrace path, final String params, final int min, final int max,
+                                     final Predicate<JsonNode> isValid,
+                                     final BiFunction<Pair<PathTrace, Integer>, List<String>, PathTrace> action) {
         final List<String> paramList = decomposeFunctionParameters(params, min, max + 1);
-        final String path = max <= UNLIMITED_AND_NO_PATH ? EMPTY : paramList.size() > max ? paramList.remove(0) : null;
-        return applyAction(node, path, isValid, action, paramList);
+        final String expression = max <= UNLIMITED_AND_NO_PATH ? EMPTY : paramList.size() > max ? paramList.remove(0) : null;
+        return applyAction(path, expression, isValid, action, paramList);
     }
 
-    static JsonNode applyTextNode(final JsonNode node, final String params,
-                                  final Function<JsonNode, String> transform) {
-        return applyWithoutParam(node, params, JsonNode::isTextual,
-                (data, paramList) -> TextNode.valueOf(transform.apply(data.getKey())));
+    static PathTrace applyTextNode(final PathTrace path, final String params,
+                                   final Function<PathTrace, String> transform) {
+        return applyWithoutParam(path, params, JsonNode::isTextual,
+            (data, paramList) -> path.push(TextNode.valueOf(transform.apply(data.getKey()))));
     }
 
-    static JsonNode applyTextNodeToInt(final JsonNode node, final String params,
-                                       final Function<JsonNode, Integer> transform) {
-        return applyWithoutParam(node, params, JsonNode::isTextual,
-            (data, paramList) -> IntNode.valueOf(transform.apply(data.getKey())));
+    static PathTrace applyTextNodeToInt(final PathTrace path, final String params,
+                                        final Function<PathTrace, Integer> transform) {
+        return applyWithoutParam(path, params, JsonNode::isTextual,
+            (data, paramList) -> path.push(IntNode.valueOf(transform.apply(data.getKey()))));
     }
 
-    static JsonNode applyTextNodeToLong(final JsonNode node, final String params,
-                                        final Function<JsonNode, Long> transform) {
-        return applyWithoutParam(node, params, JsonNode::isTextual,
-                (data, paramList) -> LongNode.valueOf(transform.apply(data.getKey())));
+    static PathTrace applyTextNodeToLong(final PathTrace path, final String params,
+                                         final Function<PathTrace, Long> transform) {
+        return applyWithoutParam(path, params, JsonNode::isTextual,
+            (data, paramList) -> path.push(LongNode.valueOf(transform.apply(data.getKey()))));
     }
 
-    static JsonNode applyNumberNodeToText(final JsonNode node, final String params,
-                                          final Function<JsonNode, String> transform) {
-        return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (data, paramList) -> TextNode.valueOf(transform.apply(data.getKey())));
+    static PathTrace applyNumberNodeToText(final PathTrace path, final String params,
+                                           final Function<PathTrace, String> transform) {
+        return applyWithoutParam(path, params, paramPath -> paramPath.isNumber() || paramPath.isTextual(),
+            (data, paramList) -> path.push(TextNode.valueOf(transform.apply(data.getKey()))));
     }
 
-    static JsonNode applyNumberNodeToInt(final JsonNode node, final String params,
-                                         final Function<JsonNode, Integer> transform) {
-        return applyWithoutParam(node, params, jsonNode -> jsonNode.isNumber() || jsonNode.isTextual(),
-                (data, paramList) -> IntNode.valueOf(transform.apply(data.getKey())));
+    static PathTrace applyNumberNodeToInt(final PathTrace path, final String params,
+                                          final Function<PathTrace, Integer> transform) {
+        return applyWithoutParam(path, params, paramPath -> paramPath.isNumber() || paramPath.isTextual(),
+            (data, paramList) -> path.push(IntNode.valueOf(transform.apply(data.getKey()))));
     }
 
-    static JsonNode applyTextNodeWithParamAsText(final JsonNode node, final String params,
-                                                 final BiFunction<String, String, String> transform) {
-        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
-            (data, paramList) -> TextNode.valueOf(
-                transform.apply(data.getKey().asText(), getNodeAsText(node, data.getValue(), paramList.get(0)))
-            ));
+    static PathTrace applyTextNodeWithParamAsText(final PathTrace path, final String params,
+                                                  final BiFunction<String, String, String> transform) {
+        return applyWithParams(path, params, 1, 1, JsonNode::isTextual,
+            (data, paramList) -> path.push(TextNode.valueOf(
+                transform.apply(data.getKey().node().asText(), getNodeAsText(path, data.getValue(), paramList.get(0)))
+            )));
     }
 
-    static JsonNode applyTextNodeWithParamAsText(final JsonNode node, final String params, final boolean not,
-                                                 final BiFunction<String, String, Boolean> transform) {
-        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
-            (data, paramList) -> BooleanNode.valueOf(
-                not ^ transform.apply(data.getKey().asText(), getNodeAsText(node, data.getValue(), paramList.get(0)))
-            ));
+    static PathTrace applyTextNodeWithParamAsText(final PathTrace path, final String params, final boolean not,
+                                                  final BiFunction<String, String, Boolean> transform) {
+        return applyWithParams(path, params, 1, 1, JsonNode::isTextual,
+            (data, paramList) -> path.push(BooleanNode.valueOf(
+                not ^ transform.apply(data.getKey().node().asText(), getNodeAsText(path, data.getValue(), paramList.get(0)))
+            )));
     }
 
-    private static JsonNode applyAction(final JsonNode node, final String path, final Predicate<JsonNode> isValid,
-                                        final BiFunction<Pair<JsonNode, Integer>, List<String>, JsonNode> action,
-                                        final List<String> paramList) {
-        final JsonNode target = path == null ? node : getNodeByPath(node, path);
+    private static PathTrace applyAction(final PathTrace path, final String expression, final Predicate<JsonNode> isValid,
+                                         final BiFunction<Pair<PathTrace, Integer>, List<String>, PathTrace> action,
+                                         final List<String> paramList) {
+        final PathTrace target = expression == null ? path : getPathByExpression(path, expression);
         if (target == null) {
             return null;
         }
-        if (target.isArray()) {
+        if (target.node().isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < target.size(); i++) {
-                array.add(applyAction(target.get(i), i, isValid, action, paramList));
+            for (int i = 0; i < target.node().size(); i++) {
+                PathTrace result = applyAction(path.push(target.node().get(i)), i, isValid, action, paramList);
+                array.add(result == null ? null : result.node());
             }
-            return array;
+            return path.push(array);
         }
-        return applyAction(target, path == null ? NON_ARRAY_INDEX : 0, isValid, action, paramList);
+        return applyAction(target, expression == null ? NON_ARRAY_INDEX : 0, isValid, action, paramList);
     }
 
-    private static JsonNode applyAction(final JsonNode node, final int index, final Predicate<JsonNode> isValid,
-                                        final BiFunction<Pair<JsonNode, Integer>, List<String>, JsonNode> action,
-                                        final List<String> paramList) {
-        return isValid == null || isValid.test(node) ? action.apply(Pair.of(node, index), paramList) : null;
+    private static PathTrace applyAction(final PathTrace path, final int index, final Predicate<JsonNode> isValid,
+                                         final BiFunction<Pair<PathTrace, Integer>, List<String>, PathTrace> action,
+                                         final List<String> paramList) {
+        return isValid == null || isValid.test(path.node()) ? action.apply(Pair.of(path, index), paramList) : null;
     }
 
-    static JsonNode applyWithArrayNode(final JsonNode node, final String params, final Predicate<JsonNode> isValid,
-                                       final BiFunction<JsonNode, ArrayNode, JsonNode> action) {
-        final ArrayNode paramArray = getParamArray(node, decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
-        if (paramArray.isEmpty()) {
+    static PathTrace applyWithArrayNode(final PathTrace path, final String params, final Predicate<JsonNode> isValid,
+                                        final BiFunction<PathTrace, PathTrace, PathTrace> action) {
+        final PathTrace paramArray = getParamArray(path, decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        if (paramArray.node().isEmpty()) {
             return null;
         }
-        if (node.isArray()) {
+        if (path.node().isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
-            node.forEach(elem -> array.add(applyAction(elem, isValid, action, paramArray)));
-            return array;
+            path.node().forEach(elem -> {
+                PathTrace result = applyAction(path.push(elem), isValid, action, paramArray);
+                array.add(result == null ? null : result.node());
+            });
+            return path.push(array);
         }
-        return applyAction(node, isValid, action, paramArray);
+        return applyAction(path, isValid, action, paramArray);
     }
 
-    private static JsonNode applyAction(final JsonNode node, final Predicate<JsonNode> isValid,
-                                        final BiFunction<JsonNode, ArrayNode, JsonNode> action,
-                                        final ArrayNode paramArray) {
-        return isValid == null || isValid.test(node) ? action.apply(node, paramArray) : null;
+    private static PathTrace applyAction(final PathTrace path, final Predicate<JsonNode> isValid,
+                                         final BiFunction<PathTrace, PathTrace, PathTrace> action,
+                                         final PathTrace paramArray) {
+        return isValid == null || isValid.test(path.node()) ? action.apply(path, paramArray) : null;
     }
 }

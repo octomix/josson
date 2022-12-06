@@ -29,9 +29,8 @@ import java.util.function.Function;
 import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_COLLECT_ALL;
 import static com.octomix.josson.CombineOperator.*;
 import static com.octomix.josson.JossonCore.QUOTE_SYMBOL;
-import static com.octomix.josson.JossonCore.getNodeByPath;
+import static com.octomix.josson.JossonCore.getNodeByExpression;
 import static com.octomix.josson.Mapper.*;
-import static com.octomix.josson.Utils.addArrayElement;
 import static com.octomix.josson.Utils.mergeObjects;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -140,8 +139,11 @@ class CombineOperation {
         final ArrayNode joinedArray = MAPPER.createArrayNode();
         for (JsonNode elem : left.getNode()) {
             if (elem.isObject()) {
-                addArrayElement(joinedArray, joinToObjectNode(
-                        (ObjectNode) elem, left.getKeys(), operator, rightArray, right.getKeys(), arrayName));
+                final ObjectNode joinedObject = joinToObjectNode(
+                        (ObjectNode) elem, left.getKeys(), operator, rightArray, right.getKeys(), arrayName);
+                if (joinedObject != null) {
+                    joinedArray.add(joinedObject);
+                }
             }
         }
         if (operator == OUTER_EXCLUDING_JOIN) {
@@ -156,7 +158,7 @@ class CombineOperation {
                                                final String arrayName) {
         final String[] relationalOps = new String[leftKeys.length];
         for (int j = leftKeys.length - 1; j >= 0; j--) {
-            final JsonNode leftValue = getNodeByPath(leftObject, leftKeys[j]);
+            final JsonNode leftValue = getNodeByExpression(PathTrace.from(leftObject), leftKeys[j]);
             if (leftValue == null || !leftValue.isValueNode()) {
                 return null;
             }
@@ -167,12 +169,13 @@ class CombineOperation {
         }
         final String path = String.format("[%s]", StringUtils.join(relationalOps, Operator.AND.getSymbol()));
         if (operator == LEFT_JOIN_MANY) {
-            final JsonNode rightToJoin = getNodeByPath(rightArray, path + FILTRATE_COLLECT_ALL.getSymbol());
+            final JsonNode rightToJoin = getNodeByExpression(
+                    PathTrace.from(rightArray), path + FILTRATE_COLLECT_ALL.getSymbol());
             if (rightToJoin != null) {
                 return cloneObject(leftObject).set(arrayName, rightToJoin);
             }
         } else {
-            final JsonNode rightToJoin = getNodeByPath(rightArray, path);
+            final JsonNode rightToJoin = getNodeByExpression(PathTrace.from(rightArray), path);
             if (operator == LEFT_EXCLUDING_JOIN || operator == OUTER_EXCLUDING_JOIN) {
                 if (rightToJoin != null) {
                     return null;

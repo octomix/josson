@@ -461,42 +461,53 @@ final class PatternMatcher {
         return new CombineOperand(input, null);
     }
 
-    static List<String> decomposePaths(final String input) {
-        final List<String> paths = new ArrayList<>();
+    static List<String> decomposePath(final String input) {
+        final List<String> steps = new ArrayList<>();
         final int last = input.length() - 1;
+        int ups = -1;
         String isInt = null;
         for (int pos = 0; pos <= last; pos = eatSpaces(input, ++pos, last)) {
             final int beg = pos;
             do {
-                if (input.charAt(pos) == '.') {
+                if (input.charAt(pos) == PATH_DELIMITER) {
                     break;
                 }
                 pos = eatSpaces(input, skipEnclosure(input, pos, last, Enclosure.ALL_KINDS) + 1, last);
             } while (pos <= last);
-            final String path = trimOf(input, beg, pos);
-            if (path.isEmpty()) {
+            final String step = trimOf(input, beg, pos);
+            if (step.isEmpty()) {
+                if (steps.isEmpty()) {
+                    ups++;
+                    continue;
+                }
                 throw new SyntaxErrorException(input, "Invalid '.'", pos);
+            }
+            if (step.startsWith(CURRENT_NODE)) {
+                if (step.length() > 1 || !steps.isEmpty()) {
+                    throw new SyntaxErrorException(step);
+                }
+                continue;
             }
             try {
                 if (isInt == null) {
-                    if (pos > last || parseInteger(path) == null) {
-                        if (path.charAt(0) == ESCAPE_PATH_NAME_SYMBOL) {
-                            final String unescapedPath = unescapePath(path);
-                            if (unescapedPath != null) {
-                                paths.add(unescapedPath);
+                    if (pos > last || parseInteger(step) == null) {
+                        if (step.charAt(0) == ESCAPE_PATH_NAME_SYMBOL) {
+                            final String unescapedStep = unescapePathStep(step);
+                            if (unescapedStep != null) {
+                                steps.add(unescapedStep);
                             }
                         } else {
-                            paths.add(path);
+                            steps.add(step);
                         }
                     } else {
-                        isInt = path;
+                        isInt = step;
                     }
                 } else {
-                    if (StringUtils.isNumeric(path)) {
-                        paths.add(String.format("%s.%s", isInt, path));
+                    if (StringUtils.isNumeric(step)) {
+                        steps.add(String.format("%s.%s", isInt, step));
                     } else {
-                        paths.add(isInt);
-                        paths.add(path);
+                        steps.add(isInt);
+                        steps.add(step);
                     }
                     isInt = null;
                 }
@@ -504,7 +515,10 @@ final class PatternMatcher {
                 throw new SyntaxErrorException(input, e.getMessage(), beg);
             }
         }
-        return paths;
+        if (ups > 0) {
+            steps.add(0, StringUtils.repeat(PATH_DELIMITER, ups));
+        }
+        return steps;
     }
 
     static List<OperationStep> decomposeStatement(final String input) {
@@ -628,8 +642,6 @@ final class PatternMatcher {
                 if (path.startsWith(":")) {
                     name = ":" + name;
                     path = path.substring(eatSpaces(path, 1, path.length() - 1));
-                } else {
-                    checkElementName(name);
                 }
                 return new String[]{name, path.isEmpty() ? null : path};
             } else {
@@ -639,7 +651,7 @@ final class PatternMatcher {
         return new String[]{getLastElementName(input), input};
     }
 
-    static String unescapePath(final String input) {
+    static String unescapePathStep(final String input) {
         final int end = input.length() - 1;
         final char[] unescape = new char[end - 1];
         int count = 0;

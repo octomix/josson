@@ -42,7 +42,9 @@ public class ResolverProgress {
         MESSAGE,
         RESOLVING,
         RESOLVED,
-        UNRESOLVABLE
+        UNRESOLVABLE,
+        DICTIONARY,
+        DATA_FINDER
     }
 
     private static class Step {
@@ -213,6 +215,25 @@ public class ResolverProgress {
     }
 
     /**
+     * Add a matched dictionary entry step.
+     *
+     * @param name the key of the dictionary entry
+     */
+    void addDictionaryStep(final String name) {
+        addStep(new Step(StepType.DICTIONARY, round, name, null, null));
+    }
+
+    /**
+     * Add a matched data finder entry step.
+     *
+     * @param name the key of the data finder entry
+     * @param query the data query statement
+     */
+    void addDataFinderStep(final String name, final String query) {
+        addStep(new Step(StepType.DATA_FINDER, round, name, query, null));
+    }
+
+    /**
      * Add a resolved resolution step.
      *
      * @param name the resolved dataset name
@@ -270,6 +291,14 @@ public class ResolverProgress {
 
             case UNRESOLVABLE:
                 message = "Unresolvable " + step.name;
+                break;
+
+            case DICTIONARY:
+                message = String.format("Located %s in dictionary", step.name);
+                break;
+
+            case DATA_FINDER:
+                message = String.format("Matched %s to data query %s", step.name, step.message);
                 break;
         }
         return String.format("Round %d : %s", step.round, message.replace("\n", "\\\\n"));

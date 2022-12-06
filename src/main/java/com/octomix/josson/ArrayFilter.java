@@ -101,20 +101,21 @@ class ArrayFilter {
     /**
      * Find an element or filter an array node.
      *
-     * @param node      the Jackson JsonNode to be processed
+     * @param path      the Jackson JsonNode to be processed
      * @param statement multiple relational operations combined with logical operators
      * @return The 1st matched element for {@code FILTRATE_FIRST_FOUND} or
      *         all matched elements in an array node for {@code FILTRATE_COLLECT_ALL} and {@code FILTRATE_DIVERT_ALL}
      */
-    JsonNode evaluateFilter(final JsonNode node, final String statement) {
-        if (node == null) {
+    JsonNode evaluateFilter(final PathTrace path, final String statement) {
+        if (path == null) {
             return null;
         }
+        final JsonNode node = path.node();
         if (StringUtils.isEmpty(statement)) {
             return node;
         }
         if (!node.isArray()) {
-            return asBoolean(new OperationStackForJsonNode(node).evaluateStatement(statement)) ? node : null;
+            return asBoolean(new OperationStackForJsonNode(path).evaluateStatement(statement)) ? node : null;
         }
         if (node.size() == 0) {
             return null;
@@ -127,7 +128,7 @@ class ArrayFilter {
             }
             matchedNodes.add(node.get(index));
         } else {
-            final OperationStack opStack = new OperationStackForJsonNode(node);
+            final OperationStack opStack = new OperationStackForJsonNode(path);
             for (int i = 0; i < node.size(); i++) {
                 if (asBoolean(opStack.evaluate(statement, i))) {
                     if (matchedNodes == null) {

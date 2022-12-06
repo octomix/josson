@@ -37,145 +37,148 @@ final class FuncDate {
     private FuncDate() {
     }
 
-    static JsonNode funcAmPmOfDay(final JsonNode node, final String params) {
-        return applyTextNode(node, params,
-            jsonNode -> toLocalDateTime(jsonNode).get(ChronoField.AMPM_OF_DAY) == 0 ? "AM" : "PM");
+    static PathTrace funcAmPmOfDay(final PathTrace path, final String params) {
+        return applyTextNode(path, params,
+            dataPath -> toLocalDateTime(dataPath.node()).get(ChronoField.AMPM_OF_DAY) == 0 ? "AM" : "PM");
     }
 
-    static JsonNode funcChronometry(final JsonNode node, final String params, final ChronoField field) {
-        return applyTextNodeToInt(node, params, jsonNode -> toLocalDateTime(jsonNode).get(field));
+    static PathTrace funcChronometry(final PathTrace path, final String params, final ChronoField field) {
+        return applyTextNodeToInt(path, params, dataPath -> toLocalDateTime(dataPath.node()).get(field));
     }
 
-    static JsonNode funcDatePlus(final JsonNode node, final String params, final ChronoUnit unit) {
-        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
+    static PathTrace funcDatePlus(final PathTrace path, final String params, final ChronoUnit unit) {
+        return applyWithParams(path, params, 1, 1, JsonNode::isTextual,
             (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                final int amount = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
-                return TextNode.valueOf(toLocalDateTime(dataNode).plus(amount, unit).toString());
+                final PathTrace dataPath = data.getKey();
+                final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
+                final int amount = getNodeAsInt(paramPath, data.getValue(), paramList.get(0));
+                return path.push(TextNode.valueOf(toLocalDateTime(dataPath.node()).plus(amount, unit).toString()));
             });
     }
 
-    static JsonNode funcDateMinus(final JsonNode node, final String params, final ChronoUnit unit) {
-        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
+    static PathTrace funcDateMinus(final PathTrace path, final String params, final ChronoUnit unit) {
+        return applyWithParams(path, params, 1, 1, JsonNode::isTextual,
             (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                final int amount = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
-                return TextNode.valueOf(toLocalDateTime(dataNode).minus(amount, unit).toString());
+                final PathTrace dataPath = data.getKey();
+                final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
+                final int amount = getNodeAsInt(paramPath, data.getValue(), paramList.get(0));
+                return path.push(TextNode.valueOf(toLocalDateTime(dataPath.node()).minus(amount, unit).toString()));
             });
     }
 
-    static JsonNode funcDateTruncateTo(final JsonNode node, final String params, final ChronoUnit unit) {
-        return applyTextNode(node, params, jsonNode -> toLocalDateTime(jsonNode).truncatedTo(unit).toString());
+    static PathTrace funcDateTruncateTo(final PathTrace path, final String params, final ChronoUnit unit) {
+        return applyTextNode(path, params, dataPath -> toLocalDateTime(dataPath.node()).truncatedTo(unit).toString());
     }
 
-    static JsonNode funcDateTruncateToMonth(final JsonNode node, final String params) {
-        return applyTextNode(node, params, jsonNode -> toLocalDate(jsonNode).withDayOfMonth(1).toString());
+    static PathTrace funcDateTruncateToMonth(final PathTrace path, final String params) {
+        return applyTextNode(path, params, dataPath -> toLocalDate(dataPath.node()).withDayOfMonth(1).toString());
     }
 
-    static JsonNode funcDateTruncateToYear(final JsonNode node, final String params) {
-        return applyTextNode(node, params, jsonNode -> toLocalDate(jsonNode).withDayOfYear(1).toString());
+    static PathTrace funcDateTruncateToYear(final PathTrace path, final String params) {
+        return applyTextNode(path, params, dataPath -> toLocalDate(dataPath.node()).withDayOfYear(1).toString());
     }
 
-    static JsonNode funcDateWith(final JsonNode node, final String params, final ChronoField field) {
-        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
+    static PathTrace funcDateWith(final PathTrace path, final String params, final ChronoField field) {
+        return applyWithParams(path, params, 1, 1, JsonNode::isTextual,
             (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                final int value = getNodeAsInt(paramNode, data.getValue(), paramList.get(0));
-                return TextNode.valueOf(toLocalDateTime(dataNode).with(field, value).toString());
+                final PathTrace dataPath = data.getKey();
+                final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
+                final int value = getNodeAsInt(paramPath, data.getValue(), paramList.get(0));
+                return path.push(TextNode.valueOf(toLocalDateTime(dataPath.node()).with(field, value).toString()));
             });
     }
 
-    static JsonNode funcDayEnd(final JsonNode node, final String params) {
-        return applyTextNode(node, params, jsonNode -> toLocalDate(jsonNode).plusDays(1).minusNanos(1).toString());
+    static PathTrace funcDayEnd(final PathTrace path, final String params) {
+        return applyTextNode(path, params, dataPath -> toLocalDate(dataPath.node()).plusDays(1).minusNanos(1).toString());
     }
 
-    static JsonNode funcMonthEnd(final JsonNode node, final String params) {
-        return applyTextNode(node, params,
-            jsonNode -> toLocalDate(jsonNode).withDayOfMonth(1).plusMonths(1).minusNanos(1).toString());
+    static PathTrace funcMonthEnd(final PathTrace path, final String params) {
+        return applyTextNode(path, params,
+            dataPath -> toLocalDate(dataPath.node()).withDayOfMonth(1).plusMonths(1).minusNanos(1).toString());
     }
 
-    static JsonNode funcYearEnd(final JsonNode node, final String params) {
-        return applyTextNode(node, params,
-            jsonNode -> toLocalDate(jsonNode).withDayOfYear(1).plusYears(1).minusNanos(1).toString());
+    static PathTrace funcYearEnd(final PathTrace path, final String params) {
+        return applyTextNode(path, params,
+            dataPath -> toLocalDate(dataPath.node()).withDayOfYear(1).plusYears(1).minusNanos(1).toString());
     }
 
-    static JsonNode funcLengthOfMonth(final JsonNode node, final String params) {
-        return applyTextNodeToInt(node, params, jsonNode -> toLocalDateTime(jsonNode).toLocalDate().lengthOfMonth());
+    static PathTrace funcLengthOfMonth(final PathTrace path, final String params) {
+        return applyTextNodeToInt(path, params, dataPath -> toLocalDateTime(dataPath.node()).toLocalDate().lengthOfMonth());
     }
 
-    static JsonNode funcLengthOfYear(final JsonNode node, final String params) {
-        return applyTextNodeToInt(node, params, jsonNode -> toLocalDateTime(jsonNode).toLocalDate().lengthOfYear());
+    static PathTrace funcLengthOfYear(final PathTrace path, final String params) {
+        return applyTextNodeToInt(path, params, dataPath -> toLocalDateTime(dataPath.node()).toLocalDate().lengthOfYear());
     }
 
-    static JsonNode funcUntil(final JsonNode node, final String params, final ChronoUnit unit) {
-        return applyWithParams(node, params, 1, 1, JsonNode::isTextual,
+    static PathTrace funcUntil(final PathTrace path, final String params, final ChronoUnit unit) {
+        return applyWithParams(path, params, 1, 1, JsonNode::isTextual,
             (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                final JsonNode later = getNodeByPath(paramNode, data.getValue(), paramList.get(0));
-                return LongNode.valueOf(toLocalDateTime(dataNode).until(toLocalDateTime(later), unit));
-            });
-    }
-
-    static JsonNode funcLocalToOffsetDate(final JsonNode node, final String params) {
-        return applyTextNode(node, params, jsonNode -> localToOffsetDateTime(jsonNode).toString());
-    }
-
-    static JsonNode funcLocalDateToEpochMilli(final JsonNode node, final String params) {
-        return applyTextNodeToLong(node, params, Utils::localDateTimeToEpochMilli);
-    }
-
-    static JsonNode funcLocalDateToEpochSecond(final JsonNode node, final String params) {
-        return applyTextNodeToLong(node, params, Utils::localDateTimeToEpochSecond);
-    }
-
-    static JsonNode funcOffsetToLocalDate(final JsonNode node, final String params) {
-        return applyTextNode(node, params, jsonNode -> offsetToLocalDateTime(jsonNode).toString());
-    }
-
-    static JsonNode funcOffsetDateToEpochMilli(final JsonNode node, final String params) {
-        return applyTextNodeToLong(node, params, Utils::offsetDateTimeToEpochMilli);
-    }
-
-    static JsonNode funcOffsetDateToEpochSecond(final JsonNode node, final String params) {
-        return applyTextNodeToLong(node, params, Utils::offsetDateTimeToEpochSecond);
-    }
-
-    static JsonNode funcEpochMilliToLocalDate(final JsonNode node, final String params) {
-        return applyNumberNodeToText(node, params, jsonNode -> epochMilliToLocalDateTime(jsonNode).toString());
-    }
-
-    static JsonNode funcEpochMilliToOffsetDate(final JsonNode node, final String params) {
-        return applyNumberNodeToText(node, params, jsonNode -> epochMilliToOffsetDateTime(jsonNode).toString());
-    }
-
-    static JsonNode funcEpochSecondToLocalDate(final JsonNode node, final String params) {
-        return applyNumberNodeToText(node, params, jsonNode -> epochSecondToLocalDateTime(jsonNode).toString());
-    }
-
-    static JsonNode funcEpochSecondToOffsetDate(final JsonNode node, final String params) {
-        return applyNumberNodeToText(node, params, jsonNode -> epochSecondToOffsetDateTime(jsonNode).toString());
-    }
-
-    static JsonNode funcNow(final JsonNode node, final String params) {
-        return applyWithParams(node, params, 0, 1, null,
-            (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                final JsonNode paramNode = data.getValue() < 0 ? dataNode : node;
-                final String type = paramList.size() > 0 ? getNodeAsText(paramNode, data.getValue(), paramList.get(0)) : null;
-                if (type == null || type.equalsIgnoreCase("local")) {
-                    return TextNode.valueOf(LocalDateTime.now().toString());
+                final PathTrace dataPath = data.getKey();
+                final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
+                final JsonNode later = getNodeByExpression(paramPath, data.getValue(), paramList.get(0));
+                if (nodeIsNull(later)) {
+                    return null;
                 }
-                switch (type) {
+                return path.push(LongNode.valueOf(toLocalDateTime(dataPath.node()).until(toLocalDateTime(later), unit)));
+            });
+    }
+
+    static PathTrace funcLocalToOffsetDate(final PathTrace path, final String params) {
+        return applyTextNode(path, params, dataPath -> localToOffsetDateTime(dataPath.node()).toString());
+    }
+
+    static PathTrace funcLocalDateToEpochMilli(final PathTrace path, final String params) {
+        return applyTextNodeToLong(path, params, dataPath -> localDateTimeToEpochMilli(dataPath.node()));
+    }
+
+    static PathTrace funcLocalDateToEpochSecond(final PathTrace path, final String params) {
+        return applyTextNodeToLong(path, params, dataPath -> localDateTimeToEpochSecond(dataPath.node()));
+    }
+
+    static PathTrace funcOffsetToLocalDate(final PathTrace path, final String params) {
+        return applyTextNode(path, params, dataPath -> offsetToLocalDateTime(dataPath.node()).toString());
+    }
+
+    static PathTrace funcOffsetDateToEpochMilli(final PathTrace path, final String params) {
+        return applyTextNodeToLong(path, params, dataPath -> offsetDateTimeToEpochMilli(dataPath.node()));
+    }
+
+    static PathTrace funcOffsetDateToEpochSecond(final PathTrace path, final String params) {
+        return applyTextNodeToLong(path, params, dataPath -> offsetDateTimeToEpochSecond(dataPath.node()));
+    }
+
+    static PathTrace funcEpochMilliToLocalDate(final PathTrace path, final String params) {
+        return applyNumberNodeToText(path, params, dataPath -> epochMilliToLocalDateTime(dataPath.node()).toString());
+    }
+
+    static PathTrace funcEpochMilliToOffsetDate(final PathTrace path, final String params) {
+        return applyNumberNodeToText(path, params, dataPath -> epochMilliToOffsetDateTime(dataPath.node()).toString());
+    }
+
+    static PathTrace funcEpochSecondToLocalDate(final PathTrace path, final String params) {
+        return applyNumberNodeToText(path, params, dataPath -> epochSecondToLocalDateTime(dataPath.node()).toString());
+    }
+
+    static PathTrace funcEpochSecondToOffsetDate(final PathTrace path, final String params) {
+        return applyNumberNodeToText(path, params, dataPath -> epochSecondToOffsetDateTime(dataPath.node()).toString());
+    }
+
+    static PathTrace funcNow(final PathTrace path, final String params) {
+        return applyWithParams(path, params, 0, 1, null,
+            (data, paramList) -> {
+                final PathTrace dataPath = data.getKey();
+                final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
+                final String type = paramList.size() > 0 ? getNodeAsText(paramPath, data.getValue(), paramList.get(0)) : null;
+                if (type == null || type.equalsIgnoreCase("local")) {
+                    return path.push(TextNode.valueOf(LocalDateTime.now().toString()));
+                }
+                switch (type.toLowerCase()) {
                     case "offset":
-                        return TextNode.valueOf(OffsetDateTime.now().toString());
+                        return path.push(TextNode.valueOf(OffsetDateTime.now().toString()));
                     case "millis":
-                        return LongNode.valueOf(OffsetDateTime.now().toInstant().toEpochMilli());
+                        return path.push(LongNode.valueOf(OffsetDateTime.now().toInstant().toEpochMilli()));
                     case "seconds":
-                        return LongNode.valueOf(OffsetDateTime.now().toEpochSecond());
+                        return path.push(LongNode.valueOf(OffsetDateTime.now().toEpochSecond()));
                     default:
                         return null;
                 }

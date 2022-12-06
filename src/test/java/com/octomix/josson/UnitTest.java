@@ -310,7 +310,7 @@ public class UnitTest {
         evaluate.accept("items[tags.containsIgnoreCase('Women')]@.tags",
                 "[ [ \"SHIRT\", \"WOMEN\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
 
-        // Some functions work on an array node and produce a value node.
+        // Aggregate functions work on an array node and produce a value node.
         //
         evaluate.accept("items.tags.join('+')",
                 "SHIRT+WOMEN+TENNIS+SPORT+RACKET+SHOE+SPORT+WOMEN");
@@ -344,7 +344,7 @@ public class UnitTest {
                         "[OctoPlus] OctoPlus Tennis Racket - Star\n" +
                         "[WinWin] WinWin Sport Shoe - Super\n");
 
-        // Some functions work on array and produce an array, such as "concat()", manipulate on each element.
+        // Scalar functions work on array and produce an array, such as "concat()", manipulate on each element.
         //
         evaluate.accept("items.concat('Item ',#,': [',itemCode,'] ',qty,unit,' x ',name,' <',property.colors.join(','),'>').join('\n')",
                 "Item 0: [B00001] 2Pcs x WinWin TShirt Series A - 2022 <WHITE,RED>\n" +
@@ -353,13 +353,14 @@ public class UnitTest {
 
         // If a step is working on an array node, "@" represents that array node.
         // "##" denotes the one-based index of an array element.
-        //                            .----->----.
+        //
         evaluate.accept("items.sort(itemCode).concat('Item ',##,'/',@.size(),': [',itemCode,'] ',qty,unit,' x ',name,' <',property.colors.join(','),'>').join('\n')",
                 "Item 1/3: [A00201] 1Pair x WinWin Sport Shoe - Super <RED>\n" +
                         "Item 2/3: [A00308] 1Pcs x OctoPlus Tennis Racket - Star <BLACK>\n" +
                         "Item 3/3: [B00001] 2Pcs x WinWin TShirt Series A - 2022 <WHITE,RED>");
 
         // An object node with a validation filter.
+        //
         evaluate.accept("customer[name='Peggy']",
                 "{\n" +
                         "  \"customerId\" : \"CU0001\",\n" +
@@ -368,15 +369,31 @@ public class UnitTest {
                         "}");
         evaluate.accept("customer[name='Raymond']", "!unresolvable!");
 
+        // In filter expression and function argument, a path starts with symbol "$" restart from the root node.
+        //
+        evaluate.accept("items.concat($.customer.customerId, '-', itemCode)",
+                "[ \"CU0001-B00001\", \"CU0001-A00308\", \"CU0001-A00201\" ]");
+
+        // In filter expression and function argument, a path starts with symbol ".." go back to the previous step's node.
+        // Each additional dot go back one more step.
+        //
+        evaluate.accept("items.property.concat(...customer.name, ' colors=', colors.join(','))",
+                "[ \"Peggy colors=WHITE,RED\", \"Peggy colors=BLACK\", \"Peggy colors=RED\" ]");
+        evaluate.accept("items@.property.concat(....customer.name, ' ', ..itemCode, ' colors=', colors.join(','))",
+                "[ \"Peggy B00001 colors=WHITE,RED\", \"Peggy A00308 colors=BLACK\", \"Peggy A00201 colors=RED\" ]");
+
         // Function "json" parse a JSON string.
+        //
         evaluate.accept("json('[1,2,\"3\"]')",
                 "[ 1, 2, \"3\" ]");
 
         // Relational operator "=" and "!=" support object comparison.
+        //
         evaluate.accept("[customer = json('{\"name\":\"Peggy\",\"phone\":\"+852 62000610\",\"customerId\":\"CU0001\"}')].isNotNull()",
                 "true");
 
         // Relational operator "=" and "!=" support root level array values comparison where the position ordering is allowed to be different.
+        //
         evaluate.accept("[items[0].property.colors = json('[\"RED\",\"WHITE\"]')].isNotNull()",
                 "true");
 
@@ -413,14 +430,17 @@ public class UnitTest {
 
         // mXparser expression accepts single-level path only.
         // To apply multi-level path, function or filter, append arguments with syntax "newVariable:path".
+        //
         evaluate.accept("items.calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)).formatNumber('US$#,##0.00')",
                 "[ \"US$30.00\", \"US$140.00\", \"US$100.00\" ]");
 
         // An argument "#r" and "#R" denotes the lowercase and uppercase roman numerals array index.
+        //
         evaluate.accept("items.unitPrice.calc(? * 2).concat(#r,'=',?)",
                 "[ \"i=30.0\", \"ii=300.0\", \"iii=220.0\" ]");
 
         // Function "entries" returns an array of an object's string-keyed property [key, value] pairs.
+        //
         evaluate.accept("items[0].entries()",
                 "[ {\n" +
                         "  \"key\" : \"itemCode\",\n" +
@@ -452,14 +472,17 @@ public class UnitTest {
                         "} ]");
 
         // Function "keys" lists an object's key names.
+        //
         evaluate.accept("keys()",
                 "[ \"salesOrderId\", \"salesDate\", \"salesPerson\", \"customer\", \"items\", \"totalAmount\" ]");
 
         // "keys()" can retrieve nested child object keys for a given levels.
+        //
         evaluate.accept("keys(?, 2)",
                 "[ \"salesOrderId\", \"salesDate\", \"salesPerson\", \"customer\", \"customerId\", \"name\", \"phone\", \"items\", \"totalAmount\" ]");
 
         // Function "collect()" puts all argument values into an array.
+        //
         evaluate.accept("collect(salesDate, customer, items.itemCode)",
                 "[ \"2022-01-01T10:01:23\", {\n" +
                         "  \"customerId\" : \"CU0001\",\n" +
@@ -471,6 +494,7 @@ public class UnitTest {
         // The 1st parameter is a query to evaluate a result that will be collected into an array.
         // The 2nd parameter is a query to evaluate the next dataset that loop back for the 1st parameter evaluation again.
         // The operation loop will be stopped when the next dataset is null.
+        //
         evaluate.accept("json('{\"id\":1,\"val\":11,\"item\":{\"id\":2,\"val\":22,\"item\":{\"id\":3,\"val\":33,\"item\":{\"id\":4,\"val\":44}}}}')" +
                         ".cumulateCollect(map(id,val.calc(?*2)), item)",
                 "[ {\n" +
@@ -488,16 +512,19 @@ public class UnitTest {
                         "} ]");
 
         // Function "toArray" puts an object's values into an array.
+        //
         evaluate.accept("customer.toArray()",
                 "[ \"CU0001\", \"Peggy\", \"+852 62000610\" ]");
 
         // Furthermore, function "toArray" puts all arguments (values, object's values, array elements) into a single array.
+        //
         evaluate.accept("toArray('Hello',customer,items.itemCode.sort())",
                 "[ \"Hello\", \"CU0001\", \"Peggy\", \"+852 62000610\", \"A00201\", \"A00308\", \"B00001\" ]");
 
         // Function "map" constructs a new object node.
         // For multi-level path, the last element name will become the new element name.
         // To rename an element, use syntax "newFieldName:path".
+        //
         evaluate.accept("map(customer.name,date:salesDate,sales:map(items.concat(name,' x ',qty,unit), totalQty:items.sum(qty), totalAmount))",
                 "{\n" +
                         "  \"name\" : \"Peggy\",\n" +
@@ -511,6 +538,7 @@ public class UnitTest {
 
         // Function "field" adds, removes and renames field on the current object node.
         // To remove an element, use syntax "fieldName:".
+        //
         evaluate.accept("items[0].field(subtotal:calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)),brand:,property:,tags:)",
                 "{\n" +
                         "  \"itemCode\" : \"B00001\",\n" +
@@ -522,6 +550,7 @@ public class UnitTest {
                         "}");
 
         // Function "map" and "field" works on array.
+        //
         evaluate.accept("items.field(subtotal:calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)),brand:,property:,tags:)",
                 "[ {\n" +
                         "  \"itemCode\" : \"B00001\",\n" +
@@ -549,6 +578,7 @@ public class UnitTest {
                         "} ]");
 
         // Function "group" works like SQL "group by".
+        //
         evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))",
                 "[ {\n" +
                         "  \"brand\" : \"WinWin\",\n" +
@@ -583,6 +613,7 @@ public class UnitTest {
                         "> Sub-total : Qty=1.0 Amt=140.0");
 
         // Function "unwind" works like MongoDB "$unwind" operation.
+        //
         evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).unwind(elements)",
                 "[ {\n" +
                         "  \"brand\" : \"WinWin\",\n" +
@@ -602,6 +633,7 @@ public class UnitTest {
                         "} ]");
 
         // Function "flatten" flatten an array same as the default path step behavior. But more readable.
+        //
         evaluate.accept("items@.tags",
                 "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
         evaluate.accept("items@.tags.@",
@@ -610,7 +642,9 @@ public class UnitTest {
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
         evaluate.accept("items@.tags.@[true]*",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+
         // If the parameter value of "flatten" is textual, it will act as a key name separator to build a flattened object.
+        //
         evaluate.accept("flatten('_')",
                 "{\n" +
                 "  \"salesOrderId\" : \"SO0001\",\n" +
@@ -655,7 +689,9 @@ public class UnitTest {
                 "  \"items_2_tags_2\" : \"WOMEN\",\n" +
                 "  \"totalAmount\" : 270.0\n" +
                 "}");
+
         // Function "unflatten" reverse the operation of "flatten".
+        //
         evaluate.accept("items[1].flatten('_').unflatten('_')",
                 "{\n" +
                         "  \"itemCode\" : \"A00308\",\n" +
@@ -670,7 +706,9 @@ public class UnitTest {
                         "  \"unitDiscount\" : 10.0,\n" +
                         "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ]\n" +
                         "}");
+
         // Functions map(),field(),group(),unwind() - key name support evaluation using syntax "keyQuery::valueQuery"
+        //
         evaluate.accept("items.map(itemCode::qty)",
                 "[ {\n" +
                         "  \"B00001\" : 2\n" +
@@ -679,7 +717,9 @@ public class UnitTest {
                         "}, {\n" +
                         "  \"A00201\" : 1\n" +
                         "} ]");
+
         // Function "mergeObjects" merge all objects in an array into one object.
+        //
         evaluate.accept("mergeObjects(customer, items.map(itemCode::qty))",
                 "{\n" +
                         "  \"customerId\" : \"CU0001\",\n" +
@@ -689,11 +729,13 @@ public class UnitTest {
                         "  \"A00308\" : 1,\n" +
                         "  \"A00201\" : 1\n" +
                         "}");
+
         // Function "assort" separates an object's entries according to different path conditions in sequence,
         // and put them into the corresponding array if the evaluated result is not null.
         // Entries will be removed if no condition can be matched.
         // If the last argument is "...", each of the remaining entry will be added to the end of result array separately.
         // If no argument is provided, each entry will be added to the result array separately.
+        //
         evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
                         ".assort(*.[isEven()], ~'xy.*', ~'ab.*', *)",
                 "[ {\n" +
@@ -767,7 +809,9 @@ public class UnitTest {
                         "    \"k\" : 10\n" +
                         "  }\n" +
                         "} ]");
+
         // Function "assort" also works for array. The result is an array of arrays.
+        //
         evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)",
                 "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]");
         evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ...)",
@@ -825,7 +869,9 @@ public class UnitTest {
                 "        }\n" +
                 "    ]\n" +
                 "}");
+
         // Demonstrate the effect of array flatten and divert.
+        //
         evaluate.accept("a.b.c.sum(d)",
                 "80.0");
         evaluate.accept("a.b.c@.sum(d)",
@@ -1662,6 +1708,12 @@ public class UnitTest {
         // count()
         evaluate.accept("json('[7,1,9,null,5,3]').count()", "5");
         evaluate.accept("count(json('[7,1,9,null,5,3]'), 15, 16)", "7");
+        // push()
+        evaluate.accept("json('[7,1,9,null,5,3]').push(10,'X',json('[-1,-2]'),json('{\"a\":11,\"b\":12}'))",
+                "[ 7, 1, 9, null, 5, 3, 10, \"X\", [ -1, -2 ], {\n" +
+                        "  \"a\" : 11,\n" +
+                        "  \"b\" : 12\n" +
+                        "} ]");
         // reverse()
         evaluate.accept("json('[7,1,9,null,5,3]').reverse()", "[ 3, 5, null, 9, 1, 7 ]");
         evaluate.accept("reverse(json('[7,1,9,null,5,3]'))", "[ 3, 5, null, 9, 1, 7 ]");
@@ -1781,6 +1833,13 @@ public class UnitTest {
                         "}");
 
         // Structural
+        // let()
+        evaluate.accept("json('{\"a\":1,\"b\":2}').let($x:a, $y:calc(a+b), $z:concat(a,b)).map($x,$y,$z)",
+                "{\n" +
+                        "  \"$x\" : 1,\n" +
+                        "  \"$y\" : 3.0,\n" +
+                        "  \"$z\" : \"12\"\n" +
+                        "}");
         // json()
         evaluate.accept("json('[1,\"2\",{\"a\":1,\"b\":2}]')",
                 "[ 1, \"2\", {\n" +
@@ -1919,6 +1978,10 @@ public class UnitTest {
                         "    \"b\" : 2\n" +
                         "  }\n" +
                         "}");
+        // mergeArrays()
+        evaluate.accept("json('[[1,2],[3,4],[5,6]]').mergeArrays(?)", "[ 1, 2, 3, 4, 5, 6 ]");
+        evaluate.accept("json('[{\"a\":[1,2]},{\"a\":[3,4]},{\"a\":[5,6]}]').mergeArrays(a)", "[ 1, 2, 3, 4, 5, 6 ]");
+        evaluate.accept("json('{\"a\":[1,2],\"b\":[3,4],\"c\":[5,6]}').mergeArrays(a,b,c)", "[ 1, 2, 3, 4, 5, 6 ]");
         // mergeObjects()
         evaluate.accept("json('[{\"a\":1,\"x\":11},{\"b\":2,\"y\":12},{\"c\":3,\"x\":13}]').mergeObjects()",
                 "{\n" +
@@ -2123,6 +2186,12 @@ public class UnitTest {
                         "  \"a\" : 3,\n" +
                         "  \"b\" : \"C\"\n" +
                         "} ]");
+        // steps()
+        evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.steps()", "2");
+        evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.b.steps()", "3");
+        evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').*().c.steps()", "4");
+        evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.b.calc(c+1).steps()", "4");
+        evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.b.c.calc(?+1).steps()", "5");
     }
 
     @Test

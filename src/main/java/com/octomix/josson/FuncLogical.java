@@ -38,240 +38,218 @@ final class FuncLogical {
     private FuncLogical() {
     }
 
-    static BooleanNode funcContains(final JsonNode node, final String params, final boolean ignoreCase, final boolean not) {
-        final Pair<JsonNode, List<String>> nodeAndParams = getParamNodeAndStrings(node, params, 1, 1);
-        final JsonNode workNode = nodeAndParams.getKey();
-        if (workNode == null) {
-            return BooleanNode.FALSE;
+    static PathTrace funcContains(final PathTrace path, final String params, final boolean ignoreCase, final boolean not) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 1);
+        final PathTrace dataPath = pathAndParams.getKey();
+        if (dataPath == null) {
+            return path.push(BooleanNode.FALSE);
         }
-        final JsonNode valueNode = getNodeByPath(node, nodeAndParams.getValue().get(0));
-        if (valueNode == null || valueNode.isContainerNode()) {
-            return BooleanNode.FALSE;
+        final JsonNode result = getNodeByExpression(path, pathAndParams.getValue().get(0));
+        if (result == null || result.isContainerNode()) {
+            return path.push(BooleanNode.FALSE);
         }
-        if (valueNode.isNumber()) {
-            final double value = valueNode.asDouble();
-            if (workNode.isArray()) {
-                for (JsonNode elem : workNode) {
+        if (result.isNumber()) {
+            final double value = result.asDouble();
+            if (dataPath.node().isArray()) {
+                for (JsonNode elem : dataPath.node()) {
                     if ((elem.isNumber() || elem.isTextual()) && elem.asDouble() == value) {
-                        return BooleanNode.valueOf(!not);
+                        return path.push(BooleanNode.valueOf(!not));
                     }
                 }
             }
-            return BooleanNode.valueOf(not);
+            return path.push(BooleanNode.valueOf(not));
         }
-        if (valueNode.isNull()) {
-            if (workNode.isArray()) {
-                for (JsonNode elem : workNode) {
+        if (result.isNull()) {
+            if (dataPath.node().isArray()) {
+                for (JsonNode elem : dataPath.node()) {
                     if (elem.isNull()) {
-                        return BooleanNode.valueOf(!not);
+                        return path.push(BooleanNode.valueOf(!not));
                     }
                 }
             }
-            return BooleanNode.valueOf(not);
+            return path.push(BooleanNode.valueOf(not));
         }
-        final String value = valueNode.asText();
-        if (workNode.isObject()) {
+        final String value = result.asText();
+        if (dataPath.node().isObject()) {
             if (ignoreCase) {
-                for (Iterator<String> it = workNode.fieldNames(); it.hasNext();) {
+                for (Iterator<String> it = dataPath.node().fieldNames(); it.hasNext();) {
                     if (value.equalsIgnoreCase(it.next())) {
-                        return BooleanNode.valueOf(!not);
+                        return path.push(BooleanNode.valueOf(!not));
                     }
                 }
-                return BooleanNode.valueOf(not);
+                return path.push(BooleanNode.valueOf(not));
             }
-            return BooleanNode.valueOf(not ^ workNode.get(value) != null);
+            return path.push(BooleanNode.valueOf(not ^ dataPath.node().get(value) != null));
         }
-        if (workNode.isArray()) {
-            for (JsonNode elem : workNode) {
+        if (dataPath.node().isArray()) {
+            for (JsonNode elem : dataPath.node()) {
                 if (elem.isTextual() || elem.isNumber()) {
                     if (ignoreCase) {
                         if (value.equalsIgnoreCase(elem.asText())) {
-                            return BooleanNode.valueOf(!not);
+                            return path.push(BooleanNode.valueOf(!not));
                         }
                     } else if (value.equals(elem.asText())) {
-                        return BooleanNode.valueOf(!not);
+                        return path.push(BooleanNode.valueOf(!not));
                     }
                 }
             }
-            return BooleanNode.valueOf(not);
+            return path.push(BooleanNode.valueOf(not));
         }
-        return BooleanNode.valueOf(not ^ (ignoreCase
-                ? StringUtils.containsIgnoreCase(workNode.asText(), value)
-                : StringUtils.contains(workNode.asText(), value)));
+        return path.push(BooleanNode.valueOf(not ^ (ignoreCase
+            ? StringUtils.containsIgnoreCase(dataPath.node().asText(), value)
+            : StringUtils.contains(dataPath.node().asText(), value))));
     }
 
-    static JsonNode funcEndsWith(final JsonNode node, final String params,
-                                 final boolean ignoreCase, final boolean not) {
-        return applyTextNodeWithParamAsText(node, params, not,
-            (str, param) -> ignoreCase
-                    ? StringUtils.endsWithIgnoreCase(str, param)
-                    : StringUtils.endsWith(str, param)
+    static PathTrace funcEndsWith(final PathTrace path, final String params,
+                                  final boolean ignoreCase, final boolean not) {
+        return applyTextNodeWithParamAsText(path, params, not,
+            (str, param) -> ignoreCase ? StringUtils.endsWithIgnoreCase(str, param) : StringUtils.endsWith(str, param)
         );
     }
 
-    static JsonNode funcEquals(final JsonNode node, final String params, final boolean ignoreCase, final boolean not) {
-        return applyTextNodeWithParamAsText(node, params, not,
-            (str, param) -> ignoreCase
-                    ? StringUtils.equalsIgnoreCase(str, param)
-                    : StringUtils.equals(str, param)
+    static PathTrace funcEquals(final PathTrace path, final String params, final boolean ignoreCase, final boolean not) {
+        return applyTextNodeWithParamAsText(path, params, not,
+            (str, param) -> ignoreCase ? StringUtils.equalsIgnoreCase(str, param) : StringUtils.equals(str, param)
         );
     }
 
-    static JsonNode funcIn(final JsonNode node, final String params, final boolean ignoreCase, final boolean not) {
-        return applyWithArrayNode(node, params, null,
-            (jsonNode, arrayNode) -> {
-                if (jsonNode.isNumber()) {
-                    final double num = jsonNode.asDouble();
-                    for (JsonNode value : arrayNode) {
+    static PathTrace funcIn(final PathTrace path, final String params, final boolean ignoreCase, final boolean not) {
+        return applyWithArrayNode(path, params, null,
+            (dataPath, paramPath) -> {
+                if (dataPath.node().isNumber()) {
+                    final double num = dataPath.node().asDouble();
+                    for (JsonNode value : paramPath.node()) {
                         if ((value.isNumber() || value.isTextual()) && value.asDouble() == num) {
-                            return BooleanNode.valueOf(!not);
+                            return path.push(BooleanNode.valueOf(!not));
                         }
                     }
-                    return BooleanNode.valueOf(not);
-                } else if (jsonNode.isValueNode()) {
-                    final String text = jsonNode.asText();
-                    for (JsonNode value : arrayNode) {
+                    return path.push(BooleanNode.valueOf(not));
+                } else if (dataPath.node().isValueNode()) {
+                    final String text = dataPath.node().asText();
+                    for (JsonNode value : paramPath.node()) {
                         if (value.isTextual() || value.isNumber()) {
                             if (ignoreCase) {
                                 if (value.asText().equalsIgnoreCase(text)) {
-                                    return BooleanNode.valueOf(!not);
+                                    return path.push(BooleanNode.valueOf(!not));
                                 }
                             } else if (value.asText().equals(text)) {
-                                return BooleanNode.valueOf(!not);
+                                return path.push(BooleanNode.valueOf(!not));
                             }
                         }
                     }
-                    return BooleanNode.valueOf(not);
+                    return path.push(BooleanNode.valueOf(not));
                 }
-                return BooleanNode.FALSE;
+                return path.push(BooleanNode.FALSE);
             });
     }
 
-    static JsonNode funcIsArray(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, jsonNode -> BooleanNode.valueOf(jsonNode.isArray()));
+    static PathTrace funcIsArray(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, dataPath -> path.push(BooleanNode.valueOf(dataPath.node().isArray())));
     }
 
-    static JsonNode funcIsBlank(final JsonNode node, final String params, final boolean not) {
-        return applyWithoutParam(node, params, null,
+    static PathTrace funcIsBlank(final PathTrace path, final String params, final boolean not) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> path.push(BooleanNode.valueOf(
+                data.getKey().node().isTextual() && (not ^ StringUtils.isBlank(data.getKey().node().asText())))));
+    }
+
+    static PathTrace funcIsBoolean(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().node().isBoolean())));
+    }
+
+    static PathTrace funcIsEmpty(final PathTrace path, final String params, final boolean not) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().node().isTextual()
+                ? not ^ data.getKey().node().asText().isEmpty()
+                : data.getKey().node().isNull() != not)));
+    }
+
+    static PathTrace funcIsEmptyArray(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params,
+            dataPath -> path.push(BooleanNode.valueOf(dataPath.node().isArray() && dataPath.node().isEmpty())));
+    }
+
+    static PathTrace funcIsEmptyObject(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params,
+            dataPath -> path.push(BooleanNode.valueOf(dataPath.node().isObject() && dataPath.node().isEmpty())));
+    }
+
+    static PathTrace funcIsEvenOdd(final PathTrace path, final String params, final int parity) {
+        return applyWithoutParam(path, params, null,
             (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                return BooleanNode.valueOf(dataNode.isTextual() && (not ^ StringUtils.isBlank(dataNode.asText())));
-            });
-    }
-
-    static JsonNode funcIsBoolean(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> BooleanNode.valueOf(data.getKey().isBoolean()));
-    }
-
-    static JsonNode funcIsEmpty(final JsonNode node, final String params, final boolean not) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                return BooleanNode.valueOf(
-                        dataNode.isTextual() ? not ^ dataNode.asText().isEmpty() : dataNode.isNull() != not);
-            });
-    }
-
-    static JsonNode funcIsEmptyArray(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params,
-            jsonNode -> BooleanNode.valueOf(jsonNode.isArray() && jsonNode.isEmpty()));
-    }
-
-    static JsonNode funcIsEmptyObject(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params,
-            jsonNode -> BooleanNode.valueOf(jsonNode.isObject() && jsonNode.isEmpty()));
-    }
-
-    static JsonNode funcIsEvenOdd(final JsonNode node, final String params, final int parity) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
+                final PathTrace dataPath = data.getKey();
                 final int number;
-                if (dataNode.isNumber()) {
-                    number = dataNode.asInt();
-                } else if (dataNode.isTextual()) {
+                if (dataPath.node().isNumber()) {
+                    number = dataPath.node().asInt();
+                } else if (dataPath.node().isTextual()) {
                     try {
-                        number = Integer.parseInt(dataNode.asText());
+                        number = Integer.parseInt(dataPath.node().asText());
                     } catch (NumberFormatException e) {
-                        return BooleanNode.FALSE;
+                        return path.push(BooleanNode.FALSE);
                     }
                 } else {
-                    return BooleanNode.FALSE;
+                    return path.push(BooleanNode.FALSE);
                 }
-                return BooleanNode.valueOf((number & 1) == parity);
+                return path.push(BooleanNode.valueOf((number & 1) == parity));
             });
     }
 
-    static JsonNode funcIsNull(final JsonNode node, final String params, final boolean not) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> BooleanNode.valueOf(not ^ data.getKey().isNull()));
+    static PathTrace funcIsNull(final PathTrace path, final String params, final boolean not) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> path.push(BooleanNode.valueOf(not ^ data.getKey().node().isNull())));
     }
 
-    static JsonNode funcIsNumber(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> BooleanNode.valueOf(data.getKey().isNumber()));
+    static PathTrace funcIsNumber(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().node().isNumber())));
     }
 
-    static JsonNode funcIsObject(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, jsonNode -> BooleanNode.valueOf(jsonNode.isObject()));
+    static PathTrace funcIsObject(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, dataPath -> path.push(BooleanNode.valueOf(dataPath.node().isObject())));
     }
 
-    static JsonNode funcIsText(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> BooleanNode.valueOf(data.getKey().isTextual()));
+    static PathTrace funcIsText(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().node().isTextual())));
     }
 
-    static JsonNode funcMatches(final JsonNode node, final String params, final boolean not) {
-        return applyTextNodeWithParamAsText(node, params, not,
+    static PathTrace funcMatches(final PathTrace path, final String params, final boolean not) {
+        return applyTextNodeWithParamAsText(path, params, not,
             (str, param) -> Pattern.compile(param).matcher(str).matches());
     }
 
-    static JsonNode funcNot(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                return dataNode.isBoolean() ? BooleanNode.valueOf(!dataNode.asBoolean())
-                        : BooleanNode.FALSE;
-            });
+    static PathTrace funcNot(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> path.push(data.getKey().node().isBoolean()
+                ? BooleanNode.valueOf(!data.getKey().node().asBoolean())
+                : BooleanNode.FALSE));
     }
 
-    static JsonNode funcStartsWith(final JsonNode node, final String params,
-                                   final boolean ignoreCase, final boolean not) {
-        return applyTextNodeWithParamAsText(node, params, not,
-            (str, param) -> ignoreCase
-                    ? StringUtils.startsWithIgnoreCase(str, param)
-                    : StringUtils.startsWith(str, param)
+    static PathTrace funcStartsWith(final PathTrace path, final String params, final boolean ignoreCase, final boolean not) {
+        return applyTextNodeWithParamAsText(path, params, not,
+            (str, param) -> ignoreCase ? StringUtils.startsWithIgnoreCase(str, param) : StringUtils.startsWith(str, param)
         );
     }
 
-    static JsonNode funcIsWeekday(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                return dataNode.isTextual()
-                        ? BooleanNode.valueOf(toLocalDateTime(dataNode).get(ChronoField.DAY_OF_WEEK) <= 5)
-                        : null;
-            });
+    static PathTrace funcIsWeekday(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> data.getKey().node().isTextual()
+                ? path.push(BooleanNode.valueOf(toLocalDateTime(data.getKey().node()).get(ChronoField.DAY_OF_WEEK) <= 5))
+                : null);
     }
 
-    static JsonNode funcIsWeekend(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                return dataNode.isTextual()
-                        ? BooleanNode.valueOf(toLocalDateTime(dataNode).get(ChronoField.DAY_OF_WEEK) > 5)
-                        : null;
-            });
+    static PathTrace funcIsWeekend(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> data.getKey().node().isTextual()
+                ? path.push(BooleanNode.valueOf(toLocalDateTime(data.getKey().node()).get(ChronoField.DAY_OF_WEEK) > 5))
+                : null);
     }
 
-    static JsonNode funcIsLeapYear(final JsonNode node, final String params) {
-        return applyWithoutParam(node, params, null,
-            (data, paramList) -> {
-                final JsonNode dataNode = data.getKey();
-                return dataNode.isTextual()
-                        ? BooleanNode.valueOf(IsoChronology.INSTANCE.isLeapYear(toLocalDateTime(dataNode).getYear()))
-                        : null;
-            });
+    static PathTrace funcIsLeapYear(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, null,
+            (data, paramList) -> data.getKey().node().isTextual()
+                ? path.push(BooleanNode.valueOf(IsoChronology.INSTANCE.isLeapYear(toLocalDateTime(data.getKey().node()).getYear())))
+                : null);
     }
 }

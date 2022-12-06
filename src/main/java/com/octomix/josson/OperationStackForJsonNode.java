@@ -18,22 +18,22 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import static com.octomix.josson.Mapper.intoNewArray;
+import static com.octomix.josson.JossonCore.getNodeByExpression;
 
 /**
  * Logical operations on a stack of OperationStep for JsonNode.
  */
 class OperationStackForJsonNode extends OperationStack {
 
-    private final Josson arrayNode;
+    private final PathTrace path;
 
-    OperationStackForJsonNode(final JsonNode node) {
+    OperationStackForJsonNode(final PathTrace path) {
         super(false);
-        this.arrayNode = node.isArray() ? Josson.create(node) : Josson.create(intoNewArray(node));
+        this.path = path;
     }
 
-    protected JsonNode evaluateExpression(final OperationStep step, final int arrayIndex) {
-        return arrayNode.getNode(arrayIndex, step.getExpression());
+    protected JsonNode evaluateExpression(final OperationStep step, final int index) {
+        return getNodeByExpression(path, index, step.getExpression());
     }
 
     JsonNode evaluateStatement(final String statement) {
