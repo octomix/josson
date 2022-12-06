@@ -310,7 +310,7 @@ public class UnitTest {
         evaluate.accept("items[tags.containsIgnoreCase('Women')]@.tags",
                 "[ [ \"SHIRT\", \"WOMEN\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
 
-        // Some functions work on an array node and produce a value node.
+        // Aggregate functions work on an array node and produce a value node.
         //
         evaluate.accept("items.tags.join('+')",
                 "SHIRT+WOMEN+TENNIS+SPORT+RACKET+SHOE+SPORT+WOMEN");
@@ -344,7 +344,7 @@ public class UnitTest {
                         "[OctoPlus] OctoPlus Tennis Racket - Star\n" +
                         "[WinWin] WinWin Sport Shoe - Super\n");
 
-        // Some functions work on array and produce an array, such as "concat()", manipulate on each element.
+        // Scalar functions work on array and produce an array, such as "concat()", manipulate on each element.
         //
         evaluate.accept("items.concat('Item ',#,': [',itemCode,'] ',qty,unit,' x ',name,' <',property.colors.join(','),'>').join('\n')",
                 "Item 0: [B00001] 2Pcs x WinWin TShirt Series A - 2022 <WHITE,RED>\n" +
@@ -377,9 +377,9 @@ public class UnitTest {
         // In filter expression and function argument, a path starts with symbol ".." go back to the previous step's node.
         // Each additional dot go back one more step.
         //
-        evaluate.accept("items.property.concatFree(...customer.name, ' colors=', colors.join(','))",
+        evaluate.accept("items.property.concat(...customer.name, ' colors=', colors.join(','))",
                 "[ \"Peggy colors=WHITE,RED\", \"Peggy colors=BLACK\", \"Peggy colors=RED\" ]");
-        evaluate.accept("items@.property.concatFree(....customer.name, ' ', ..itemCode, ' colors=', colors.join(','))",
+        evaluate.accept("items@.property.concat(....customer.name, ' ', ..itemCode, ' colors=', colors.join(','))",
                 "[ \"Peggy B00001 colors=WHITE,RED\", \"Peggy A00308 colors=BLACK\", \"Peggy A00201 colors=RED\" ]");
 
         // Function "json" parse a JSON string.
