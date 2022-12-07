@@ -227,6 +227,10 @@ final class FuncStructural {
         }
     }
 
+    static PathTrace funcGet(final PathTrace path, final String params) {
+        return getParamPath(path, params);
+    }
+
     static PathTrace funcGroup(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 2);
         final PathTrace dataPath = pathAndParams.getKey();

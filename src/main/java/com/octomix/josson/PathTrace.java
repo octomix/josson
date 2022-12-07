@@ -24,7 +24,10 @@ import java.util.Map;
 
 import static com.octomix.josson.JossonCore.VARIABLE_PREFIX_SYMBOL;
 
-class PathTrace {
+/**
+ * Contains all progressive nodes and variables defined along the path.
+ */
+public class PathTrace {
 
     private final JsonNode[] steps;
     private Map<String, JsonNode> variables;
@@ -83,5 +86,23 @@ class PathTrace {
 
     JsonNode getVariable(final String name) {
         return variables == null ? null : variables.get(name);
+    }
+
+    /**
+     * Get all progressive nodes along the path.
+     *
+     * @return all progressive nodes along the path.
+     */
+    public JsonNode[] getNodes() {
+        return steps;
+    }
+
+    /**
+     * Get all variables defined by function let() along the path.
+     *
+     * @return all variables defined by function let().
+     */
+    public Map<String, JsonNode> getVariables() {
+        return variables;
     }
 }

@@ -32,7 +32,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 ### Josson
 
 - Query a JSON dataset.
-- There are 242 internal functions to manipulate and format data.
+- There are 243 internal functions to manipulate and format data.
 - Restructure JSON data and capable of grouping and unwind data.
 - Can be used as an API parameter to trim down the response JSON result.
 
@@ -163,6 +163,11 @@ To apply a Josson query path and get the result JsonNode.
 
     JsonNode node = josson.getNode(expression);
 
+To apply a Josson query path and get the path trace along the main branch.
+The trace object contains all progressive nodes and variables defined along the main branch.
+
+    PathTrace trace = josson.getPathTrace(expression);
+
 ## Josson Query Language
 
 ### Josson Path
@@ -268,10 +273,12 @@ Josson function `entries()` > Find-all array filter `[expression]*` > Select ele
 
 Function `entries()` transform object `{ "name" : <JsonNode> }` into this new structure:
 
-    {
-        "key" : "name",
-        "value" : <JsonNode>
-    }
+    [
+        {
+            "key" : "name",
+            "value" : <JsonNode>
+        }
+    ]
 
 Therefore, use keyword `key` in a wildcard filter expression to search.
 Even keyword `value` can also be used in wildcard filter expression.
@@ -292,20 +299,21 @@ The last 3 examples do the same thing and can be simplified to this syntax:
 
 Additional step symbols are available in filter expression and function argument.
 
-| Step  | Operation | Description                                                           |
-|:------|:----------|:----------------------------------------------------------------------|
-| `$`   | N/A       | Restart from the root node                                            |
-| `..`  | N/A       | Node of the previous step (each additional dot go back one more step) |
-| `...` | N/A       | Node of the previous step's previous step                             |
-| `?`   | Aggregate | Current array node                                                    |
-| `?`   | Scalar    | Current non-array node or current array node's each element           |
-| `@`   | Scalar    | Current array node                                                    |
-| `#`   | Scalar    | Zero-based index of an array element                                  |
-| `##`  | Scalar    | One-based index of an array element                                   |
-| `#A`  | Scalar    | Uppercase alphabetic index of an array element                        |
-| `#a`  | Scalar    | Lowercase alphabetic index of an array element                        |
-| `#R`  | Scalar    | Uppercase roman numerals index of an array element                    |
-| `#r`  | Scalar    | Lowercase roman numerals index of an array element                    |
+| Step      | Operation | Description                                                           |
+|:----------|:----------|:----------------------------------------------------------------------|
+| `$`       | N/A       | Restart from the root node                                            |
+| `..`      | N/A       | Node of the previous step (each additional dot go back one more step) |
+| `...`     | N/A       | Node of the previous step's previous step                             |
+| `$letVar` | N/A       | Variable defined by function `let()`                                  |
+| `?`       | Aggregate | Current array node                                                    |
+| `?`       | Scalar    | Current non-array node or current array node's each element           |
+| `@`       | Scalar    | Current array node                                                    |
+| `#`       | Scalar    | Zero-based index of an array element                                  |
+| `##`      | Scalar    | One-based index of an array element                                   |
+| `#A`      | Scalar    | Uppercase alphabetic index of an array element                        |
+| `#a`      | Scalar    | Lowercase alphabetic index of an array element                        |
+| `#R`      | Scalar    | Uppercase roman numerals index of an array element                    |
+| `#r`      | Scalar    | Lowercase roman numerals index of an array element                    |
 
 ### Path Chart Elements
 
@@ -1563,7 +1571,7 @@ Below is the JSON for this tutorial.
 
 ## Josson Functions
 
-There are 242 functions. They are classified into 7 categories:
+There are 243 functions. They are classified into 7 categories:
 
 Arithmetic Functions
 
@@ -1807,26 +1815,27 @@ Array Functions
 
 Structural Functions
 
-223. [let()](#223-let)
-224. [json()](#224-json)
-225. [entries()](#225-entries)
-226. [keys()](#226-keys)
-227. [depthLimit()](#227-depthlimit)
-228. [collect()](#228-collect)
-229. [cumulateCollect()](#229-cumulatecollect)
-230. [wrap()](#230-wrap)
-231. [toArray()](#231-toarray)
-232. [toObject()](#232-toobject)
-233. [mergeArrays()](#233-mergearrays)
-234. [mergeObjects()](#234-mergeobjects)
-235. [flatten()](#235-flatten)
-236. [unflatten()](#236-unflatten)
-237. [map()](#237-map)
-238. [field()](#238-field)
-239. [group()](#239-group)
-240. [unwind()](#240-unwind)
-241. [assort()](#241-assort)
-242. [steps()](#242-steps)
+223. [json()](#223-json)
+224. [let()](#224-let)
+225. [get()](#225-get)
+226. [entries()](#226-entries)
+227. [keys()](#227-keys)
+228. [depthLimit()](#228-depthlimit)
+229. [collect()](#229-collect)
+230. [cumulateCollect()](#230-cumulatecollect)
+231. [wrap()](#231-wrap)
+232. [toArray()](#232-toarray)
+233. [toObject()](#233-toobject)
+234. [mergeArrays()](#234-mergearrays)
+235. [mergeObjects()](#235-mergeobjects)
+236. [flatten()](#236-flatten)
+237. [unflatten()](#237-unflatten)
+238. [map()](#238-map)
+239. [field()](#239-field)
+240. [group()](#240-group)
+241. [unwind()](#241-unwind)
+242. [assort()](#242-assort)
+243. [steps()](#243-steps)
 
 Following are some examples of each function.
 
@@ -3665,17 +3674,7 @@ Following are some examples of each function.
 
 ### Structural Functions
 
-#### 223. let()
-
-    json('{"a":1,"b":2}').let($x:a, $y:calc(a+b), $z:concat(a,b)).map($x,$y,$z)
-    ==>
-    {
-      "$x" : 1,
-      "$y" : 3.0,
-      "$z" : "12"
-    }
-
-#### 224. json()
+#### 223. json()
 
     json('[1,"2",{"a":1,"b":2}]')
     ==>
@@ -3695,7 +3694,24 @@ Following are some examples of each function.
       }
     }
 
-#### 225. entries()
+#### 224. let()
+
+    json('{"a":1,"b":2}').let($x:a, $y:calc(a+b), $z:concat(a,b)).map($x,$y,$z)
+    ==>
+    {
+      "$x" : 1,
+      "$y" : 3.0,
+      "$z" : "12"
+    }
+
+#### 225. get()
+
+    json('{"decode":[{"code":"A","color":"Red"},{"code":"B","color":"Blue"}],"data":["B","A","B"]}')
+    .data@.let($code:?).get(...decode[code=$code].color)
+    ==>
+    [ "Blue", "Red", "Blue" ]
+
+#### 226. entries()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').entries()
     ==>
@@ -3713,7 +3729,7 @@ Following are some examples of each function.
       }
     } ]
 
-#### 226. keys()
+#### 227. keys()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').keys() ==> [ "a", "b", "c" ]
 
@@ -3721,7 +3737,7 @@ Following are some examples of each function.
 
     keys(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}'), -1) ==> [ "a", "b", "c", "d", "e" ]
 
-#### 227. depthLimit()
+#### 228. depthLimit()
 
     json('{"id":1,"array":[{"id":2,"obj":{"id":3,"array":[{"id":4.1},{"id":4.2}]}}]}').depthLimit(1)
     ==>
@@ -3767,7 +3783,7 @@ Following are some examples of each function.
       } ]
     }
 
-#### 228. collect()
+#### 229. collect()
 
     'Hi'.collect(1,?,true,json('[{"a":1,"x":11},{"b":2,"y":12}]'),json('{"c":3,"x":13}'))
     ==>
@@ -3782,7 +3798,7 @@ Following are some examples of each function.
       "x" : 13
     } ]
 
-#### 229. cumulateCollect()
+#### 230. cumulateCollect()
 
     json('{"id":1,"val":11,"item":{"id":2,"val":22,"item":{"id":3,"val":33,"item":{"id":4,"val":44}}}}')
     .cumulateCollect(map(id,val.calc(?*2)), item)
@@ -3801,7 +3817,7 @@ Following are some examples of each function.
       "val" : 88.0
     } ]
 
-#### 230. wrap()
+#### 231. wrap()
 
     json('["Hi"]').wrap() ==> [ [ "Hi" ] ]
 
@@ -3811,7 +3827,7 @@ Following are some examples of each function.
       "a" : 1
     } ]
 
-#### 231. toArray()
+#### 232. toArray()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()
     ==>
@@ -3824,7 +3840,7 @@ Following are some examples of each function.
 
     toArray(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()) ==> [ 1, 2, 3, 4, 5 ]
 
-#### 232. toObject()
+#### 233. toObject()
 
     'a'.toObject('text')
     ==>
@@ -3853,7 +3869,7 @@ Following are some examples of each function.
       }
     }
 
-#### 233. mergeArrays()
+#### 234. mergeArrays()
 
     json('[[1,2],[3,4],[5,6]]').mergeArrays(?) ==> [ 1, 2, 3, 4, 5, 6 ]
 
@@ -3861,7 +3877,7 @@ Following are some examples of each function.
 
     json('{"a":[1,2],"b":[3,4],"c":[5,6]}').mergeArrays(a,b,c) ==> [ 1, 2, 3, 4, 5, 6 ]
 
-#### 234. mergeObjects()
+#### 235. mergeObjects()
 
     json('[{"a":1,"x":11},{"b":2,"y":12},{"c":3,"x":13}]').mergeObjects()
     ==>
@@ -3883,7 +3899,7 @@ Following are some examples of each function.
       "c" : 3
     }
 
-#### 235. flatten()
+#### 236. flatten()
 
     json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten(1)
     ==>
@@ -3951,7 +3967,7 @@ Following are some examples of each function.
       "[3]" : 9
     }
 
-#### 236. unflatten()
+#### 237. unflatten()
 
     flatten(json('{"a":1,"b":[2,3],"c":{"d":4,"e":{"f":5}}}'),'_',null).unflatten('_')
     ==>
@@ -3987,7 +4003,7 @@ Following are some examples of each function.
     ==>
     [ 0, 1, [ 2, 3, [ 4, {"a":5}, 6, [ 7 ] ], 8 ], 9 ]
 
-#### 237. map()
+#### 238. map()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').map(c.e,c.d,b,a)
     ==>
@@ -4011,7 +4027,7 @@ Following are some examples of each function.
       }
     }
 
-#### 238. field()
+#### 239. field()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').field(f:6,c:)
     ==>
@@ -4028,7 +4044,7 @@ Following are some examples of each function.
       "name" : "Cyron"
     }
 
-#### 239. group()
+#### 240. group()
 
     json('[{"a":1,"b":"A"},{"a":2,"b":"B"},{"a":3,"b":"C"},{"a":2,"b":"D"},{"a":1,"b":"E"}]').group(a)
     ==>
@@ -4071,7 +4087,7 @@ Following are some examples of each function.
       "bs" : [ "C" ]
     } ]
 
-#### 240. unwind()
+#### 241. unwind()
 
     json('[{"a":1,"bs":["A","E"]},{"a":2,"bs":["B","D"]},{"a":3,"bs":["C"]}]').unwind(b:bs)
     ==>
@@ -4092,7 +4108,7 @@ Following are some examples of each function.
       "b" : "C"
     } ]
 
-#### 241. assort()
+#### 242. assort()
 
     json('{"xy1": 1,"xy2": 2,"ab1": 3,"ab2": 4,"ab3": 5,"zz1": 6,"xy3": 7,"zz2": 9,"zz3": {"k":10}}}').assort(*.[isEven()], ~'xy.*', ~'ab.*', ...)
     ==>
@@ -4118,7 +4134,7 @@ Following are some examples of each function.
     ==>
     [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]
 
-#### 242. steps()
+#### 243. steps()
 
     json('{"a":{"b":{"c":1}}}').a.steps() ==> 2
 

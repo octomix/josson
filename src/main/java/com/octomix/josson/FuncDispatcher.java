@@ -283,8 +283,11 @@ class FuncDispatcher {
 
     private PathTrace applyG(final PathTrace path, final String func) {
         // Structural
-        if ("group".equals(func)) {
-            return funcGroup(path, params);
+        switch (func) {
+            case "get":
+                return funcGet(path, params);
+            case "group":
+                return funcGroup(path, params);
         }
         throw new UnsupportedFunctionException();
     }
