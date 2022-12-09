@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import static com.octomix.josson.JossonCore.getPathByExpression;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.Utils.*;
 
@@ -335,6 +336,17 @@ public class Josson {
     public Josson getJosson(final int index, final String expression) {
         final JsonNode node = getNode(index, expression);
         return node == null ? null : new Josson(node);
+    }
+
+    /**
+     * Query data by Josson query language and return the path trace along the main branch.
+     *
+     * @param expression the Josson query path
+     * @return A {@code PathTrace} object that contains all progressive nodes and variables defined along the main branch.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public PathTrace getPathTrace(final String expression) {
+        return getPathByExpression(PathTrace.from(jsonNode), expression);
     }
 
     /**

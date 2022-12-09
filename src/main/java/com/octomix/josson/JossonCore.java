@@ -336,10 +336,10 @@ final class JossonCore {
                 return getPathBySteps(path.push(node), steps, nextSteps);
             }
             node = path.node().get(filter.getNodeName());
-        } else if (!filter.getNodeName().isEmpty()) {
-            node = filter.evaluateFilter(getPathByExpression(path, filter.getNodeName()), filter.getFilter());
-        } else {
+        } else if (filter.getNodeName().isEmpty()) {
             node = filter.evaluateFilter(path, filter.getFilter());
+        } else {
+            node = filter.evaluateFilter(getPathByExpression(path, filter.getNodeName()), filter.getFilter());
         }
         if (node == null) {
             return null;

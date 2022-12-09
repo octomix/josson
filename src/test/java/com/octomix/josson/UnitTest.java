@@ -1833,13 +1833,6 @@ public class UnitTest {
                         "}");
 
         // Structural
-        // let()
-        evaluate.accept("json('{\"a\":1,\"b\":2}').let($x:a, $y:calc(a+b), $z:concat(a,b)).map($x,$y,$z)",
-                "{\n" +
-                        "  \"$x\" : 1,\n" +
-                        "  \"$y\" : 3.0,\n" +
-                        "  \"$z\" : \"12\"\n" +
-                        "}");
         // json()
         evaluate.accept("json('[1,\"2\",{\"a\":1,\"b\":2}]')",
                 "[ 1, \"2\", {\n" +
@@ -1855,6 +1848,17 @@ public class UnitTest {
                         "    \"e\" : 5\n" +
                         "  }\n" +
                         "}");
+        // let()
+        evaluate.accept("json('{\"a\":1,\"b\":2}').let($x:a, $y:calc(a+b), $z:concat(a,b)).map($x,$y,$z)",
+                "{\n" +
+                        "  \"$x\" : 1,\n" +
+                        "  \"$y\" : 3.0,\n" +
+                        "  \"$z\" : \"12\"\n" +
+                        "}");
+        // get()
+        evaluate.accept("json('{\"decode\":[{\"code\":\"A\",\"color\":\"Red\"},{\"code\":\"B\",\"color\":\"Blue\"}],\"data\":[\"B\",\"A\",\"B\"]}')" +
+                        ".data@.let($code:?).get(...decode[code=$code].color)",
+                "[ \"Blue\", \"Red\", \"Blue\" ]");
         // entries()
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').entries()",
                 "[ {\n" +

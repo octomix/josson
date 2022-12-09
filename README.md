@@ -20,19 +20,19 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.4.0</version>
+        <version>1.4.1</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.0'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.1'
 
 ## Features and Capabilities
 
 ### Josson
 
 - Query a JSON dataset.
-- There are 242 internal functions to manipulate and format data.
+- There are 243 internal functions to manipulate and format data.
 - Restructure JSON data and capable of grouping and unwind data.
 - Can be used as an API parameter to trim down the response JSON result.
 
@@ -163,6 +163,11 @@ To apply a Josson query path and get the result JsonNode.
 
     JsonNode node = josson.getNode(expression);
 
+To apply a Josson query path and get the path trace along the main branch.
+The trace object contains all progressive nodes and variables defined along the main branch.
+
+    PathTrace trace = josson.getPathTrace(expression);
+
 ## Josson Query Language
 
 ### Josson Path
@@ -175,7 +180,7 @@ A path step can...
 - Filter an array node, return the first matching element or all matching elements.
 - Perform a transformation operation by a [Josson Function](#josson-functions).
 
-| Step             | Description                                                               |
+| Step Syntax      | Description                                                               |
 |:-----------------|:--------------------------------------------------------------------------|
 | `key`            | A child element key name                                                  |
 | `[number]`       | An array element by zero-based index                                      |
@@ -199,7 +204,9 @@ A path step can...
 | `~'regex'@`      | Search by regular expression and divert each element to separate branches |
 
 To specify an array and then apply an index or a filter can be simplified by removing the `.` between them.
-The following two are the same.
+The following two statements produce the same final result. But have different number of path steps.
+The first one contains two path steps, select an array and then filter.
+The second one contains one path step only, filter an array directly.
 
     array.[expression]*
 
@@ -209,7 +216,7 @@ Filter can also apply to an object node.
 If the expression is evaluated to `true`, the object itself is returned.
 Otherwise, return `null`.
 
-For example:
+_Example_
 
     {
         "a": {
@@ -228,11 +235,17 @@ For example:
 
     a.b.c[2].upperCase() ==> "D"
 
+    a.b.c[?.isNumber()]* ==> [ 1, 2 ]
+
+    a.x[y='z'] ==> { "y": "z" }
+
+    a.x[y='1'] ==> null
+
     a.*.y ==> "z"
 
 Enclose the key name with double quote if it contains "." or starts/ends with spaces. 
 
-For example:
+_Example_
 
     {
         "a.b": {
@@ -246,7 +259,7 @@ Wildcard search and regular expression search path steps work on object node.
 Multi-level wildcard searches for the first resolvable result on path steps in order.
 No argument or an argument of value `0` means unlimited levels.
 
-For example:
+_Example_
 
     // Search for *.y
     *(1).y ==> null
@@ -268,15 +281,17 @@ Josson function `entries()` > Find-all array filter `[expression]*` > Select ele
 
 Function `entries()` transform object `{ "name" : <JsonNode> }` into this new structure:
 
-    {
-        "key" : "name",
-        "value" : <JsonNode>
-    }
+    [
+        {
+            "key" : "name",
+            "value" : <JsonNode>
+        }
+    ]
 
 Therefore, use keyword `key` in a wildcard filter expression to search.
 Even keyword `value` can also be used in wildcard filter expression.
 
-For example:
+_Example_
 
     *[key.startsWith('item') & value.isText()]
 
@@ -292,20 +307,25 @@ The last 3 examples do the same thing and can be simplified to this syntax:
 
 Additional step symbols are available in filter expression and function argument.
 
-| Step  | Operation | Description                                                           |
-|:------|:----------|:----------------------------------------------------------------------|
-| `$`   | N/A       | Restart from the root node                                            |
-| `..`  | N/A       | Node of the previous step (each additional dot go back one more step) |
-| `...` | N/A       | Node of the previous step's previous step                             |
-| `?`   | Aggregate | Current array node                                                    |
-| `?`   | Scalar    | Current non-array node or current array node's each element           |
-| `@`   | Scalar    | Current array node                                                    |
-| `#`   | Scalar    | Zero-based index of an array element                                  |
-| `##`  | Scalar    | One-based index of an array element                                   |
-| `#A`  | Scalar    | Uppercase alphabetic index of an array element                        |
-| `#a`  | Scalar    | Lowercase alphabetic index of an array element                        |
-| `#R`  | Scalar    | Uppercase roman numerals index of an array element                    |
-| `#r`  | Scalar    | Lowercase roman numerals index of an array element                    |
+| Step      | Operation | Description                                                           |
+|:----------|:----------|:----------------------------------------------------------------------|
+| `$`       | N/A       | Restart from the root node                                            |
+| `..`      | N/A       | Node of the previous step (each additional dot go back one more step) |
+| `...`     | N/A       | Node of the previous step's previous step                             |
+| `$letVar` | N/A       | Variable defined by function `let()`                                  |
+| `?`       | Aggregate | Current array node                                                    |
+| `?`       | Scalar    | Current non-array node or current array node's each element           |
+| `@`       | Scalar    | Current array node                                                    |
+| `#`       | Scalar    | Zero-based index of an array element                                  |
+| `##`      | Scalar    | One-based index of an array element                                   |
+| `#A`      | Scalar    | Uppercase alphabetic index of an array element                        |
+| `#a`      | Scalar    | Lowercase alphabetic index of an array element                        |
+| `#R`      | Scalar    | Uppercase roman numerals index of an array element                    |
+| `#r`      | Scalar    | Lowercase roman numerals index of an array element                    |
+
+_Exception_
+
+Function `let()` is not counted as a path step.
 
 ### Path Chart Elements
 
@@ -321,6 +341,7 @@ Data filtering, transformation and formatting details are not included.
 | `$D`                                       | A double node                                                                            |
 | `$TF`                                      | A boolean node                                                                           |
 | `{}`                                       | An object node                                                                           |
+| `{=}`                                      | An object validator                                                                      |
 | `[]`                                       | An array node                                                                            |
 | `[]@`                                      | Divert each array element to separate branches                                           |
 | `[#]`                                      | An indexed array element                                                                 |
@@ -675,7 +696,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [{}] → [itemCode] → [=] ⇒ ""
+        {} → items[] → [{}] → [itemCode][=] ⇒ ""
 
 23. Filter using relational operators `=`, `!=`, `>`, `>=`, `<` and `<=`.
 
@@ -685,7 +706,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=] → {} → name ⇒ ""
+        {} → items[=] → {} → name ⇒ ""
 
 24. Returns null value if nothing matches the array filter.
 
@@ -695,7 +716,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]!! → {} → name ⇒ !unresolvable!
+        {} → items[=]!! → {} → name ⇒ !unresolvable!
 
 25. To query all matching elements, add a modifier `*` after the array filter.
 
@@ -705,7 +726,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [name] ⇒ [""]
+        {} → items[=]* → [{}] → [name] ⇒ [""]
 
 26. If a step is working on an array node, `#` denotes the zero-based index of an array element.
 
@@ -715,7 +736,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [itemCode] ⇒ [""]
+        {} → items[=]* → [{}] → [itemCode] ⇒ [""]
 
 27. For each path step, a nested array is flattened once.
 
@@ -725,7 +746,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [tags[] → [=]* ⇒ [""]] ⇒ [""]
+        {} → items[=]* → [{}] → [tags[=]* ⇒ [""]] ⇒ [""]
 
 28. Path step `array.` is the same as `array[true]*.`.
 
@@ -746,7 +767,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [{}] → [tags[] → [=]* ⇒ [""]] ⇒ [""]
+        {} → items[] → [{}] → [tags[=]* ⇒ [""]] ⇒ [""]
 
 30. The matching criteria supports logical operators and parentheses.
 
@@ -760,7 +781,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [name] ⇒ [""]
+        {} → items[=]* → [{}] → [name] ⇒ [""]
 
 31. Example of a find-all filter operation with flattened array result.
 
@@ -770,7 +791,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [tags[] ⇒ [""]] ⇒ [""]
+        {} → items[=]* → [{}] → [tags[] ⇒ [""]] ⇒ [""]
 
 32. An array filter modifier `@` divert each element to separate branch for upcoming manipulation.  
     The final output merges branches into an array.
@@ -781,11 +802,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                            {} → tags[] → [""]
-                           /                  \
-        {} → items[] → [=]@                    @ ⇒ [[""]]
-                           \                  /
-                            {} → tags[] → [""]
+                       {} → tags[] → [""]
+                      /                  \
+        {} → items[=]@                    @ ⇒ [[""]]
+                      \                  /
+                       {} → tags[] → [""]
 
 33. Aggregate functions work on an array node and produce a value node.
 
@@ -908,7 +929,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → customer{} → [=] ⇒ {}
+        {} → customer{=} ⇒ {}
 
 42. An object node that cannot meet the validation filter criteria returns null.
 
@@ -918,7 +939,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → customer{} → [=]!! ⇒ !unresolvable!
+        {} → customer{=}!! ⇒ !unresolvable!
 
 43. In filter expression and function argument, a path starts with symbol "$" restart from the root node.
 
@@ -977,7 +998,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → [=] → {} → isNotNull(?) ⇒ $TF
+        {} → {=} → {} → isNotNull(?) ⇒ $TF
 
 48. Relational operator `=` and `!=` support root level array values comparison where the position ordering is allowed to be different.
 
@@ -987,7 +1008,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → [=] → {} → isNotNull(?) ⇒ $TF
+        {} → {=} → {} → isNotNull(?) ⇒ $TF
 
 49. Function `calc()` uses MathParser.org-mXparser library <http://mathparser.org/> to perform calculation.
 
@@ -1563,7 +1584,7 @@ Below is the JSON for this tutorial.
 
 ## Josson Functions
 
-There are 242 functions. They are classified into 7 categories:
+There are 243 functions. They are classified into 7 categories:
 
 Arithmetic Functions
 
@@ -1807,26 +1828,27 @@ Array Functions
 
 Structural Functions
 
-223. [let()](#223-let)
-224. [json()](#224-json)
-225. [entries()](#225-entries)
-226. [keys()](#226-keys)
-227. [depthLimit()](#227-depthlimit)
-228. [collect()](#228-collect)
-229. [cumulateCollect()](#229-cumulatecollect)
-230. [wrap()](#230-wrap)
-231. [toArray()](#231-toarray)
-232. [toObject()](#232-toobject)
-233. [mergeArrays()](#233-mergearrays)
-234. [mergeObjects()](#234-mergeobjects)
-235. [flatten()](#235-flatten)
-236. [unflatten()](#236-unflatten)
-237. [map()](#237-map)
-238. [field()](#238-field)
-239. [group()](#239-group)
-240. [unwind()](#240-unwind)
-241. [assort()](#241-assort)
-242. [steps()](#242-steps)
+223. [json()](#223-json)
+224. [let()](#224-let)
+225. [get()](#225-get)
+226. [entries()](#226-entries)
+227. [keys()](#227-keys)
+228. [depthLimit()](#228-depthlimit)
+229. [collect()](#229-collect)
+230. [cumulateCollect()](#230-cumulatecollect)
+231. [wrap()](#231-wrap)
+232. [toArray()](#232-toarray)
+233. [toObject()](#233-toobject)
+234. [mergeArrays()](#234-mergearrays)
+235. [mergeObjects()](#235-mergeobjects)
+236. [flatten()](#236-flatten)
+237. [unflatten()](#237-unflatten)
+238. [map()](#238-map)
+239. [field()](#239-field)
+240. [group()](#240-group)
+241. [unwind()](#241-unwind)
+242. [assort()](#242-assort)
+243. [steps()](#243-steps)
 
 Following are some examples of each function.
 
@@ -3665,17 +3687,7 @@ Following are some examples of each function.
 
 ### Structural Functions
 
-#### 223. let()
-
-    json('{"a":1,"b":2}').let($x:a, $y:calc(a+b), $z:concat(a,b)).map($x,$y,$z)
-    ==>
-    {
-      "$x" : 1,
-      "$y" : 3.0,
-      "$z" : "12"
-    }
-
-#### 224. json()
+#### 223. json()
 
     json('[1,"2",{"a":1,"b":2}]')
     ==>
@@ -3695,7 +3707,24 @@ Following are some examples of each function.
       }
     }
 
-#### 225. entries()
+#### 224. let()
+
+    json('{"a":1,"b":2}').let($x:a, $y:calc(a+b), $z:concat(a,b)).map($x,$y,$z)
+    ==>
+    {
+      "$x" : 1,
+      "$y" : 3.0,
+      "$z" : "12"
+    }
+
+#### 225. get()
+
+    json('{"decode":[{"code":"A","color":"Red"},{"code":"B","color":"Blue"}],"data":["B","A","B"]}')
+    .data@.let($code:?).get(...decode[code=$code].color)
+    ==>
+    [ "Blue", "Red", "Blue" ]
+
+#### 226. entries()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').entries()
     ==>
@@ -3713,7 +3742,7 @@ Following are some examples of each function.
       }
     } ]
 
-#### 226. keys()
+#### 227. keys()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').keys() ==> [ "a", "b", "c" ]
 
@@ -3721,7 +3750,7 @@ Following are some examples of each function.
 
     keys(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}'), -1) ==> [ "a", "b", "c", "d", "e" ]
 
-#### 227. depthLimit()
+#### 228. depthLimit()
 
     json('{"id":1,"array":[{"id":2,"obj":{"id":3,"array":[{"id":4.1},{"id":4.2}]}}]}').depthLimit(1)
     ==>
@@ -3767,7 +3796,7 @@ Following are some examples of each function.
       } ]
     }
 
-#### 228. collect()
+#### 229. collect()
 
     'Hi'.collect(1,?,true,json('[{"a":1,"x":11},{"b":2,"y":12}]'),json('{"c":3,"x":13}'))
     ==>
@@ -3782,7 +3811,7 @@ Following are some examples of each function.
       "x" : 13
     } ]
 
-#### 229. cumulateCollect()
+#### 230. cumulateCollect()
 
     json('{"id":1,"val":11,"item":{"id":2,"val":22,"item":{"id":3,"val":33,"item":{"id":4,"val":44}}}}')
     .cumulateCollect(map(id,val.calc(?*2)), item)
@@ -3801,7 +3830,7 @@ Following are some examples of each function.
       "val" : 88.0
     } ]
 
-#### 230. wrap()
+#### 231. wrap()
 
     json('["Hi"]').wrap() ==> [ [ "Hi" ] ]
 
@@ -3811,7 +3840,7 @@ Following are some examples of each function.
       "a" : 1
     } ]
 
-#### 231. toArray()
+#### 232. toArray()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()
     ==>
@@ -3824,7 +3853,7 @@ Following are some examples of each function.
 
     toArray(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()) ==> [ 1, 2, 3, 4, 5 ]
 
-#### 232. toObject()
+#### 233. toObject()
 
     'a'.toObject('text')
     ==>
@@ -3853,7 +3882,7 @@ Following are some examples of each function.
       }
     }
 
-#### 233. mergeArrays()
+#### 234. mergeArrays()
 
     json('[[1,2],[3,4],[5,6]]').mergeArrays(?) ==> [ 1, 2, 3, 4, 5, 6 ]
 
@@ -3861,7 +3890,7 @@ Following are some examples of each function.
 
     json('{"a":[1,2],"b":[3,4],"c":[5,6]}').mergeArrays(a,b,c) ==> [ 1, 2, 3, 4, 5, 6 ]
 
-#### 234. mergeObjects()
+#### 235. mergeObjects()
 
     json('[{"a":1,"x":11},{"b":2,"y":12},{"c":3,"x":13}]').mergeObjects()
     ==>
@@ -3883,7 +3912,7 @@ Following are some examples of each function.
       "c" : 3
     }
 
-#### 235. flatten()
+#### 236. flatten()
 
     json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten(1)
     ==>
@@ -3951,7 +3980,7 @@ Following are some examples of each function.
       "[3]" : 9
     }
 
-#### 236. unflatten()
+#### 237. unflatten()
 
     flatten(json('{"a":1,"b":[2,3],"c":{"d":4,"e":{"f":5}}}'),'_',null).unflatten('_')
     ==>
@@ -3987,7 +4016,7 @@ Following are some examples of each function.
     ==>
     [ 0, 1, [ 2, 3, [ 4, {"a":5}, 6, [ 7 ] ], 8 ], 9 ]
 
-#### 237. map()
+#### 238. map()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').map(c.e,c.d,b,a)
     ==>
@@ -4011,7 +4040,7 @@ Following are some examples of each function.
       }
     }
 
-#### 238. field()
+#### 239. field()
 
     json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').field(f:6,c:)
     ==>
@@ -4028,7 +4057,7 @@ Following are some examples of each function.
       "name" : "Cyron"
     }
 
-#### 239. group()
+#### 240. group()
 
     json('[{"a":1,"b":"A"},{"a":2,"b":"B"},{"a":3,"b":"C"},{"a":2,"b":"D"},{"a":1,"b":"E"}]').group(a)
     ==>
@@ -4071,7 +4100,7 @@ Following are some examples of each function.
       "bs" : [ "C" ]
     } ]
 
-#### 240. unwind()
+#### 241. unwind()
 
     json('[{"a":1,"bs":["A","E"]},{"a":2,"bs":["B","D"]},{"a":3,"bs":["C"]}]').unwind(b:bs)
     ==>
@@ -4092,7 +4121,7 @@ Following are some examples of each function.
       "b" : "C"
     } ]
 
-#### 241. assort()
+#### 242. assort()
 
     json('{"xy1": 1,"xy2": 2,"ab1": 3,"ab2": 4,"ab3": 5,"zz1": 6,"xy3": 7,"zz2": 9,"zz3": {"k":10}}}').assort(*.[isEven()], ~'xy.*', ~'ab.*', ...)
     ==>
@@ -4118,7 +4147,7 @@ Following are some examples of each function.
     ==>
     [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]
 
-#### 242. steps()
+#### 243. steps()
 
     json('{"a":{"b":{"c":1}}}').a.steps() ==> 2
 
@@ -5561,7 +5590,89 @@ Output
 
 ---
 
-#### 9. Spring query convert to a nested JSON structure
+#### 9. Refer mapping value of others array base on "id"
+
+(73945727)
+
+    {
+      "status": [
+        {
+          "id": "online",
+          "state": "valid"
+        },
+        {
+          "id": "busy",
+          "state": "unknown"
+        },
+        {
+          "id": "any",
+          "state": "unknow",
+          "moreInfo": "unavailable"
+        }
+      ],
+      "users": [
+        {
+          "title": "foo",
+          "availability": [
+            "online",
+            "busy"
+          ]
+        },
+        {
+          "title": "bar",
+          "availability": [
+            "busy",
+            "any"
+          ]
+        },
+        {
+          "title": "baz",
+          "availability": [
+            "any"
+          ]
+        }
+      ]
+    }
+
+Josson Query
+
+    map(users.field(availability@.let($id:?).get($.status[id=$id])))
+
+Output
+
+    {
+      "users" : [ {
+        "title" : "foo",
+        "availability" : [ {
+          "id" : "online",
+          "state" : "valid"
+        }, {
+          "id" : "busy",
+          "state" : "unknown"
+        } ]
+      }, {
+        "title" : "bar",
+        "availability" : [ {
+          "id" : "busy",
+          "state" : "unknown"
+        }, {
+          "id" : "any",
+          "state" : "unknow",
+          "moreInfo" : "unavailable"
+        } ]
+      }, {
+        "title" : "baz",
+        "availability" : [ {
+          "id" : "any",
+          "state" : "unknow",
+          "moreInfo" : "unavailable"
+        } ]
+      } ]
+    }
+
+---
+
+#### 10. Spring query convert to a nested JSON structure
 
 (73616066)
 
@@ -5637,7 +5748,7 @@ Output
 
 ---
 
-#### 10. How to merge two JSON string
+#### 11. How to merge two JSON string
 
 (72272928)
 
@@ -5697,7 +5808,7 @@ Output
 
 ---
 
-#### 11. How to rearrange the json array based on id in java
+#### 12. How to rearrange the json array based on id in java
 
 (47427518)
 
@@ -5766,7 +5877,7 @@ Output
 
 ---
 
-#### 12. Json object, convert json array into a json object in java
+#### 13. Json object, convert json array into a json object in java
 
 (51576987)
 
@@ -5808,7 +5919,7 @@ Output
 
 ---
 
-#### 13. How to use "set" with a predicate
+#### 14. How to use "set" with a predicate
 
 (73506183)
 
@@ -5872,7 +5983,7 @@ Output
 
 ---
 
-#### 14. How to groupby json value like python in java?
+#### 15. How to groupby json value like python in java?
 
 (72790475)
 
@@ -5915,7 +6026,7 @@ Output
 
 ---
 
-#### 15. Correct way to transform a response into DTO
+#### 16. Correct way to transform a response into DTO
 
 (73405994)
 
@@ -5967,7 +6078,7 @@ Output
 
 ---
 
-#### 16. How transform a json in another json using java
+#### 17. How transform a json in another json using java
 
 (35438323)
 
@@ -6024,7 +6135,7 @@ Output
 
 ---
 
-#### 17. Variable api JSON responses to bind to Java Object using Jackson
+#### 18. Variable api JSON responses to bind to Java Object using Jackson
 
 (73397763)
 
@@ -6072,7 +6183,7 @@ Output
 
 ---
 
-#### 18. How to convert JSONArray of objects to a json string message
+#### 19. How to convert JSONArray of objects to a json string message
 
 (73224582)
 
@@ -6112,7 +6223,7 @@ Output
 
 ---
 
-#### 19. Java copy properties with condition
+#### 20. Java copy properties with condition
 
 (73200231)
 
@@ -6136,7 +6247,7 @@ Output
 
 ---
 
-#### 20. Array input JSON
+#### 21. Array input JSON
 
 (73190751)
 
@@ -6189,7 +6300,7 @@ Output
 
 ---
 
-#### 21. Compare nested JSON object with Java with differences
+#### 22. Compare nested JSON object with Java with differences
 
 (73131799)
 
@@ -6281,7 +6392,7 @@ Output
 
 ---
 
-#### 22. Build array of objects grouping attributes in the same object
+#### 23. Build array of objects grouping attributes in the same object
 
 (72442001)
 
@@ -6338,7 +6449,7 @@ Output
 
 ---
 
-#### 23. Flatten array and nested object with default values for missing array elements
+#### 24. Flatten array and nested object with default values for missing array elements
 
 (72442443)
 
@@ -6399,7 +6510,7 @@ Output
 
 ---
 
-#### 24. Merge Array of multi Objects
+#### 25. Merge Array of multi Objects
 
 (70753154)
 
@@ -6462,7 +6573,7 @@ Output
 
 ---
 
-#### 25. Transform by condition
+#### 26. Transform by condition
 
 (54502431)
 
@@ -6530,7 +6641,7 @@ Output
 
 ---
 
-#### 26. Apply some condition on jsonnode and filter resultset in Java
+#### 27. Apply some condition on jsonnode and filter resultset in Java
 
 (73884462)
 
