@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.4.0</version>
+        <version>1.4.1</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.0'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.1'
 
 ## Features and Capabilities
 
@@ -180,7 +180,7 @@ A path step can...
 - Filter an array node, return the first matching element or all matching elements.
 - Perform a transformation operation by a [Josson Function](#josson-functions).
 
-| Step             | Description                                                               |
+| Step Syntax      | Description                                                               |
 |:-----------------|:--------------------------------------------------------------------------|
 | `key`            | A child element key name                                                  |
 | `[number]`       | An array element by zero-based index                                      |
@@ -204,7 +204,9 @@ A path step can...
 | `~'regex'@`      | Search by regular expression and divert each element to separate branches |
 
 To specify an array and then apply an index or a filter can be simplified by removing the `.` between them.
-The following two are the same.
+The following two statements produce the same final result. But have different number of path steps.
+The first one contains two path steps, select an array and then filter.
+The second one contains one path step only, filter an array directly.
 
     array.[expression]*
 
@@ -214,7 +216,7 @@ Filter can also apply to an object node.
 If the expression is evaluated to `true`, the object itself is returned.
 Otherwise, return `null`.
 
-For example:
+_Example_
 
     {
         "a": {
@@ -233,11 +235,17 @@ For example:
 
     a.b.c[2].upperCase() ==> "D"
 
+    a.b.c[?.isNumber()]* ==> [ 1, 2 ]
+
+    a.x[y='z'] ==> { "y": "z" }
+
+    a.x[y='1'] ==> null
+
     a.*.y ==> "z"
 
 Enclose the key name with double quote if it contains "." or starts/ends with spaces. 
 
-For example:
+_Example_
 
     {
         "a.b": {
@@ -251,7 +259,7 @@ Wildcard search and regular expression search path steps work on object node.
 Multi-level wildcard searches for the first resolvable result on path steps in order.
 No argument or an argument of value `0` means unlimited levels.
 
-For example:
+_Example_
 
     // Search for *.y
     *(1).y ==> null
@@ -283,7 +291,7 @@ Function `entries()` transform object `{ "name" : <JsonNode> }` into this new st
 Therefore, use keyword `key` in a wildcard filter expression to search.
 Even keyword `value` can also be used in wildcard filter expression.
 
-For example:
+_Example_
 
     *[key.startsWith('item') & value.isText()]
 
@@ -315,6 +323,10 @@ Additional step symbols are available in filter expression and function argument
 | `#R`      | Scalar    | Uppercase roman numerals index of an array element                    |
 | `#r`      | Scalar    | Lowercase roman numerals index of an array element                    |
 
+_Exception_
+
+Function `let()` is not counted as a path step.
+
 ### Path Chart Elements
 
 Josson path chart shows data type changes and data flow along the path.
@@ -329,6 +341,7 @@ Data filtering, transformation and formatting details are not included.
 | `$D`                                       | A double node                                                                            |
 | `$TF`                                      | A boolean node                                                                           |
 | `{}`                                       | An object node                                                                           |
+| `{=}`                                      | An object validator                                                                      |
 | `[]`                                       | An array node                                                                            |
 | `[]@`                                      | Divert each array element to separate branches                                           |
 | `[#]`                                      | An indexed array element                                                                 |
@@ -683,7 +696,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [{}] → [itemCode] → [=] ⇒ ""
+        {} → items[] → [{}] → [itemCode][=] ⇒ ""
 
 23. Filter using relational operators `=`, `!=`, `>`, `>=`, `<` and `<=`.
 
@@ -693,7 +706,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=] → {} → name ⇒ ""
+        {} → items[=] → {} → name ⇒ ""
 
 24. Returns null value if nothing matches the array filter.
 
@@ -703,7 +716,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]!! → {} → name ⇒ !unresolvable!
+        {} → items[=]!! → {} → name ⇒ !unresolvable!
 
 25. To query all matching elements, add a modifier `*` after the array filter.
 
@@ -713,7 +726,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [name] ⇒ [""]
+        {} → items[=]* → [{}] → [name] ⇒ [""]
 
 26. If a step is working on an array node, `#` denotes the zero-based index of an array element.
 
@@ -723,7 +736,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [itemCode] ⇒ [""]
+        {} → items[=]* → [{}] → [itemCode] ⇒ [""]
 
 27. For each path step, a nested array is flattened once.
 
@@ -733,7 +746,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [tags[] → [=]* ⇒ [""]] ⇒ [""]
+        {} → items[=]* → [{}] → [tags[=]* ⇒ [""]] ⇒ [""]
 
 28. Path step `array.` is the same as `array[true]*.`.
 
@@ -754,7 +767,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [{}] → [tags[] → [=]* ⇒ [""]] ⇒ [""]
+        {} → items[] → [{}] → [tags[=]* ⇒ [""]] ⇒ [""]
 
 30. The matching criteria supports logical operators and parentheses.
 
@@ -768,7 +781,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [name] ⇒ [""]
+        {} → items[=]* → [{}] → [name] ⇒ [""]
 
 31. Example of a find-all filter operation with flattened array result.
 
@@ -778,7 +791,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → items[] → [=]* → [{}] → [tags[] ⇒ [""]] ⇒ [""]
+        {} → items[=]* → [{}] → [tags[] ⇒ [""]] ⇒ [""]
 
 32. An array filter modifier `@` divert each element to separate branch for upcoming manipulation.  
     The final output merges branches into an array.
@@ -789,11 +802,11 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-                            {} → tags[] → [""]
-                           /                  \
-        {} → items[] → [=]@                    @ ⇒ [[""]]
-                           \                  /
-                            {} → tags[] → [""]
+                       {} → tags[] → [""]
+                      /                  \
+        {} → items[=]@                    @ ⇒ [[""]]
+                      \                  /
+                       {} → tags[] → [""]
 
 33. Aggregate functions work on an array node and produce a value node.
 
@@ -916,7 +929,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → customer{} → [=] ⇒ {}
+        {} → customer{=} ⇒ {}
 
 42. An object node that cannot meet the validation filter criteria returns null.
 
@@ -926,7 +939,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → customer{} → [=]!! ⇒ !unresolvable!
+        {} → customer{=}!! ⇒ !unresolvable!
 
 43. In filter expression and function argument, a path starts with symbol "$" restart from the root node.
 
@@ -985,7 +998,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → [=] → {} → isNotNull(?) ⇒ $TF
+        {} → {=} → {} → isNotNull(?) ⇒ $TF
 
 48. Relational operator `=` and `!=` support root level array values comparison where the position ordering is allowed to be different.
 
@@ -995,7 +1008,7 @@ Below is the JSON for this tutorial.
 
     _Path chart_
 
-        {} → [=] → {} → isNotNull(?) ⇒ $TF
+        {} → {=} → {} → isNotNull(?) ⇒ $TF
 
 49. Function `calc()` uses MathParser.org-mXparser library <http://mathparser.org/> to perform calculation.
 
@@ -5577,7 +5590,89 @@ Output
 
 ---
 
-#### 9. Spring query convert to a nested JSON structure
+#### 9. Refer mapping value of others array base on "id"
+
+(73945727)
+
+    {
+      "status": [
+        {
+          "id": "online",
+          "state": "valid"
+        },
+        {
+          "id": "busy",
+          "state": "unknown"
+        },
+        {
+          "id": "any",
+          "state": "unknow",
+          "moreInfo": "unavailable"
+        }
+      ],
+      "users": [
+        {
+          "title": "foo",
+          "availability": [
+            "online",
+            "busy"
+          ]
+        },
+        {
+          "title": "bar",
+          "availability": [
+            "busy",
+            "any"
+          ]
+        },
+        {
+          "title": "baz",
+          "availability": [
+            "any"
+          ]
+        }
+      ]
+    }
+
+Josson Query
+
+    map(users.field(availability@.let($id:?).get($.status[id=$id])))
+
+Output
+
+    {
+      "users" : [ {
+        "title" : "foo",
+        "availability" : [ {
+          "id" : "online",
+          "state" : "valid"
+        }, {
+          "id" : "busy",
+          "state" : "unknown"
+        } ]
+      }, {
+        "title" : "bar",
+        "availability" : [ {
+          "id" : "busy",
+          "state" : "unknown"
+        }, {
+          "id" : "any",
+          "state" : "unknow",
+          "moreInfo" : "unavailable"
+        } ]
+      }, {
+        "title" : "baz",
+        "availability" : [ {
+          "id" : "any",
+          "state" : "unknow",
+          "moreInfo" : "unavailable"
+        } ]
+      } ]
+    }
+
+---
+
+#### 10. Spring query convert to a nested JSON structure
 
 (73616066)
 
@@ -5653,7 +5748,7 @@ Output
 
 ---
 
-#### 10. How to merge two JSON string
+#### 11. How to merge two JSON string
 
 (72272928)
 
@@ -5713,7 +5808,7 @@ Output
 
 ---
 
-#### 11. How to rearrange the json array based on id in java
+#### 12. How to rearrange the json array based on id in java
 
 (47427518)
 
@@ -5782,7 +5877,7 @@ Output
 
 ---
 
-#### 12. Json object, convert json array into a json object in java
+#### 13. Json object, convert json array into a json object in java
 
 (51576987)
 
@@ -5824,7 +5919,7 @@ Output
 
 ---
 
-#### 13. How to use "set" with a predicate
+#### 14. How to use "set" with a predicate
 
 (73506183)
 
@@ -5888,7 +5983,7 @@ Output
 
 ---
 
-#### 14. How to groupby json value like python in java?
+#### 15. How to groupby json value like python in java?
 
 (72790475)
 
@@ -5931,7 +6026,7 @@ Output
 
 ---
 
-#### 15. Correct way to transform a response into DTO
+#### 16. Correct way to transform a response into DTO
 
 (73405994)
 
@@ -5983,7 +6078,7 @@ Output
 
 ---
 
-#### 16. How transform a json in another json using java
+#### 17. How transform a json in another json using java
 
 (35438323)
 
@@ -6040,7 +6135,7 @@ Output
 
 ---
 
-#### 17. Variable api JSON responses to bind to Java Object using Jackson
+#### 18. Variable api JSON responses to bind to Java Object using Jackson
 
 (73397763)
 
@@ -6088,7 +6183,7 @@ Output
 
 ---
 
-#### 18. How to convert JSONArray of objects to a json string message
+#### 19. How to convert JSONArray of objects to a json string message
 
 (73224582)
 
@@ -6128,7 +6223,7 @@ Output
 
 ---
 
-#### 19. Java copy properties with condition
+#### 20. Java copy properties with condition
 
 (73200231)
 
@@ -6152,7 +6247,7 @@ Output
 
 ---
 
-#### 20. Array input JSON
+#### 21. Array input JSON
 
 (73190751)
 
@@ -6205,7 +6300,7 @@ Output
 
 ---
 
-#### 21. Compare nested JSON object with Java with differences
+#### 22. Compare nested JSON object with Java with differences
 
 (73131799)
 
@@ -6297,7 +6392,7 @@ Output
 
 ---
 
-#### 22. Build array of objects grouping attributes in the same object
+#### 23. Build array of objects grouping attributes in the same object
 
 (72442001)
 
@@ -6354,7 +6449,7 @@ Output
 
 ---
 
-#### 23. Flatten array and nested object with default values for missing array elements
+#### 24. Flatten array and nested object with default values for missing array elements
 
 (72442443)
 
@@ -6415,7 +6510,7 @@ Output
 
 ---
 
-#### 24. Merge Array of multi Objects
+#### 25. Merge Array of multi Objects
 
 (70753154)
 
@@ -6478,7 +6573,7 @@ Output
 
 ---
 
-#### 25. Transform by condition
+#### 26. Transform by condition
 
 (54502431)
 
@@ -6546,7 +6641,7 @@ Output
 
 ---
 
-#### 26. Apply some condition on jsonnode and filter resultset in Java
+#### 27. Apply some condition on jsonnode and filter resultset in Java
 
 (73884462)
 
