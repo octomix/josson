@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
@@ -275,7 +276,19 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final String expression) {
-        return JossonCore.getNodeByExpression(jsonNode, expression);
+        return JossonCore.getNodeByExpression(jsonNode, expression, null);
+    }
+
+    /**
+     * Query data by Josson query language.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with `$`
+     * @return The resulting Jackson JsonNode
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public JsonNode getNode(final String expression, final Map<String, JsonNode> variables) {
+        return JossonCore.getNodeByExpression(jsonNode, expression, variables);
     }
 
     /**
@@ -287,7 +300,20 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final int index, final String expression) {
-        return JossonCore.getNodeByExpression(jsonNode, index, expression);
+        return JossonCore.getNodeByExpression(jsonNode, index, expression, null);
+    }
+
+    /**
+     * Query data on an element of {@code ArrayNode} by Josson query language.
+     *
+     * @param index index of the specific {@code ArrayNode} element
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with `$`
+     * @return The resulting Jackson JsonNode. {@code null} if the root is not an {@code ArrayNode}.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public JsonNode getNode(final int index, final String expression, final Map<String, JsonNode> variables) {
+        return JossonCore.getNodeByExpression(jsonNode, index, expression, variables);
     }
 
     /**
@@ -299,7 +325,20 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final String expression) {
-        return JossonCore.getNodeByExpression(node, expression);
+        return JossonCore.getNodeByExpression(node, expression, null);
+    }
+
+    /**
+     * Query data from a Jackson JsonNode by Josson query language.
+     *
+     * @param node the Jackson JsonNode that retrieve data from
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with `$`
+     * @return The resulting Jackson JsonNode
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public static JsonNode getNode(final JsonNode node, final String expression, final Map<String, JsonNode> variables) {
+        return JossonCore.getNodeByExpression(node, expression, variables);
     }
 
     /**
@@ -312,7 +351,22 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final int index, final String expression) {
-        return JossonCore.getNodeByExpression(node, index, expression);
+        return JossonCore.getNodeByExpression(node, index, expression, null);
+    }
+
+    /**
+     * Query data on an element of ArrayNode by Josson query language.
+     *
+     * @param node the Jackson JsonNode that retrieve data from
+     * @param index index of the specific ArrayNode element
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with `$`
+     * @return The resulting Jackson JsonNode. {@code null} if the root is not an ArrayNode.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public static JsonNode getNode(final JsonNode node, final int index, final String expression,
+                                   final Map<String, JsonNode> variables) {
+        return JossonCore.getNodeByExpression(node, index, expression, variables);
     }
 
     /**

@@ -246,4 +246,55 @@ class Utils {
         }
         throw new UnknownFormatConversionException("_" + funcName);
     }
+
+    static int jsonNodeComparator(JsonNode o1, JsonNode o2, final String path, final boolean asc) {
+        if (!StringUtils.isEmpty(path)) {
+            if (o1.isObject()) {
+                o1 = getNodeByExpression(PathTrace.from(o1), path);
+                if (o1 == null) {
+                    return 1;
+                }
+            }
+            if (o2.isObject()) {
+                o2 = getNodeByExpression(PathTrace.from(o2), path);
+                if (o2 == null) {
+                    return -1;
+                }
+            }
+        }
+        return jsonNodeComparator(o1, o2, asc);
+    }
+
+    static int jsonNodeComparator(final JsonNode o1, final JsonNode o2, final boolean asc) {
+        final int compare;
+        if (o1.isNumber() && o2.isNumber()) {
+            final double value = o1.asDouble() - o2.asDouble();
+            if (value == 0) {
+                return 0;
+            }
+            compare = (value > 0) ? 1 : -1;
+        } else if (o1.isTextual() && o2.isTextual()) {
+            compare = o1.asText().compareTo(o2.asText());
+        } else if (o1.isBoolean() && o2.isBoolean()) {
+            if (o1.asBoolean() == o2.asBoolean()) {
+                return 0;
+            }
+            compare = o1.asBoolean() ? -1 : 1;
+        } else if (o1.isNull() && o2.isNull()) {
+            return 0;
+        } else if (o1.isNumber()) {
+            compare = -1;
+        } else if (o1.isTextual()) {
+            compare = o2.isNumber() ? 1 : -1;
+        } else if (o1.isBoolean()) {
+            compare = o2.isNumber() || o2.isTextual() ? 1 : -1;
+        } else if (o1.isNull()) {
+            compare = o2.isContainerNode() ? -1 : 1;
+        } else if (o1.isObject()) {
+            compare = o2.isArray() ? -1 : 1;
+        } else {
+            compare = 1;
+        }
+        return asc ? compare : -compare;
+    }
 }

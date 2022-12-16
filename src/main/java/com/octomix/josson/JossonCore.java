@@ -137,12 +137,14 @@ final class JossonCore {
         return result == null || !result.isValueNode() ? 0 : result.asInt();
     }
 
-    static JsonNode getNodeByExpression(final JsonNode node, final String expression) {
-        return getNodeByExpression(node, NON_ARRAY_INDEX, expression);
+    static JsonNode getNodeByExpression(final JsonNode node, final String expression,
+                                        final Map<String, JsonNode> variables) {
+        return getNodeByExpression(node, NON_ARRAY_INDEX, expression, variables);
     }
 
-    static JsonNode getNodeByExpression(final JsonNode node, final int index, final String expression) {
-        PathTrace path = getPathByExpression(PathTrace.from(node), index, expression);
+    static JsonNode getNodeByExpression(final JsonNode node, final int index, final String expression,
+                                        final Map<String, JsonNode> variables) {
+        PathTrace path = getPathByExpression(PathTrace.from(node, variables), index, expression);
         return path == null ? null : path.node();
     }
 

@@ -46,6 +46,10 @@ public class PathTrace {
         return new PathTrace(node, null);
     }
 
+    static PathTrace from(final JsonNode node, final Map<String, JsonNode> variables) {
+        return new PathTrace(node, variables);
+    }
+
     PathTrace root() {
         return steps.length == 1 ? this : new PathTrace(steps[0], variables);
     }

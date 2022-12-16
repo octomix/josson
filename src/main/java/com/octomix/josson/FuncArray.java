@@ -18,7 +18,6 @@ package com.octomix.josson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
-import com.octomix.josson.commons.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -314,45 +313,6 @@ final class FuncArray {
         dataPath.node().forEach(nodeList::add);
         nodeList.sort((o1, o2) -> jsonNodeComparator(o1, o2, paramPath, asc));
         return path.push(MAPPER.createArrayNode().addAll(nodeList));
-    }
-
-    private static int jsonNodeComparator(JsonNode o1, JsonNode o2, final String path, final boolean asc) {
-        if (!StringUtils.isEmpty(path)) {
-            if (o1.isObject()) {
-                o1 = getNodeByExpression(PathTrace.from(o1), path);
-                if (o1 == null) {
-                    return 1;
-                }
-            }
-            if (o2.isObject()) {
-                o2 = getNodeByExpression(PathTrace.from(o2), path);
-                if (o2 == null) {
-                    return -1;
-                }
-            }
-        }
-        int compare = 0;
-        if (o1.isNumber() && o2.isNumber()) {
-            final double value = o1.asDouble() - o2.asDouble();
-            compare = (value > 0) ? 1 : (value < 0) ? -1 : 0;
-        } else if (o1.isTextual() && o2.isTextual()) {
-            compare = o1.asText().compareTo(o2.asText());
-        } else if (o1.isBoolean() && o2.isBoolean()) {
-            if (o1.asBoolean() != o2.asBoolean()) {
-                compare = o1.asBoolean() ? -1 : 1;
-            }
-        } else if (!o1.isNull() || !o2.isNull()) {
-            if (o1.isNumber()) {
-                compare = -1;
-            } else if (o1.isTextual()) {
-                compare = o2.isNumber() ? 1 : -1;
-            } else if (o1.isBoolean()) {
-                compare = o2.isNumber() || o2.isTextual() ? 1 : -1;
-            } else {
-                compare = o2.isValueNode() ? 1 : -1;
-            }
-        }
-        return asc ? compare : -compare;
     }
 
     static PathTrace funcTopBottomN(final PathTrace path, final String params, final boolean isTop) {

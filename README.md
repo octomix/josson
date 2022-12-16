@@ -279,13 +279,15 @@ Josson function `entries()` > Find-all array filter `[expression]*` > Select ele
     // *[expression]* is expanded to...
     entries().[expression]*.value
 
-Function `entries()` transform object `{ "name" : <JsonNode> }` into this new structure:
+Function `entries()` transform object `{ "name" : <JsonNode>, ... }` into this new structure:
 
     [
         {
             "key" : "name",
             "value" : <JsonNode>
-        }
+        },
+        :
+        :
     ]
 
 Therefore, use keyword `key` in a wildcard filter expression to search.
