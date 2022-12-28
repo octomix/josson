@@ -236,6 +236,9 @@ class FuncDispatcher {
                 return funcEquals(path, params, false, false);
             case "equalsignorecase":
                 return funcEquals(path, params, true, false);
+            // String
+            case "eval":
+                return funcEval(path, params);
             // Structural
             case "entries":
                 return funcEntries(path, params);
@@ -249,6 +252,8 @@ class FuncDispatcher {
             case "floor":
                 return funcFloor(path, params);
             // Array
+            case "findandmodify":
+                return funcFindAndModify(path, params);
             case "findbymax":
                 return funcFindByMaxMin(path, params, true, 0);
             case "findbymaxornull":

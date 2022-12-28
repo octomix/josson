@@ -104,6 +104,11 @@ final class FuncString {
         );
     }
 
+    static PathTrace funcEval(final PathTrace path, final String params) {
+        return applyWithoutParam(path, params, JsonNode::isTextual,
+            (data, paramList) -> path.push(getNodeByExpression(path, data.getKey().node().asText())));
+    }
+
     static PathTrace funcKeep(final PathTrace path, final String params,
                               final boolean ignoreCase, final boolean after, final boolean last) {
         return applyTextNodeWithParamAsText(path, params,

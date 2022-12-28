@@ -817,6 +817,13 @@ public class UnitTest {
         evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ...)",
                 "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]");
 
+        // Function "eval" evaluates the value of a text node as a query statement.
+        //
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"statement\":\"calc(a+b*2)\"}').eval(statement)",
+                "5.0");
+        evaluate.accept("json('[{\"a\":3,\"s\":\"calc(a*2)\"},{\"a\":4,\"s\":\"calc(a*2)\"}]')@.eval(s)",
+                "[ 6.0, 8.0 ]");
+
         josson.setJsonString("{\n" +
                 "    \"a\": [\n" +
                 "        {\n" +
@@ -975,6 +982,9 @@ public class UnitTest {
         // concatFree()
         evaluate.accept("'Hello'.concatFree(2022, '... ', ?, ' World!')", "2022... Hello World!");
         evaluate.accept("json('{\"a\":\"Hello\",\"c\":\" World!\"}').concatFree(a,b,c)", "Hello World!");
+        // eval()
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"statement\":\"calc(a+b*2)\"}').eval(statement)", "5.0");
+        evaluate.accept("json('[{\"a\":3,\"s\":\"calc(a*2)\"},{\"a\":4,\"s\":\"calc(a*2)\"}]')@.eval(s)", "[ 6.0, 8.0 ]");
         // keepAfter()
         evaluate.accept("'abcxmnxyz'.keepAfter('x')", "mnxyz");
         evaluate.accept("'abcxmnxyz'.keepAfter(?, 'X')", "*empty*");
@@ -1767,6 +1777,29 @@ public class UnitTest {
         evaluate.accept("json('[\"Hello\", \",\", \"World\", \"!\"]').join()", "Hello,World!");
         evaluate.accept("json('[1,2,3]').join('+')", "1+2+3");
         evaluate.accept("join(json('[\"A\",1,\"B\",\"2.00\",\"C\",3.00,\"D\",true,null]'),'/')", "A/1/B/2.00/C/3.0/D/true");
+        // findAndModify()
+        evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\",\"price\":8},{\"code\":\"C\",\"price\":3}]').findAndModify([code='C'],field(price:99))",
+                "[ {\n" +
+                        "  \"code\" : \"A\",\n" +
+                        "  \"price\" : 8\n" +
+                        "}, {\n" +
+                        "  \"code\" : \"B\",\n" +
+                        "  \"price\" : 8\n" +
+                        "}, {\n" +
+                        "  \"code\" : \"C\",\n" +
+                        "  \"price\" : 99\n" +
+                        "} ]");
+        evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\",\"price\":8},{\"code\":\"C\",\"price\":3}]').findAndModify([price=8],field(price:99),2)",
+                "[ {\n" +
+                        "  \"code\" : \"A\",\n" +
+                        "  \"price\" : 99\n" +
+                        "}, {\n" +
+                        "  \"code\" : \"B\",\n" +
+                        "  \"price\" : 99\n" +
+                        "}, {\n" +
+                        "  \"code\" : \"C\",\n" +
+                        "  \"price\" : 3\n" +
+                        "} ]");
         // findByMax()
         evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]').findByMax(price)",
                 "{\n" +

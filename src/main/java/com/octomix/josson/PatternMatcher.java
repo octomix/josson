@@ -123,6 +123,24 @@ final class PatternMatcher {
         return pos;
     }
 
+    private static String unescapePathStep(final String input) {
+        final int end = input.length() - 1;
+        final char[] unescape = new char[end - 1];
+        int count = 0;
+        for (int i = 1; i < end; i++) {
+            char ch = input.charAt(i);
+            if (ch == ESCAPE_SYMBOL) {
+                final char escaped = input.charAt(i + 1);
+                if (escaped == ESCAPE_SYMBOL || escaped == ESCAPE_PATH_NAME_SYMBOL) {
+                    ch = escaped;
+                    i++;
+                }
+            }
+            unescape[count++] = ch;
+        }
+        return count == 0 ? null : new String(unescape, 0, count);
+    }
+
     private static int matchEscapePathName(final String input, int pos, final int last) {
         if (input.charAt(pos) != ESCAPE_PATH_NAME_SYMBOL) {
             return 0;
@@ -649,23 +667,5 @@ final class PatternMatcher {
             }
         }
         return new String[]{getLastElementName(input), input};
-    }
-
-    static String unescapePathStep(final String input) {
-        final int end = input.length() - 1;
-        final char[] unescape = new char[end - 1];
-        int count = 0;
-        for (int i = 1; i < end; i++) {
-            char ch = input.charAt(i);
-            if (ch == ESCAPE_SYMBOL) {
-                final char escaped = input.charAt(i + 1);
-                if (escaped == ESCAPE_SYMBOL || escaped == ESCAPE_PATH_NAME_SYMBOL) {
-                    ch = escaped;
-                    i++;
-                }
-            }
-            unescape[count++] = ch;
-        }
-        return count == 0 ? null : new String(unescape, 0, count);
     }
 }

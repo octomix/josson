@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
@@ -275,7 +276,19 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final String expression) {
-        return JossonCore.getNodeByExpression(jsonNode, expression);
+        return JossonCore.getNodeByExpression(jsonNode, expression, null);
+    }
+
+    /**
+     * Query data by Josson query language.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return The resulting Jackson JsonNode
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public JsonNode getNode(final String expression, final Map<String, JsonNode> variables) {
+        return JossonCore.getNodeByExpression(jsonNode, expression, variables);
     }
 
     /**
@@ -287,7 +300,20 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final int index, final String expression) {
-        return JossonCore.getNodeByExpression(jsonNode, index, expression);
+        return JossonCore.getNodeByExpression(jsonNode, index, expression, null);
+    }
+
+    /**
+     * Query data on an element of {@code ArrayNode} by Josson query language.
+     *
+     * @param index index of the specific {@code ArrayNode} element
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return The resulting Jackson JsonNode. {@code null} if the root is not an {@code ArrayNode}.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public JsonNode getNode(final int index, final String expression, final Map<String, JsonNode> variables) {
+        return JossonCore.getNodeByExpression(jsonNode, index, expression, variables);
     }
 
     /**
@@ -299,7 +325,20 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final String expression) {
-        return JossonCore.getNodeByExpression(node, expression);
+        return JossonCore.getNodeByExpression(node, expression, null);
+    }
+
+    /**
+     * Query data from a Jackson JsonNode by Josson query language.
+     *
+     * @param node the Jackson JsonNode that retrieve data from
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return The resulting Jackson JsonNode
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public static JsonNode getNode(final JsonNode node, final String expression, final Map<String, JsonNode> variables) {
+        return JossonCore.getNodeByExpression(node, expression, variables);
     }
 
     /**
@@ -312,7 +351,22 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final int index, final String expression) {
-        return JossonCore.getNodeByExpression(node, index, expression);
+        return JossonCore.getNodeByExpression(node, index, expression, null);
+    }
+
+    /**
+     * Query data on an element of ArrayNode by Josson query language.
+     *
+     * @param node the Jackson JsonNode that retrieve data from
+     * @param index index of the specific ArrayNode element
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return The resulting Jackson JsonNode. {@code null} if the root is not an ArrayNode.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public static JsonNode getNode(final JsonNode node, final int index, final String expression,
+                                   final Map<String, JsonNode> variables) {
+        return JossonCore.getNodeByExpression(node, index, expression, variables);
     }
 
     /**
@@ -323,6 +377,18 @@ public class Josson {
      */
     public Josson getJosson(final String expression) {
         final JsonNode node = getNode(expression);
+        return node == null ? null : new Josson(node);
+    }
+
+    /**
+     * Query data by Josson query language.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return A new Josson object with the resulting JsonNode
+     */
+    public Josson getJosson(final String expression, final Map<String, JsonNode> variables) {
+        final JsonNode node = getNode(expression, variables);
         return node == null ? null : new Josson(node);
     }
 
@@ -339,6 +405,19 @@ public class Josson {
     }
 
     /**
+     * Query data on an element of {@code ArrayNode} by Josson query language.
+     *
+     * @param index index of the specific {@code ArrayNode} element
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return A new Josson object with the resulting JsonNode. {@code null} if the root is not an {@code ArrayNode}.
+     */
+    public Josson getJosson(final int index, final String expression, final Map<String, JsonNode> variables) {
+        final JsonNode node = getNode(index, expression, variables);
+        return node == null ? null : new Josson(node);
+    }
+
+    /**
      * Query data by Josson query language and return the path trace along the main branch.
      *
      * @param expression the Josson query path
@@ -350,6 +429,18 @@ public class Josson {
     }
 
     /**
+     * Query data by Josson query language and return the path trace along the main branch.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return A {@code PathTrace} object that contains all progressive nodes and variables defined along the main branch.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public PathTrace getPathTrace(final String expression, final Map<String, JsonNode> variables) {
+        return getPathByExpression(PathTrace.from(jsonNode, variables), expression);
+    }
+
+    /**
      * Query data by Josson query language, return result for {@code ArrayNode} only.
      *
      * @param expression the Josson query path
@@ -357,6 +448,19 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public ArrayNode getArrayNode(final String expression) {
+        final JsonNode node = getNode(expression);
+        return node != null && node.isArray() ? (ArrayNode) node : null;
+    }
+
+    /**
+     * Query data by Josson query language, return result for {@code ArrayNode} only.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return The resulting Jackson {@code ArrayNode}. {@code null} if the result is not an {@code ArrayNode}.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public ArrayNode getArrayNode(final String expression, final Map<String, JsonNode> variables) {
         final JsonNode node = getNode(expression);
         return node != null && node.isArray() ? (ArrayNode) node : null;
     }
@@ -377,12 +481,42 @@ public class Josson {
      * Query data by Josson query language, return result for {@code ValueNode} only.
      *
      * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return The resulting Jackson {@code ValueNode}. {@code null} if the result is not a {@code ValueNode}.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public ValueNode getValueNode(final String expression, final Map<String, JsonNode> variables) {
+        final JsonNode node = getNode(expression, variables);
+        return node != null && node.isValueNode() ? (ValueNode) node : null;
+    }
+
+    /**
+     * Query data by Josson query language, return result for {@code ValueNode} only.
+     *
+     * @param expression the Josson query path
      * @return The resulting Jackson {@code ValueNode}.
      * @throws IllegalArgumentException if the query path is invalid
      * @throws NoSuchElementException if the result is not a {@code ValueNode}
      */
     public ValueNode getRequiredValueNode(final String expression) {
         final JsonNode node = getNode(expression);
+        if (node == null || !node.isValueNode()) {
+            throw new NoSuchElementException("This Josson path cannot evaluate to a value node: " + expression);
+        }
+        return (ValueNode) node;
+    }
+
+    /**
+     * Query data by Josson query language, return result for {@code ValueNode} only.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return The resulting Jackson {@code ValueNode}.
+     * @throws IllegalArgumentException if the query path is invalid
+     * @throws NoSuchElementException if the result is not a {@code ValueNode}
+     */
+    public ValueNode getRequiredValueNode(final String expression, final Map<String, JsonNode> variables) {
+        final JsonNode node = getNode(expression, variables);
         if (node == null || !node.isValueNode()) {
             throw new NoSuchElementException("This Josson path cannot evaluate to a value node: " + expression);
         }
@@ -406,12 +540,39 @@ public class Josson {
      * Query a {@code ValueNode} by Josson query language, return the result as {@code String}.
      *
      * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asText()} if the result is a {@code ValueNode},
+     *         {@code null} if no result found or the result is a {@code NullNode}, otherwise {@code node.toString()}
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public String getString(final String expression, final Map<String, JsonNode> variables) {
+        final JsonNode node = getNode(expression, variables);
+        return nodeIsNull(node) ? null : node.isValueNode() ? node.asText() : node.toString();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code String}.
+     *
+     * @param expression the Josson query path
      * @return {@code node.asText()}
      * @throws IllegalArgumentException if the query path is invalid
      * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
      */
     public String getRequiredString(final String expression) {
         return getRequiredValueNode(expression).asText();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code String}.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asText()}
+     * @throws IllegalArgumentException if the query path is invalid
+     * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
+     */
+    public String getRequiredString(final String expression, final Map<String, JsonNode> variables) {
+        return getRequiredValueNode(expression, variables).asText();
     }
 
     /**
@@ -430,12 +591,38 @@ public class Josson {
      * Query a {@code ValueNode} by Josson query language, return the result as {@code Long}.
      *
      * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asLong()} if the result is a {@code ValueNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public Long getLong(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getValueNode(expression, variables);
+        return nodeIsNull(node) ? null : node.asLong();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code Long}.
+     *
+     * @param expression the Josson query path
      * @return {@code node.asLong()}
      * @throws IllegalArgumentException if the query path is invalid
      * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
      */
     public Long getRequiredLong(final String expression) {
         return getRequiredValueNode(expression).asLong();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code Long}.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asLong()}
+     * @throws IllegalArgumentException if the query path is invalid
+     * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
+     */
+    public Long getRequiredLong(final String expression, final Map<String, JsonNode> variables) {
+        return getRequiredValueNode(expression, variables).asLong();
     }
 
     /**
@@ -454,12 +641,38 @@ public class Josson {
      * Query a {@code ValueNode} by Josson query language, return the result as {@code Integer}.
      *
      * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asInt()} if the result is a {@code ValueNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public Integer getInteger(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getValueNode(expression, variables);
+        return nodeIsNull(node) ? null : node.asInt();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code Integer}.
+     *
+     * @param expression the Josson query path
      * @return {@code node.asInt()}
      * @throws IllegalArgumentException if the query path is invalid
      * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
      */
     public Integer getRequiredInteger(final String expression) {
         return getRequiredValueNode(expression).asInt();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code Integer}.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asInt()}
+     * @throws IllegalArgumentException if the query path is invalid
+     * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
+     */
+    public Integer getRequiredInteger(final String expression, final Map<String, JsonNode> variables) {
+        return getRequiredValueNode(expression, variables).asInt();
     }
 
     /**
@@ -478,12 +691,38 @@ public class Josson {
      * Query a {@code ValueNode} by Josson query language, return the result as {@code Double}.
      *
      * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asDouble()} if the result is a {@code ValueNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public Double getDouble(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getValueNode(expression, variables);
+        return nodeIsNull(node) ? null : node.asDouble();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code Double}.
+     *
+     * @param expression the Josson query path
      * @return {@code node.asDouble()}
      * @throws IllegalArgumentException if the query path is invalid
      * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
      */
     public Double getRequiredDouble(final String expression) {
         return getRequiredValueNode(expression).asDouble();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code Double}.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asDouble()}
+     * @throws IllegalArgumentException if the query path is invalid
+     * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
+     */
+    public Double getRequiredDouble(final String expression, final Map<String, JsonNode> variables) {
+        return getRequiredValueNode(expression, variables).asDouble();
     }
 
     /**
@@ -502,12 +741,38 @@ public class Josson {
      * Query a {@code ValueNode} by Josson query language, return the result as {@code Boolean}.
      *
      * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asBoolean()} if the result is a {@code ValueNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public Boolean getBoolean(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getValueNode(expression, variables);
+        return nodeIsNull(node) ? null : node.asBoolean();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code Boolean}.
+     *
+     * @param expression the Josson query path
      * @return {@code node.asBoolean()}
      * @throws IllegalArgumentException if the query path is invalid
      * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
      */
     public Boolean getRequiredBoolean(final String expression) {
         return getRequiredValueNode(expression).asBoolean();
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code Boolean}.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return {@code node.asBoolean()}
+     * @throws IllegalArgumentException if the query path is invalid
+     * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
+     */
+    public Boolean getRequiredBoolean(final String expression, final Map<String, JsonNode> variables) {
+        return getRequiredValueNode(expression, variables).asBoolean();
     }
 
     /**
@@ -526,12 +791,39 @@ public class Josson {
      * Query a {@code ValueNode} by Josson query language, return the result as {@code LocalDateTime}.
      *
      * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return parsed {@code LocalDateTime} if the result is a {@code TextNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid or the text cannot be parsed
+     */
+    public LocalDateTime getIsoLocalDateTime(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getValueNode(expression, variables);
+        return node == null || !node.isTextual() ? null : toLocalDateTime(node);
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code LocalDateTime}.
+     *
+     * @param expression the Josson query path
      * @return parsed {@code LocalDateTime} if the result is a {@code TextNode}, otherwise {@code null}
      * @throws IllegalArgumentException if the query path is invalid or the text cannot be parsed
      * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
      */
     public LocalDateTime getRequiredIsoLocalDateTime(final String expression) {
         final ValueNode node = getRequiredValueNode(expression);
+        return !node.isTextual() ? null : toLocalDateTime(node);
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code LocalDateTime}.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return parsed {@code LocalDateTime} if the result is a {@code TextNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid or the text cannot be parsed
+     * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
+     */
+    public LocalDateTime getRequiredIsoLocalDateTime(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getRequiredValueNode(expression, variables);
         return !node.isTextual() ? null : toLocalDateTime(node);
     }
 
@@ -551,12 +843,39 @@ public class Josson {
      * Query a {@code ValueNode} by Josson query language, return the result as {@code LocalDate}.
      *
      * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return parsed {@code LocalDate} if the result is a {@code TextNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid or the text cannot be parsed
+     */
+    public LocalDate getIsoLocalDate(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getValueNode(expression, variables);
+        return node == null || !node.isTextual() ? null : LocalDate.parse(node.asText());
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code LocalDate}.
+     *
+     * @param expression the Josson query path
      * @return parsed {@code LocalDate} if the result is a {@code TextNode}, otherwise {@code null}
      * @throws IllegalArgumentException if the query path is invalid or the text cannot be parsed
      * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
      */
     public LocalDate getRequiredIsoLocalDate(final String expression) {
         final ValueNode node = getRequiredValueNode(expression);
+        return !node.isTextual() ? null : LocalDate.parse(node.asText());
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code LocalDate}.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return parsed {@code LocalDate} if the result is a {@code TextNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid or the text cannot be parsed
+     * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
+     */
+    public LocalDate getRequiredIsoLocalDate(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getRequiredValueNode(expression, variables);
         return !node.isTextual() ? null : LocalDate.parse(node.asText());
     }
 
@@ -576,12 +895,39 @@ public class Josson {
      * Query a {@code ValueNode} by Josson query language, return the result as {@code OffsetDateTime}.
      *
      * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return parsed {@code OffsetDateTime} if the result is a {@code TextNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid or the text cannot be parsed
+     */
+    public OffsetDateTime getOffsetDateTime(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getValueNode(expression, variables);
+        return node == null || !node.isTextual() ? null : toOffsetDateTime(node);
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code OffsetDateTime}.
+     *
+     * @param expression the Josson query path
      * @return parsed {@code OffsetDateTime} if the result is a {@code TextNode}, otherwise {@code null}
      * @throws IllegalArgumentException if the query path is invalid or the text cannot be parsed
      * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
      */
     public OffsetDateTime getRequiredOffsetDateTime(final String expression) {
         final ValueNode node = getRequiredValueNode(expression);
+        return !node.isTextual() ? null : toOffsetDateTime(node);
+    }
+
+    /**
+     * Query a {@code ValueNode} by Josson query language, return the result as {@code OffsetDateTime}.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return parsed {@code OffsetDateTime} if the result is a {@code TextNode}, otherwise {@code null}
+     * @throws IllegalArgumentException if the query path is invalid or the text cannot be parsed
+     * @throws NoSuchElementException if no result found or the result is not a {@code ValueNode}
+     */
+    public OffsetDateTime getRequiredOffsetDateTime(final String expression, final Map<String, JsonNode> variables) {
+        final ValueNode node = getRequiredValueNode(expression, variables);
         return !node.isTextual() ? null : toOffsetDateTime(node);
     }
 
