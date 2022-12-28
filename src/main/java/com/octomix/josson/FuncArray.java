@@ -29,6 +29,7 @@ import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 import static com.octomix.josson.Utils.*;
+import static com.octomix.josson.Utils.asBoolean;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -88,6 +89,28 @@ final class FuncArray {
         doubles.forEach(value -> result.add(DoubleNode.valueOf(value)));
         booleans.forEach(value -> result.add(BooleanNode.valueOf(value)));
         return path.push(result);
+    }
+
+    static PathTrace funcFindAndModify(final PathTrace path, final String params) {
+        final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 2, 3);
+        final PathTrace dataPath = pathAndParams.getKey();
+        if (dataPath == null || !dataPath.node().isArray()) {
+            return dataPath;
+        }
+        final String expression = pathAndParams.getValue().get(0);
+        final String eval = pathAndParams.getValue().get(1);
+        int count = pathAndParams.getValue().size() < 3 ? 1 : getNodeAsInt(dataPath, pathAndParams.getValue().get(2));
+        final ArrayNode array = (ArrayNode) dataPath.node();
+        for (int i = 0; i < array.size(); i++) {
+            final JsonNode result = getNodeByExpression(dataPath.push(array.get(i)), expression);
+            if (result != null && result.isNumber() && result.asInt() == i || asBoolean(result)) {
+                array.set(i, getNodeByExpression(dataPath.push(array.get(i)), eval));
+                if (--count == 0) {
+                    break;
+                }
+            }
+        }
+        return path.push(array);
     }
 
     static PathTrace funcFindByMaxMin(final PathTrace path, final String params, final boolean isMax, final int nullPriority) {

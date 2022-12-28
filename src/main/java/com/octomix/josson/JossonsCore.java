@@ -141,7 +141,7 @@ class JossonsCore {
         return backup;
     }
 
-    private void restoreDictionaryFunctionParams(Map<String, Josson> backup) {
+    private void restoreDictionaryFunctionParams(final Map<String, Josson> backup) {
         removeDictionaryFunctionParams();
         if (backup != null) {
             datasets.putAll(backup);
@@ -382,7 +382,7 @@ class JossonsCore {
         } else {
             sb.append(template, offset, template.length());
         }
-        String filled = sb.toString();
+        final String filled = sb.toString();
         if (!unresolvedDatasets.isEmpty() || !unresolvedPlaceholders.isEmpty()) {
             throw new NoValuePresentException(unresolvedDatasets, unresolvedPlaceholders, filled).isAntiInject(outIsAntiInject);
         }
