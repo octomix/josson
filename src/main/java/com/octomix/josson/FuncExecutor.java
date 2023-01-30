@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@ package com.octomix.josson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UnknownFormatConversionException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -63,19 +62,11 @@ final class FuncExecutor {
         return Pair.of(expression == null ? path : getPathByExpression(path, expression), paramList);
     }
 
-    static Map<String, String> getParamNamePath(final List<String> paramList) {
-        final Map<String, String> elements = new LinkedHashMap<>();
-        int noNameCount = 0;
-        for (String param : paramList) {
-            String[] namePath;
-            try {
-                namePath = decomposeNameAndPath(param);
-            } catch (UnknownFormatConversionException e) {
-                namePath = new String[]{e.getConversion() + ++noNameCount, param};
-            }
-            elements.put(namePath[0], namePath[1]);
-        }
-        return elements;
+    static List<String[]> getParamNamePath(final List<String> paramList) {
+        final AtomicInteger noNameCount = new AtomicInteger();
+        return paramList.stream()
+                .map(param -> decomposeNameAndPath(param, (ifFuncName) -> ifFuncName + noNameCount.incrementAndGet()))
+                .collect(Collectors.toList());
     }
 
     static PathTrace getParamArrayOrItselfIsContainer(final PathTrace path, final String params) {

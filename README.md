@@ -241,7 +241,7 @@ _Example_
 
     a.b.c[2].upperCase() ==> "D"
 
-    a.b.c[?.isNumber()]* ==> [ 1, 2 ]
+    a.b.c[isNumber()]* ==> [ 1, 2 ]
 
     a.x[y='z'] ==> { "y": "z" }
 
@@ -1496,7 +1496,7 @@ Below is the JSON for this tutorial.
 74. Function `assort()` separates an object's entries according to different path conditions in sequence,
     and put them into the corresponding array if the evaluated result is not null.
     Entries will be removed if no condition can be matched.
-    If the last argument is `...`, each of the remaining entry will be added to the end of result array separately.
+    If the last argument is `??`, each of the remaining entry will be added to the end of result array separately.
     If no argument is provided, each entry will be added to the result array separately.
 
         josson.getNode("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
@@ -1535,7 +1535,7 @@ Below is the JSON for this tutorial.
         } ]
 
         josson.getNode("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
-                       ".assort(*.[isEven()], ~'xy.*', ~'ab.*', ...)")
+                       ".assort(*.[isEven()], ~'xy.*', ~'ab.*', ??)")
         ==>
         [ {
           "xy2" : 2,
@@ -1586,7 +1586,7 @@ Below is the JSON for this tutorial.
         ==>
         [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]
 
-        josson.getNode("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ...)")
+        josson.getNode("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ??)")
         ==>
         [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]
 
@@ -4177,7 +4177,7 @@ Following are some examples of each function.
 
 #### 244. assort()
 
-    json('{"xy1": 1,"xy2": 2,"ab1": 3,"ab2": 4,"ab3": 5,"zz1": 6,"xy3": 7,"zz2": 9,"zz3": {"k":10}}}').assort(*.[isEven()], ~'xy.*', ~'ab.*', ...)
+    json('{"xy1": 1,"xy2": 2,"ab1": 3,"ab2": 4,"ab3": 5,"zz1": 6,"xy3": 7,"zz2": 9,"zz3": {"k":10}}}').assort(*.[isEven()], ~'xy.*', ~'ab.*', ??)
     ==>
     [ {
       "xy2" : 2,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.mariuszgromada.math.mxparser.Expression;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
@@ -47,36 +46,35 @@ final class FuncArithmetic {
     static PathTrace funcCalc(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH);
         String calc = paramList.remove(0);
-        final Map<String, String> args = getParamNamePath(paramList);
+        final List<String[]> nameAndPaths = getParamNamePath(paramList);
         if (calc.contains(CURRENT_NODE)) {
             calc = calc.replace(CURRENT_NODE, "_THIS_NODE_ ");
-            args.put("_THIS_NODE_", CURRENT_NODE);
+            nameAndPaths.add(new String[]{"_THIS_NODE_", CURRENT_NODE, null});
         }
         final Expression calcExpr = new Expression(calc);
         calcExpr.disableImpliedMultiplicationMode();
         if (path.node().isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < path.node().size(); i++) {
-                array.add(funcCalc(path, calcExpr, args, i));
+                array.add(funcCalc(path, calcExpr, nameAndPaths, i));
             }
             return path.push(array);
         }
-        return path.push(funcCalc(path, calcExpr, args, NON_ARRAY_INDEX));
+        return path.push(funcCalc(path, calcExpr, nameAndPaths, NON_ARRAY_INDEX));
     }
 
     private static DoubleNode funcCalc(final PathTrace path, final Expression calcExpr,
-                                       final Map<String, String> args, final int index) {
+                                       final List<String[]> nameAndPaths, final int index) {
         calcExpr.removeAllArguments();
-        for (Map.Entry<String, String> arg : args.entrySet()) {
-            final String expression = arg.getValue();
-            if (expression == null) {
+        for (String[] nameAndPath : nameAndPaths) {
+            if (nameAndPath[1] == null) {
                 continue;
             }
-            final JsonNode argNode = getNodeByExpression(path, index, expression);
+            final JsonNode argNode = getNodeByExpression(path, index, nameAndPath[1]);
             if (!nodeHasValue(argNode)) {
                 return null;
             }
-            calcExpr.addArguments(new Argument(arg.getKey(), argNode.asDouble()));
+            calcExpr.addArguments(new Argument(nameAndPath[0], argNode.asDouble()));
         }
         if (!calcExpr.checkSyntax()) {
             for (String missingArg : calcExpr.getMissingUserDefinedArguments()) {

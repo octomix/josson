@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,15 +157,15 @@ final class FuncStructural {
     }
 
     static PathTrace funcField(final PathTrace path, final String params) {
-        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        final List<String[]> nameAndPaths = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
         if (path.node().isObject()) {
-            return path.push(funcMap(cloneObject((ObjectNode) path.node()), path, args, NON_ARRAY_INDEX));
+            return path.push(funcMap(cloneObject((ObjectNode) path.node()), path, nameAndPaths, NON_ARRAY_INDEX));
         }
         if (path.node().isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < path.node().size(); i++) {
                 final JsonNode elem = path.node().get(i);
-                array.add(elem.isObject() ? funcMap(cloneObject((ObjectNode) elem), path, args, i) : null);
+                array.add(elem.isObject() ? funcMap(cloneObject((ObjectNode) elem), path, nameAndPaths, i) : null);
             }
             return path.push(array);
         }
@@ -238,26 +238,15 @@ final class FuncStructural {
             return null;
         }
         final List<String> paramList = pathAndParams.getValue();
-        String[] nameAndPath;
-        try {
-            nameAndPath = decomposeNameAndPath(paramList.get(0));
-        } catch (UnknownFormatConversionException e) {
-            nameAndPath = new String[]{ENTRY_KEY_NAME, paramList.get(0)};
-        }
-        String[] grouping;
-        if (paramList.size() > 1) {
-            try {
-                grouping = decomposeNameAndPath(paramList.get(1));
-            } catch (UnknownFormatConversionException e) {
-                grouping = new String[]{GROUP_VALUE_NAME, paramList.get(1)};
-            }
-        } else {
-            grouping = new String[]{GROUP_VALUE_NAME, null};
-        }
+        final String[] nameAndPath = decomposeNameAndPath(paramList.get(0), (ifFuncName) -> ENTRY_KEY_NAME);
+        final String[] grouping = paramList.size() > 1
+                ? decomposeNameAndPath(paramList.get(1), (ifFuncName) -> GROUP_VALUE_NAME)
+                : new String[]{GROUP_VALUE_NAME, null, null};
         final ArrayNode array = MAPPER.createArrayNode();
         for (int i = 0; i < dataPath.node().size(); i++) {
             final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, dataPath, i);
-            final JsonNode key = getNodeByExpression(dataPath, i, evalNameAndPath[evalNameAndPath[1] == null ? 0 : 1]);
+            final JsonNode key = getNodeByExpression(
+                dataPath, i, evalNameAndPath[evalNameAndPath[1] == null ? 0 : 1], evalNameAndPath[2] != null);
             if (key != null) {
                 ArrayNode values = null;
                 final String[] evalGrouping = evaluateNameAndPath(grouping, dataPath, i);
@@ -274,7 +263,8 @@ final class FuncStructural {
                     entry.set(evalGrouping[0], values);
                     array.add(entry);
                 }
-                values.add(evalGrouping[1] == null ? dataPath.node().get(i) : getNodeByExpression(dataPath, i, evalGrouping[1]));
+                values.add(evalGrouping[1] == null ? dataPath.node().get(i)
+                        : getNodeByExpression(dataPath, i, evalGrouping[1], evalGrouping[2] != null));
             }
         }
         return path.push(array);
@@ -313,35 +303,35 @@ final class FuncStructural {
     }
 
     static PathTrace funcLet(final PathTrace path, final String params) {
-        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
-        for (Map.Entry<String, String> arg : args.entrySet()) {
-            final String[] evalNameAndPath = evaluateNameAndPath(new String[]{arg.getKey(), arg.getValue()}, path, NON_ARRAY_INDEX);
-            final JsonNode result = getNodeByExpression(path, NON_ARRAY_INDEX, evalNameAndPath[1]);
+        final List<String[]> nameAndPaths = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        for (String[] nameAndPath : nameAndPaths) {
+            final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, path, NON_ARRAY_INDEX);
+            final JsonNode result = getNodeByExpression(
+                path, NON_ARRAY_INDEX, evalNameAndPath[1], evalNameAndPath[2] != null);
             path.setVariable(evalNameAndPath[0], result);
         }
         return path;
     }
 
     static PathTrace funcMap(final PathTrace path, final String params) {
-        final Map<String, String> args = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        final List<String[]> nameAndPaths = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
         if (!path.node().isArray()) {
-            return path.push(funcMap(MAPPER.createObjectNode(), path, args, NON_ARRAY_INDEX));
+            return path.push(funcMap(MAPPER.createObjectNode(), path, nameAndPaths, NON_ARRAY_INDEX));
         }
         final ArrayNode array = MAPPER.createArrayNode();
         for (int i = 0; i < path.node().size(); i++) {
-            array.add(funcMap(MAPPER.createObjectNode(), path, args, i));
+            array.add(funcMap(MAPPER.createObjectNode(), path, nameAndPaths, i));
         }
         return path.push(array);
     }
 
-    private static ObjectNode funcMap(final ObjectNode base, final PathTrace node,
-                                      final Map<String, String> args, final int index) {
-        for (Map.Entry<String, String> arg : args.entrySet()) {
-            final String[] evalNameAndPath = evaluateNameAndPath(new String[]{arg.getKey(), arg.getValue()}, node, index);
+    private static ObjectNode funcMap(final ObjectNode base, final PathTrace node, final List<String[]> nameAndPaths, final int index) {
+        for (String[] nameAndPath : nameAndPaths) {
+            final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, node, index);
             if (evalNameAndPath[1] == null) {
                 base.remove(evalNameAndPath[0]);
             } else {
-                final JsonNode result = getNodeByExpression(node, index, evalNameAndPath[1]);
+                final JsonNode result = getNodeByExpression(node, index, evalNameAndPath[1], evalNameAndPath[2] != null);
                 if (result == null) {
                     base.remove(evalNameAndPath[0]);
                 } else {
@@ -505,7 +495,7 @@ final class FuncStructural {
         if (dataPath == null) {
             return null;
         }
-        final String[] nameAndPath = decomposeNameAndPath(pathAndParams.getValue().get(0));
+        final String[] nameAndPath = decomposeNameAndPath(pathAndParams.getValue().get(0), null);
         if (nameAndPath[1] == null) {
             throw new SyntaxErrorException("Missing path '" + params + "'");
         }
@@ -521,7 +511,7 @@ final class FuncStructural {
     }
 
     private static void funcUnwind(final ArrayNode unwind, final PathTrace path, final String[] nameAndPath) {
-        final JsonNode array = getNodeByExpression(path, nameAndPath[1]);
+        final JsonNode array = getNodeByExpression(path, nameAndPath[1], nameAndPath[2] != null);
         if (array == null || !array.isArray()) {
             return;
         }

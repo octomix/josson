@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,11 @@ final class JossonCore {
 
     static final String CURRENT_NODE = "?";
 
-    static final String VAR_ARGS = "...";
+    static final String EVALUATE_KEY_NAME = ":";
+
+    static final String UNRESOLVABLE_AS_NULL = "+";
+
+    static final String VAR_ARGS = "??";
 
     private static final char WILDCARD_SYMBOL = '*';
 
@@ -144,18 +148,29 @@ final class JossonCore {
 
     static JsonNode getNodeByExpression(final JsonNode node, final int index, final String expression,
                                         final Map<String, JsonNode> variables) {
-        PathTrace path = getPathByExpression(PathTrace.from(node, variables), index, expression);
+        final PathTrace path = getPathByExpression(PathTrace.from(node, variables), index, expression);
         return path == null ? null : path.node();
     }
 
     static JsonNode getNodeByExpression(final PathTrace path, final String expression) {
-        PathTrace result = getPathByExpression(path, expression);
+        final PathTrace result = getPathByExpression(path, expression);
         return result == null ? null : result.node();
     }
 
+    static JsonNode getNodeByExpression(final PathTrace path, final String expression, final boolean defaultNullNode) {
+        final JsonNode result = getNodeByExpression(path, expression);
+        return result != null ? result : defaultNullNode ? NullNode.getInstance() : null;
+    }
+
     static JsonNode getNodeByExpression(final PathTrace path, final int index, final String expression) {
-        PathTrace result = getPathByExpression(path, index, expression);
+        final PathTrace result = getPathByExpression(path, index, expression);
         return result == null ? null : result.node();
+    }
+
+    static JsonNode getNodeByExpression(final PathTrace path, final int index, final String expression,
+                                        final boolean defaultNullNode) {
+        final JsonNode result = getNodeByExpression(path, index, expression);
+        return result != null ? result : defaultNullNode ? NullNode.getInstance() : null;
     }
 
     static PathTrace getPathByExpression(final PathTrace path, final String expression) {
@@ -386,7 +401,7 @@ final class JossonCore {
         final List<PathTrace> nextLevel = new ArrayList<>();
         for (PathTrace path : paths) {
             for (Iterator<JsonNode> it = path.node().elements(); it.hasNext(); ) {
-                JsonNode elem = it.next();
+                final JsonNode elem = it.next();
                 if (elem.isObject()) {
                     nextLevel.add(path.push(elem));
                 }
