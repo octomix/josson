@@ -40,7 +40,7 @@ final class FuncArithmetic {
 
     static PathTrace funcAbs(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, node -> node.isNumber() || node.isTextual(),
-            (data, paramList) -> path.push(DoubleNode.valueOf(Math.abs(data.getKey().node().asDouble()))));
+            (data, paramList) -> path.push(DoubleNode.valueOf(Math.abs(data.getKey().asDouble()))));
     }
 
     static PathTrace funcCalc(final PathTrace path, final String params) {
@@ -53,9 +53,9 @@ final class FuncArithmetic {
         }
         final Expression calcExpr = new Expression(calc);
         calcExpr.disableImpliedMultiplicationMode();
-        if (path.node().isArray()) {
+        if (path.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < path.node().size(); i++) {
+            for (int i = 0; i < path.containerSize(); i++) {
                 array.add(funcCalc(path, calcExpr, nameAndPaths, i));
             }
             return path.push(array);
@@ -102,11 +102,11 @@ final class FuncArithmetic {
     }
 
     static PathTrace funcCeil(final PathTrace path, final String params) {
-        return applyNumberNodeToInt(path, params, dataPath -> (int) Math.ceil(dataPath.node().asDouble()));
+        return applyNumberNodeToInt(path, params, dataPath -> (int) Math.ceil(dataPath.asDouble()));
     }
 
     static PathTrace funcFloor(final PathTrace path, final String params) {
-        return applyNumberNodeToInt(path, params, dataPath -> (int) Math.floor(dataPath.node().asDouble()));
+        return applyNumberNodeToInt(path, params, dataPath -> (int) Math.floor(dataPath.asDouble()));
     }
 
     static PathTrace funcMod(final PathTrace path, final String params) {
@@ -115,7 +115,7 @@ final class FuncArithmetic {
                 final PathTrace dataPath = data.getKey();
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
                 final int divisor = getNodeAsInt(paramPath, data.getValue(), paramList.get(0));
-                final int result = dataPath.node().asInt() % divisor;
+                final int result = dataPath.asInt() % divisor;
                 return path.push(IntNode.valueOf(result < 0 ? result + divisor : result));
             });
     }
@@ -127,7 +127,7 @@ final class FuncArithmetic {
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
                 final int precision = getNodeAsInt(paramPath, data.getValue(), paramList.get(0));
                 final double magnitude = Math.pow(10, precision);
-                final double result = Math.round(dataPath.node().asDouble() * magnitude) / magnitude;
+                final double result = Math.round(dataPath.asDouble() * magnitude) / magnitude;
                 return path.push(precision > 0 ? DoubleNode.valueOf(result) : IntNode.valueOf((int) result));
             });
     }

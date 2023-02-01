@@ -43,7 +43,7 @@ final class FuncStructural {
 
     static PathTrace funcAssort(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
-        if (!path.node().isContainerNode()) {
+        if (!path.isContainer()) {
             return null;
         }
         final boolean notAssorted;
@@ -56,7 +56,7 @@ final class FuncStructural {
             notAssorted = false;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        if (path.node().isObject()) {
+        if (path.isObject()) {
             paramList.forEach(each -> array.add(MAPPER.createObjectNode()));
             path.node().fields().forEachRemaining(field -> {
                 final ObjectNode entry = MAPPER.createObjectNode().set(field.getKey(), field.getValue());
@@ -107,15 +107,15 @@ final class FuncStructural {
         if (result == null || (index != null && Operator.EQ.relationalCompare(path.node(), result.node()))) {
             return;
         }
-        if (result.node().isArray()) {
-            for (int i = 0; i < result.node().size(); i++) {
+        if (result.isArray()) {
+            for (int i = 0; i < result.containerSize(); i++) {
                 addArrayElement(array, getNodeByExpression(result, i, expression));
                 funcCumulateCollect(array, result, i, expression, next);
             }
             return;
         }
         addArrayElement(array, getNodeByExpression(result, expression));
-        if (result.node().isObject()) {
+        if (result.isObject()) {
             funcCumulateCollect(array, result, NON_ARRAY_INDEX, expression, next);
         }
     }
@@ -130,10 +130,10 @@ final class FuncStructural {
         if (depth < 1) {
             return null;
         }
-        if (dataPath.node().isObject()) {
+        if (dataPath.isObject()) {
             return path.push(deepCopy((ObjectNode) dataPath.node(), depth));
         }
-        if (dataPath.node().isArray()) {
+        if (dataPath.isArray()) {
             return path.push(deepCopy((ArrayNode) dataPath.node(), depth));
         }
         return dataPath;
@@ -141,11 +141,11 @@ final class FuncStructural {
 
     static PathTrace funcEntries(final PathTrace path, final String params) {
         final PathTrace paramPath = getParamPath(path, params);
-        if (paramPath == null || !paramPath.node().isContainerNode()) {
+        if (paramPath == null || !paramPath.isContainer()) {
             return null;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        if (paramPath.node().isArray()) {
+        if (paramPath.isArray()) {
             paramPath.node().forEach(elem -> elem.fields()
                 .forEachRemaining(field ->
                     array.add(Josson.createObjectNode().put(ENTRY_KEY_NAME, field.getKey()).set(ENTRY_VALUE_NAME, field.getValue()))));
@@ -158,13 +158,13 @@ final class FuncStructural {
 
     static PathTrace funcField(final PathTrace path, final String params) {
         final List<String[]> nameAndPaths = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
-        if (path.node().isObject()) {
+        if (path.isObject()) {
             return path.push(funcMap(cloneObject((ObjectNode) path.node()), path, nameAndPaths, NON_ARRAY_INDEX));
         }
-        if (path.node().isArray()) {
+        if (path.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < path.node().size(); i++) {
-                final JsonNode elem = path.node().get(i);
+            for (int i = 0; i < path.containerSize(); i++) {
+                final JsonNode elem = path.get(i);
                 array.add(elem.isObject() ? funcMap(cloneObject((ObjectNode) elem), path, nameAndPaths, i) : null);
             }
             return path.push(array);
@@ -175,7 +175,7 @@ final class FuncStructural {
     static PathTrace funcFlatten(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 0, 2);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath != null && dataPath.node().isContainerNode()) {
+        if (dataPath != null && dataPath.isContainer()) {
             final List<String> paramList = pathAndParams.getValue();
             final JsonNode param = paramList.size() > 0 ? getNodeByExpression(path, paramList.get(0)) : null;
             final JsonNode indexFormat = paramList.size() > 1 ? getNodeByExpression(path, paramList.get(1)) : null;
@@ -185,7 +185,7 @@ final class FuncStructural {
                         nodeIsNull(indexFormat) ? null : indexFormat.asText());
                 return path.push(object);
             }
-            if (dataPath.node().isArray()) {
+            if (dataPath.isArray()) {
                 final ArrayNode array = MAPPER.createArrayNode();
                 funcFlatten(array, dataPath.node(), param == null ? 0 : param.asInt());
                 return path.push(array);
@@ -234,7 +234,7 @@ final class FuncStructural {
     static PathTrace funcGroup(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 2);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath == null || !dataPath.node().isArray()) {
+        if (dataPath == null || !dataPath.isArray()) {
             return null;
         }
         final List<String> paramList = pathAndParams.getValue();
@@ -243,7 +243,7 @@ final class FuncStructural {
                 ? decomposeNameAndPath(paramList.get(1), (ifFuncName) -> GROUP_VALUE_NAME)
                 : new String[]{GROUP_VALUE_NAME, null, null};
         final ArrayNode array = MAPPER.createArrayNode();
-        for (int i = 0; i < dataPath.node().size(); i++) {
+        for (int i = 0; i < dataPath.containerSize(); i++) {
             final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, dataPath, i);
             final JsonNode key = getNodeByExpression(
                 dataPath, i, evalNameAndPath[evalNameAndPath[1] == null ? 0 : 1], evalNameAndPath[2] != null);
@@ -263,7 +263,7 @@ final class FuncStructural {
                     entry.set(evalGrouping[0], values);
                     array.add(entry);
                 }
-                values.add(evalGrouping[1] == null ? dataPath.node().get(i)
+                values.add(evalGrouping[1] == null ? dataPath.get(i)
                         : getNodeByExpression(dataPath, i, evalGrouping[1], evalGrouping[2] != null));
             }
         }
@@ -274,7 +274,7 @@ final class FuncStructural {
         return applyWithoutParam(path, params, JsonNode::isTextual,
             (data, paramList) -> {
                 try {
-                    return path.push(readJsonNode(data.getKey().node().asText()));
+                    return path.push(readJsonNode(data.getKey().asText()));
                 } catch (JsonProcessingException e) {
                     throw new IllegalArgumentException(e.getMessage());
                 }
@@ -284,7 +284,7 @@ final class FuncStructural {
     static PathTrace funcKeys(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 0, 1);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath == null || !dataPath.node().isObject()) {
+        if (dataPath == null || !dataPath.isObject()) {
             return null;
         }
         final ArrayNode array = MAPPER.createArrayNode();
@@ -315,11 +315,11 @@ final class FuncStructural {
 
     static PathTrace funcMap(final PathTrace path, final String params) {
         final List<String[]> nameAndPaths = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
-        if (!path.node().isArray()) {
+        if (!path.isArray()) {
             return path.push(funcMap(MAPPER.createObjectNode(), path, nameAndPaths, NON_ARRAY_INDEX));
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        for (int i = 0; i < path.node().size(); i++) {
+        for (int i = 0; i < path.containerSize(); i++) {
             array.add(funcMap(MAPPER.createObjectNode(), path, nameAndPaths, i));
         }
         return path.push(array);
@@ -346,8 +346,8 @@ final class FuncStructural {
         final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH);
         final ArrayNode array = MAPPER.createArrayNode();
         for (String param : paramList) {
-            if (path.node().isArray()) {
-                for (int i = 0; i < path.node().size(); i++) {
+            if (path.isArray()) {
+                for (int i = 0; i < path.containerSize(); i++) {
                     final JsonNode result = getNodeByExpression(path, i, param);
                     if (result != null && result.isArray()) {
                         array.addAll((ArrayNode) result);
@@ -391,7 +391,7 @@ final class FuncStructural {
             return null;
         }
         final ArrayNode array = MAPPER.createArrayNode();
-        if (container.node().isArray()) {
+        if (container.isArray()) {
             container.node().forEach(elem -> {
                 if (elem.isArray()) {
                     array.addAll((ArrayNode) elem);
@@ -420,7 +420,7 @@ final class FuncStructural {
     static PathTrace funcUnflatten(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 1);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath == null || !dataPath.node().isContainerNode()) {
+        if (dataPath == null || !dataPath.isContainer()) {
             return null;
         }
         final String separator = getNodeAsText(path, pathAndParams.getValue().get(0));
@@ -500,11 +500,11 @@ final class FuncStructural {
             throw new SyntaxErrorException("Missing path '" + params + "'");
         }
         final ArrayNode unwind = MAPPER.createArrayNode();
-        if (dataPath.node().isObject()) {
+        if (dataPath.isObject()) {
             funcUnwind(unwind, dataPath, evaluateNameAndPath(nameAndPath, dataPath, NON_ARRAY_INDEX));
-        } else if (dataPath.node().isArray()) {
-            for (int i = 0; i < dataPath.node().size(); i++) {
-                funcUnwind(unwind, dataPath.push(dataPath.node().get(i)), evaluateNameAndPath(nameAndPath, dataPath, i));
+        } else if (dataPath.isArray()) {
+            for (int i = 0; i < dataPath.containerSize(); i++) {
+                funcUnwind(unwind, dataPath.push(dataPath.get(i)), evaluateNameAndPath(nameAndPath, dataPath, i));
             }
         }
         return path.push(unwind);

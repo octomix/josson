@@ -461,8 +461,33 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public ArrayNode getArrayNode(final String expression, final Map<String, JsonNode> variables) {
-        final JsonNode node = getNode(expression);
+        final JsonNode node = getNode(expression, variables);
         return node != null && node.isArray() ? (ArrayNode) node : null;
+    }
+
+    /**
+     * Query data by Josson query language, return result for {@code ObjectNode} only.
+     *
+     * @param expression the Josson query path
+     * @return The resulting Jackson {@code ObjectNode}. {@code null} if the result is not an {@code ObjectNode}.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public ObjectNode getObjectNode(final String expression) {
+        final JsonNode node = getNode(expression);
+        return node != null && node.isObject() ? (ObjectNode) node : null;
+    }
+
+    /**
+     * Query data by Josson query language, return result for {@code ObjectNode} only.
+     *
+     * @param expression the Josson query path
+     * @param variables initial variables with key name starts with "$"
+     * @return The resulting Jackson {@code ObjectNode}. {@code null} if the result is not an {@code ObjectNode}.
+     * @throws IllegalArgumentException if the query path is invalid
+     */
+    public ObjectNode getObjectNode(final String expression, final Map<String, JsonNode> variables) {
+        final JsonNode node = getNode(expression, variables);
+        return node != null && node.isObject() ? (ObjectNode) node : null;
     }
 
     /**

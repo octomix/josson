@@ -42,11 +42,11 @@ final class FuncFormat {
     }
 
     static PathTrace funcB64Decode(final PathTrace path, final String params, final Base64.Decoder decoder) {
-        return applyTextNode(path, params, dataPath -> new String(decoder.decode(dataPath.node().asText())));
+        return applyTextNode(path, params, dataPath -> new String(decoder.decode(dataPath.asText())));
     }
 
     static PathTrace funcB64Encode(final PathTrace path, final String params, final Base64.Encoder encoder) {
-        return applyTextNode(path, params, dataPath -> encoder.encodeToString(dataPath.node().asText().getBytes()));
+        return applyTextNode(path, params, dataPath -> encoder.encodeToString(dataPath.asText().getBytes()));
     }
 
     static PathTrace funcCaseValue(final PathTrace path, final String params, final boolean ignoreCase) {
@@ -58,16 +58,16 @@ final class FuncFormat {
                 for (; i < last; i += 2) {
                     final JsonNode node = getNodeByExpression(path, data.getValue(), paramList.get(i));
                     if (node == null || node.isNull()) {
-                        if (!dataPath.node().isNull()) {
+                        if (!dataPath.isNull()) {
                             continue;
                         }
-                    } else if ((node.isNumber() || node.isTextual()) && dataPath.node().isNumber()) {
-                        if (node.asDouble() != dataPath.node().asDouble()) {
+                    } else if ((node.isNumber() || node.isTextual()) && dataPath.isNumber()) {
+                        if (node.asDouble() != dataPath.asDouble()) {
                             continue;
                         }
                     } else if (ignoreCase
-                            ? !node.asText().equalsIgnoreCase(dataPath.node().asText())
-                            : !node.asText().equals(dataPath.node().asText())) {
+                            ? !node.asText().equalsIgnoreCase(dataPath.asText())
+                            : !node.asText().equals(dataPath.asText())) {
                         continue;
                     }
                     return getPathByExpression(path, data.getValue(), paramList.get(i + 1));
@@ -145,9 +145,9 @@ final class FuncFormat {
     static PathTrace funcCycleValue(final PathTrace path, final String params) {
         return applyWithArrayNode(path, params, Utils::nodeHasValue,
             (dataPath, paramPath) -> {
-                final int size = paramPath.node().size();
-                final int index = dataPath.node().asInt() % size;
-                return path.push(paramPath.node().get(index < 0 ? index + size : index));
+                final int size = paramPath.containerSize();
+                final int index = dataPath.asInt() % size;
+                return path.push(paramPath.get(index < 0 ? index + size : index));
             });
     }
 
@@ -181,7 +181,7 @@ final class FuncFormat {
                 final PathTrace dataPath = data.getKey();
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
                 final String pattern = getNodeAsText(paramPath, data.getValue(), paramList.get(0));
-                return path.push(TextNode.valueOf(new DecimalFormat(pattern).format(dataPath.node().asDouble())));
+                return path.push(TextNode.valueOf(new DecimalFormat(pattern).format(dataPath.asDouble())));
             });
     }
 
@@ -226,45 +226,45 @@ final class FuncFormat {
     static PathTrace funcIndexedValue(final PathTrace path, final String params) {
         return applyWithArrayNode(path, params, Utils::nodeHasValue,
             (dataPath, paramPath) -> {
-                final int index = dataPath.node().asInt();
-                return index >= 0 && index < paramPath.node().size() ? path.push(paramPath.node().get(index)) : null;
+                final int index = dataPath.asInt();
+                return index >= 0 && index < paramPath.containerSize() ? path.push(paramPath.get(index)) : null;
             });
     }
 
     static PathTrace funcMarkupEscape(final PathTrace path, final String params, final MarkupLanguage language) {
-        return applyTextNode(path, params, dataPath -> language.escape(dataPath.node().asText()));
+        return applyTextNode(path, params, dataPath -> language.escape(dataPath.asText()));
     }
 
     static PathTrace funcMarkupUnescape(final PathTrace path, final String params, final MarkupLanguage language) {
-        return applyTextNode(path, params, dataPath -> language.unescape(dataPath.node().asText()));
+        return applyTextNode(path, params, dataPath -> language.unescape(dataPath.asText()));
     }
 
     static PathTrace funcToNumber(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, Utils::nodeHasValue,
-            (data, paramList) -> data.getKey().node().isNumber()
+            (data, paramList) -> data.getKey().isNumber()
                 ? data.getKey()
-                : path.push(DoubleNode.valueOf(data.getKey().node().asDouble())));
+                : path.push(DoubleNode.valueOf(data.getKey().asDouble())));
     }
 
     static PathTrace funcToString(final PathTrace path, final String params) {
         return applyWithoutParam(path, params,
-            dataPath -> dataPath.node().isTextual() ? dataPath
-                : path.push(TextNode.valueOf(dataPath.node().isValueNode() ? dataPath.node().asText()
+            dataPath -> dataPath.isTextual() ? dataPath
+                : path.push(TextNode.valueOf(dataPath.isValueNode() ? dataPath.asText()
                 : dataPath.node().toString())));
     }
 
     static PathTrace funcToText(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, JsonNode::isValueNode,
-            (data, paramList) -> data.getKey().node().isTextual()
+            (data, paramList) -> data.getKey().isTextual()
                 ? data.getKey()
-                : path.push(TextNode.valueOf(data.getKey().node().asText())));
+                : path.push(TextNode.valueOf(data.getKey().asText())));
     }
 
     static PathTrace funcUrlDecode(final PathTrace path, final String params) {
         return applyTextNode(path, params,
             dataPath -> {
                 try {
-                    return URLDecoder.decode(dataPath.node().asText(), StandardCharsets.UTF_8.toString());
+                    return URLDecoder.decode(dataPath.asText(), StandardCharsets.UTF_8.toString());
                 } catch (UnsupportedEncodingException e) {
                     throw new IllegalArgumentException(e.getMessage());
                 }
@@ -275,7 +275,7 @@ final class FuncFormat {
         return applyTextNode(path, params,
             dataPath -> {
                 try {
-                    return URLEncoder.encode(dataPath.node().asText(), StandardCharsets.UTF_8.toString());
+                    return URLEncoder.encode(dataPath.asText(), StandardCharsets.UTF_8.toString());
                 } catch (UnsupportedEncodingException e) {
                     throw new IllegalArgumentException(e.getMessage());
                 }

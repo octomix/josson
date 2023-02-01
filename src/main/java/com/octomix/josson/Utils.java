@@ -152,7 +152,7 @@ class Utils {
     }
 
     static boolean nodeIsNull(final PathTrace path) {
-        return path == null || path.node() == null || path.node().isNull();
+        return path == null || path.node() == null || path.isNull();
     }
 
     static boolean nodeIsNull(final JsonNode node) {
@@ -185,7 +185,7 @@ class Utils {
         final int size = paramList.size();
         if (size == 0) {
             if (index >= 0) {
-                path = path.push(path.node().get(index));
+                path = path.push(path.get(index));
             }
             if (nodeHasValue(path)) {
                 objects = new Object[]{valueAsObject(path.node())};
