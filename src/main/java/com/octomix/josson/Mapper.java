@@ -36,6 +36,15 @@ class Mapper extends ObjectMapper {
         this.setDateFormat(DateFormat.getInstance());
     }
 
+    /**
+     * Get the static instance of Josson's ObjectMapper.
+     *
+     * @return the static instance of Josson's ObjectMapper.
+     */
+    public static Mapper mapper() {
+        return MAPPER;
+    }
+
     static ObjectNode cloneObject(final ObjectNode objectNode) {
         return MAPPER.createObjectNode().setAll(objectNode);
     }

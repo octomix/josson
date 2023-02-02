@@ -577,6 +577,53 @@ public class UnitTest {
                         "  \"subtotal\" : 100.0\n" +
                         "} ]");
 
+        // Syntax "path:+" present an unresolvable path as a NullNode.
+        evaluate.accept("items.map(itemCode, unitDiscount)",
+                "[ {\n" +
+                        "  \"itemCode\" : \"B00001\"\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00201\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "} ]");
+        evaluate.accept("items.map(itemCode, unitDiscount:+)",
+                "[ {\n" +
+                        "  \"itemCode\" : \"B00001\",\n" +
+                        "  \"unitDiscount\" : null\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00201\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "} ]");
+        evaluate.accept("items.map(itemCode, unitDiscount:if([unitDiscount=null],null,unitDiscount))",
+                "[ {\n" +
+                        "  \"itemCode\" : \"B00001\",\n" +
+                        "  \"unitDiscount\" : null\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00201\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "} ]");
+
+        // Syntax "newFieldName:+path" present an unresolvable path as a NullNode with a new field name.
+        evaluate.accept("items.map(itemCode, discount:+unitDiscount)",
+                "[ {\n" +
+                        "  \"itemCode\" : \"B00001\",\n" +
+                        "  \"discount\" : null\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"discount\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00201\",\n" +
+                        "  \"discount\" : 10.0\n" +
+                        "} ]");
+
         // Function "group" works like SQL "group by".
         //
         evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))",
@@ -716,6 +763,22 @@ public class UnitTest {
                         "  \"A00308\" : 1\n" +
                         "}, {\n" +
                         "  \"A00201\" : 1\n" +
+                        "} ]");
+
+        // Syntax "keyQuery::+valueQuery" present an unresolvable path as a NullNode.
+        evaluate.accept("items.map(itemCode::unitDiscount)",
+                "[ { }, {\n" +
+                        "  \"A00308\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"A00201\" : 10.0\n" +
+                        "} ]");
+        evaluate.accept("items.map(itemCode::+unitDiscount)",
+                "[ {\n" +
+                        "  \"B00001\" : null\n" +
+                        "}, {\n" +
+                        "  \"A00308\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"A00201\" : 10.0\n" +
                         "} ]");
 
         // Function "mergeObjects" merge all objects in an array into one object.
