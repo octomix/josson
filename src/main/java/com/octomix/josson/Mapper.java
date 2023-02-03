@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,15 @@ class Mapper extends ObjectMapper {
     Mapper() {
         this.registerModule(new JavaTimeModule());
         this.setDateFormat(DateFormat.getInstance());
+    }
+
+    /**
+     * Get the static instance of Josson's ObjectMapper.
+     *
+     * @return the static instance of Josson's ObjectMapper.
+     */
+    public static Mapper mapper() {
+        return MAPPER;
     }
 
     static ObjectNode cloneObject(final ObjectNode objectNode) {

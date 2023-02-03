@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 import static com.octomix.josson.Utils.*;
-import static com.octomix.josson.Utils.asBoolean;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -94,7 +93,7 @@ final class FuncArray {
     static PathTrace funcFindAndModify(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 2, 3);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath == null || !dataPath.node().isArray()) {
+        if (dataPath == null || !dataPath.isArray()) {
             return dataPath;
         }
         final String expression = pathAndParams.getValue().get(0);
@@ -116,18 +115,18 @@ final class FuncArray {
     static PathTrace funcFindByMaxMin(final PathTrace path, final String params, final boolean isMax, final int nullPriority) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 1);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath == null || !dataPath.node().isArray()) {
+        if (dataPath == null || !dataPath.isArray()) {
             return dataPath;
         }
         final String expression = pathAndParams.getValue().get(0);
         int foundIndex = -1;
         Double maxMinNum = null;
         String maxMinStr = null;
-        for (int i = 0; i < dataPath.node().size(); i++) {
-            final JsonNode result = getNodeByExpression(dataPath.push(dataPath.node().get(i)), expression);
+        for (int i = 0; i < dataPath.containerSize(); i++) {
+            final JsonNode result = getNodeByExpression(dataPath.push(dataPath.get(i)), expression);
             if (nodeIsNull(result)) {
                 if (nullPriority > 0) {
-                    return path.push(dataPath.node().get(i));
+                    return path.push(dataPath.get(i));
                 }
                 if (nullPriority < 0 && foundIndex < 0) {
                     foundIndex = i;
@@ -151,27 +150,27 @@ final class FuncArray {
                 }
             }
         }
-        return foundIndex >= 0 ? path.push(dataPath.node().get(foundIndex)) : null;
+        return foundIndex >= 0 ? path.push(dataPath.get(foundIndex)) : null;
     }
 
     static PathTrace funcFirst(final PathTrace path, final String params) {
         return applyWithoutParam(path, params,
-            dataPath -> !dataPath.node().isArray() ? dataPath
-                : dataPath.node().size() == 0 ? null
-                : path.push(dataPath.node().get(0)));
+            dataPath -> !dataPath.isArray() ? dataPath
+                : dataPath.containerSize() == 0 ? null
+                : path.push(dataPath.get(0)));
     }
 
     static PathTrace funcIndexOf(final PathTrace path, final String params, final int step) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 1);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath == null || !dataPath.node().isArray()) {
+        if (dataPath == null || !dataPath.isArray()) {
             return null;
         }
         final JsonNode result = getNodeByExpression(path, pathAndParams.getValue().get(0));
-        int i = step > 0 ? 0 : dataPath.node().size() - 1;
-        final int end = step > 0 ? dataPath.node().size() : -1;
+        int i = step > 0 ? 0 : dataPath.containerSize() - 1;
+        final int end = step > 0 ? dataPath.containerSize() : -1;
         for (; i != end; i += step) {
-            if (Operator.EQ.relationalCompare(result, dataPath.node().get(i))) {
+            if (Operator.EQ.relationalCompare(result, dataPath.get(i))) {
                 return path.push(IntNode.valueOf(i));
             }
         }
@@ -197,15 +196,15 @@ final class FuncArray {
 
     static PathTrace funcLast(final PathTrace path, final String params) {
         return applyWithoutParam(path, params,
-            dataPath -> !dataPath.node().isArray() ? dataPath
-                : dataPath.node().size() == 0 ? null
-                : path.push(dataPath.node().get(dataPath.node().size() - 1))
+            dataPath -> !dataPath.isArray() ? dataPath
+                : dataPath.containerSize() == 0 ? null
+                : path.push(dataPath.get(dataPath.containerSize() - 1))
         );
     }
 
     static PathTrace funcLastIndex(final PathTrace path, final String params) {
         return applyWithoutParam(path, params,
-            dataPath -> !dataPath.node().isArray() ? null : path.push(IntNode.valueOf(dataPath.node().size() - 1)));
+            dataPath -> !dataPath.isArray() ? null : path.push(IntNode.valueOf(dataPath.containerSize() - 1)));
     }
 
     static PathTrace funcMaxMin(final PathTrace path, final String params, final boolean isMax) {
@@ -216,8 +215,8 @@ final class FuncArray {
         double maxMinNum = 0;
         String maxMinStr = null;
         JsonNode result = null;
-        for (int i = array.node().size() - 1; i >= 0; i--) {
-            final JsonNode elem = array.node().get(i);
+        for (int i = array.containerSize() - 1; i >= 0; i--) {
+            final JsonNode elem = array.get(i);
             if (!nodeHasValue(elem)) {
                 continue;
             }
@@ -241,7 +240,7 @@ final class FuncArray {
     static PathTrace funcPush(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH);
         final ArrayNode array = MAPPER.createArrayNode();
-        if (path.node().isArray()) {
+        if (path.isArray()) {
             array.addAll((ArrayNode) path.node());
         } else {
             array.add(path.node());
@@ -258,33 +257,33 @@ final class FuncArray {
     static PathTrace funcReverse(final PathTrace path, final String params) {
         return applyWithoutParam(path, params,
             dataPath -> {
-                if (dataPath.node().isTextual()) {
-                    final StringBuilder sb = new StringBuilder(dataPath.node().asText());
+                if (dataPath.isTextual()) {
+                    final StringBuilder sb = new StringBuilder(dataPath.asText());
                     return path.push(TextNode.valueOf(sb.reverse().toString()));
                 }
-                if (!dataPath.node().isArray()) {
+                if (!dataPath.isArray()) {
                     return null;
                 }
                 final ArrayNode array = MAPPER.createArrayNode();
-                final int len = dataPath.node().size();
+                final int len = dataPath.containerSize();
                 for (int i = len - 1; i >= 0; i--) {
-                    array.add(dataPath.node().get(i));
+                    array.add(dataPath.get(i));
                 }
                 return path.push(array);
             });
     }
 
     static PathTrace funcSize(final PathTrace path, final String params) {
-        return applyWithoutParam(path, params, dataPath -> path.push(IntNode.valueOf(dataPath.node().size())));
+        return applyWithoutParam(path, params, dataPath -> path.push(IntNode.valueOf(dataPath.containerSize())));
     }
 
     static PathTrace funcSlice(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 0, 3);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath == null || !dataPath.node().isArray()) {
+        if (dataPath == null || !dataPath.isArray()) {
             return dataPath;
         }
-        final int size = dataPath.node().size();
+        final int size = dataPath.containerSize();
         int start = pathAndParams.getValue().size() > 0 && !pathAndParams.getValue().get(0).isEmpty()
                 ? getNodeAsInt(path, pathAndParams.getValue().get(0)) : 0;
         int end = pathAndParams.getValue().size() > 1 && !pathAndParams.getValue().get(1).isEmpty()
@@ -298,11 +297,11 @@ final class FuncArray {
         final ArrayNode array = MAPPER.createArrayNode();
         if (start <= end) {
             for (int i = start; i < end; i += step) {
-                array.add(dataPath.node().get(i));
+                array.add(dataPath.get(i));
             }
         } else {
             for (int i = start; i > end; i -= step) {
-                array.add(dataPath.node().get(i));
+                array.add(dataPath.get(i));
             }
         }
         return path.push(array);
@@ -311,7 +310,7 @@ final class FuncArray {
     static PathTrace funcSort(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 0, 2);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath == null || !dataPath.node().isArray()) {
+        if (dataPath == null || !dataPath.isArray()) {
             return dataPath;
         }
         String param = null;
@@ -341,14 +340,14 @@ final class FuncArray {
     static PathTrace funcTopBottomN(final PathTrace path, final String params, final boolean isTop) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 1);
         final PathTrace dataPath = pathAndParams.getKey();
-        if (dataPath == null || !dataPath.node().isArray()) {
+        if (dataPath == null || !dataPath.isArray()) {
             return null;
         }
         final int n = getNodeAsInt(path, pathAndParams.getValue().get(0));
         final List<Pair<Double, ValueNode>> maxMinNum = new ArrayList<>();
         final List<String> maxMinStr = new ArrayList<>();
-        for (int i = dataPath.node().size() - 1; i >= 0; i--) {
-            final JsonNode elem = dataPath.node().get(i);
+        for (int i = dataPath.containerSize() - 1; i >= 0; i--) {
+            final JsonNode elem = dataPath.get(i);
             if (!nodeHasValue(elem)) {
                 continue;
             }

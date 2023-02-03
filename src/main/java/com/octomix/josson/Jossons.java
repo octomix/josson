@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,18 @@ public class Jossons extends JossonsCore {
      */
     public Jossons putDataset(final String key, final Josson value) {
         datasets.put(key, value);
+        return this;
+    }
+
+    /**
+     * Put dataset to the dataset mapping.
+     *
+     * @param key the mapping key
+     * @param value the mapping Josson object as the data value
+     * @return {@code this}
+     */
+    public Jossons putDataset(final String key, final JsonNode value) {
+        datasets.put(key, Josson.create(value));
         return this;
     }
 

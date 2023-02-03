@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ final class FuncLogical {
         }
         if (result.isNumber()) {
             final double value = result.asDouble();
-            if (dataPath.node().isArray()) {
+            if (dataPath.isArray()) {
                 for (JsonNode elem : dataPath.node()) {
                     if ((elem.isNumber() || elem.isTextual()) && elem.asDouble() == value) {
                         return path.push(BooleanNode.valueOf(!not));
@@ -60,7 +60,7 @@ final class FuncLogical {
             return path.push(BooleanNode.valueOf(not));
         }
         if (result.isNull()) {
-            if (dataPath.node().isArray()) {
+            if (dataPath.isArray()) {
                 for (JsonNode elem : dataPath.node()) {
                     if (elem.isNull()) {
                         return path.push(BooleanNode.valueOf(!not));
@@ -70,7 +70,7 @@ final class FuncLogical {
             return path.push(BooleanNode.valueOf(not));
         }
         final String value = result.asText();
-        if (dataPath.node().isObject()) {
+        if (dataPath.isObject()) {
             if (ignoreCase) {
                 for (Iterator<String> it = dataPath.node().fieldNames(); it.hasNext();) {
                     if (value.equalsIgnoreCase(it.next())) {
@@ -79,9 +79,9 @@ final class FuncLogical {
                 }
                 return path.push(BooleanNode.valueOf(not));
             }
-            return path.push(BooleanNode.valueOf(not ^ dataPath.node().get(value) != null));
+            return path.push(BooleanNode.valueOf(not ^ dataPath.get(value) != null));
         }
-        if (dataPath.node().isArray()) {
+        if (dataPath.isArray()) {
             for (JsonNode elem : dataPath.node()) {
                 if (elem.isTextual() || elem.isNumber()) {
                     if (ignoreCase) {
@@ -96,8 +96,8 @@ final class FuncLogical {
             return path.push(BooleanNode.valueOf(not));
         }
         return path.push(BooleanNode.valueOf(not ^ (ignoreCase
-            ? StringUtils.containsIgnoreCase(dataPath.node().asText(), value)
-            : StringUtils.contains(dataPath.node().asText(), value))));
+            ? StringUtils.containsIgnoreCase(dataPath.asText(), value)
+            : StringUtils.contains(dataPath.asText(), value))));
     }
 
     static PathTrace funcEndsWith(final PathTrace path, final String params,
@@ -116,16 +116,16 @@ final class FuncLogical {
     static PathTrace funcIn(final PathTrace path, final String params, final boolean ignoreCase, final boolean not) {
         return applyWithArrayNode(path, params, null,
             (dataPath, paramPath) -> {
-                if (dataPath.node().isNumber()) {
-                    final double num = dataPath.node().asDouble();
+                if (dataPath.isNumber()) {
+                    final double num = dataPath.asDouble();
                     for (JsonNode value : paramPath.node()) {
                         if ((value.isNumber() || value.isTextual()) && value.asDouble() == num) {
                             return path.push(BooleanNode.valueOf(!not));
                         }
                     }
                     return path.push(BooleanNode.valueOf(not));
-                } else if (dataPath.node().isValueNode()) {
-                    final String text = dataPath.node().asText();
+                } else if (dataPath.isValueNode()) {
+                    final String text = dataPath.asText();
                     for (JsonNode value : paramPath.node()) {
                         if (value.isTextual() || value.isNumber()) {
                             if (ignoreCase) {
@@ -144,35 +144,35 @@ final class FuncLogical {
     }
 
     static PathTrace funcIsArray(final PathTrace path, final String params) {
-        return applyWithoutParam(path, params, dataPath -> path.push(BooleanNode.valueOf(dataPath.node().isArray())));
+        return applyWithoutParam(path, params, dataPath -> path.push(BooleanNode.valueOf(dataPath.isArray())));
     }
 
     static PathTrace funcIsBlank(final PathTrace path, final String params, final boolean not) {
         return applyWithoutParam(path, params, null,
             (data, paramList) -> path.push(BooleanNode.valueOf(
-                data.getKey().node().isTextual() && (not ^ StringUtils.isBlank(data.getKey().node().asText())))));
+                data.getKey().isTextual() && (not ^ StringUtils.isBlank(data.getKey().asText())))));
     }
 
     static PathTrace funcIsBoolean(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, null,
-            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().node().isBoolean())));
+            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().isBoolean())));
     }
 
     static PathTrace funcIsEmpty(final PathTrace path, final String params, final boolean not) {
         return applyWithoutParam(path, params, null,
-            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().node().isTextual()
-                ? not ^ data.getKey().node().asText().isEmpty()
-                : data.getKey().node().isNull() != not)));
+            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().isTextual()
+                ? not ^ data.getKey().asText().isEmpty()
+                : data.getKey().isNull() != not)));
     }
 
     static PathTrace funcIsEmptyArray(final PathTrace path, final String params) {
         return applyWithoutParam(path, params,
-            dataPath -> path.push(BooleanNode.valueOf(dataPath.node().isArray() && dataPath.node().isEmpty())));
+            dataPath -> path.push(BooleanNode.valueOf(dataPath.isArray() && dataPath.isEmpty())));
     }
 
     static PathTrace funcIsEmptyObject(final PathTrace path, final String params) {
         return applyWithoutParam(path, params,
-            dataPath -> path.push(BooleanNode.valueOf(dataPath.node().isObject() && dataPath.node().isEmpty())));
+            dataPath -> path.push(BooleanNode.valueOf(dataPath.isObject() && dataPath.isEmpty())));
     }
 
     static PathTrace funcIsEvenOdd(final PathTrace path, final String params, final int parity) {
@@ -180,11 +180,11 @@ final class FuncLogical {
             (data, paramList) -> {
                 final PathTrace dataPath = data.getKey();
                 final int number;
-                if (dataPath.node().isNumber()) {
-                    number = dataPath.node().asInt();
-                } else if (dataPath.node().isTextual()) {
+                if (dataPath.isNumber()) {
+                    number = dataPath.asInt();
+                } else if (dataPath.isTextual()) {
                     try {
-                        number = Integer.parseInt(dataPath.node().asText());
+                        number = Integer.parseInt(dataPath.asText());
                     } catch (NumberFormatException e) {
                         return path.push(BooleanNode.FALSE);
                     }
@@ -197,21 +197,21 @@ final class FuncLogical {
 
     static PathTrace funcIsNull(final PathTrace path, final String params, final boolean not) {
         return applyWithoutParam(path, params, null,
-            (data, paramList) -> path.push(BooleanNode.valueOf(not ^ data.getKey().node().isNull())));
+            (data, paramList) -> path.push(BooleanNode.valueOf(not ^ data.getKey().isNull())));
     }
 
     static PathTrace funcIsNumber(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, null,
-            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().node().isNumber())));
+            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().isNumber())));
     }
 
     static PathTrace funcIsObject(final PathTrace path, final String params) {
-        return applyWithoutParam(path, params, dataPath -> path.push(BooleanNode.valueOf(dataPath.node().isObject())));
+        return applyWithoutParam(path, params, dataPath -> path.push(BooleanNode.valueOf(dataPath.isObject())));
     }
 
     static PathTrace funcIsText(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, null,
-            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().node().isTextual())));
+            (data, paramList) -> path.push(BooleanNode.valueOf(data.getKey().isTextual())));
     }
 
     static PathTrace funcMatches(final PathTrace path, final String params, final boolean not) {
@@ -221,8 +221,8 @@ final class FuncLogical {
 
     static PathTrace funcNot(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, null,
-            (data, paramList) -> path.push(data.getKey().node().isBoolean()
-                ? BooleanNode.valueOf(!data.getKey().node().asBoolean())
+            (data, paramList) -> path.push(data.getKey().isBoolean()
+                ? BooleanNode.valueOf(!data.getKey().asBoolean())
                 : BooleanNode.FALSE));
     }
 
@@ -234,21 +234,21 @@ final class FuncLogical {
 
     static PathTrace funcIsWeekday(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, null,
-            (data, paramList) -> data.getKey().node().isTextual()
+            (data, paramList) -> data.getKey().isTextual()
                 ? path.push(BooleanNode.valueOf(toLocalDateTime(data.getKey().node()).get(ChronoField.DAY_OF_WEEK) <= 5))
                 : null);
     }
 
     static PathTrace funcIsWeekend(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, null,
-            (data, paramList) -> data.getKey().node().isTextual()
+            (data, paramList) -> data.getKey().isTextual()
                 ? path.push(BooleanNode.valueOf(toLocalDateTime(data.getKey().node()).get(ChronoField.DAY_OF_WEEK) > 5))
                 : null);
     }
 
     static PathTrace funcIsLeapYear(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, null,
-            (data, paramList) -> data.getKey().node().isTextual()
+            (data, paramList) -> data.getKey().isTextual()
                 ? path.push(BooleanNode.valueOf(IsoChronology.INSTANCE.isLeapYear(toLocalDateTime(data.getKey().node()).getYear())))
                 : null);
     }

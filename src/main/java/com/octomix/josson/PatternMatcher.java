@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
@@ -647,25 +648,45 @@ final class PatternMatcher {
         return steps;
     }
 
-    static String[] decomposeNameAndPath(final String input) throws UnknownFormatConversionException {
+    static String[] decomposeNameAndPath(final String input, final Function<String, String> getUnknownName) {
         final int len = input.length();
         final int last = len - 1;
+        String name = null;
+        String path = input;
         for (int pos = 0; pos < len; pos++) {
             if (input.charAt(pos) == ':') {
-                String name = trimOf(input, 0, pos);
+                name = trimOf(input, 0, pos);
                 if (name.isEmpty()) {
                     throw new SyntaxErrorException(input, "Missing field name");
                 }
-                String path = trimOf(input, pos + 1, len);
-                if (path.startsWith(":")) {
-                    name = ":" + name;
-                    path = path.substring(eatSpaces(path, 1, path.length() - 1));
+                path = trimOf(input, pos + 1, len);
+                if (path.startsWith(EVALUATE_KEY_NAME)) {
+                    name = EVALUATE_KEY_NAME + name;
+                    path = path.substring(eatSpaces(path, EVALUATE_KEY_NAME.length(), path.length() - 1));
+                    if (path.isEmpty()) {
+                        throw new SyntaxErrorException(input, "Missing field value");
+                    }
                 }
-                return new String[]{name, path.isEmpty() ? null : path};
-            } else {
-                pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
+                break;
             }
+            pos = skipEnclosure(input, pos, last, Enclosure.ALL_KINDS);
         }
-        return new String[]{getLastElementName(input), input};
+        final boolean unresolvableAsNull = path.startsWith(UNRESOLVABLE_AS_NULL);
+        if (unresolvableAsNull) {
+            path = path.substring(eatSpaces(path, UNRESOLVABLE_AS_NULL.length(), path.length() - 1));
+        }
+        if (name == null) {
+            try {
+                name = getLastElementName(input);
+            } catch (UnknownFormatConversionException e) {
+                name = getUnknownName == null ? e.getConversion() : getUnknownName.apply(e.getConversion());
+            }
+        } else if (unresolvableAsNull && path.isEmpty()) {
+            if (name.startsWith(EVALUATE_KEY_NAME)) {
+                throw new SyntaxErrorException(input, "Missing field value");
+            }
+            path = name;
+        }
+        return new String[]{name, path.isEmpty() ? null : path, unresolvableAsNull ? UNRESOLVABLE_AS_NULL : null};
     }
 }

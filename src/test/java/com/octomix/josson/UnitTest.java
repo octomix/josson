@@ -577,6 +577,53 @@ public class UnitTest {
                         "  \"subtotal\" : 100.0\n" +
                         "} ]");
 
+        // Syntax "path:+" present an unresolvable path as a NullNode.
+        evaluate.accept("items.map(itemCode, unitDiscount)",
+                "[ {\n" +
+                        "  \"itemCode\" : \"B00001\"\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00201\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "} ]");
+        evaluate.accept("items.map(itemCode, unitDiscount:+)",
+                "[ {\n" +
+                        "  \"itemCode\" : \"B00001\",\n" +
+                        "  \"unitDiscount\" : null\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00201\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "} ]");
+        evaluate.accept("items.map(itemCode, unitDiscount:if([unitDiscount=null],null,unitDiscount))",
+                "[ {\n" +
+                        "  \"itemCode\" : \"B00001\",\n" +
+                        "  \"unitDiscount\" : null\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00201\",\n" +
+                        "  \"unitDiscount\" : 10.0\n" +
+                        "} ]");
+
+        // Syntax "newFieldName:+path" present an unresolvable path as a NullNode with a new field name.
+        evaluate.accept("items.map(itemCode, discount:+unitDiscount)",
+                "[ {\n" +
+                        "  \"itemCode\" : \"B00001\",\n" +
+                        "  \"discount\" : null\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"discount\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00201\",\n" +
+                        "  \"discount\" : 10.0\n" +
+                        "} ]");
+
         // Function "group" works like SQL "group by".
         //
         evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))",
@@ -718,6 +765,22 @@ public class UnitTest {
                         "  \"A00201\" : 1\n" +
                         "} ]");
 
+        // Syntax "keyQuery::+valueQuery" present an unresolvable path as a NullNode.
+        evaluate.accept("items.map(itemCode::unitDiscount)",
+                "[ { }, {\n" +
+                        "  \"A00308\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"A00201\" : 10.0\n" +
+                        "} ]");
+        evaluate.accept("items.map(itemCode::+unitDiscount)",
+                "[ {\n" +
+                        "  \"B00001\" : null\n" +
+                        "}, {\n" +
+                        "  \"A00308\" : 10.0\n" +
+                        "}, {\n" +
+                        "  \"A00201\" : 10.0\n" +
+                        "} ]");
+
         // Function "mergeObjects" merge all objects in an array into one object.
         //
         evaluate.accept("mergeObjects(customer, items.map(itemCode::qty))",
@@ -733,7 +796,7 @@ public class UnitTest {
         // Function "assort" separates an object's entries according to different path conditions in sequence,
         // and put them into the corresponding array if the evaluated result is not null.
         // Entries will be removed if no condition can be matched.
-        // If the last argument is "...", each of the remaining entry will be added to the end of result array separately.
+        // If the last argument is "??", each of the remaining entry will be added to the end of result array separately.
         // If no argument is provided, each entry will be added to the result array separately.
         //
         evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
@@ -768,7 +831,7 @@ public class UnitTest {
                         "  \"ab3\" : 5\n" +
                         "} ]");
         evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
-                        ".assort(*.[isEven()], ~'xy.*', ~'ab.*', ...)",
+                        ".assort(*.[isEven()], ~'xy.*', ~'ab.*', ??)",
                 "[ {\n" +
                         "  \"xy2\" : 2,\n" +
                         "  \"ab2\" : 4,\n" +
@@ -814,7 +877,7 @@ public class UnitTest {
         //
         evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)",
                 "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]");
-        evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ...)",
+        evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ??)",
                 "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]");
 
         // Function "eval" evaluates the value of a text node as a query statement.

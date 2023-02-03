@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,70 @@ public class PathTrace {
 
     JsonNode getVariable(final String name) {
         return variables == null ? null : variables.get(name);
+    }
+
+    boolean isObject() {
+        return node().isObject();
+    }
+    
+    boolean isArray() {
+        return node().isArray();
+    }
+
+    boolean isContainer() {
+        return node().isContainerNode();
+    }
+
+    boolean isValueNode() {
+        return node().isValueNode();
+    }
+
+    boolean isTextual() {
+        return node().isTextual();
+    }
+
+    boolean isNumber() {
+        return node().isNumber();
+    }
+
+    boolean isBoolean() {
+        return node().isBoolean();
+    }
+
+    boolean isNull() {
+        return node().isNull();
+    }
+
+    boolean isEmpty() {
+        return node().isEmpty();
+    }
+
+    String asText() {
+        return node().asText();
+    }
+
+    double asDouble() {
+        return node().asDouble();
+    }
+
+    int asInt() {
+        return node().asInt();
+    }
+
+    boolean asBoolean() {
+        return node().asBoolean();
+    }
+
+    int containerSize() {
+        return node().size();
+    }
+
+    JsonNode get(final int i) {
+        return node().get(i);
+    }
+
+    JsonNode get(final String fieldName) {
+        return node().get(fieldName);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ class Utils {
     }
 
     static boolean nodeIsNull(final PathTrace path) {
-        return path == null || path.node() == null || path.node().isNull();
+        return path == null || path.node() == null || path.isNull();
     }
 
     static boolean nodeIsNull(final JsonNode node) {
@@ -185,7 +185,7 @@ class Utils {
         final int size = paramList.size();
         if (size == 0) {
             if (index >= 0) {
-                path = path.push(path.node().get(index));
+                path = path.push(path.get(index));
             }
             if (nodeHasValue(path)) {
                 objects = new Object[]{valueAsObject(path.node())};
@@ -223,8 +223,8 @@ class Utils {
     }
 
     static String[] evaluateNameAndPath(final String[] nameAndPath, final PathTrace path, final int index) {
-        if (nameAndPath[0].startsWith(":")) {
-            return new String[]{getNodeAsText(path, index, nameAndPath[0].substring(1)), nameAndPath[1]};
+        if (nameAndPath[0].startsWith(EVALUATE_KEY_NAME)) {
+            return new String[]{getNodeAsText(path, index, nameAndPath[0].substring(1)), nameAndPath[1], nameAndPath[2]};
         }
         return nameAndPath;
     }

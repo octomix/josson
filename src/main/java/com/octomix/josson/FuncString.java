@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ final class FuncString {
                     maxWidth = offset;
                     offset = 0;
                 }
-                return path.push(TextNode.valueOf(StringUtils.abbreviate(dataPath.node().asText(), offset, maxWidth)));
+                return path.push(TextNode.valueOf(StringUtils.abbreviate(dataPath.asText(), offset, maxWidth)));
             });
     }
 
@@ -73,12 +73,12 @@ final class FuncString {
                 final PathTrace dataPath = data.getKey();
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
                 final String delimiters = paramList.size() > 0 ? getNodeAsText(paramPath, data.getValue(), paramList.get(0)) : " _.";
-                return path.push(TextNode.valueOf(CaseUtils.toCamelCase(dataPath.node().asText(), capitalizeFirstLetter, delimiters)));
+                return path.push(TextNode.valueOf(CaseUtils.toCamelCase(dataPath.asText(), capitalizeFirstLetter, delimiters)));
             });
     }
 
     static PathTrace funcCapitalize(final PathTrace path, final String params) {
-        return applyTextNode(path, params, dataPath -> StringUtils.capitalize(dataPath.node().asText()));
+        return applyTextNode(path, params, dataPath -> StringUtils.capitalize(dataPath.asText()));
     }
 
     static PathTrace funcConcat(final PathTrace path, final String params, final boolean notNull) {
@@ -100,13 +100,13 @@ final class FuncString {
     static PathTrace funcDoubleQuote(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, Utils::nodeHasValue,
             (data, paramList) -> path.push(TextNode.valueOf(
-                    String.format("\"%s\"", data.getKey().node().asText().replace("\"", "\\\""))))
+                    String.format("\"%s\"", data.getKey().asText().replace("\"", "\\\""))))
         );
     }
 
     static PathTrace funcEval(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, JsonNode::isTextual,
-            (data, paramList) -> path.push(getNodeByExpression(path, data.getKey().node().asText())));
+            (data, paramList) -> path.push(getNodeByExpression(path, data.getKey().asText())));
     }
 
     static PathTrace funcKeep(final PathTrace path, final String params,
@@ -124,11 +124,11 @@ final class FuncString {
 
     static PathTrace funcLength(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, Utils::nodeHasValue,
-            (data, paramList) -> path.push(IntNode.valueOf(data.getKey().node().asText().length())));
+            (data, paramList) -> path.push(IntNode.valueOf(data.getKey().asText().length())));
     }
 
     static PathTrace funcLowerCase(final PathTrace path, final String params) {
-        return applyTextNode(path, params, dataPath -> StringUtils.lowerCase(dataPath.node().asText()));
+        return applyTextNode(path, params, dataPath -> StringUtils.lowerCase(dataPath.asText()));
     }
 
     static PathTrace funcNotBlankOrEmpty(final PathTrace path, final String params,
@@ -136,12 +136,12 @@ final class FuncString {
         return applyWithParams(path, params, 1, UNLIMITED_AND_NO_PATH, null,
             (data, paramList) -> {
                 final PathTrace dataPath = data.getKey();
-                if (dataPath.node().isTextual() && transform.apply(dataPath.node().asText())) {
+                if (dataPath.isTextual() && transform.apply(dataPath.asText())) {
                     return dataPath;
                 }
                 for (String expression : paramList) {
                     final PathTrace result = getPathByExpression(path, data.getValue(), expression);
-                    if (result != null && result.node().isTextual() && transform.apply(result.node().asText())) {
+                    if (result != null && result.isTextual() && transform.apply(result.asText())) {
                         return result;
                     }
                 }
@@ -157,9 +157,9 @@ final class FuncString {
                 final int size = getNodeAsInt(paramPath, data.getValue(), paramList.get(0));
                 final String padStr = paramList.size() > 1 ? getNodeAsTextExceptNull(paramPath, data.getValue(), paramList.get(1)) : null;
                 return path.push(TextNode.valueOf(
-                        alignment < 0 ? StringUtils.leftPad(dataPath.node().asText(), size, padStr)
-                        : alignment > 0 ? StringUtils.rightPad(dataPath.node().asText(), size, padStr)
-                        : StringUtils.center(dataPath.node().asText(), size, padStr))
+                        alignment < 0 ? StringUtils.leftPad(dataPath.asText(), size, padStr)
+                        : alignment > 0 ? StringUtils.rightPad(dataPath.asText(), size, padStr)
+                        : StringUtils.center(dataPath.asText(), size, padStr))
                 );
             });
     }
@@ -192,7 +192,7 @@ final class FuncString {
                 final PathTrace dataPath = data.getKey();
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
                 final int param = getNodeAsInt(paramPath, data.getValue(), paramList.get(0));
-                return path.push(TextNode.valueOf(StringUtils.repeat(dataPath.node().asText(), param)));
+                return path.push(TextNode.valueOf(StringUtils.repeat(dataPath.asText(), param)));
             });
     }
 
@@ -204,19 +204,19 @@ final class FuncString {
                 final String searchString = getNodeAsText(paramPath, data.getValue(), paramList.get(0));
                 final String replacement = getNodeAsText(paramPath, data.getValue(), paramList.get(1));
                 final int max = paramList.size() > 2 ? getNodeAsInt(paramPath, data.getValue(), paramList.get(2)) : -1;
-                return path.push(TextNode.valueOf(StringUtils.replace(dataPath.node().asText(), searchString, replacement, max, ignoreCase)));
+                return path.push(TextNode.valueOf(StringUtils.replace(dataPath.asText(), searchString, replacement, max, ignoreCase)));
             });
     }
 
     static PathTrace funcSingleQuote(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, Utils::nodeHasValue,
-            (data, paramList) -> path.push(TextNode.valueOf(quoteText(data.getKey().node().asText())))
+            (data, paramList) -> path.push(TextNode.valueOf(quoteText(data.getKey().asText())))
         );
     }
 
     static PathTrace funcSnakeCase(final PathTrace path, final String params, final CaseUtils.Type type) {
         return applyWithoutParam(path, params, JsonNode::isTextual,
-            (data, paramList) -> path.push(TextNode.valueOf(CaseUtils.toSnakeCase(data.getKey().node().asText(), type))));
+            (data, paramList) -> path.push(TextNode.valueOf(CaseUtils.toSnakeCase(data.getKey().asText(), type))));
     }
 
     static PathTrace funcSplit(final PathTrace path, final String params, final boolean wholeSeparator) {
@@ -227,8 +227,8 @@ final class FuncString {
                 final String separator = paramList.size() > 0 ? getNodeAsTextExceptNull(paramPath, data.getValue(), paramList.get(0)) : null;
                 final ArrayNode array = MAPPER.createArrayNode();
                 for (String text : wholeSeparator
-                        ? StringUtils.separate(dataPath.node().asText(), separator)
-                        : StringUtils.split(dataPath.node().asText(), separator)) {
+                        ? StringUtils.separate(dataPath.asText(), separator)
+                        : StringUtils.split(dataPath.asText(), separator)) {
                     array.add(TextNode.valueOf(text));
                 }
                 return path.push(array);
@@ -245,8 +245,8 @@ final class FuncString {
                 final boolean preserveAllTokens = paramList.size() > 2 && getNodeAsBoolean(paramPath, data.getValue(), paramList.get(2));
                 final ArrayNode array = MAPPER.createArrayNode();
                 for (String text : wholeSeparator
-                        ? StringUtils.separateWorker(dataPath.node().asText(), separator, max, preserveAllTokens)
-                        : StringUtils.splitWorker(dataPath.node().asText(), separator, max, preserveAllTokens)) {
+                        ? StringUtils.separateWorker(dataPath.asText(), separator, max, preserveAllTokens)
+                        : StringUtils.splitWorker(dataPath.asText(), separator, max, preserveAllTokens)) {
                     array.add(TextNode.valueOf(text));
                 }
                 return path.push(array);
@@ -272,19 +272,19 @@ final class FuncString {
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
                 final int start = (paramList.get(0)).isEmpty() ? 0 : getNodeAsInt(paramPath, data.getValue(), paramList.get(0));
                 final int end = paramList.size() > 1 ? getNodeAsInt(paramPath, data.getValue(), paramList.get(1)) : Integer.MAX_VALUE;
-                return path.push(TextNode.valueOf(StringUtils.substring(dataPath.node().asText(), start, end)));
+                return path.push(TextNode.valueOf(StringUtils.substring(dataPath.asText(), start, end)));
             });
     }
 
     static PathTrace funcTrim(final PathTrace path, final String params) {
-        return applyTextNode(path, params, dataPath -> StringUtils.trim(dataPath.node().asText()));
+        return applyTextNode(path, params, dataPath -> StringUtils.trim(dataPath.asText()));
     }
 
     static PathTrace funcUncapitalize(final PathTrace path, final String params) {
-        return applyTextNode(path, params, dataPath -> StringUtils.uncapitalize(dataPath.node().asText()));
+        return applyTextNode(path, params, dataPath -> StringUtils.uncapitalize(dataPath.asText()));
     }
 
     static PathTrace funcUpperCase(final PathTrace path, final String params) {
-        return applyTextNode(path, params, dataPath -> StringUtils.upperCase(dataPath.node().asText()));
+        return applyTextNode(path, params, dataPath -> StringUtils.upperCase(dataPath.asText()));
     }
 }

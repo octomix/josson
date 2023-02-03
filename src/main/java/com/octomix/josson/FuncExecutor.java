@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@ package com.octomix.josson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UnknownFormatConversionException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -63,25 +62,17 @@ final class FuncExecutor {
         return Pair.of(expression == null ? path : getPathByExpression(path, expression), paramList);
     }
 
-    static Map<String, String> getParamNamePath(final List<String> paramList) {
-        final Map<String, String> elements = new LinkedHashMap<>();
-        int noNameCount = 0;
-        for (String param : paramList) {
-            String[] namePath;
-            try {
-                namePath = decomposeNameAndPath(param);
-            } catch (UnknownFormatConversionException e) {
-                namePath = new String[]{e.getConversion() + ++noNameCount, param};
-            }
-            elements.put(namePath[0], namePath[1]);
-        }
-        return elements;
+    static List<String[]> getParamNamePath(final List<String> paramList) {
+        final AtomicInteger noNameCount = new AtomicInteger();
+        return paramList.stream()
+                .map(param -> decomposeNameAndPath(param, (ifFuncName) -> ifFuncName + noNameCount.incrementAndGet()))
+                .collect(Collectors.toList());
     }
 
     static PathTrace getParamArrayOrItselfIsContainer(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
-            if (path.node().isContainerNode()) {
+            if (path.isContainer()) {
                 return path;
             }
             return null;
@@ -92,7 +83,7 @@ final class FuncExecutor {
     static PathTrace getParamArrayOrItself(final PathTrace path, final String params) {
         final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
-            if (path.node().isArray()) {
+            if (path.isArray()) {
                 return path;
             }
             return null;
@@ -103,8 +94,8 @@ final class FuncExecutor {
     private static PathTrace getParamArray(final PathTrace path, final List<String> paramList) {
         final ArrayNode array = MAPPER.createArrayNode();
         for (String param : paramList) {
-            if (path.node().isArray()) {
-                for (int i = 0; i < path.node().size(); i++) {
+            if (path.isArray()) {
+                for (int i = 0; i < path.containerSize(); i++) {
                     addArrayElement(array, getNodeByExpression(path, i, param));
                 }
             } else {
@@ -174,7 +165,7 @@ final class FuncExecutor {
                                                   final BiFunction<String, String, String> transform) {
         return applyWithParams(path, params, 1, 1, JsonNode::isTextual,
             (data, paramList) -> path.push(TextNode.valueOf(
-                transform.apply(data.getKey().node().asText(), getNodeAsText(path, data.getValue(), paramList.get(0)))
+                transform.apply(data.getKey().asText(), getNodeAsText(path, data.getValue(), paramList.get(0)))
             )));
     }
 
@@ -182,7 +173,7 @@ final class FuncExecutor {
                                                   final BiFunction<String, String, Boolean> transform) {
         return applyWithParams(path, params, 1, 1, JsonNode::isTextual,
             (data, paramList) -> path.push(BooleanNode.valueOf(
-                not ^ transform.apply(data.getKey().node().asText(), getNodeAsText(path, data.getValue(), paramList.get(0)))
+                not ^ transform.apply(data.getKey().asText(), getNodeAsText(path, data.getValue(), paramList.get(0)))
             )));
     }
 
@@ -193,10 +184,10 @@ final class FuncExecutor {
         if (target == null) {
             return null;
         }
-        if (target.node().isArray()) {
+        if (target.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < target.node().size(); i++) {
-                PathTrace result = applyAction(path.push(target.node().get(i)), i, isValid, action, paramList);
+            for (int i = 0; i < target.containerSize(); i++) {
+                PathTrace result = applyAction(path.push(target.get(i)), i, isValid, action, paramList);
                 array.add(result == null ? null : result.node());
             }
             return path.push(array);
@@ -213,10 +204,10 @@ final class FuncExecutor {
     static PathTrace applyWithArrayNode(final PathTrace path, final String params, final Predicate<JsonNode> isValid,
                                         final BiFunction<PathTrace, PathTrace, PathTrace> action) {
         final PathTrace paramArray = getParamArray(path, decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
-        if (paramArray.node().isEmpty()) {
+        if (paramArray.isEmpty()) {
             return null;
         }
-        if (path.node().isArray()) {
+        if (path.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             path.node().forEach(elem -> {
                 PathTrace result = applyAction(path.push(elem), isValid, action, paramArray);

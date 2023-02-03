@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Octomix Software Technology Limited
+ * Copyright 2020-2023 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,11 @@ final class JossonCore {
 
     static final String CURRENT_NODE = "?";
 
-    static final String VAR_ARGS = "...";
+    static final String EVALUATE_KEY_NAME = ":";
+
+    static final String UNRESOLVABLE_AS_NULL = "+";
+
+    static final String VAR_ARGS = "??";
 
     private static final char WILDCARD_SYMBOL = '*';
 
@@ -144,18 +148,29 @@ final class JossonCore {
 
     static JsonNode getNodeByExpression(final JsonNode node, final int index, final String expression,
                                         final Map<String, JsonNode> variables) {
-        PathTrace path = getPathByExpression(PathTrace.from(node, variables), index, expression);
+        final PathTrace path = getPathByExpression(PathTrace.from(node, variables), index, expression);
         return path == null ? null : path.node();
     }
 
     static JsonNode getNodeByExpression(final PathTrace path, final String expression) {
-        PathTrace result = getPathByExpression(path, expression);
+        final PathTrace result = getPathByExpression(path, expression);
         return result == null ? null : result.node();
     }
 
+    static JsonNode getNodeByExpression(final PathTrace path, final String expression, final boolean defaultNullNode) {
+        final JsonNode result = getNodeByExpression(path, expression);
+        return result != null ? result : defaultNullNode ? NullNode.getInstance() : null;
+    }
+
     static JsonNode getNodeByExpression(final PathTrace path, final int index, final String expression) {
-        PathTrace result = getPathByExpression(path, index, expression);
+        final PathTrace result = getPathByExpression(path, index, expression);
         return result == null ? null : result.node();
+    }
+
+    static JsonNode getNodeByExpression(final PathTrace path, final int index, final String expression,
+                                        final boolean defaultNullNode) {
+        final JsonNode result = getNodeByExpression(path, index, expression);
+        return result != null ? result : defaultNullNode ? NullNode.getInstance() : null;
     }
 
     static PathTrace getPathByExpression(final PathTrace path, final String expression) {
@@ -168,7 +183,7 @@ final class JossonCore {
         }
         final List<String> steps = decomposePath(expression);
         if (steps.isEmpty()) {
-            return index >= 0 && path.node().isArray() ? path.push(path.node().get(index)) : path;
+            return index >= 0 && path.isArray() ? path.push(path.get(index)) : path;
         }
         final String step = steps.get(0);
         switch (step) {
@@ -205,8 +220,8 @@ final class JossonCore {
                 }
                 throw new IllegalArgumentException("Invalid index type: " + step);
         }
-        if (index >= 0 && path.node().isArray()) {
-            return getPathBySteps(path.push(path.node().get(index)), steps);
+        if (index >= 0 && path.isArray()) {
+            return getPathBySteps(path.push(path.get(index)), steps);
         }
         return getPathBySteps(path, steps);
     }
@@ -263,13 +278,13 @@ final class JossonCore {
         String step = steps.get(0);
         switch (step.charAt(0)) {
             case WILDCARD_SYMBOL:
-                if (path.node().isEmpty())  {
+                if (path.isEmpty())  {
                     return null;
                 }
                 final String[] levelsAndFilter = matchWildcardLevelsAndFilter(step);
                 if (levelsAndFilter == null) {
                     steps.remove(0);
-                    if (path.node().isObject()) {
+                    if (path.isObject()) {
                         return wildcardAny(path, steps, nextSteps);
                     }
                     return wildcardAny(wildcardArrayNodeToList(path), steps, nextSteps, 1);
@@ -278,7 +293,7 @@ final class JossonCore {
                     steps.remove(0);
                     final int levels = levelsAndFilter[0].isEmpty() ? 0 : getNodeAsInt(path, levelsAndFilter[0]);
                     return wildcardAny(
-                            path.node().isObject() ? Collections.singletonList(path) : wildcardArrayNodeToList(path),
+                            path.isObject() ? Collections.singletonList(path) : wildcardArrayNodeToList(path),
                             steps, nextSteps, levels);
                 }
                 final String filter = levelsAndFilter[1];
@@ -330,14 +345,14 @@ final class JossonCore {
         final ArrayFilter filter = matchFilterQuery(step);
         JsonNode node;
         if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
-            if (path.node().isValueNode()) {
+            if (path.isValueNode()) {
                 return null;
             }
-            if (path.node().isArray()) {
+            if (path.isArray()) {
                 node = forEachElement(path, filter.getNodeName(), filter.getMode(), steps, nextSteps);
                 return getPathBySteps(path.push(node), steps, nextSteps);
             }
-            node = path.node().get(filter.getNodeName());
+            node = path.get(filter.getNodeName());
         } else if (filter.getNodeName().isEmpty()) {
             node = filter.evaluateFilter(path, filter.getFilter());
         } else {
@@ -386,7 +401,7 @@ final class JossonCore {
         final List<PathTrace> nextLevel = new ArrayList<>();
         for (PathTrace path : paths) {
             for (Iterator<JsonNode> it = path.node().elements(); it.hasNext(); ) {
-                JsonNode elem = it.next();
+                final JsonNode elem = it.next();
                 if (elem.isObject()) {
                     nextLevel.add(path.push(elem));
                 }
@@ -409,7 +424,7 @@ final class JossonCore {
                     }
                 }
             }
-        } else if (!path.node().isEmpty()) {
+        } else if (!path.isEmpty()) {
             List<String> nextNextKeys = null;
             for (JsonNode each : path.node()) {
                 final List<String> tempKeys = new ArrayList<>();
