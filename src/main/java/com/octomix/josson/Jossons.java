@@ -140,6 +140,18 @@ public class Jossons extends JossonsCore {
     }
 
     /**
+     * Put dataset to the dataset mapping.
+     *
+     * @param key the mapping key
+     * @param value the mapping Josson object as the data value
+     * @return {@code this}
+     */
+    public Jossons putDataset(final String key, final JsonNode value) {
+        datasets.put(key, Josson.create(value));
+        return this;
+    }
+
+    /**
      * Get the stored dataset mapping for placeholder resolution.
      *
      * @return The stored dataset mapping
