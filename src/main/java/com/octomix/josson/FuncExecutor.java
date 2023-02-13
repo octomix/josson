@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.PatternMatcher.*;
 import static com.octomix.josson.Utils.addArrayElement;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -51,13 +50,13 @@ final class FuncExecutor {
     }
 
     static PathTrace getParamPath(final PathTrace path, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 0, 1);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(0, 1);
         return paramList.isEmpty() ? path : getPathByExpression(path, paramList.get(0));
     }
 
     static Pair<PathTrace, List<String>> getParamPathAndStrings(final PathTrace path, final String params,
                                                                 final int min, final int max) {
-        final List<String> paramList = decomposeFunctionParameters(params, min, max + 1);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(min, max + 1);
         final String expression = max <= UNLIMITED_AND_NO_PATH ? EMPTY : paramList.size() > max ? paramList.remove(0) : null;
         return Pair.of(expression == null ? path : getPathByExpression(path, expression), paramList);
     }
@@ -65,12 +64,12 @@ final class FuncExecutor {
     static List<String[]> getParamNamePath(final List<String> paramList) {
         final AtomicInteger noNameCount = new AtomicInteger();
         return paramList.stream()
-                .map(param -> decomposeNameAndPath(param, (ifFuncName) -> ifFuncName + noNameCount.incrementAndGet()))
-                .collect(Collectors.toList());
+            .map(param -> new SyntaxDecomposer(param).deNameAndPath((ifFuncName) -> ifFuncName + noNameCount.incrementAndGet()))
+            .collect(Collectors.toList());
     }
 
     static PathTrace getParamArrayOrItselfIsContainer(final PathTrace path, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
             if (path.isContainer()) {
                 return path;
@@ -81,7 +80,7 @@ final class FuncExecutor {
     }
 
     static PathTrace getParamArrayOrItself(final PathTrace path, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
             if (path.isArray()) {
                 return path;
@@ -119,14 +118,14 @@ final class FuncExecutor {
 
     static PathTrace applyWithoutParam(final PathTrace path, final String params, final Predicate<JsonNode> isValid,
                                        final BiFunction<Pair<PathTrace, Integer>, List<String>, PathTrace> action) {
-        final List<String> paramList = decomposeFunctionParameters(params, 0, 1);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(0, 1);
         return applyAction(path, paramList.isEmpty() ? null : paramList.get(0), isValid, action, null);
     }
 
     static PathTrace applyWithParams(final PathTrace path, final String params, final int min, final int max,
                                      final Predicate<JsonNode> isValid,
                                      final BiFunction<Pair<PathTrace, Integer>, List<String>, PathTrace> action) {
-        final List<String> paramList = decomposeFunctionParameters(params, min, max + 1);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(min, max + 1);
         final String expression = max <= UNLIMITED_AND_NO_PATH ? EMPTY : paramList.size() > max ? paramList.remove(0) : null;
         return applyAction(path, expression, isValid, action, paramList);
     }
@@ -203,7 +202,7 @@ final class FuncExecutor {
 
     static PathTrace applyWithArrayNode(final PathTrace path, final String params, final Predicate<JsonNode> isValid,
                                         final BiFunction<PathTrace, PathTrace, PathTrace> action) {
-        final PathTrace paramArray = getParamArray(path, decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        final PathTrace paramArray = getParamArray(path, new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH));
         if (paramArray.isEmpty()) {
             return null;
         }

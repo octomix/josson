@@ -27,7 +27,6 @@ import java.util.Set;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -238,7 +237,7 @@ final class FuncArray {
     }
 
     static PathTrace funcPush(final PathTrace path, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH);
         final ArrayNode array = MAPPER.createArrayNode();
         if (path.isArray()) {
             array.addAll((ArrayNode) path.node());

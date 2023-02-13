@@ -24,7 +24,6 @@ import java.util.LinkedList;
 import java.util.function.BiFunction;
 
 import static com.octomix.josson.JossonsCore.antiInjectionDecode;
-import static com.octomix.josson.PatternMatcher.decomposeStatement;
 import static com.octomix.josson.Utils.asBoolean;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -135,7 +134,7 @@ abstract class OperationStack {
 
     JsonNode evaluate(final String statement, final int arrayIndex) {
         stack.clear();
-        for (OperationStep step : decomposeStatement(isAntiInject ? antiInjectionDecode(statement) : statement)) {
+        for (OperationStep step : new SyntaxDecomposer(isAntiInject ? antiInjectionDecode(statement) : statement).deOperationSteps()) {
             try {
                 evaluate(step, arrayIndex);
             } catch (IllegalArgumentException e) {

@@ -85,7 +85,7 @@ final class FuncFormat {
                 }
                 for (String expression : paramList) {
                     final PathTrace result = getPathByExpression(path, data.getValue(), expression);
-                    if (!nodeIsNull(result)) {
+                    if (nodeIsNotNull(result)) {
                         return result;
                     }
                 }
@@ -156,7 +156,7 @@ final class FuncFormat {
             (data, paramList) -> {
                 for (String expression : paramList) {
                     final PathTrace result = getPathByExpression(path, data.getValue(), expression);
-                    if (!nodeIsNull(result)) {
+                    if (nodeIsNotNull(result)) {
                         return result;
                     }
                 }

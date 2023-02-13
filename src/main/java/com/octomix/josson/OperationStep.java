@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 import static com.octomix.josson.JossonsCore.isCacheDataset;
-import static com.octomix.josson.PatternMatcher.matchDatasetQuery;
 import static com.octomix.josson.Utils.literalToValueNode;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -85,7 +84,7 @@ class OperationStep {
         if (implicitVariable != null) {
             return implicitVariable;
         }
-        final String[] tokens = matchDatasetQuery(expression);
+        final String[] tokens = new SyntaxDecomposer(expression).deDatasetQuery();
         if (tokens == null) {
             if (isCacheDataset(expression)) {
                 throw new UnresolvedDatasetException(expression);
