@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.octomix.josson.commons.StringUtils;
 
-import static com.octomix.josson.ArrayFilter.FilterMode.FILTRATE_FIND_FIRST;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.Utils.asBoolean;
 import static com.octomix.josson.Utils.parseInteger;
@@ -120,7 +119,7 @@ class ArrayFilter {
         if (node.size() == 0) {
             return null;
         }
-        final ArrayNode matchedNodes = mode == FILTRATE_FIND_FIRST ? null : MAPPER.createArrayNode();
+        final ArrayNode matchedNodes = mode == FilterMode.FILTRATE_FIND_FIRST ? null : MAPPER.createArrayNode();
         final Integer index = parseInteger(statement);
         if (index != null) {
             if (matchedNodes == null) {

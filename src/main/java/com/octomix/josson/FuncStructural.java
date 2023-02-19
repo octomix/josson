@@ -333,6 +333,10 @@ final class FuncStructural {
                 final JsonNode result = getNodeByExpression(node, index, evalNameAndPath[1], evalNameAndPath[2] != null);
                 if (result == null) {
                     base.remove(evalNameAndPath[0]);
+                } else if (evalNameAndPath[0].equals(WILDCARD_COLLECT_ALL)) {
+                    if (result.isObject()) {
+                        result.fields().forEachRemaining(field -> base.set(field.getKey(), field.getValue()));
+                    }
                 } else {
                     base.set(evalNameAndPath[0], result);
                 }

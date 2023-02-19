@@ -89,6 +89,8 @@ final class JossonCore {
 
     private static ZoneId zoneId = ZoneId.systemDefault();
 
+    static final String WILDCARD_COLLECT_ALL = String.valueOf(WILDCARD_SYMBOL) + FILTRATE_COLLECT_ALL.getSymbol();
+
     private JossonCore() {
     }
 

@@ -108,7 +108,7 @@ class SyntaxMatcher {
 
     protected int skipEnclosure(final int pos, final Enclosure... enclosures) {
         for (Enclosure enclosure : enclosures) {
-            int end = 0;
+            final int end;
             switch (enclosure) {
                 case STRING_LITERAL:
                     end = matchStringLiteral(pos);
@@ -122,6 +122,8 @@ class SyntaxMatcher {
                 case ESCAPE_PATH_NAME:
                     end = matchEscapePathName(pos);
                     break;
+                default:
+                    end = 0;
             }
             if (end > 0) {
                 return end;
@@ -243,7 +245,7 @@ class SyntaxMatcher {
     }
 
     protected CombineOperand matchCombineOperand(final int pos, final int end, final boolean needQuery) {
-        CombineOperand operand = new SyntaxMatcher(trimOf(pos, end)).matchCombineOperand();
+        final CombineOperand operand = new SyntaxMatcher(trimOf(pos, end)).matchCombineOperand();
         if (needQuery) {
             if (!operand.hasQuery()) {
                 throw new SyntaxErrorException(input, "Missing query statement", pos);
