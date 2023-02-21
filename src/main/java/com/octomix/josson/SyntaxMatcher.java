@@ -108,25 +108,25 @@ class SyntaxMatcher {
 
     protected int skipEnclosure(final int pos, final Enclosure... enclosures) {
         for (Enclosure enclosure : enclosures) {
-            final int end;
+            final int index;
             switch (enclosure) {
                 case STRING_LITERAL:
-                    end = matchStringLiteral(pos);
+                    index = matchStringLiteral(pos);
                     break;
                 case SQUARE_BRACKETS:
-                    end = matchSquareBrackets(pos);
+                    index = matchSquareBrackets(pos);
                     break;
                 case PARENTHESES:
-                    end = matchParentheses(pos);
+                    index = matchParentheses(pos);
                     break;
                 case ESCAPE_PATH_NAME:
-                    end = matchEscapePathName(pos);
+                    index = matchEscapePathName(pos);
                     break;
                 default:
-                    end = 0;
+                    index = 0;
             }
-            if (end > 0) {
-                return end;
+            if (index > 0) {
+                return index;
             }
         }
         return pos;
@@ -225,20 +225,20 @@ class SyntaxMatcher {
 
     protected void matchCombineOperation(int pos, final CombineOperand leftOperand, final CombineOperator operator,
                                          final List<CombineOperation> operations) {
-        int end = skipDatasetQuery(pos);
-        final CombineOperand rightOperand = matchCombineOperand(pos, end, true);
+        int index = skipDatasetQuery(pos);
+        final CombineOperand rightOperand = matchCombineOperand(pos, index, true);
         operations.add(new CombineOperation(leftOperand, operator, rightOperand));
-        pos = eatSpaces(end);
+        pos = eatSpaces(index);
         if (pos <= last) {
             if (input.charAt(pos) != '|') {
                 throw new SyntaxErrorException(input, "Expecting pipe operator '|'", pos);
             }
-            end = skipDatasetQuery(++pos);
-            final CombineOperand nextLeftOperand = matchCombineOperand(pos, end, false);
-            pos = CombineOperator.findEndingPos(input, end, last);
-            final CombineOperator nextOperator = CombineOperator.fromSymbol(input.substring(end, pos));
+            index = skipDatasetQuery(++pos);
+            final CombineOperand nextLeftOperand = matchCombineOperand(pos, index, false);
+            pos = CombineOperator.findEndingPos(input, index, last);
+            final CombineOperator nextOperator = CombineOperator.fromSymbol(input.substring(index, pos));
             if (nextOperator == null) {
-                throw new SyntaxErrorException(input, "Invalid join or set operator", end);
+                throw new SyntaxErrorException(input, "Invalid join or set operator", index);
             }
             matchCombineOperation(pos, nextLeftOperand, nextOperator, operations);
         }
@@ -297,9 +297,9 @@ class SyntaxMatcher {
             if (beg < last) {
                 final char charBeg = input.charAt(beg);
                 if (charBeg == '{' || charBeg == '[') {
-                    final int end = eatRightSpaces(beg, last);
-                    if (end > beg) {
-                        return charBeg == '{' && input.charAt(end) == '}' || charBeg == '[' && input.charAt(end) == ']';
+                    final int index = eatRightSpaces(beg, length) - 1;
+                    if (index > beg) {
+                        return charBeg == '{' && input.charAt(index) == '}' || charBeg == '[' && input.charAt(index) == ']';
                     }
                 }
             }
