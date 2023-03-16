@@ -169,7 +169,7 @@ final class FuncArray {
         int i = step > 0 ? 0 : dataPath.containerSize() - 1;
         final int end = step > 0 ? dataPath.containerSize() : -1;
         for (; i != end; i += step) {
-            if (Operator.EQ.relationalCompare(result, dataPath.get(i))) {
+            if (Operator.EQ.compare(result, dataPath.get(i))) {
                 return path.push(IntNode.valueOf(i));
             }
         }

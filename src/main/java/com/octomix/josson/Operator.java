@@ -109,7 +109,7 @@ enum Operator {
         return symbol;
     }
 
-    boolean relationalCompare(JsonNode leftNode, JsonNode rightNode) {
+    boolean compare(JsonNode leftNode, JsonNode rightNode) {
         if (leftNode == null) {
             leftNode = NullNode.getInstance();
         }
@@ -123,7 +123,7 @@ enum Operator {
             return this == NOT_MATCH ^ Pattern.compile(rightNode.asText()).matcher(leftNode.asText()).matches();
         }
         if (leftNode.isContainerNode() || rightNode.isContainerNode()) {
-            return relationalCompareContainer(leftNode, rightNode);
+            return compareContainer(leftNode, rightNode);
         }
         if (rightNode.isTextual()) {
             if (leftNode.isTextual()) {
@@ -145,20 +145,20 @@ enum Operator {
             }
             switch (this) {
                 case GT:
-                    return LT.relationalCompareValue(rightNode, leftNode);
+                    return LT.compareValue(rightNode, leftNode);
                 case GTE:
-                    return LTE.relationalCompareValue(rightNode, leftNode);
+                    return LTE.compareValue(rightNode, leftNode);
                 case LT:
-                    return GT.relationalCompareValue(rightNode, leftNode);
+                    return GT.compareValue(rightNode, leftNode);
                 case LTE:
-                    return GTE.relationalCompareValue(rightNode, leftNode);
+                    return GTE.compareValue(rightNode, leftNode);
             }
-            return relationalCompareValue(rightNode, leftNode);
+            return compareValue(rightNode, leftNode);
         }
-        return relationalCompareValue(leftNode, rightNode);
+        return compareValue(leftNode, rightNode);
     }
 
-    private boolean relationalCompareValue(final JsonNode leftNode, final JsonNode rightNode) {
+    private boolean compareValue(final JsonNode leftNode, final JsonNode rightNode) {
         if (rightNode.isNumber()) {
             try {
                 final double value = leftNode.isNumber() ? leftNode.asDouble() : Double.parseDouble(leftNode.asText());
@@ -195,7 +195,7 @@ enum Operator {
         return false;
     }
 
-    private boolean relationalCompareContainer(final JsonNode leftNode, final JsonNode rightNode) {
+    private boolean compareContainer(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.getNodeType() != rightNode.getNodeType() || this != EQ && this != NE) {
             return this == NE;
         }
@@ -210,7 +210,7 @@ enum Operator {
                 final JsonNode leftElem = leftNode.get(i);
                 int j = i;
                 for (; j >= 0; j--) {
-                    if (EQ.relationalCompare(leftElem, rightArray.get(j))) {
+                    if (EQ.compare(leftElem, rightArray.get(j))) {
                         break;
                     }
                 }
@@ -223,7 +223,7 @@ enum Operator {
             final Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
             while (iterator.hasNext()) {
                 final Map.Entry<String, JsonNode> leftElem = iterator.next();
-                if (!EQ.relationalCompare(leftElem.getValue(), rightNode.get(leftElem.getKey()))) {
+                if (!EQ.compare(leftElem.getValue(), rightNode.get(leftElem.getKey()))) {
                     return this == NE;
                 }
             }

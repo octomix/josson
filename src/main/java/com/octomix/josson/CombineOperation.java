@@ -110,9 +110,9 @@ class CombineOperation {
             case INTERSECTION:
                 return intersection(rightOperand.getNode(), leftOperand.getNode());
             case EQUALS:
-                return BooleanNode.valueOf(equals(leftOperand.getNode(), rightOperand.getNode()));
+                return BooleanNode.valueOf(Operator.EQ.compare(leftOperand.getNode(), rightOperand.getNode()));
             case NOT_EQUALS:
-                return BooleanNode.valueOf(!equals(leftOperand.getNode(), rightOperand.getNode()));
+                return BooleanNode.valueOf(Operator.NE.compare(leftOperand.getNode(), rightOperand.getNode()));
             default:
                 break;
         }
@@ -205,10 +205,6 @@ class CombineOperation {
     }
 
     private static JsonNode subtract(final JsonNode leftNode, final JsonNode rightNode) {
-        return subtract(leftNode, rightNode, false);
-    }
-
-    private static JsonNode subtract(final JsonNode leftNode, final JsonNode rightNode, final boolean detectEqual) {
         if (leftNode.isObject() && rightNode.isObject()) {
             final ObjectNode node = MAPPER.createObjectNode();
             final Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
@@ -217,45 +213,34 @@ class CombineOperation {
                 if (rightNode.has(entry.getKey())) {
                     if (entry.getValue().isObject() && rightNode.get(entry.getKey()).isObject()
                         || entry.getValue().isArray() && rightNode.get(entry.getKey()).isArray()) {
-                        final JsonNode diff = subtract(entry.getValue(), rightNode.get(entry.getKey()), detectEqual);
-                        if (detectEqual) {
-                            if (!diff.asBoolean()) {
-                                return BooleanNode.FALSE;
-                            }
-                        } else if (!diff.isEmpty()) {
+                        final JsonNode diff = subtract(entry.getValue(), rightNode.get(entry.getKey()));
+                        if (!diff.isEmpty()) {
                             node.set(entry.getKey(), diff);
                         }
                         continue;
                     }
-                    if (Operator.EQ.relationalCompare(entry.getValue(), rightNode.get(entry.getKey()))) {
+                    if (Operator.EQ.compare(entry.getValue(), rightNode.get(entry.getKey()))) {
                         continue;
                     }
                 }
-                if (detectEqual) {
-                    return BooleanNode.FALSE;
-                } else {
-                    node.set(entry.getKey(), entry.getValue());
-                }
+                node.set(entry.getKey(), entry.getValue());
             }
-            return detectEqual ? BooleanNode.TRUE : node;
+            return node;
         }
         final JsonNode rightArray = rightNode.isArray() ? rightNode : intoNewArray(rightNode);
         final ArrayNode node = MAPPER.createArrayNode();
         for (JsonNode leftElem : leftNode.isObject() ? intoNewArray(leftNode) : leftNode) {
             int i = rightArray.size() - 1;
             for (; i >= 0 ; i--) {
-                if (Operator.EQ.relationalCompare(leftElem, rightArray.get(i))) {
+                if (Operator.EQ.compare(leftElem, rightArray.get(i))) {
                     break;
                 }
             }
             if (i < 0) {
-                if (detectEqual) {
-                    return BooleanNode.FALSE;
-                }
                 node.add(leftElem);
             }
         }
-        return detectEqual ? BooleanNode.TRUE : node;
+        return node;
     }
 
     private static JsonNode symmetricDifference(final JsonNode leftNode, final JsonNode rightNode) {
@@ -282,7 +267,7 @@ class CombineOperation {
             final ArrayNode node = MAPPER.createArrayNode();
             for (JsonNode leftElem : leftNode) {
                 for (JsonNode rightElem : rightNode) {
-                    if (Operator.EQ.relationalCompare(leftElem, rightElem)) {
+                    if (Operator.EQ.compare(leftElem, rightElem)) {
                         node.add(leftElem);
                         break;
                     }
@@ -291,13 +276,5 @@ class CombineOperation {
             return node;
         }
         throw new IllegalArgumentException("cannot operate intersection on object");
-    }
-
-    private static boolean equals(final JsonNode leftNode, final JsonNode rightNode) {
-        if (leftNode.isObject() && rightNode.isObject() || leftNode.isArray() && rightNode.isArray()) {
-            return subtract(leftNode, rightNode, true).asBoolean()
-                && subtract(rightNode, leftNode, true).asBoolean();
-        }
-        throw new IllegalArgumentException("cannot operate equals between an object and an array");
     }
 }

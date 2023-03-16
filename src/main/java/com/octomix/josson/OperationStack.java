@@ -128,7 +128,7 @@ abstract class OperationStack {
     }
 
     private JsonNode relationalCompare(final OperationStep prevStep, final OperationStep step, final int arrayIndex) {
-        return BooleanNode.valueOf(step.getOperator().relationalCompare(
+        return BooleanNode.valueOf(step.getOperator().compare(
                 resolveFrom(prevStep, arrayIndex), evaluateExpression(step, arrayIndex)));
     }
 

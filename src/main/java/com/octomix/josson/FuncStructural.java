@@ -103,7 +103,7 @@ final class FuncStructural {
     private static void funcCumulateCollect(final ArrayNode array, final PathTrace path, final Integer index,
                                             final String expression, final String next) {
         final PathTrace result = index == null ? path : getPathByExpression(path, index, next);
-        if (result == null || (index != null && Operator.EQ.relationalCompare(path.node(), result.node()))) {
+        if (result == null || (index != null && Operator.EQ.compare(path.node(), result.node()))) {
             return;
         }
         if (result.isArray()) {
@@ -250,7 +250,7 @@ final class FuncStructural {
                 ArrayNode values = null;
                 final String[] evalGrouping = evaluateNameAndPath(grouping, dataPath, i);
                 for (JsonNode elem : array) {
-                    if (Operator.EQ.relationalCompare(elem.get(evalNameAndPath[0]), key)) {
+                    if (Operator.EQ.compare(elem.get(evalNameAndPath[0]), key)) {
                         values = (ArrayNode) elem.get(evalGrouping[0]);
                         break;
                     }
