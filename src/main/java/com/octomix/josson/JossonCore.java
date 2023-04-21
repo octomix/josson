@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
+import org.mariuszgromada.math.mxparser.mXparser;
 
 import java.time.ZoneId;
 import java.util.*;
@@ -90,6 +91,10 @@ final class JossonCore {
     private static ZoneId zoneId = ZoneId.systemDefault();
 
     static final String WILDCARD_COLLECT_ALL = String.valueOf(WILDCARD_SYMBOL) + FILTRATE_COLLECT_ALL.getSymbol();
+
+    static {
+        mXparser.disableImpliedMultiplicationMode();
+    }
 
     private JossonCore() {
     }

@@ -51,7 +51,6 @@ final class FuncArithmetic {
             nameAndPaths.add(new String[]{"_THIS_NODE_", CURRENT_NODE, null});
         }
         final Expression calcExpr = new Expression(calc);
-        calcExpr.disableImpliedMultiplicationMode();
         if (path.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < path.containerSize(); i++) {
