@@ -578,6 +578,7 @@ public class UnitTest {
                         "} ]");
 
         // Syntax "path:+" present an unresolvable path as a NullNode.
+        //
         evaluate.accept("items.map(itemCode, unitDiscount)",
                 "[ {\n" +
                         "  \"itemCode\" : \"B00001\"\n" +
@@ -612,6 +613,7 @@ public class UnitTest {
                         "} ]");
 
         // Syntax "newFieldName:+path" present an unresolvable path as a NullNode with a new field name.
+        //
         evaluate.accept("items.map(itemCode, discount:+unitDiscount)",
                 "[ {\n" +
                         "  \"itemCode\" : \"B00001\",\n" +
@@ -622,6 +624,31 @@ public class UnitTest {
                         "}, {\n" +
                         "  \"itemCode\" : \"A00201\",\n" +
                         "  \"discount\" : 10.0\n" +
+                        "} ]");
+
+        // Syntax `**:object` extracts all the fields within a given object.
+        //
+        evaluate.accept("items.slice(0,2).field(**:property, property:)",
+                "[ {\n" +
+                        "  \"itemCode\" : \"B00001\",\n" +
+                        "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                        "  \"brand\" : \"WinWin\",\n" +
+                        "  \"qty\" : 2,\n" +
+                        "  \"unit\" : \"Pcs\",\n" +
+                        "  \"unitPrice\" : 15.0,\n" +
+                        "  \"tags\" : [ \"SHIRT\", \"WOMEN\" ],\n" +
+                        "  \"size\" : \"M\",\n" +
+                        "  \"colors\" : [ \"WHITE\", \"RED\" ]\n" +
+                        "}, {\n" +
+                        "  \"itemCode\" : \"A00308\",\n" +
+                        "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                        "  \"brand\" : \"OctoPlus\",\n" +
+                        "  \"qty\" : 1,\n" +
+                        "  \"unit\" : \"Pcs\",\n" +
+                        "  \"unitPrice\" : 150.0,\n" +
+                        "  \"unitDiscount\" : 10.0,\n" +
+                        "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ],\n" +
+                        "  \"colors\" : [ \"BLACK\" ]\n" +
                         "} ]");
 
         // Function "group" works like SQL "group by".
@@ -2417,8 +2444,8 @@ public class UnitTest {
                         "{{order->totalAmount.formatNumber('US$#,##0.0').leftPad(12).concat('Subtotal:',?,'\n').leftPad(80)}}" +
                         "{{order->discountPct > 0 ? order->discountPct.formatNumber('0.0').leftPad(11).concat('Discount:',?,'%\n').leftPad(80)}}" +
                         "{{order->delivery.handlingFee!=null ? order->delivery.handlingFee.formatNumber('US$#,##0.0').leftPad(12).concat('Shipping and handling:',?,'\n').leftPad(80)}}" +
-                        "{{order->calc(netAmount+fee, fee:coalesce(delivery.handlingFee,0)).formatNumber('US$#,##0.0').leftPad(12).concat('Total:',?,'\n').leftPad(80)}}" +
-                        ""));
+                        "{{order->calc(netAmount+fee, fee:coalesce(delivery.handlingFee,0)).formatNumber('US$#,##0.0').leftPad(12).concat('Total:',?,'\n').leftPad(80)}}"
+        ));
 
         // Test join datasets
         Map<String, String> dictionaryFinder = new HashMap<>();

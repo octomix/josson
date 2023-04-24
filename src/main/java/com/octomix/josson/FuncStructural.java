@@ -29,7 +29,6 @@ import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.*;
-import static com.octomix.josson.PatternMatcher.*;
 import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -42,7 +41,7 @@ final class FuncStructural {
     }
 
     static PathTrace funcAssort(final PathTrace path, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 0, UNLIMITED_WITH_PATH);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(0, UNLIMITED_WITH_PATH);
         if (!path.isContainer()) {
             return null;
         }
@@ -88,7 +87,7 @@ final class FuncStructural {
     }
 
     static PathTrace funcCollect(final PathTrace path, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_AND_NO_PATH);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_AND_NO_PATH);
         final ArrayNode array = MAPPER.createArrayNode();
         paramList.forEach(param -> addArrayElement(array, getNodeByExpression(path, param)));
         return path.push(array);
@@ -104,7 +103,7 @@ final class FuncStructural {
     private static void funcCumulateCollect(final ArrayNode array, final PathTrace path, final Integer index,
                                             final String expression, final String next) {
         final PathTrace result = index == null ? path : getPathByExpression(path, index, next);
-        if (result == null || (index != null && Operator.EQ.relationalCompare(path.node(), result.node()))) {
+        if (result == null || (index != null && Operator.EQ.compare(path.node(), result.node()))) {
             return;
         }
         if (result.isArray()) {
@@ -157,7 +156,7 @@ final class FuncStructural {
     }
 
     static PathTrace funcField(final PathTrace path, final String params) {
-        final List<String[]> nameAndPaths = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        final List<String[]> nameAndPaths = getParamNamePath(new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH));
         if (path.isObject()) {
             return path.push(funcMap(cloneObject((ObjectNode) path.node()), path, nameAndPaths, NON_ARRAY_INDEX));
         }
@@ -238,9 +237,9 @@ final class FuncStructural {
             return null;
         }
         final List<String> paramList = pathAndParams.getValue();
-        final String[] nameAndPath = decomposeNameAndPath(paramList.get(0), (ifFuncName) -> ENTRY_KEY_NAME);
+        final String[] nameAndPath = new SyntaxDecomposer(paramList.get(0)).deNameAndPath((ifFuncName) -> ENTRY_KEY_NAME);
         final String[] grouping = paramList.size() > 1
-                ? decomposeNameAndPath(paramList.get(1), (ifFuncName) -> GROUP_VALUE_NAME)
+                ? new SyntaxDecomposer(paramList.get(1)).deNameAndPath((ifFuncName) -> GROUP_VALUE_NAME)
                 : new String[]{GROUP_VALUE_NAME, null, null};
         final ArrayNode array = MAPPER.createArrayNode();
         for (int i = 0; i < dataPath.containerSize(); i++) {
@@ -251,7 +250,7 @@ final class FuncStructural {
                 ArrayNode values = null;
                 final String[] evalGrouping = evaluateNameAndPath(grouping, dataPath, i);
                 for (JsonNode elem : array) {
-                    if (Operator.EQ.relationalCompare(elem.get(evalNameAndPath[0]), key)) {
+                    if (Operator.EQ.compare(elem.get(evalNameAndPath[0]), key)) {
                         values = (ArrayNode) elem.get(evalGrouping[0]);
                         break;
                     }
@@ -303,7 +302,7 @@ final class FuncStructural {
     }
 
     static PathTrace funcLet(final PathTrace path, final String params) {
-        final List<String[]> nameAndPaths = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        final List<String[]> nameAndPaths = getParamNamePath(new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH));
         for (String[] nameAndPath : nameAndPaths) {
             final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, path, NON_ARRAY_INDEX);
             final JsonNode result = getNodeByExpression(
@@ -314,7 +313,7 @@ final class FuncStructural {
     }
 
     static PathTrace funcMap(final PathTrace path, final String params) {
-        final List<String[]> nameAndPaths = getParamNamePath(decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH));
+        final List<String[]> nameAndPaths = getParamNamePath(new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH));
         if (!path.isArray()) {
             return path.push(funcMap(MAPPER.createObjectNode(), path, nameAndPaths, NON_ARRAY_INDEX));
         }
@@ -334,6 +333,10 @@ final class FuncStructural {
                 final JsonNode result = getNodeByExpression(node, index, evalNameAndPath[1], evalNameAndPath[2] != null);
                 if (result == null) {
                     base.remove(evalNameAndPath[0]);
+                } else if (evalNameAndPath[0].equals(WILDCARD_COLLECT_ALL)) {
+                    if (result.isObject()) {
+                        result.fields().forEachRemaining(field -> base.set(field.getKey(), field.getValue()));
+                    }
                 } else {
                     base.set(evalNameAndPath[0], result);
                 }
@@ -343,7 +346,7 @@ final class FuncStructural {
     }
 
     static PathTrace funcMergeArrays(final PathTrace path, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH);
         final ArrayNode array = MAPPER.createArrayNode();
         for (String param : paramList) {
             if (path.isArray()) {
@@ -495,7 +498,7 @@ final class FuncStructural {
         if (dataPath == null) {
             return null;
         }
-        final String[] nameAndPath = decomposeNameAndPath(pathAndParams.getValue().get(0), null);
+        final String[] nameAndPath = new SyntaxDecomposer(pathAndParams.getValue().get(0)).deNameAndPath(null);
         if (nameAndPath[1] == null) {
             throw new SyntaxErrorException("Missing path '" + params + "'");
         }

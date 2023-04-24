@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.4.3</version>
+        <version>1.4.4</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.3'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.4'
 
 ## Features and Capabilities
 
@@ -1297,7 +1297,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [field(%) ⇒ {}] ⇒ [{}]
 
-67. Syntax `path:+` present an unresolvable path as a NullNode.
+67. For functions `map()` and `field()`, parameter syntax `path:+` present an unresolvable path as a NullNode.
 
         josson.getNode("items.map(itemCode, unitDiscount)")
         ==>
@@ -1337,7 +1337,7 @@ Below is the JSON for this tutorial.
           "unitDiscount" : 10.0
         } ]
 
-68. Syntax `newFieldName:+path` present an unresolvable path as a NullNode with a new field name.
+68. For functions `map()` and `field()`, parameter syntax `newFieldName:+path` present an unresolvable path as a NullNode with a new field name.
 
         josson.getNode("items.map(itemCode, discount:+unitDiscount)")
         ==>
@@ -1352,7 +1352,33 @@ Below is the JSON for this tutorial.
           "discount" : 10.0
         } ]
 
-69. Function `group()` works like SQL `group by`. It will build a structure of `[{key, [elements]}]`.
+69. For functions `map()` and `field()`, parameter syntax `**:object` extracts all the fields within a given object.
+
+        josson.getNode("items.slice(0,2).field(**:properties, properties:)")
+        ==>
+        [ {
+          "itemCode" : "B00001",
+          "name" : "WinWin TShirt Series A - 2022",
+          "brand" : "WinWin",
+          "qty" : 2,
+          "unit" : "Pcs",
+          "unitPrice" : 15.0,
+          "tags" : [ "SHIRT", "WOMEN" ],
+          "size" : "M",
+          "colors" : [ "WHITE", "RED" ]
+        }, {
+          "itemCode" : "A00308",
+          "name" : "OctoPlus Tennis Racket - Star",
+          "brand" : "OctoPlus",
+          "qty" : 1,
+          "unit" : "Pcs",
+          "unitPrice" : 150.0,
+          "unitDiscount" : 10.0,
+          "tags" : [ "TENNIS", "SPORT", "RACKET" ],
+          "colors" : [ "BLACK" ]
+        } ]
+
+70. Function `group()` works like SQL `group by`. It will build a structure of `[{key, [elements]}]`.
     The first parameter is the grouping key. If it is a function, it will be given a name `key` in the output.
     The optional second parameter is to evaluate the grouped element. The default is the whole array element.
     And the default output array name is `elements`.
@@ -1402,7 +1428,7 @@ Below is the JSON for this tutorial.
                                               \                   /
                                                {} → concat(%) → ""
 
-70. Function `unwind()` works like MongoDB `$unwind` operation. The operation is the reverse of `group()`.
+71. Function `unwind()` works like MongoDB `$unwind` operation. The operation is the reverse of `group()`.
 
         josson.getNode("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).unwind(elements)")
         ==>
@@ -1427,7 +1453,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → group(%) → [{}] → unwind(%) ⇒ [{}]
 
-71. Function `flatten()` flatten an array same as the default path step behavior. But more readable.
+72. Function `flatten()` flatten an array same as the default path step behavior. But more readable.
 
         josson.getNode("items@.tags")
         ==>
@@ -1451,7 +1477,7 @@ Below is the JSON for this tutorial.
                           \                  /
                            {} → tags[] → [""]
 
-72. If the parameter value of `flatten()` is textual, it will act as a key name separator to build a flattened object.
+73. If the parameter value of `flatten()` is textual, it will act as a key name separator to build a flattened object.
     If the separator is `null`, the standalone end node name will be used instead.
     The second parameter is optional and is the string format for array index, usually use with this combination `('.', '[%d]')`.
 
@@ -1501,7 +1527,7 @@ Below is the JSON for this tutorial.
           "totalAmount" : 270.0
         }
 
-73. Function `unflatten()` reverse the operation of `flatten()`.
+74. Function `unflatten()` reverse the operation of `flatten()`.
 
         josson.getNode("items[1].flatten('_').unflatten('_')")
         ==>
@@ -1519,7 +1545,7 @@ Below is the JSON for this tutorial.
           "tags" : [ "TENNIS", "SPORT", "RACKET" ]
         }
 
-74. Functions `map()`,`field()`,`group()`,`unwind()` - key name support evaluation using syntax `keyQuery::valueQuery`.
+75. Functions `map()`,`field()`,`group()`,`unwind()` - key name support evaluation using syntax `keyQuery::valueQuery`.
 
         josson.getNode("items.map(itemCode::qty)")
         ==>
@@ -1535,7 +1561,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [map(%) ⇒ {}] ⇒ [{}]
 
-75. Syntax `keyQuery::+valueQuery` present an unresolvable path as a NullNode.
+76. Syntax `keyQuery::+valueQuery` present an unresolvable path as a NullNode.
 
         josson.getNode("items.map(itemCode::unitDiscount)")
         ==>
@@ -1555,7 +1581,7 @@ Below is the JSON for this tutorial.
           "A00201" : 10.0
         } ]
 
-76. Function `mergeObjects()` merge all objects in an array into one object.
+77. Function `mergeObjects()` merge all objects in an array into one object.
 
         josson.getNode("mergeObjects(customer, items.map(itemCode::qty))")
         ==>
@@ -1572,7 +1598,7 @@ Below is the JSON for this tutorial.
 
         {} → mergeObjects(%) ⇒ {}
 
-77. Function `assort()` separates an object's entries according to different path conditions in sequence,
+78. Function `assort()` separates an object's entries according to different path conditions in sequence,
     and put them into the corresponding array if the evaluated result is not null.
     Entries will be removed if no condition can be matched.
     If the last argument is `??`, each of the remaining entry will be added to the end of result array separately.
@@ -1659,7 +1685,7 @@ Below is the JSON for this tutorial.
           }
         } ]
 
-78. Function `assort()` also works for array. The result is an array of arrays.
+79. Function `assort()` also works for array. The result is an array of arrays.
 
         josson.getNode("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)")
         ==>
@@ -1669,7 +1695,7 @@ Below is the JSON for this tutorial.
         ==>
         [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]
 
-79. Function `eval()` evaluates the value of a text node as a query statement.
+80. Function `eval()` evaluates the value of a text node as a query statement.
 
         josson.getNode("json('{"a":1,"b":2,"statement":"calc(a+b*2)"}').eval(statement)")
         ==>

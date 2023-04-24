@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
+import org.mariuszgromada.math.mxparser.mXparser;
 
 import java.time.ZoneId;
 import java.util.*;
@@ -27,7 +28,6 @@ import java.util.*;
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.PatternMatcher.*;
 import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -89,6 +89,12 @@ final class JossonCore {
     private static Locale locale = Locale.getDefault();
 
     private static ZoneId zoneId = ZoneId.systemDefault();
+
+    static final String WILDCARD_COLLECT_ALL = String.valueOf(WILDCARD_SYMBOL) + FILTRATE_COLLECT_ALL.getSymbol();
+
+    static {
+        mXparser.disableImpliedMultiplicationMode();
+    }
 
     private JossonCore() {
     }
@@ -181,7 +187,7 @@ final class JossonCore {
         if (path == null) {
             return null;
         }
-        final List<String> steps = decomposePath(expression);
+        final List<String> steps = new SyntaxDecomposer(expression).dePathSteps();
         if (steps.isEmpty()) {
             return index >= 0 && path.isArray() ? path.push(path.get(index)) : path;
         }
@@ -281,7 +287,7 @@ final class JossonCore {
                 if (path.isEmpty())  {
                     return null;
                 }
-                final String[] levelsAndFilter = matchWildcardLevelsAndFilter(step);
+                final String[] levelsAndFilter = new SyntaxDecomposer(step).deWildcardLevelsAndFilter();
                 if (levelsAndFilter == null) {
                     steps.remove(0);
                     if (path.isObject()) {
@@ -335,14 +341,15 @@ final class JossonCore {
                 throw new SyntaxErrorException(step);
         }
         steps.remove(0);
-        final String[] funcAndArgs = matchFunctionAndArgument(step, true);
+        final SyntaxDecomposer decomposer = new SyntaxDecomposer(step);
+        final String[] funcAndArgs = decomposer.deFunctionAndArgument(true);
         if (funcAndArgs != null) {
             if (FILTRATE_DIVERT_ALL.equals(step.charAt(step.length() - 1))) {
                 steps.add(0, "[]" + FILTRATE_DIVERT_ALL.getSymbol());
             }
             return getPathBySteps(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(path), steps, nextSteps);
         }
-        final ArrayFilter filter = matchFilterQuery(step);
+        final ArrayFilter filter = decomposer.deFilterQuery();
         JsonNode node;
         if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
             if (path.isValueNode()) {
@@ -380,7 +387,7 @@ final class JossonCore {
     private static PathTrace wildcardAny(final PathTrace path, final List<String> steps, final List<String> nextSteps) {
         for (JsonNode elem : path.node()) {
             final PathTrace result = getPathBySteps(path.push(elem), new ArrayList<>(steps), new ArrayList<>(nextSteps));
-            if (!nodeIsNull(result)) {
+            if (nodeIsNotNull(result)) {
                 return result;
             }
         }

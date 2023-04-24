@@ -30,7 +30,6 @@ import java.util.function.Function;
 
 import static com.octomix.josson.FuncExecutor.UNLIMITED_WITH_PATH;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.PatternMatcher.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -66,7 +65,7 @@ class JossonsCore {
 
     private boolean evaluateDbQuery(final String name, final String query,
                                     final BiFunction<String, String, Josson> dataFinder, final ResolverProgress progress) {
-        final String[] tokens = matchDbQuery(query);
+        final String[] tokens = new SyntaxDecomposer(query).deDbQuery();
         if (tokens == null) {
             return false;
         }
@@ -84,7 +83,7 @@ class JossonsCore {
     }
 
     private boolean parseObjectOrArrayJson(final String name, final String query, final ResolverProgress progress) {
-        if (!matchObjectOrArrayJson(query)) {
+        if (!new SyntaxDecomposer(query).matchObjectOrArrayJson()) {
             return false;
         }
         JsonNode node;
@@ -123,7 +122,7 @@ class JossonsCore {
                                          final ResolverProgress progress) {
         String query = dictionaryFinder.apply(name);
         if (query == null) {
-            final String[] funcAndArgs = matchFunctionAndArgument(name, false);
+            final String[] funcAndArgs = new SyntaxDecomposer(name).deFunctionAndArgument(false);
             if (funcAndArgs == null || (query = dictionaryFinder.apply(funcAndArgs[0] + "()")) == null) {
                 if (isCacheDataset(name)) {
                     datasets.put(name, null);
@@ -131,7 +130,7 @@ class JossonsCore {
                 return null;
             }
             final ArrayNode params = MAPPER.createArrayNode();
-            for (String param : decomposeFunctionParameters(funcAndArgs[1], 0, UNLIMITED_WITH_PATH)) {
+            for (String param : new SyntaxDecomposer(funcAndArgs[1]).deFunctionParameters(0, UNLIMITED_WITH_PATH)) {
                 params.add(evaluateQueryWithResolverLoop(param, dictionaryFinder, dataFinder, progress));
             }
             removeDictionaryFunctionParams();

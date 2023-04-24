@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.UnknownFormatConversionException;
 
 import static com.octomix.josson.JossonCore.*;
-import static com.octomix.josson.PatternMatcher.*;
 
 class Utils {
 
@@ -151,8 +150,8 @@ class Utils {
         return toOffsetDateTime(node).toEpochSecond();
     }
 
-    static boolean nodeIsNull(final PathTrace path) {
-        return path == null || path.node() == null || path.isNull();
+    static boolean nodeIsNotNull(final PathTrace path) {
+        return path != null && path.node() != null && !path.isNull();
     }
 
     static boolean nodeIsNull(final JsonNode node) {
@@ -230,15 +229,16 @@ class Utils {
     }
 
     static String getLastElementName(final String path) {
-        final List<String> steps = decomposePath(path);
+        final List<String> steps = new SyntaxDecomposer(path).dePathSteps();
         if (steps.isEmpty()) {
             throw new UnknownFormatConversionException("undefined");
         }
         String funcName = null;
         for (int i = steps.size() - 1; i >= 0; i--) {
-            final String[] funcAndArgs = matchFunctionAndArgument(steps.get(i), true);
+            final SyntaxDecomposer decomposer = new SyntaxDecomposer(steps.get(i));
+            final String[] funcAndArgs = decomposer.deFunctionAndArgument(true);
             if (funcAndArgs == null) {
-                return matchFilterQuery(steps.get(i)).getNodeName();
+                return decomposer.deFilterQuery().getNodeName();
             }
             if (funcName == null) {
                 funcName = funcAndArgs[0];

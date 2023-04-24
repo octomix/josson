@@ -21,13 +21,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import static com.octomix.josson.JossonCore.getNodeByExpression;
 
 /**
- * Logical operations on a stack of OperationStep for JsonNode.
+ * Logical operations on a stack of OperationStep for Path.
  */
-class OperationStackForJsonNode extends OperationStack {
+class OperationStackForPath extends OperationStack {
 
     private final PathTrace path;
 
-    OperationStackForJsonNode(final PathTrace path) {
+    OperationStackForPath(final PathTrace path) {
         super(false);
         this.path = path;
     }

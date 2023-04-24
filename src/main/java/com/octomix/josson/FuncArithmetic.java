@@ -27,7 +27,6 @@ import java.util.List;
 import static com.octomix.josson.FuncExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.PatternMatcher.decomposeFunctionParameters;
 import static com.octomix.josson.Utils.nodeHasValue;
 
 /**
@@ -44,7 +43,7 @@ final class FuncArithmetic {
     }
 
     static PathTrace funcCalc(final PathTrace path, final String params) {
-        final List<String> paramList = decomposeFunctionParameters(params, 1, UNLIMITED_WITH_PATH);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH);
         String calc = paramList.remove(0);
         final List<String[]> nameAndPaths = getParamNamePath(paramList);
         if (calc.contains(CURRENT_NODE)) {
@@ -52,7 +51,6 @@ final class FuncArithmetic {
             nameAndPaths.add(new String[]{"_THIS_NODE_", CURRENT_NODE, null});
         }
         final Expression calcExpr = new Expression(calc);
-        calcExpr.disableImpliedMultiplicationMode();
         if (path.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             for (int i = 0; i < path.containerSize(); i++) {
