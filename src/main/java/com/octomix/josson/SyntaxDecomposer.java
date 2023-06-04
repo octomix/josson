@@ -101,6 +101,9 @@ final class SyntaxDecomposer extends SyntaxMatcher {
     }
 
     ArrayFilter deFilterQuery() {
+        if (length == 0) {
+            return new ArrayFilter(null, null, FILTRATE_COLLECT_ALL);
+        }
         for (int pos = 0; pos <= last; pos++) {
             final int end = matchSquareBrackets(pos);
             if (end > 0) {

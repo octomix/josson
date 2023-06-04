@@ -183,7 +183,7 @@ class Utils {
         Object[] objects = null;
         final int size = paramList.size();
         if (size == 0) {
-            if (index >= 0) {
+            if (index > NON_ARRAY_INDEX) {
                 path = path.push(path.get(index));
             }
             if (nodeHasValue(path)) {

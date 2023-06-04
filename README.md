@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.4.4</version>
+        <version>1.4.5</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.4'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.5'
 
 ## Features and Capabilities
 
@@ -746,7 +746,7 @@ Below is the JSON for this tutorial.
 
         {} → items[=]* → [{}] → [itemCode] ⇒ [""]
 
-27. For each path step, a nested array is flattened once.
+27. A succession of two path steps that produced a nested array will be flattened automatically.
 
         josson.getNode("items[true]*.tags[true]*")
         ==>
@@ -766,7 +766,35 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [tags[] ⇒ [""]] ⇒ [""]
 
-29. If a step is working on an array node, `?` represents an array element.  
+29. To simulate cancellation of the automatic flatten mechanism, add a divert-branch modifier "@" to the end of the first array name.
+
+        josson.getNode("items@.tags")
+        ==>
+        [ [ "SHIRT", "WOMEN" ], [ "TENNIS", "SPORT", "RACKET" ], [ "SHOE", "SPORT", "WOMEN" ] ]
+
+    _Path chart_
+
+                           {} → tags[] → [""]
+                          /                  \
+        {} → items[] → []@                    @ ⇒ [[""]]
+                          \                  /
+                           {} → tags[] → [""]
+
+30. Modifier `@` after a path step separator `.` merges all branch results into a single array before manipulation.
+
+        josson.getNode("items@.@tags")
+        ==>
+        [ "SHIRT", "WOMEN", "TENNIS", "SPORT", "RACKET", "SHOE", "SPORT", "WOMEN" ]
+
+    _Path chart_
+
+                           {}
+                          /  \
+        {} → items[] → []@    @ ⇒ [{}] → [tags[] ⇒ [""]] ⇒ [""]
+                          \  /
+                           {}
+
+31. If a step is working on an array node, `?` represents an array element.  
     `=~` matches a regular expression.
 
         josson.getNode("items.tags[? =~ '^S.*O.+']*")
@@ -777,7 +805,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [tags[=]* ⇒ [""]] ⇒ [""]
 
-30. The matching criteria supports logical operators and parentheses.
+32. The matching criteria supports logical operators and parentheses.
 
     >not `!`  
      and `&`  
@@ -791,7 +819,7 @@ Below is the JSON for this tutorial.
 
         {} → items[=]* → [{}] → [name] ⇒ [""]
 
-31. Example of a find-all filter operation with flattened array result.
+33. Example of a find-all filter operation with flattened array result.
 
         josson.getNode("items[tags.contains('SPORT')]*.tags")
         ==>
@@ -801,7 +829,7 @@ Below is the JSON for this tutorial.
 
         {} → items[=]* → [{}] → [tags[] ⇒ [""]] ⇒ [""]
 
-32. An array filter modifier `@` divert each element to separate branch for upcoming manipulation.  
+34. An array filter modifier `@` divert each element to separate branch for upcoming manipulation.  
     The final output merges branches into an array.
 
         josson.getNode("items[tags.containsIgnoreCase('Women')]@.tags")
@@ -816,7 +844,7 @@ Below is the JSON for this tutorial.
                       \                  /
                        {} → tags[] → [""]
 
-33. Aggregate functions work on an array node and produce a value node.
+35. Aggregate functions work on an array node and produce a value node.
 
         josson.getNode("items.tags.join('+')")
         ==>
@@ -826,7 +854,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [tags[] ⇒ [""]] → [""] → join(?[]) ⇒ ""
 
-34. An array node can apply the modifier `@` that divert each element to separate branch.
+36. An array node can apply the modifier `@` that divert each element to separate branch.
 
         josson.getNode("items@.tags.join('+')")
         ==>
@@ -840,7 +868,7 @@ Below is the JSON for this tutorial.
                           \                                   /
                            {} → tags[] → [""] → join(?[]) → ""
 
-35. Syntax `[]@` diverts each element of the current array node.
+37. Syntax `[]@` diverts each element of the current array node.
 
         josson.getNode("items.join([]@.tags.join('+'),' / ')")
         ==>
@@ -854,7 +882,7 @@ Below is the JSON for this tutorial.
                                        \                                   /
                                         {} → tags[] → [""] → join(?[]) → ""
 
-36. Modifier `@` before a function name merges all branch results into a single array before manipulation.
+38. Modifier `@` before a function name merges all branch results into a single array before manipulation.
 
         josson.getNode("items@.tags.join('+').@join(' / ')")
         ==>
@@ -868,7 +896,7 @@ Below is the JSON for this tutorial.
                           \                                   /
                            {} → tags[] → [""] → join(?[]) → ""
 
-37. Modifier `@` after a function diverts the function output array elements to separate branches.  
+39. Modifier `@` after a function diverts the function output array elements to separate branches.  
     It has the same effect of a path step `.[]@` after a function.
 
         josson.getNode("'1+2 | 3+4 | 5+6'.split('|')@.split('+').calc(?*2).round(0).join('+').concat('(',?,')/2').@join(' | ')")
@@ -883,7 +911,7 @@ Below is the JSON for this tutorial.
                              \                                                                                         /
                               "" → split(?) → [""] → [calc(?) ⇒ $D] → [round(?) ⇒ $I] → join(?[]) → "" → concat(?) → ""
 
-38. All function parameters can refer to a child node of the step.
+40. All function parameters can refer to a child node of the step.
 
         josson.getNode("items@.repeat(concat('[',brand,'] ',name,'\n'), qty).@join()")
         ==>
@@ -900,7 +928,7 @@ Below is the JSON for this tutorial.
                           \                   /
                            {} → repeat(%) → ""
 
-39. Scalar functions work on array and produce an array, such as `concat()`, manipulate on each element.
+41. Scalar functions work on array and produce an array, such as `concat()`, manipulate on each element.
 
         josson.getNode("items.concat('Item ',#,': [',itemCode,'] ',qty,unit,' x ',name,' <',property.colors.join(','),'>').join('\n')")
         ==>
@@ -912,7 +940,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [concat(%) ⇒ ""] → join(?[]) ⇒ ""
 
-40. If a step is working on an array node, `@` represents that array node.  
+42. If a step is working on an array node, `@` represents that array node.  
     `##` denotes the one-based index of an array element.
 
         josson.getNode("items.sort(itemCode).concat('Item ',##,'/',@.size(),': [',itemCode,'] ',qty,unit,' x ',name,' <',property.colors.join(','),'>').join('\n')")
@@ -925,7 +953,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] -> sort(%) → [{}] → [concat(@, %) ⇒ ""] → join(?[]) ⇒ ""
 
-41. An object node with a validation filter.
+43. An object node with a validation filter.
 
         josson.getNode("customer[name='Peggy']")
         ==>
@@ -939,7 +967,7 @@ Below is the JSON for this tutorial.
 
         {} → customer{=} ⇒ {}
 
-42. An object node that cannot meet the validation filter criteria returns null.
+44. An object node that cannot meet the validation filter criteria returns null.
 
         josson.getNode("customer[name='Raymond']")
         ==>
@@ -949,7 +977,7 @@ Below is the JSON for this tutorial.
 
         {} → customer{=}!! ⇒ !unresolvable!
 
-43. In filter expression and function argument, a path starts with symbol "$" restart from the root node.
+45. In filter expression and function argument, a path starts with symbol "$" restart from the root node.
 
         josson.getNode("items.concat($.customer.customerId, '-', itemCode)")
         ==>
@@ -961,7 +989,7 @@ Below is the JSON for this tutorial.
          |                              |
         {} → items[] → [{}] → [concat(%,$) ⇒ ""] ⇒ [""]
 
-44. In filter expression and function argument, a path starts with symbol ".." go back to the previous step's node.
+46. In filter expression and function argument, a path starts with symbol ".." go back to the previous step's node.
     Each additional dot go back one more step.
 
         josson.getNode("items.property.concat(...customer.name, ' items=', ..size(), ' colors=', colors.join(','))")
@@ -975,7 +1003,7 @@ Below is the JSON for this tutorial.
          |               |                           |  |
         {} → items[] → [{}] → [property] → [concat(%,..,...) ⇒ ""] ⇒ [""]
 
-45. One more example.
+47. One more example.
 
         josson.getNode("items@.property.concat(....customer.name, ' ', ..itemCode, ' colors=', colors.join(','))")
         ==>
@@ -992,7 +1020,7 @@ Below is the JSON for this tutorial.
                           \                                        /
                            {} → property{} → concat(%,..,....) → ""
 
-46. Function `json()` parse a JSON string.
+48. Function `json()` parse a JSON string.
 
         josson.getNode("json('[1,2,"3"]')")
         ==>
@@ -1002,7 +1030,7 @@ Below is the JSON for this tutorial.
 
         json("") ⇒ []
 
-47. Relational operator `=` and `!=` support object comparison.
+49. Relational operator `=` and `!=` support object comparison.
 
         josson.getNode("[customer = json('{"name":"Peggy","phone":"+852 62000610","customerId":"CU0001"}')].isNotNull()")
         ==>
@@ -1012,7 +1040,7 @@ Below is the JSON for this tutorial.
 
         {} → {=} → {} → isNotNull(?) ⇒ $TF
 
-48. Relational operator `=` and `!=` support root level array values comparison where the position ordering is allowed to be different.
+50. Relational operator `=` and `!=` support root level array values comparison where the position ordering is allowed to be different.
 
         josson.getNode("[items[0].property.colors = json('["RED","WHITE"]')].isNotNull()")
         ==>
@@ -1022,7 +1050,7 @@ Below is the JSON for this tutorial.
 
         {} → {=} → {} → isNotNull(?) ⇒ $TF
 
-49. Function `calc()` uses MathParser.org-mXparser library <http://mathparser.org/> to perform calculation.
+51. Function `calc()` uses MathParser.org-mXparser library <http://mathparser.org/> to perform calculation.
 
         josson.getNode("items.calc(qty * (unitPrice-unitDiscount)).concat(##,'=',?)")
         ==>
@@ -1032,7 +1060,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [calc(%) ⇒ $D] → [concat(?) ⇒ ""] ⇒ [""]
 
-50. Scalar functions preserve null element.
+52. Scalar functions preserve null element.
 
         josson.getNode("items.calc(qty * (unitPrice-unitDiscount)).[##<=2]*.concat(##,'=',?)")
         ==>
@@ -1042,7 +1070,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [calc(%) ⇒ $D] → [=]* → [concat(?) ⇒ ""] ⇒ [""]
 
-51. An array-to-value transformation function throws away null nodes automatically.
+53. An array-to-value transformation function throws away null nodes automatically.
 
         josson.getNode("items.calc(qty * (unitPrice-unitDiscount)).concat(##,'=',?).join(' / ')")
         ==>
@@ -1052,7 +1080,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [calc(%) ⇒ $D] → [concat(?) ⇒ ""] → join(?[]) ⇒ ""
 
-52. Array filter can filter out null nodes.
+54. Array filter can filter out null nodes.
 
         josson.getNode("items.calc(qty * (unitPrice-unitDiscount)).[isNotNull()]*.concat(##,'=',?)")
         ==>
@@ -1062,7 +1090,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [calc(%) ⇒ $D] → [=]* → [concat(?) ⇒ ""] ⇒ [""]
 
-53. An argument `#A` denotes the uppercase alphabetic array index.
+55. An argument `#A` denotes the uppercase alphabetic array index.
 
         josson.getNode("items.calc(qty * (unitPrice-unitDiscount)).[?!=null]*.concat(#A,'=',?).join(' / ')")
         ==>
@@ -1072,7 +1100,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [calc(%) ⇒ $D] → [=]* → [concat(?) ⇒ ""] → join(?[]) ⇒ ""
 
-54. Merge Diverted branches throws away null nodes automatically.
+56. Merge Diverted branches throws away null nodes automatically.
     An argument `#a` denotes the lowercase alphabetic array index.
 
         josson.getNode("items@.calc(qty * (unitPrice-unitDiscount)).@concat(#a,'=',?)")
@@ -1087,7 +1115,7 @@ Below is the JSON for this tutorial.
                           \                 /
                            {} → calc(%) → $D
 
-55. mXparser expression accepts single-step path only.
+57. mXparser expression accepts single-step path only.
     To apply multi-steps path, function or filter, append arguments with syntax `newVariable:path`.
 
         josson.getNode("items.calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)).formatNumber('US$#,##0.00')")
@@ -1098,7 +1126,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [calc(%) ⇒ $D] → [formatNumber(?) ⇒ ""] ⇒ [""]
 
-56. An argument `#r` and `#R` denotes the lowercase and uppercase roman numerals array index.
+58. An argument `#r` and `#R` denotes the lowercase and uppercase roman numerals array index.
 
         josson.getNode("items.unitPrice.calc(? * 2).concat(#r,'=',?)")
         ==>
@@ -1108,7 +1136,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [unitPrice ⇒ $D] → [calc(?) ⇒ $D] → [concat(?) ⇒ ""] ⇒ [""]
 
-57. Function `entries()` returns an array of an object's string-keyed property `[{key, value}]` pairs.
+59. Function `entries()` returns an array of an object's string-keyed property `[{key, value}]` pairs.
 
         josson.getNode("items[0].entries()")
         ==>
@@ -1145,7 +1173,7 @@ Below is the JSON for this tutorial.
 
         {} → items[#] → {} → entries(?) ⇒ [{}]
 
-58. Function `keys()` lists an object's key names.
+60. Function `keys()` lists an object's key names.
 
         josson.getNode("keys()")
         ==>
@@ -1155,9 +1183,9 @@ Below is the JSON for this tutorial.
 
         {} → keys(?) ⇒ [""]
 
-59. `keys()` can retrieve nested child object keys for a given levels.
+61. `keys()` can retrieve nested child object keys for a given levels.
 
-        josson.getNode("keys(?, 2)")
+        josson.getNode("keys(2)")
         ==>
         [ "salesOrderId", "salesDate", "salesPerson", "customer", "customerId", "name", "phone", "items", "totalAmount" ]
 
@@ -1165,7 +1193,7 @@ Below is the JSON for this tutorial.
 
         {} → keys(?) ⇒ [""]
 
-60. Function `collect()` puts all argument values into an array.
+62. Function `collect()` puts all argument values into an array.
     Function `wrap()` is equivalent to `collect(?)` which is wrap the node inside an array.
 
         josson.getNode("collect(salesDate, customer, items.itemCode)")
@@ -1180,7 +1208,7 @@ Below is the JSON for this tutorial.
 
         {} → collect(%) ⇒ []
 
-61. Function `cumulateCollect()` require 2 arguments.
+63. Function `cumulateCollect()` require 2 arguments.
     The 1st parameter is a query to evaluate a result that will be collected into an array.
     The 2nd parameter is a query to evaluate the next dataset that loop back for the 1st parameter evaluation again.
     The operation loop will be stopped when the next dataset is null.
@@ -1206,7 +1234,7 @@ Below is the JSON for this tutorial.
 
         {} → cumulateCollect(%) ⇒ [{}]
 
-62. Function `toArray()` puts an object's values into an array.
+64. Function `toArray()` puts an object's values into an array.
 
         josson.getNode("customer.toArray()")
         ==>
@@ -1216,7 +1244,7 @@ Below is the JSON for this tutorial.
 
         {} → customer{} → toArray(?) ⇒ [""]
 
-63. Furthermore, function `toArray()` puts all arguments (values, object's values, array elements) into a single array.
+65. Furthermore, function `toArray()` puts all arguments (values, object's values, array elements) into a single array.
 
         josson.getNode("toArray('Hello',customer,items.itemCode.sort())")
         ==>
@@ -1226,7 +1254,7 @@ Below is the JSON for this tutorial.
 
         {} → toArray(%) ⇒ [""]
 
-64. Function `map()` constructs a new object node.
+66. Function `map()` constructs a new object node.
     For multi-steps path, the last element name will become the new element name.
     To rename an element, use syntax `newFieldName:path` or `queryThatResolveToName::path`.
 
@@ -1246,7 +1274,7 @@ Below is the JSON for this tutorial.
 
         {} → map(%) ⇒ {}
 
-65. Function `field()` adds, removes and renames field on the current object node.
+67. Function `field()` adds, removes and renames field on the current object node.
     To remove an element, use syntax `fieldName:` or `queryThatResolveToName::`.
 
         josson.getNode("items[0].field(subtotal:calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)),brand:,property:,tags:)")
@@ -1264,7 +1292,7 @@ Below is the JSON for this tutorial.
 
         {} → items[#] → {} → field(%) ⇒ {}
 
-66. Functions `map()` and `field()` works on array.
+68. Functions `map()` and `field()` works on array.
 
         josson.getNode("items.field(subtotal:calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)),brand:,property:,tags:)")
         ==>
@@ -1297,7 +1325,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [field(%) ⇒ {}] ⇒ [{}]
 
-67. For functions `map()` and `field()`, parameter syntax `path:+` present an unresolvable path as a NullNode.
+69. For functions `map()` and `field()`, parameter syntax `path:+` present an unresolvable path as a NullNode.
 
         josson.getNode("items.map(itemCode, unitDiscount)")
         ==>
@@ -1337,7 +1365,7 @@ Below is the JSON for this tutorial.
           "unitDiscount" : 10.0
         } ]
 
-68. For functions `map()` and `field()`, parameter syntax `newFieldName:+path` present an unresolvable path as a NullNode with a new field name.
+70. For functions `map()` and `field()`, parameter syntax `newFieldName:+path` present an unresolvable path as a NullNode with a new field name.
 
         josson.getNode("items.map(itemCode, discount:+unitDiscount)")
         ==>
@@ -1352,7 +1380,7 @@ Below is the JSON for this tutorial.
           "discount" : 10.0
         } ]
 
-69. For functions `map()` and `field()`, parameter syntax `**:object` extracts all the fields within a given object.
+71. For functions `map()` and `field()`, parameter syntax `**:object` extracts all the fields within a given object.
 
         josson.getNode("items.slice(0,2).field(**:properties, properties:)")
         ==>
@@ -1378,7 +1406,7 @@ Below is the JSON for this tutorial.
           "colors" : [ "BLACK" ]
         } ]
 
-70. Function `group()` works like SQL `group by`. It will build a structure of `[{key, [elements]}]`.
+72. Function `group()` works like SQL `group by`. It will build a structure of `[{key, [elements]}]`.
     The first parameter is the grouping key. If it is a function, it will be given a name `key` in the output.
     The optional second parameter is to evaluate the grouped element. The default is the whole array element.
     And the default output array name is `elements`.
@@ -1428,7 +1456,7 @@ Below is the JSON for this tutorial.
                                               \                   /
                                                {} → concat(%) → ""
 
-71. Function `unwind()` works like MongoDB `$unwind` operation. The operation is the reverse of `group()`.
+73. Function `unwind()` works like MongoDB `$unwind` operation. The operation is the reverse of `group()`.
 
         josson.getNode("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).unwind(elements)")
         ==>
@@ -1453,19 +1481,25 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → group(%) → [{}] → unwind(%) ⇒ [{}]
 
-72. Function `flatten()` flatten an array same as the default path step behavior. But more readable.
+74. Function `flatten()` flatten an array for a given number of times.
 
         josson.getNode("items@.tags")
         ==>
         [ [ "SHIRT", "WOMEN" ], [ "TENNIS", "SPORT", "RACKET" ], [ "SHOE", "SPORT", "WOMEN" ] ]
 
 
-        josson.getNode("items@.tags.@flatten(1)")
+        flatten(items@.tags, 1, null)
+        ==>
+        [ "SHIRT", "WOMEN", "TENNIS", "SPORT", "RACKET", "SHOE", "SPORT", "WOMEN" ]
+
+75. Function `flatten()` flatten an array same as the default path step behavior. But more readable.
+
+        josson.getNode("items@.tags.@.[true]*")
         ==>
         [ "SHIRT", "WOMEN", "TENNIS", "SPORT", "RACKET", "SHOE", "SPORT", "WOMEN" ]
 
 
-        josson.getNode("items@.tags.@[true]*")
+        josson.getNode("items@.tags.@.flatten(1)")
         ==>
         [ "SHIRT", "WOMEN", "TENNIS", "SPORT", "RACKET", "SHOE", "SPORT", "WOMEN" ]
 
@@ -1477,7 +1511,7 @@ Below is the JSON for this tutorial.
                           \                  /
                            {} → tags[] → [""]
 
-73. If the parameter value of `flatten()` is textual, it will act as a key name separator to build a flattened object.
+76. If the parameter value of `flatten()` is textual, it will act as a key name separator to build a flattened object.
     If the separator is `null`, the standalone end node name will be used instead.
     The second parameter is optional and is the string format for array index, usually use with this combination `('.', '[%d]')`.
 
@@ -1527,7 +1561,7 @@ Below is the JSON for this tutorial.
           "totalAmount" : 270.0
         }
 
-74. Function `unflatten()` reverse the operation of `flatten()`.
+77. Function `unflatten()` reverse the operation of `flatten()`.
 
         josson.getNode("items[1].flatten('_').unflatten('_')")
         ==>
@@ -1545,7 +1579,7 @@ Below is the JSON for this tutorial.
           "tags" : [ "TENNIS", "SPORT", "RACKET" ]
         }
 
-75. Functions `map()`,`field()`,`group()`,`unwind()` - key name support evaluation using syntax `keyQuery::valueQuery`.
+78. Functions `map()`,`field()`,`group()`,`unwind()` - key name support evaluation using syntax `keyQuery::valueQuery`.
 
         josson.getNode("items.map(itemCode::qty)")
         ==>
@@ -1561,7 +1595,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [map(%) ⇒ {}] ⇒ [{}]
 
-76. Syntax `keyQuery::+valueQuery` present an unresolvable path as a NullNode.
+79. Syntax `keyQuery::+valueQuery` present an unresolvable path as a NullNode.
 
         josson.getNode("items.map(itemCode::unitDiscount)")
         ==>
@@ -1581,7 +1615,7 @@ Below is the JSON for this tutorial.
           "A00201" : 10.0
         } ]
 
-77. Function `mergeObjects()` merge all objects in an array into one object.
+80. Function `mergeObjects()` merge all objects in an array into one object.
 
         josson.getNode("mergeObjects(customer, items.map(itemCode::qty))")
         ==>
@@ -1598,7 +1632,7 @@ Below is the JSON for this tutorial.
 
         {} → mergeObjects(%) ⇒ {}
 
-78. Function `assort()` separates an object's entries according to different path conditions in sequence,
+81. Function `assort()` separates an object's entries according to different path conditions in sequence,
     and put them into the corresponding array if the evaluated result is not null.
     Entries will be removed if no condition can be matched.
     If the last argument is `??`, each of the remaining entry will be added to the end of result array separately.
@@ -1685,7 +1719,7 @@ Below is the JSON for this tutorial.
           }
         } ]
 
-79. Function `assort()` also works for array. The result is an array of arrays.
+82. Function `assort()` also works for array. The result is an array of arrays.
 
         josson.getNode("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)")
         ==>
@@ -1695,7 +1729,7 @@ Below is the JSON for this tutorial.
         ==>
         [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]
 
-80. Function `eval()` evaluates the value of a text node as a query statement.
+83. Function `eval()` evaluates the value of a text node as a query statement.
 
         josson.getNode("json('{"a":1,"b":2,"statement":"calc(a+b*2)"}').eval(statement)")
         ==>

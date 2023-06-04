@@ -277,7 +277,7 @@ public class UnitTest {
         //
         evaluate.accept("items[#.isEven()]*.itemCode", "[ \"B00001\", \"A00201\" ]");
 
-        // For each path step, a nested array is flattened once.
+        // A succession of two path steps that produced a nested array will be flattened automatically.
         //
         evaluate.accept("items[true]*.tags[true]*",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
@@ -285,6 +285,15 @@ public class UnitTest {
         // Path step "array." is the same as "array[true]*.".
         //
         evaluate.accept("items.tags",
+                "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+
+        // To simulate cancellation of the automatic flatten mechanism, add a divert-branch modifier "@" to the end of the first array name.
+        evaluate.accept("items@.tags",
+                "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
+
+        // Modifier "@" after a path step separator "." merges all branch results into a single array before manipulation.
+        //
+        evaluate.accept("items@.@tags",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
         // If a step is working on an array node, "?" represents an array element.
@@ -478,7 +487,7 @@ public class UnitTest {
 
         // "keys()" can retrieve nested child object keys for a given levels.
         //
-        evaluate.accept("keys(?, 2)",
+        evaluate.accept("keys(2)",
                 "[ \"salesOrderId\", \"salesDate\", \"salesPerson\", \"customer\", \"customerId\", \"name\", \"phone\", \"items\", \"totalAmount\" ]");
 
         // Function "collect()" puts all argument values into an array.
@@ -706,15 +715,18 @@ public class UnitTest {
                         "  \"netPrice\" : 140.0\n" +
                         "} ]");
 
-        // Function "flatten" flatten an array same as the default path step behavior. But more readable.
+        // Function "flatten" flatten an array for a given number of times.
         //
         evaluate.accept("items@.tags",
                 "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
-        evaluate.accept("items@.tags.@",
-                "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
-        evaluate.accept("items@.tags.@flatten(1)",
+        evaluate.accept("flatten(items@.tags, 1, null)",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
-        evaluate.accept("items@.tags.@[true]*",
+
+        // Function "flatten" flatten an array same as the default path step behavior. But more readable.
+        //
+        evaluate.accept("items@.tags.@.[true]*",
+                "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+        evaluate.accept("items@.tags.@.flatten(1)",
                 "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
         // If the parameter value of "flatten" is textual, it will act as a key name separator to build a flattened object.

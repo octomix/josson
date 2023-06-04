@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
 import com.octomix.josson.exception.SyntaxErrorException;
+import org.mariuszgromada.math.mxparser.License;
 import org.mariuszgromada.math.mxparser.mXparser;
 
 import java.time.ZoneId;
@@ -93,6 +94,7 @@ final class JossonCore {
     static final String WILDCARD_COLLECT_ALL = String.valueOf(WILDCARD_SYMBOL) + FILTRATE_COLLECT_ALL.getSymbol();
 
     static {
+        License.iConfirmNonCommercialUse("Josson");
         mXparser.disableImpliedMultiplicationMode();
     }
 
@@ -189,7 +191,7 @@ final class JossonCore {
         }
         final List<String> steps = new SyntaxDecomposer(expression).dePathSteps();
         if (steps.isEmpty()) {
-            return index >= 0 && path.isArray() ? path.push(path.get(index)) : path;
+            return index > NON_ARRAY_INDEX && path.isArray() ? path.push(path.get(index)) : path;
         }
         final String step = steps.get(0);
         switch (step) {
@@ -226,7 +228,7 @@ final class JossonCore {
                 }
                 throw new IllegalArgumentException("Invalid index type: " + step);
         }
-        if (index >= 0 && path.isArray()) {
+        if (index > NON_ARRAY_INDEX && path.isArray()) {
             return getPathBySteps(path.push(path.get(index)), steps);
         }
         return getPathBySteps(path, steps);
@@ -281,66 +283,60 @@ final class JossonCore {
         if (steps == null || steps.isEmpty() || path == null) {
             return path;
         }
-        String step = steps.get(0);
-        switch (step.charAt(0)) {
-            case WILDCARD_SYMBOL:
-                if (path.isEmpty())  {
-                    return null;
-                }
-                final String[] levelsAndFilter = new SyntaxDecomposer(step).deWildcardLevelsAndFilter();
-                if (levelsAndFilter == null) {
-                    steps.remove(0);
-                    if (path.isObject()) {
-                        return wildcardAny(path, steps, nextSteps);
+        String step = steps.remove(0);
+        if (!step.isEmpty()) {
+            switch (step.charAt(0)) {
+                case WILDCARD_SYMBOL:
+                    if (path.isEmpty()) {
+                        return null;
                     }
-                    return wildcardAny(wildcardArrayNodeToList(path), steps, nextSteps, 1);
-                }
-                if (levelsAndFilter[0] != null) {
-                    steps.remove(0);
-                    final int levels = levelsAndFilter[0].isEmpty() ? 0 : getNodeAsInt(path, levelsAndFilter[0]);
-                    return wildcardAny(
-                            path.isObject() ? Collections.singletonList(path) : wildcardArrayNodeToList(path),
-                            steps, nextSteps, levels);
-                }
-                final String filter = levelsAndFilter[1];
-                if (filter.length() == 1) {
-                    if (FILTRATE_COLLECT_ALL.equals(filter.charAt(0))) {
-                        step = "toarray()";
+                    final String[] levelsAndFilter = new SyntaxDecomposer(step).deWildcardLevelsAndFilter();
+                    if (levelsAndFilter == null) {
+                        if (path.isObject()) {
+                            return wildcardAny(path, steps, nextSteps);
+                        }
+                        return wildcardAny(wildcardArrayNodeToList(path), steps, nextSteps, 1);
+                    }
+                    if (levelsAndFilter[0] != null) {
+                        final int levels = levelsAndFilter[0].isEmpty() ? 0 : getNodeAsInt(path, levelsAndFilter[0]);
+                        return wildcardAny(
+                                path.isObject() ? Collections.singletonList(path) : wildcardArrayNodeToList(path),
+                                steps, nextSteps, levels);
+                    }
+                    final String filter = levelsAndFilter[1];
+                    if (filter.length() == 1) {
+                        if (FILTRATE_COLLECT_ALL.equals(filter.charAt(0))) {
+                            step = "toarray()";
+                        } else {
+                            step = "toarray()@";
+                        }
                     } else {
-                        step = "toarray()@";
+                        step = "entries()";
+                        steps.add(0, filter);
+                        steps.add(1, ENTRY_VALUE_NAME);
                     }
-                } else {
+                    break;
+                case MATCHES_SYMBOL:
+                    final char lastChar = step.charAt(step.length() - 1);
+                    final String filterMode = FILTRATE_COLLECT_ALL.equals(lastChar) || FILTRATE_DIVERT_ALL.equals(lastChar)
+                            ? String.valueOf(lastChar) : EMPTY;
+                    final String strLiteral = StringUtils.strip(step.substring(1, step.length() - filterMode.length()));
+                    if (strLiteral.charAt(0) != QUOTE_SYMBOL || strLiteral.charAt(strLiteral.length() - 1) != QUOTE_SYMBOL) {
+                        throw new SyntaxErrorException(step);
+                    }
                     step = "entries()";
-                    steps.add(1, filter);
-                    steps.add(2, ENTRY_VALUE_NAME);
-                }
-                break;
-            case MATCHES_SYMBOL:
-                final char lastChar = step.charAt(step.length() - 1);
-                final String filterMode = FILTRATE_COLLECT_ALL.equals(lastChar) || FILTRATE_DIVERT_ALL.equals(lastChar)
-                        ? String.valueOf(lastChar) : EMPTY;
-                final String strLiteral = StringUtils.strip(step.substring(1, step.length() - filterMode.length()));
-                if (strLiteral.charAt(0) != QUOTE_SYMBOL || strLiteral.charAt(strLiteral.length() - 1) != QUOTE_SYMBOL) {
+                    steps.add(0, "[" + ENTRY_KEY_NAME + ".matches(" + strLiteral + ")]" + filterMode);
+                    steps.add(1, ENTRY_VALUE_NAME);
+                    break;
+                case COLLECT_BRANCHES_SYMBOL:
+                    nextSteps.add(StringUtils.strip(step.substring(1)));
+                    nextSteps.addAll(steps);
+                    steps.clear();
+                    return path;
+                case INDEX_PREFIX_SYMBOL:
                     throw new SyntaxErrorException(step);
-                }
-                step = "entries()";
-                steps.add(1, "[" + ENTRY_KEY_NAME + ".matches(" + strLiteral + ")]" + filterMode);
-                steps.add(2, ENTRY_VALUE_NAME);
-                break;
-            case COLLECT_BRANCHES_SYMBOL:
-                step = StringUtils.strip(step.substring(1));
-                nextSteps.addAll(steps);
-                if (step.isEmpty()) {
-                    nextSteps.remove(0);
-                } else {
-                    nextSteps.set(0, step);
-                }
-                steps.clear();
-                return path;
-            case INDEX_PREFIX_SYMBOL:
-                throw new SyntaxErrorException(step);
+            }
         }
-        steps.remove(0);
         final SyntaxDecomposer decomposer = new SyntaxDecomposer(step);
         final String[] funcAndArgs = decomposer.deFunctionAndArgument(true);
         if (funcAndArgs != null) {
@@ -351,7 +347,9 @@ final class JossonCore {
         }
         final ArrayFilter filter = decomposer.deFilterQuery();
         JsonNode node;
-        if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
+        if (filter.getNodeName() == null) {
+            node = path.node();
+        } else if (filter.getFilter() == null && filter.getMode() != FILTRATE_DIVERT_ALL) {
             if (path.isValueNode()) {
                 return null;
             }
@@ -368,7 +366,7 @@ final class JossonCore {
         if (node == null) {
             return null;
         }
-        if (node.isArray()) {
+        if (node.isArray() && !steps.isEmpty()) {
             node = forEachElement(path.push(node), null, filter.getMode(), steps, nextSteps);
         }
         return getPathBySteps(path.push(node), steps, nextSteps);
