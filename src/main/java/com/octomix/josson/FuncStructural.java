@@ -514,8 +514,13 @@ final class FuncStructural {
     }
 
     private static void funcUnwind(final ArrayNode unwind, final PathTrace path, final String[] nameAndPath) {
-        final JsonNode array = getNodeByExpression(path, nameAndPath[1], nameAndPath[2] != null);
-        if (array == null || !array.isArray()) {
+        final JsonNode array = getNodeByExpression(path, nameAndPath[1], false);
+        if (array == null) {
+            if (nameAndPath[2] != null) {
+                unwind.add(path.node());
+            }
+            return;
+        } else if (!array.isArray()) {
             return;
         }
         array.elements().forEachRemaining(
