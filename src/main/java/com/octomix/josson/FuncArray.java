@@ -70,6 +70,7 @@ final class FuncArray {
         if (array == null) {
             return null;
         }
+        final ArrayNode result = MAPPER.createArrayNode();
         final Set<String> texts = new HashSet<>();
         final Set<Double> doubles = new HashSet<>();
         final Set<Boolean> booleans = new HashSet<>();
@@ -80,9 +81,18 @@ final class FuncArray {
                 doubles.add(elem.asDouble());
             } else if (elem.isBoolean()) {
                 booleans.add(elem.asBoolean());
+            } else if (elem.isContainerNode()) {
+                int i = result.size() - 1;
+                for (; i >= 0; i--) {
+                    if (Operator.EQ.compare(result.get(i), elem)) {
+                        break;
+                    }
+                }
+                if (i < 0) {
+                    result.add(elem);
+                }
             }
         });
-        final ArrayNode result = MAPPER.createArrayNode();
         texts.forEach(value -> result.add(TextNode.valueOf(value)));
         doubles.forEach(value -> result.add(DoubleNode.valueOf(value)));
         booleans.forEach(value -> result.add(BooleanNode.valueOf(value)));
