@@ -208,8 +208,8 @@ final class JossonCore {
                 return getPathBySteps(path.pop(step.length()), steps);
             case VARIABLE_PREFIX_SYMBOL:
                 steps.remove(0);
-                JsonNode value = path.getVariable(step);
-                return getPathBySteps(PathTrace.from(value == null ? NullNode.getInstance() : value), steps);
+                final JsonNode value = path.getVariable(step);
+                return getPathBySteps(PathTrace.from(value == null ? NullNode.getInstance() : value, path.getVariables()), steps);
             case INDEX_PREFIX_SYMBOL:
                 steps.remove(0);
                 switch (step) {

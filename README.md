@@ -167,7 +167,7 @@ Define initial variables for a query. Variable name must start with "$".
 
     Map<String, JsonNode> vars = new HashMap<>();
     vars.put("$a", IntNode.valueOf(3));
-    JsonNode node = josson.getNode("concat('qty=',$a)", param);
+    JsonNode node = josson.getNode("concat('qty=',$a)", vars);
 
 To apply a Josson query path and get the path trace along the main branch.
 The trace object contains all progressive nodes and variables defined along the main branch.
