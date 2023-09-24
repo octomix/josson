@@ -192,8 +192,7 @@ final class FuncArray {
         if (dataPath == null) {
             return null;
         }
-        final String delimiter = pathAndParams.getValue().size() > 0
-                ? getNodeAsText(path, pathAndParams.getValue().get(0)) : EMPTY;
+        final String delimiter = pathAndParams.getValue().isEmpty() ? EMPTY : getNodeAsText(path, pathAndParams.getValue().get(0));
         final List<String> texts = new ArrayList<>();
         dataPath.node().forEach(elem -> {
             if (nodeHasValue(elem)) {
@@ -293,7 +292,7 @@ final class FuncArray {
             return dataPath;
         }
         final int size = dataPath.containerSize();
-        int start = pathAndParams.getValue().size() > 0 && !pathAndParams.getValue().get(0).isEmpty()
+        int start = !pathAndParams.getValue().isEmpty() && !pathAndParams.getValue().get(0).isEmpty()
                 ? getNodeAsInt(path, pathAndParams.getValue().get(0)) : 0;
         int end = pathAndParams.getValue().size() > 1 && !pathAndParams.getValue().get(1).isEmpty()
                 ? getNodeAsInt(path, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
@@ -324,7 +323,7 @@ final class FuncArray {
         }
         String param = null;
         int ordering = 1;
-        if (pathAndParams.getValue().size() > 0) {
+        if (!pathAndParams.getValue().isEmpty()) {
             param = pathAndParams.getValue().get(0);
             try {
                 ordering = Integer.parseInt(param);

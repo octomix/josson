@@ -168,7 +168,7 @@ final class FuncDate {
             (data, paramList) -> {
                 final PathTrace dataPath = data.getKey();
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
-                final String type = paramList.size() > 0 ? getNodeAsText(paramPath, data.getValue(), paramList.get(0)) : null;
+                final String type = paramList.isEmpty() ? null : getNodeAsText(paramPath, data.getValue(), paramList.get(0));
                 if (type == null || type.equalsIgnoreCase("local")) {
                     return path.push(TextNode.valueOf(LocalDateTime.now().toString()));
                 }

@@ -86,7 +86,7 @@ class Utils {
     }
 
     static boolean asBoolean(final JsonNode node) {
-        return node != null && (node.isContainerNode() ? node.size() > 0 : node.asBoolean());
+        return node != null && (node.isContainerNode() ? !node.isEmpty() : node.asBoolean());
     }
 
     static LocalDateTime toLocalDateTime(final JsonNode node) {

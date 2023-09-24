@@ -176,7 +176,7 @@ final class FuncStructural {
         final PathTrace dataPath = pathAndParams.getKey();
         if (dataPath != null && dataPath.isContainer()) {
             final List<String> paramList = pathAndParams.getValue();
-            final JsonNode param = paramList.size() > 0 ? getNodeByExpression(path, paramList.get(0)) : null;
+            final JsonNode param = paramList.isEmpty() ? null : getNodeByExpression(path, paramList.get(0));
             final JsonNode indexFormat = paramList.size() > 1 ? getNodeByExpression(path, paramList.get(1)) : null;
             if (param != null && (param.isTextual() || param.isNull() || !nodeIsNull(indexFormat))) {
                 final ObjectNode object = MAPPER.createObjectNode();
@@ -288,7 +288,7 @@ final class FuncStructural {
         }
         final ArrayNode array = MAPPER.createArrayNode();
         funcKeys(array, dataPath.node(),
-                pathAndParams.getValue().size() > 0 ? getNodeAsInt(dataPath, pathAndParams.getValue().get(0)) : 1);
+                pathAndParams.getValue().isEmpty() ? 1 : getNodeAsInt(dataPath, pathAndParams.getValue().get(0)));
         return path.push(array);
     }
 

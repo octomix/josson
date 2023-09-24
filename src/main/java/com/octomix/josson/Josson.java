@@ -218,7 +218,7 @@ public class Josson {
      * @return {@code this}
      */
     public Josson put(final String key, final JsonNode value) {
-        ((ObjectNode) jsonNode).putPOJO(key, value);
+        ((ObjectNode) jsonNode).set(key, value);
         return this;
     }
 

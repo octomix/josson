@@ -72,7 +72,7 @@ final class FuncString {
             (data, paramList) -> {
                 final PathTrace dataPath = data.getKey();
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
-                final String delimiters = paramList.size() > 0 ? getNodeAsText(paramPath, data.getValue(), paramList.get(0)) : " _.";
+                final String delimiters = paramList.isEmpty() ? " _." : getNodeAsText(paramPath, data.getValue(), paramList.get(0));
                 return path.push(TextNode.valueOf(CaseUtils.toCamelCase(dataPath.asText(), capitalizeFirstLetter, delimiters)));
             });
     }
@@ -224,7 +224,7 @@ final class FuncString {
             (data, paramList) -> {
                 final PathTrace dataPath = data.getKey();
                 final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
-                final String separator = paramList.size() > 0 ? getNodeAsTextExceptNull(paramPath, data.getValue(), paramList.get(0)) : null;
+                final String separator = paramList.isEmpty() ? null : getNodeAsTextExceptNull(paramPath, data.getValue(), paramList.get(0));
                 final ArrayNode array = MAPPER.createArrayNode();
                 for (String text : wholeSeparator
                         ? StringUtils.separate(dataPath.asText(), separator)
