@@ -25,6 +25,7 @@ import org.mariuszgromada.math.mxparser.mXparser;
 
 import java.time.ZoneId;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.octomix.josson.ArrayFilter.FilterMode;
 import static com.octomix.josson.ArrayFilter.FilterMode.*;
@@ -91,6 +92,10 @@ final class JossonCore {
 
     private static ZoneId zoneId = ZoneId.systemDefault();
 
+    static int threadPoolSize = 4;
+
+    static boolean retainArrayOrder = true;
+
     static final String WILDCARD_COLLECT_ALL = String.valueOf(WILDCARD_SYMBOL) + FILTRATE_COLLECT_ALL.getSymbol();
 
     static {
@@ -156,23 +161,20 @@ final class JossonCore {
 
     static JsonNode getNodeByExpression(final JsonNode node, final int index, final String expression,
                                         final Map<String, JsonNode> variables) {
-        final PathTrace path = getPathByExpression(PathTrace.from(node, variables), index, expression);
-        return path == null ? null : path.node();
+        return getPathNode(getPathByExpression(PathTrace.from(node, variables), index, expression));
     }
 
     static JsonNode getNodeByExpression(final PathTrace path, final String expression) {
-        final PathTrace result = getPathByExpression(path, expression);
-        return result == null ? null : result.node();
+        return getPathNode(getPathByExpression(path, expression));
+    }
+
+    static JsonNode getNodeByExpression(final PathTrace path, final int index, final String expression) {
+        return getPathNode(getPathByExpression(path, index, expression));
     }
 
     static JsonNode getNodeByExpression(final PathTrace path, final String expression, final boolean defaultNullNode) {
         final JsonNode result = getNodeByExpression(path, expression);
         return result != null ? result : defaultNullNode ? NullNode.getInstance() : null;
-    }
-
-    static JsonNode getNodeByExpression(final PathTrace path, final int index, final String expression) {
-        final PathTrace result = getPathByExpression(path, index, expression);
-        return result == null ? null : result.node();
     }
 
     static JsonNode getNodeByExpression(final PathTrace path, final int index, final String expression,
@@ -329,8 +331,10 @@ final class JossonCore {
                     steps.add(1, ENTRY_VALUE_NAME);
                     break;
                 case COLLECT_BRANCHES_SYMBOL:
-                    nextSteps.add(StringUtils.strip(step.substring(1)));
-                    nextSteps.addAll(steps);
+                    if (nextSteps.isEmpty()) {
+                        nextSteps.add(StringUtils.strip(step.substring(1)));
+                        nextSteps.addAll(steps);
+                    }
                     steps.clear();
                     return path;
                 case INDEX_PREFIX_SYMBOL:
@@ -418,6 +422,9 @@ final class JossonCore {
     private static ArrayNode forEachElement(final PathTrace path, final String elem, final FilterMode mode,
                                             final List<String> steps, final List<String> nextSteps) {
         final ArrayNode array = MAPPER.createArrayNode();
+        if (path.isEmpty()) {
+            return array;
+        }
         if (mode != FILTRATE_DIVERT_ALL) {
             for (JsonNode each : path.node()) {
                 final JsonNode addNode = elem == null ? each : each.get(elem);
@@ -429,26 +436,38 @@ final class JossonCore {
                     }
                 }
             }
-        } else if (!path.isEmpty()) {
-            List<String> nextNextKeys = null;
+            return array;
+        }
+        final List<String> nextNextSteps = new ArrayList<>();
+        final int size = path.containerSize();
+        if (size <= 1 || threadPoolSize == 1) {
             for (JsonNode each : path.node()) {
-                final List<String> tempKeys = new ArrayList<>();
-                final PathTrace result =
-                        getPathBySteps(path.push(elem == null ? each : each.get(elem)), new ArrayList<>(steps), tempKeys);
-                if (result != null) {
-                    addArrayElement(array, result.node());
-                }
-                if (!tempKeys.isEmpty()) {
-                    nextNextKeys = tempKeys;
-                }
+                divertEachElement(path, elem, steps, nextNextSteps, each, (node) -> addArrayElement(array, node));
             }
-            if (nextSteps.isEmpty() && nextNextKeys != null) {
-                nextSteps.addAll(nextNextKeys);
-            }
-            steps.clear();
+        } else if (retainArrayOrder) {
+            final JsonNode[] orderedNodes = new JsonNode[size];
+            submitTasks(size, (i) ->
+                divertEachElement(path, elem, steps, nextNextSteps, path.node().get(i), (node) -> orderedNodes[i] = node));
+            addArrayElements(array, orderedNodes);
+        } else {
+            submitTasks(size, (i) ->
+                divertEachElement(path, elem, steps, nextNextSteps, path.node().get(i), (node) -> addArrayElement(array, node)));
+        }
+        steps.clear();
+        if (nextSteps.isEmpty()) {
+            steps.addAll(nextNextSteps);
+        } else {
             steps.addAll(nextSteps);
             nextSteps.clear();
         }
         return array;
+    }
+
+    private static void divertEachElement(final PathTrace path, final String elem, final List<String> steps,
+                                          final List<String> nextSteps, final JsonNode each, Consumer<JsonNode> consumer) {
+        final PathTrace result = getPathBySteps(path.push(elem == null ? each : each.get(elem)), new ArrayList<>(steps), nextSteps);
+        if (result != null) {
+            consumer.accept(result.node());
+        }
     }
 }

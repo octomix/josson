@@ -25,14 +25,24 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UnknownFormatConversionException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static com.octomix.josson.JossonCore.*;
 
 class Utils {
 
     private Utils() {
+    }
+
+    static JsonNode getPathNode(final PathTrace path) {
+        return path == null ? null : path.node();
     }
 
     static String quoteText(final String text) {
@@ -215,6 +225,14 @@ class Utils {
         });
     }
 
+    static void addArrayElements(final ArrayNode array, final JsonNode[] nodes) {
+        if (nodes != null) {
+            for (JsonNode node : nodes) {
+                addArrayElement(array, node);
+            }
+        }
+    }
+
     static void addArrayElement(final ArrayNode array, final JsonNode node) {
         if (node != null) {
             array.add(node);
@@ -296,5 +314,30 @@ class Utils {
             compare = 1;
         }
         return asc ? compare : -compare;
+    }
+
+    static void submitTasks(final int size, final Consumer<Integer> task) {
+        final int threads = Math.min(threadPoolSize, size);
+        final AtomicInteger processed = new AtomicInteger();
+        final List<Callable<Void>> tasks = new ArrayList<>(threads);
+        for (int x = 0; x < threads; x++) {
+            tasks.add(() -> {
+                while (true) {
+                    final int i = processed.getAndIncrement();
+                    if (i >= size) {
+                        return null;
+                    }
+                    task.accept(i);
+                }
+            });
+        }
+        final ExecutorService executorService = Executors.newFixedThreadPool(threads);
+        try {
+            executorService.invokeAll(tasks);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            executorService.shutdown();
+        }
     }
 }

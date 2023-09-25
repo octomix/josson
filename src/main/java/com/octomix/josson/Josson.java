@@ -1072,6 +1072,46 @@ public class Josson {
     }
 
     /**
+     * Set the thread pool size for array elements manipulation.
+     * Default value is 4.
+     *
+     * @param threads the thread pool size
+     */
+    public static void setThreadPoolSize(final int threads) {
+        if (threads > 0) {
+            JossonCore.threadPoolSize = threads;
+        }
+    }
+
+    /**
+     * Get the current thread pool size for array elements manipulation.
+     *
+     * @return The thread pool size
+     */
+    public static int getThreadPoolSize() {
+        return JossonCore.threadPoolSize;
+    }
+
+    /**
+     * For multithreaded array elements manipulation, more system resource is required to retain the array order.
+     * Tune it off if the array elements order of the result is negligible. Default value is true.
+     *
+     * @param retain whether to retain the array order of multithreaded array elements manipulation
+     */
+    public static void setRetainArrayOrder(final boolean retain) {
+        JossonCore.retainArrayOrder = retain;
+    }
+
+    /**
+     * Get the current setting of whether to retain the array order of multithreaded array elements manipulation.
+     *
+     * @return Whether to retain the array order of multithreaded array elements manipulation
+     */
+    public static boolean isRetainArrayOrder() {
+        return JossonCore.retainArrayOrder;
+    }
+
+    /**
      * Create an empty Jackson {@code ObjectNode}.
      *
      * @return The new empty Jackson {@code ObjectNode}
