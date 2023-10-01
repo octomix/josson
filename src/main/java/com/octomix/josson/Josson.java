@@ -1072,15 +1072,32 @@ public class Josson {
     }
 
     /**
+     * Set the minimum array size that trigger to use multithreading.
+     * Default value is 100. Minimum value is 2.
+     *
+     * @param size the minimum array size that trigger to use multithreading
+     */
+    public static void setMinArraySizeToUseMultiThread(final int size) {
+        JossonCore.minArraySizeToUseMultiThread = Math.max(size, 2);
+    }
+
+    /**
+     * Get the current minimum array size that trigger to use multithreading.
+     *
+     * @return The minimum array size that trigger to use multithreading
+     */
+    public static int getMinArraySizeToUseMultiThread() {
+        return JossonCore.minArraySizeToUseMultiThread;
+    }
+
+    /**
      * Set the thread pool size for array elements manipulation.
-     * Default value is 4.
+     * Default value is 4. Minimum value is 1 that means to turn off multithreading.
      *
      * @param threads the thread pool size
      */
     public static void setThreadPoolSize(final int threads) {
-        if (threads > 0) {
-            JossonCore.threadPoolSize = threads;
-        }
+        JossonCore.threadPoolSize = Math.max(threads, 1);
     }
 
     /**
@@ -1094,7 +1111,7 @@ public class Josson {
 
     /**
      * For multithreaded array elements manipulation, more system resource is required to retain the array order.
-     * Tune it off if the array elements order of the result is negligible. Default value is true.
+     * Turn it off if the array elements order of the result is negligible. Default value is true.
      *
      * @param retain whether to retain the array order of multithreaded array elements manipulation
      */

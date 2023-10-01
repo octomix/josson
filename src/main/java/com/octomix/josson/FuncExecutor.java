@@ -95,7 +95,7 @@ final class FuncExecutor {
         for (String param : paramList) {
             if (path.isArray()) {
                 final int size = path.containerSize();
-                if (size <= 1 || threadPoolSize == 1) {
+                if (size < minArraySizeToUseMultiThread || threadPoolSize == 1) {
                     for (int i = 0; i < size; i++) {
                         addArrayElement(array, getNodeByExpression(path, i, param));
                     }
@@ -195,7 +195,7 @@ final class FuncExecutor {
         if (target.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             final int size = target.containerSize();
-            if (size <= 1 || threadPoolSize == 1) {
+            if (size < minArraySizeToUseMultiThread || threadPoolSize == 1) {
                 for (int i = 0; i < size; i++) {
                     array.add(getPathNode(applyAction(path.push(target.get(i)), i, isValid, action, paramList)));
                 }
@@ -227,7 +227,7 @@ final class FuncExecutor {
         if (path.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
             final int size = path.containerSize();
-            if (size <= 1 || threadPoolSize == 1) {
+            if (size < minArraySizeToUseMultiThread || threadPoolSize == 1) {
                 path.node().forEach(elem -> array.add(getPathNode(applyAction(path.push(elem), isValid, action, paramArray))));
             } else {
                 final JsonNode[] orderedNodes = new JsonNode[size];

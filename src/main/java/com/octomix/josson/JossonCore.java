@@ -92,6 +92,8 @@ final class JossonCore {
 
     private static ZoneId zoneId = ZoneId.systemDefault();
 
+    static int minArraySizeToUseMultiThread = 100;
+
     static int threadPoolSize = 4;
 
     static boolean retainArrayOrder = true;
@@ -440,7 +442,7 @@ final class JossonCore {
         }
         final List<String> nextNextSteps = new ArrayList<>();
         final int size = path.containerSize();
-        if (size <= 1 || threadPoolSize == 1) {
+        if (size < minArraySizeToUseMultiThread || threadPoolSize == 1) {
             for (JsonNode each : path.node()) {
                 divertEachElement(path, elem, steps, nextNextSteps, each, (node) -> addArrayElement(array, node));
             }
