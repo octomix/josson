@@ -514,7 +514,7 @@ final class FuncStructural {
     }
 
     private static void funcUnwind(final ArrayNode unwind, final PathTrace path, final String[] nameAndPath) {
-        final JsonNode array = getNodeByExpression(path, nameAndPath[1], false);
+        final JsonNode array = getNodeByExpression(path, nameAndPath[1]);
         if (array == null) {
             if (nameAndPath[2] != null) {
                 unwind.add(path.node());

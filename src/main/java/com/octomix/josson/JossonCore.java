@@ -174,15 +174,10 @@ final class JossonCore {
         return getPathNode(getPathByExpression(path, index, expression));
     }
 
-    static JsonNode getNodeByExpression(final PathTrace path, final String expression, final boolean defaultNullNode) {
-        final JsonNode result = getNodeByExpression(path, expression);
-        return result != null ? result : defaultNullNode ? NullNode.getInstance() : null;
-    }
-
     static JsonNode getNodeByExpression(final PathTrace path, final int index, final String expression,
                                         final boolean defaultNullNode) {
         final JsonNode result = getNodeByExpression(path, index, expression);
-        return result != null ? result : defaultNullNode ? NullNode.getInstance() : null;
+        return result == null && defaultNullNode ? NullNode.getInstance() : result;
     }
 
     static PathTrace getPathByExpression(final PathTrace path, final String expression) {

@@ -247,11 +247,11 @@ class SyntaxMatcher {
     protected CombineOperand matchCombineOperand(final int pos, final int end, final boolean needQuery) {
         final CombineOperand operand = new SyntaxMatcher(trimOf(pos, end)).matchCombineOperand();
         if (needQuery) {
-            if (!operand.hasQuery()) {
+            if (operand.hasNoQuery()) {
                 throw new SyntaxErrorException(input, "Missing query statement", pos);
             }
         } else {
-            if (operand.hasQuery()) {
+            if (!operand.hasNoQuery()) {
                 throw new SyntaxErrorException(input, "Unnecessary query statement", pos);
             }
         }
