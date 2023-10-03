@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.Utils.addArrayElement;
+import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -94,8 +94,17 @@ final class FuncExecutor {
         final ArrayNode array = MAPPER.createArrayNode();
         for (String param : paramList) {
             if (path.isArray()) {
-                for (int i = 0; i < path.containerSize(); i++) {
-                    addArrayElement(array, getNodeByExpression(path, i, param));
+                final int size = path.containerSize();
+                if (size < minArraySizeToUseMultiThread || threadPoolSize == 1) {
+                    for (int i = 0; i < size; i++) {
+                        addArrayElement(array, getNodeByExpression(path, i, param));
+                    }
+                } else if (retainArrayOrder) {
+                    final JsonNode[] orderedNodes = new JsonNode[size];
+                    submitTasks(size, (i) -> orderedNodes[i] = getNodeByExpression(path, i, param));
+                    addArrayElements(array, orderedNodes);
+                } else {
+                    submitTasks(size, (i) -> addArrayElement(array, getNodeByExpression(path, i, param)));
                 }
             } else {
                 final JsonNode result = getNodeByExpression(path, param);
@@ -185,9 +194,18 @@ final class FuncExecutor {
         }
         if (target.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
-            for (int i = 0; i < target.containerSize(); i++) {
-                PathTrace result = applyAction(path.push(target.get(i)), i, isValid, action, paramList);
-                array.add(result == null ? null : result.node());
+            final int size = target.containerSize();
+            if (size < minArraySizeToUseMultiThread || threadPoolSize == 1) {
+                for (int i = 0; i < size; i++) {
+                    array.add(getPathNode(applyAction(path.push(target.get(i)), i, isValid, action, paramList)));
+                }
+            } else {
+                final JsonNode[] orderedNodes = new JsonNode[size];
+                submitTasks(size, (i) ->
+                        orderedNodes[i] = getPathNode(applyAction(path.push(target.get(i)), i, isValid, action, paramList)));
+                for (JsonNode node : orderedNodes) {
+                    array.add(node);
+                }
             }
             return path.push(array);
         }
@@ -208,10 +226,17 @@ final class FuncExecutor {
         }
         if (path.isArray()) {
             final ArrayNode array = MAPPER.createArrayNode();
-            path.node().forEach(elem -> {
-                PathTrace result = applyAction(path.push(elem), isValid, action, paramArray);
-                array.add(result == null ? null : result.node());
-            });
+            final int size = path.containerSize();
+            if (size < minArraySizeToUseMultiThread || threadPoolSize == 1) {
+                path.node().forEach(elem -> array.add(getPathNode(applyAction(path.push(elem), isValid, action, paramArray))));
+            } else {
+                final JsonNode[] orderedNodes = new JsonNode[size];
+                submitTasks(size, (i) ->
+                        orderedNodes[i] = getPathNode(applyAction(path.push(path.node().get(i)), isValid, action, paramArray)));
+                for (JsonNode node : orderedNodes) {
+                    array.add(node);
+                }
+            }
             return path.push(array);
         }
         return applyAction(path, isValid, action, paramArray);

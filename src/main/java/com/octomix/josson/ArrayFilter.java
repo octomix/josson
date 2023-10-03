@@ -116,7 +116,7 @@ class ArrayFilter {
         if (!node.isArray()) {
             return asBoolean(new OperationStackForPath(path).evaluateStatement(statement)) ? node : null;
         }
-        if (node.size() == 0) {
+        if (node.isEmpty()) {
             return null;
         }
         final ArrayNode matchedNodes = mode == FilterMode.FILTRATE_FIND_FIRST ? null : MAPPER.createArrayNode();

@@ -22,7 +22,7 @@
     <groupId>com.octomix.josson</groupId>
     <artifactId>josson</artifactId>
     <packaging>jar</packaging>
-    <version>1.4.5</version>
+    <version>1.4.6</version>
     <build>
         <plugins>
             <plugin>
@@ -91,7 +91,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.5.0</version>
+                        <version>3.6.0</version>
                         <configuration>
                             <source>8</source>
                         </configuration>
@@ -166,7 +166,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.9.3</version>
+            <version>5.10.0</version>
             <type>jar</type>
             <scope>test</scope>
             <optional>true</optional>

@@ -218,7 +218,7 @@ public class Josson {
      * @return {@code this}
      */
     public Josson put(final String key, final JsonNode value) {
-        ((ObjectNode) jsonNode).putPOJO(key, value);
+        ((ObjectNode) jsonNode).set(key, value);
         return this;
     }
 
@@ -1069,6 +1069,63 @@ public class Josson {
      */
     public static ZoneId getZoneId() {
         return JossonCore.getZoneId();
+    }
+
+    /**
+     * Set the minimum array size that trigger to use multithreading.
+     * Default value is 100. Minimum value is 2.
+     *
+     * @param size the minimum array size that trigger to use multithreading
+     */
+    public static void setMinArraySizeToUseMultiThread(final int size) {
+        JossonCore.minArraySizeToUseMultiThread = Math.max(size, 2);
+    }
+
+    /**
+     * Get the current minimum array size that trigger to use multithreading.
+     *
+     * @return The minimum array size that trigger to use multithreading
+     */
+    public static int getMinArraySizeToUseMultiThread() {
+        return JossonCore.minArraySizeToUseMultiThread;
+    }
+
+    /**
+     * Set the thread pool size for array elements manipulation.
+     * Default value is 4. Minimum value is 1 that means to turn off multithreading.
+     *
+     * @param threads the thread pool size
+     */
+    public static void setThreadPoolSize(final int threads) {
+        JossonCore.threadPoolSize = Math.max(threads, 1);
+    }
+
+    /**
+     * Get the current thread pool size for array elements manipulation.
+     *
+     * @return The thread pool size
+     */
+    public static int getThreadPoolSize() {
+        return JossonCore.threadPoolSize;
+    }
+
+    /**
+     * For multithreaded array elements manipulation, more system resource is required to retain the array order.
+     * Turn it off if the array elements order of the result is negligible. Default value is true.
+     *
+     * @param retain whether to retain the array order of multithreaded array elements manipulation
+     */
+    public static void setRetainArrayOrder(final boolean retain) {
+        JossonCore.retainArrayOrder = retain;
+    }
+
+    /**
+     * Get the current setting of whether to retain the array order of multithreaded array elements manipulation.
+     *
+     * @return Whether to retain the array order of multithreaded array elements manipulation
+     */
+    public static boolean isRetainArrayOrder() {
+        return JossonCore.retainArrayOrder;
     }
 
     /**

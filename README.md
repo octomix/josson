@@ -20,12 +20,12 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
     <dependency>
         <groupId>com.octomix.josson</groupId>
         <artifactId>josson</artifactId>
-        <version>1.4.5</version>
+        <version>1.4.6</version>
     </dependency>
 
 ### Gradle
 
-    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.5'
+    implementation group: 'com.octomix.josson', name: 'josson', version: '1.4.6'
 
 ## Features and Capabilities
 
@@ -34,6 +34,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 - Query a JSON dataset.
 - There are 245 internal functions to manipulate and format data.
 - Restructure JSON data and capable of grouping and unwind data.
+- Multithreading capability for array elements manipulation.
 - Can be used as an API parameter to trim down the response JSON result.
 
 ### Jossons
@@ -147,6 +148,16 @@ Initial setup for date time formatting and JSON serialization.
 
     Josson.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
+Josson support multithreading for array elements manipulation.
+When thread pool size is 2 or above, a little more system resource is required to retain the array order.
+Turn it off if the array elements order of the result is negligible.
+
+    Josson.setMinArraySizeToUseMultiThread(200); // default size is 100
+
+    Josson.setThreadPoolSize(2); // default size is 4
+
+    Josson.setRetainArrayOrder(false); // default ture
+
 To create a Josson object from a Jackson JsonNode.
 
     Josson josson = Josson.create(jsonNode);
@@ -167,7 +178,7 @@ Define initial variables for a query. Variable name must start with "$".
 
     Map<String, JsonNode> vars = new HashMap<>();
     vars.put("$a", IntNode.valueOf(3));
-    JsonNode node = josson.getNode("concat('qty=',$a)", param);
+    JsonNode node = josson.getNode("concat('qty=',$a)", vars);
 
 To apply a Josson query path and get the path trace along the main branch.
 The trace object contains all progressive nodes and variables defined along the main branch.
@@ -1457,6 +1468,7 @@ Below is the JSON for this tutorial.
                                                {} → concat(%) → ""
 
 73. Function `unwind()` works like MongoDB `$unwind` operation. The operation is the reverse of `group()`.
+    It supports parameter with prefix `+` in order to add element even the path is unresolvable.
 
         josson.getNode("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).unwind(elements)")
         ==>

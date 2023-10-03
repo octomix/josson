@@ -222,27 +222,9 @@ final class SyntaxDecomposer extends SyntaxMatcher {
             try {
                 if (isInt == null) {
                     if (pos > last || parseInteger(step) == null) {
-                        if (step.charAt(0) == ESCAPE_PATH_NAME_SYMBOL) {
-                            final int end = step.length();
-                            final int last = end - 1;
-                            final char[] unescape = new char[end];
-                            int count = 0;
-                            for (int i = 1; i < last; i++) {
-                                char ch = step.charAt(i);
-                                if (ch == ESCAPE_SYMBOL) {
-                                    final char escaped = step.charAt(i + 1);
-                                    if (escaped == ESCAPE_SYMBOL || escaped == ESCAPE_PATH_NAME_SYMBOL) {
-                                        ch = escaped;
-                                        i++;
-                                    }
-                                }
-                                unescape[count++] = ch;
-                            }
-                            if (count > 0) {
-                                steps.add(new String(unescape, 0, count));
-                            }
-                        } else {
-                            steps.add(step);
+                        final String name = unescapePathName(step);
+                        if (name != null) {
+                            steps.add(name);
                         }
                     } else {
                         isInt = step;
@@ -379,6 +361,7 @@ final class SyntaxDecomposer extends SyntaxMatcher {
                 if (name.isEmpty()) {
                     throw new SyntaxErrorException(input, "Missing field name");
                 }
+                name = unescapePathName(name);
                 path = trimOf(pos + 1, length);
                 if (path.startsWith(EVALUATE_KEY_NAME)) {
                     name = EVALUATE_KEY_NAME + name;

@@ -60,9 +60,9 @@ class SyntaxMatcher {
         };
     }
 
-    protected static final char ESCAPE_SYMBOL = '\\';
+    private static final char ESCAPE_SYMBOL = '\\';
 
-    protected static final char ESCAPE_PATH_NAME_SYMBOL = '"';
+    private static final char ESCAPE_PATH_NAME_SYMBOL = '"';
 
     protected final String input;
 
@@ -247,11 +247,11 @@ class SyntaxMatcher {
     protected CombineOperand matchCombineOperand(final int pos, final int end, final boolean needQuery) {
         final CombineOperand operand = new SyntaxMatcher(trimOf(pos, end)).matchCombineOperand();
         if (needQuery) {
-            if (!operand.hasQuery()) {
+            if (operand.hasNoQuery()) {
                 throw new SyntaxErrorException(input, "Missing query statement", pos);
             }
         } else {
-            if (operand.hasQuery()) {
+            if (!operand.hasNoQuery()) {
                 throw new SyntaxErrorException(input, "Unnecessary query statement", pos);
             }
         }
@@ -305,5 +305,27 @@ class SyntaxMatcher {
             }
         }
         return false;
+    }
+
+    protected static String unescapePathName(String name) {
+        if (name.charAt(0) != ESCAPE_PATH_NAME_SYMBOL) {
+            return name;
+        }
+        final int end = name.length();
+        final int last = end - 1;
+        final char[] unescape = new char[end];
+        int count = 0;
+        for (int i = 1; i < last; i++) {
+            char ch = name.charAt(i);
+            if (ch == ESCAPE_SYMBOL) {
+                final char escaped = name.charAt(i + 1);
+                if (escaped == ESCAPE_SYMBOL || escaped == ESCAPE_PATH_NAME_SYMBOL) {
+                    ch = escaped;
+                    i++;
+                }
+            }
+            unescape[count++] = ch;
+        }
+        return count > 0 ? new String(unescape, 0, count) : null;
     }
 }

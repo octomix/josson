@@ -70,6 +70,7 @@ final class FuncArray {
         if (array == null) {
             return null;
         }
+        final ArrayNode result = MAPPER.createArrayNode();
         final Set<String> texts = new HashSet<>();
         final Set<Double> doubles = new HashSet<>();
         final Set<Boolean> booleans = new HashSet<>();
@@ -80,9 +81,18 @@ final class FuncArray {
                 doubles.add(elem.asDouble());
             } else if (elem.isBoolean()) {
                 booleans.add(elem.asBoolean());
+            } else if (elem.isContainerNode()) {
+                int i = result.size() - 1;
+                for (; i >= 0; i--) {
+                    if (Operator.EQ.compare(result.get(i), elem)) {
+                        break;
+                    }
+                }
+                if (i < 0) {
+                    result.add(elem);
+                }
             }
         });
-        final ArrayNode result = MAPPER.createArrayNode();
         texts.forEach(value -> result.add(TextNode.valueOf(value)));
         doubles.forEach(value -> result.add(DoubleNode.valueOf(value)));
         booleans.forEach(value -> result.add(BooleanNode.valueOf(value)));
@@ -182,8 +192,7 @@ final class FuncArray {
         if (dataPath == null) {
             return null;
         }
-        final String delimiter = pathAndParams.getValue().size() > 0
-                ? getNodeAsText(path, pathAndParams.getValue().get(0)) : EMPTY;
+        final String delimiter = pathAndParams.getValue().isEmpty() ? EMPTY : getNodeAsText(path, pathAndParams.getValue().get(0));
         final List<String> texts = new ArrayList<>();
         dataPath.node().forEach(elem -> {
             if (nodeHasValue(elem)) {
@@ -283,7 +292,7 @@ final class FuncArray {
             return dataPath;
         }
         final int size = dataPath.containerSize();
-        int start = pathAndParams.getValue().size() > 0 && !pathAndParams.getValue().get(0).isEmpty()
+        int start = !pathAndParams.getValue().isEmpty() && !pathAndParams.getValue().get(0).isEmpty()
                 ? getNodeAsInt(path, pathAndParams.getValue().get(0)) : 0;
         int end = pathAndParams.getValue().size() > 1 && !pathAndParams.getValue().get(1).isEmpty()
                 ? getNodeAsInt(path, pathAndParams.getValue().get(1)) : Integer.MAX_VALUE;
@@ -314,7 +323,7 @@ final class FuncArray {
         }
         String param = null;
         int ordering = 1;
-        if (pathAndParams.getValue().size() > 0) {
+        if (!pathAndParams.getValue().isEmpty()) {
             param = pathAndParams.getValue().get(0);
             try {
                 ordering = Integer.parseInt(param);
