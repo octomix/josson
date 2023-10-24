@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UnknownFormatConversionException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -335,7 +336,7 @@ class Utils {
         try {
             executorService.invokeAll(tasks);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new CancellationException(e.getMessage());
         } finally {
             executorService.shutdown();
         }

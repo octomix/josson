@@ -1033,7 +1033,7 @@ Below is the JSON for this tutorial.
 
 48. Function `json()` parse a JSON string.
 
-        josson.getNode("json('[1,2,"3"]')")
+        josson.getNode("json('[1,2,\"3\"]')")
         ==>
         [ 1, 2, "3" ]
 
@@ -1043,7 +1043,7 @@ Below is the JSON for this tutorial.
 
 49. Relational operator `=` and `!=` support object comparison.
 
-        josson.getNode("[customer = json('{"name":"Peggy","phone":"+852 62000610","customerId":"CU0001"}')].isNotNull()")
+        josson.getNode("[customer = json('{\"name\":\"Peggy\",\"phone\":\"+852 62000610\",\"customerId\":\"CU0001\"}')].isNotNull()")
         ==>
         true
 
@@ -1053,7 +1053,7 @@ Below is the JSON for this tutorial.
 
 50. Relational operator `=` and `!=` support root level array values comparison where the position ordering is allowed to be different.
 
-        josson.getNode("[items[0].property.colors = json('["RED","WHITE"]')].isNotNull()")
+        josson.getNode("[items[0].property.colors = json('[\"RED\",\"WHITE\"]')].isNotNull()")
         ==>
         true
 
@@ -1743,11 +1743,11 @@ Below is the JSON for this tutorial.
 
 83. Function `eval()` evaluates the value of a text node as a query statement.
 
-        josson.getNode("json('{"a":1,"b":2,"statement":"calc(a+b*2)"}').eval(statement)")
+        josson.getNode("json('{\"a\":1,\"b\":2,\"statement\":\"calc(a+b*2)\"}').eval(statement)")
         ==>
         5.0
 
-        josson.getNode("json('[{"a":3,"s":"calc(a*2)"},{"a":4,"s":"calc(a*2)"}]')@.eval(s)")
+        josson.getNode("json('[{\"a\":3,\"s\":\"calc(a*2)\"},{\"a\":4,\"s\":\"calc(a*2)\"}]')@.eval(s)")
         ==>
         [ 6.0, 8.0 ]
 
