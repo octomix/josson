@@ -160,8 +160,7 @@
         </dependency>
         <dependency>
             <groupId>org.mariuszgromada.math</groupId>
-            <artifactId>MathParser.org-mXparser</artifactId>
-            <version>5.2.1</version>
+            <artifactId>MathParser.org-mXparser</artifactId><version>6.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
