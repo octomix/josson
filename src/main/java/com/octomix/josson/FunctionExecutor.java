@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import static com.octomix.josson.commons.StringUtils.EMPTY;
 /**
  * Common logic to execute functions.
  */
-final class FuncExecutor {
+final class FunctionExecutor {
 
     /**
      * Unlimited number of parameters with optional data path.
@@ -46,7 +46,7 @@ final class FuncExecutor {
      */
     static final int UNLIMITED_AND_NO_PATH = -2;
 
-    private FuncExecutor() {
+    private FunctionExecutor() {
     }
 
     static PathTrace getParamPath(final PathTrace path, final String params) {

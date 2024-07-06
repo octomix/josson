@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,20 @@ import static com.octomix.josson.FuncArray.*;
 import static com.octomix.josson.FuncDate.*;
 import static com.octomix.josson.FuncFormat.*;
 import static com.octomix.josson.FuncLogical.*;
+import static com.octomix.josson.FuncOptions.*;
 import static com.octomix.josson.FuncString.*;
 import static com.octomix.josson.FuncStructural.*;
 
 /**
  * Function dispatcher.
  */
-class FuncDispatcher {
+class FunctionDispatcher {
 
     private final String funcName;
 
     private final String params;
 
-    FuncDispatcher(final String funcName, final String params) {
+    FunctionDispatcher(final String funcName, final String params) {
         this.funcName = funcName;
         this.params = params;
     }

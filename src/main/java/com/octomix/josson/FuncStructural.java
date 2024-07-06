@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.octomix.josson.exception.SyntaxErrorException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.octomix.josson.FuncExecutor.*;
+import static com.octomix.josson.FunctionExecutor.*;
 import static com.octomix.josson.Josson.readJsonNode;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.*;
@@ -299,17 +299,6 @@ final class FuncStructural {
                 funcKeys(array, field.getValue(), levels - 1);
             }
         });
-    }
-
-    static PathTrace funcLet(final PathTrace path, final String params) {
-        final List<String[]> nameAndPaths = getParamNamePath(new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH));
-        for (String[] nameAndPath : nameAndPaths) {
-            final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, path, NON_ARRAY_INDEX);
-            final JsonNode result = getNodeByExpression(
-                path, NON_ARRAY_INDEX, evalNameAndPath[1], evalNameAndPath[2] != null);
-            path.setVariable(evalNameAndPath[0], result);
-        }
-        return path;
     }
 
     static PathTrace funcMap(final PathTrace path, final String params) {

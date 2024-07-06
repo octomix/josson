@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.time.OffsetDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 
-import static com.octomix.josson.FuncExecutor.*;
+import static com.octomix.josson.FunctionExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Utils.*;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static com.octomix.josson.FuncExecutor.UNLIMITED_WITH_PATH;
+import static com.octomix.josson.FunctionExecutor.UNLIMITED_WITH_PATH;
 import static com.octomix.josson.Mapper.MAPPER;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
@@ -322,10 +322,9 @@ class JossonsCore {
         for (int i = 0; i < last; i++) {
             if (template.charAt(i) == PLACEHOLDER_OPEN) {
                 if (template.charAt(i + 1) == PLACEHOLDER_OPEN) {
-                    i++;
-                    while (template.charAt(i + 1) == PLACEHOLDER_OPEN && i < last) {
+                    do {
                         i++;
-                    }
+                    } while (template.charAt(i + 1) == PLACEHOLDER_OPEN && i < last);
                     placeholderAt = i - 1;
                     sb.append(template, offset, placeholderAt);
                     offset = placeholderAt;

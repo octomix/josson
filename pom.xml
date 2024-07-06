@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2020-2023 Octomix Software Technology Limited
+ Copyright 2020-2024 Octomix Software Technology Limited
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -160,12 +160,13 @@
         </dependency>
         <dependency>
             <groupId>org.mariuszgromada.math</groupId>
-            <artifactId>MathParser.org-mXparser</artifactId><version>6.0.0</version>
+            <artifactId>MathParser.org-mXparser</artifactId>
+            <version>6.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.2</version>
+            <version>5.10.3</version>
             <type>jar</type>
             <scope>test</scope>
             <optional>true</optional>

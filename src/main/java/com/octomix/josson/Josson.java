@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Octomix Software Technology Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.BiFunction;
 
 import static com.octomix.josson.JossonCore.getPathByExpression;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -50,13 +48,14 @@ import static com.octomix.josson.Utils.*;
 public class Josson {
 
     private JsonNode jsonNode;
+    private Map<String, BiFunction<Integer, JsonNode, JsonNode>> customFunctions;
 
     private Josson(final JsonNode node) {
         this.jsonNode = node;
     }
 
     /**
-     * Create a Josson object that contains an empty Jackson {@code ObjectNode}.
+     * Create a Josson object that contains an empty Jackson {@link ObjectNode}.
      *
      * @return The new Josson object
      */
@@ -301,6 +300,26 @@ public class Josson {
     }
 
     /**
+     * Define a custom function.
+     *
+     * @param name custom function name starts with "$" and ends with "()"
+     * @param customFunction a {@link BiFunction} with input (Array index, Current node) and output an {@link JsonNode}
+     * @return {@code this}
+     * @throws NullPointerException if {@code name} is null
+     */
+    public Josson customFunction(final String name, final BiFunction<Integer, JsonNode, JsonNode> customFunction) {
+        Objects.requireNonNull(name, "Function name must not be null");
+        final String functionName = JossonCore.getCustomFunctionName(name.trim());
+        if (customFunction != null) {
+            if (customFunctions == null) {
+                customFunctions = new HashMap<>();
+            }
+            customFunctions.put(functionName, customFunction);
+        }
+        return this;
+    }
+
+    /**
      * Simply returns the content.
      *
      * @return The root Jackson JsonNode
@@ -354,7 +373,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final String expression) {
-        return JossonCore.getNodeByExpression(jsonNode, expression, null);
+        return JossonCore.getNodeByExpression(jsonNode, expression, customFunctions, null);
     }
 
     /**
@@ -366,7 +385,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final String expression, final Map<String, JsonNode> variables) {
-        return JossonCore.getNodeByExpression(jsonNode, expression, variables);
+        return JossonCore.getNodeByExpression(jsonNode, expression, customFunctions, variables);
     }
 
     /**
@@ -378,7 +397,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final int index, final String expression) {
-        return JossonCore.getNodeByExpression(jsonNode, index, expression, null);
+        return JossonCore.getNodeByExpression(jsonNode, index, expression, customFunctions, null);
     }
 
     /**
@@ -391,7 +410,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final int index, final String expression, final Map<String, JsonNode> variables) {
-        return JossonCore.getNodeByExpression(jsonNode, index, expression, variables);
+        return JossonCore.getNodeByExpression(jsonNode, index, expression, customFunctions, variables);
     }
 
     /**
@@ -403,7 +422,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final String expression) {
-        return JossonCore.getNodeByExpression(node, expression, null);
+        return JossonCore.getNodeByExpression(node, expression, null, null);
     }
 
     /**
@@ -416,7 +435,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final String expression, final Map<String, JsonNode> variables) {
-        return JossonCore.getNodeByExpression(node, expression, variables);
+        return JossonCore.getNodeByExpression(node, expression, null, variables);
     }
 
     /**
@@ -429,7 +448,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final int index, final String expression) {
-        return JossonCore.getNodeByExpression(node, index, expression, null);
+        return JossonCore.getNodeByExpression(node, index, expression, null, null);
     }
 
     /**
@@ -444,7 +463,7 @@ public class Josson {
      */
     public static JsonNode getNode(final JsonNode node, final int index, final String expression,
                                    final Map<String, JsonNode> variables) {
-        return JossonCore.getNodeByExpression(node, index, expression, variables);
+        return JossonCore.getNodeByExpression(node, index, expression, null, variables);
     }
 
     /**
@@ -503,7 +522,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public PathTrace getPathTrace(final String expression) {
-        return getPathByExpression(PathTrace.from(jsonNode), expression);
+        return getPathByExpression(PathTrace.from(jsonNode, customFunctions), expression);
     }
 
     /**
@@ -515,7 +534,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public PathTrace getPathTrace(final String expression, final Map<String, JsonNode> variables) {
-        return getPathByExpression(PathTrace.from(jsonNode, variables), expression);
+        return getPathByExpression(PathTrace.from(jsonNode, customFunctions, variables), expression);
     }
 
     /**
