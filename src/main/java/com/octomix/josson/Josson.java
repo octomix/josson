@@ -37,6 +37,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static com.octomix.josson.JossonCore.getPathByExpression;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -48,7 +49,7 @@ import static com.octomix.josson.Utils.*;
 public class Josson {
 
     private JsonNode jsonNode;
-    private Map<String, BiFunction<Integer, JsonNode, JsonNode>> customFunctions;
+    private Map<String, CustomFunction> customFunctions;
 
     private Josson(final JsonNode node) {
         this.jsonNode = node;
@@ -300,21 +301,39 @@ public class Josson {
     }
 
     /**
-     * Define a custom function.
+     * Define a custom function that accept the current node as parameter and produce a new node.
+     *
+     * @param name custom function name starts with "$" and ends with "()"
+     * @param customFunction a {@link Function} with input (Current node) and output an {@link JsonNode}
+     * @return {@code this}
+     * @throws NullPointerException if {@code name} is null
+     */
+    public Josson customFunction(final String name, final Function<JsonNode, JsonNode> customFunction) {
+        final String functionName = JossonCore.getCustomFunctionName(name.trim());
+        if (customFunction != null) {
+            if (customFunctions == null) {
+                customFunctions = new HashMap<>();
+            }
+            customFunctions.put(functionName, CustomFunction.of(customFunction));
+        }
+        return this;
+    }
+
+    /**
+     * Define a custom function that accept the current array index and node as parameters and produce a new node.
      *
      * @param name custom function name starts with "$" and ends with "()"
      * @param customFunction a {@link BiFunction} with input (Array index, Current node) and output an {@link JsonNode}
      * @return {@code this}
      * @throws NullPointerException if {@code name} is null
      */
-    public Josson customFunction(final String name, final BiFunction<Integer, JsonNode, JsonNode> customFunction) {
-        Objects.requireNonNull(name, "Function name must not be null");
+    public Josson customFunction(final String name, final BiFunction<JsonNode, Integer, JsonNode> customFunction) {
         final String functionName = JossonCore.getCustomFunctionName(name.trim());
         if (customFunction != null) {
             if (customFunctions == null) {
                 customFunctions = new HashMap<>();
             }
-            customFunctions.put(functionName, customFunction);
+            customFunctions.put(functionName, CustomFunction.of(customFunction));
         }
         return this;
     }

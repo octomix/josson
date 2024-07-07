@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 /**
  * Contains all progressive nodes and variables defined along the path.
@@ -28,24 +27,16 @@ import java.util.function.BiFunction;
 public class PathTrace {
 
     private final JsonNode[] steps;
-    private final Map<String, BiFunction<Integer, JsonNode, JsonNode>> customFunctions;
+    private final Map<String, CustomFunction> customFunctions;
     private Map<String, JsonNode> variables;
 
-    private PathTrace(
-        final int size,
-        final Map<String, BiFunction<Integer, JsonNode, JsonNode>> customFunctions,
-        final Map<String, JsonNode> variables
-    ) {
+    private PathTrace(final int size, final Map<String, CustomFunction> customFunctions, final Map<String, JsonNode> variables) {
         this.steps = new JsonNode[size];
         this.customFunctions = customFunctions;
         this.variables = variables;
     }
 
-    private PathTrace(
-        final JsonNode node,
-        final Map<String, BiFunction<Integer, JsonNode, JsonNode>> customFunctions,
-        final Map<String, JsonNode> variables
-    ) {
+    private PathTrace(final JsonNode node, final Map<String, CustomFunction> customFunctions, final Map<String, JsonNode> variables) {
         this.steps = new JsonNode[]{node};
         this.customFunctions = customFunctions;
         this.variables = variables;
@@ -55,13 +46,13 @@ public class PathTrace {
         return new PathTrace(node, null, null);
     }
 
-    static PathTrace from(final JsonNode node, final Map<String, BiFunction<Integer, JsonNode, JsonNode>> customFunctions) {
+    static PathTrace from(final JsonNode node, final Map<String, CustomFunction> customFunctions) {
         return new PathTrace(node, customFunctions, null);
     }
 
     static PathTrace from(
         final JsonNode node,
-        final Map<String, BiFunction<Integer, JsonNode, JsonNode>> customFunctions,
+        final Map<String, CustomFunction> customFunctions,
         final Map<String, JsonNode> variables
     ) {
         if (variables != null) {
@@ -114,7 +105,7 @@ public class PathTrace {
         return variables == null ? null : variables.get(name);
     }
 
-    BiFunction<Integer, JsonNode, JsonNode> getCustomFunction(final String functionName) {
+    CustomFunction getCustomFunction(final String functionName) {
         return customFunctions == null ? null : customFunctions.get(functionName);
     }
 
