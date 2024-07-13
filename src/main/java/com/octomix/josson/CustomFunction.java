@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class CustomFunction {
+class CustomFunction {
 
     private final Function<JsonNode, JsonNode> function;
     private final BiFunction<JsonNode, Integer, JsonNode> biFunction;

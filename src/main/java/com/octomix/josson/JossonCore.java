@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,8 @@ final class JossonCore {
     static int threadPoolSize = 4;
 
     static boolean retainArrayOrder = true;
+
+    static MergeArraysOption mergeArraysOption = MergeArraysOption.APPEND;
 
     static final String WILDCARD_COLLECT_ALL = String.valueOf(WILDCARD_SYMBOL) + FILTRATE_COLLECT_ALL.getSymbol();
 
@@ -246,7 +248,7 @@ final class JossonCore {
                         throw new SyntaxErrorException(e.getMessage(), "Custom function " + step);
                     }
                 }
-                return getPathBySteps(path.clone(value == null ? NullNode.getInstance() : value), steps);
+                return getPathBySteps(new PathTrace(value == null ? NullNode.getInstance() : value, path), steps);
             case INDEX_PREFIX_SYMBOL:
                 steps.remove(0);
                 switch (step) {

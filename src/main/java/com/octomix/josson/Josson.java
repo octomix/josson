@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1242,6 +1242,24 @@ public class Josson {
      */
     public static boolean isRetainArrayOrder() {
         return JossonCore.retainArrayOrder;
+    }
+
+    /**
+     * Set the default {@link MergeArraysOption} setting
+     *
+     * @param mergeArraysOption {@link MergeArraysOption}
+     */
+    public static void setMergeArraysOption(final MergeArraysOption mergeArraysOption) {
+        JossonCore.mergeArraysOption = mergeArraysOption;
+    }
+
+    /**
+     * Get the default {@link MergeArraysOption} setting
+     *
+     * @return the default {@link MergeArraysOption} setting
+     */
+    public static MergeArraysOption getMergeArraysOption() {
+        return JossonCore.mergeArraysOption;
     }
 
     /**

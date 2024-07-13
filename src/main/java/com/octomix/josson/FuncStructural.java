@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -342,13 +342,13 @@ final class FuncStructural {
                 for (int i = 0; i < path.containerSize(); i++) {
                     final JsonNode result = getNodeByExpression(path, i, param);
                     if (result != null && result.isArray()) {
-                        array.addAll((ArrayNode) result);
+                        mergeArrays(array, (ArrayNode) result, path.getMergeArraysOption());
                     }
                 }
             } else {
                 final JsonNode result = getNodeByExpression(path, param);
                 if (result != null && result.isArray()) {
-                    array.addAll((ArrayNode) result);
+                    mergeArrays(array, (ArrayNode) result, path.getMergeArraysOption());
                 }
             }
         }
@@ -366,7 +366,7 @@ final class FuncStructural {
                 if (result == null) {
                     result = elem.deepCopy();
                 } else {
-                    mergeObjects(result, elem);
+                    mergeObjects(result, elem, path.getMergeArraysOption());
                 }
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,11 @@ final public class FuncOptions {
                     path, NON_ARRAY_INDEX, evalNameAndPath[1], evalNameAndPath[2] != null);
             path.setVariable(evalNameAndPath[0], result);
         }
+        return path;
+    }
+
+    static PathTrace funcMergeArraysOption(final PathTrace path, final String params) {
+        path.setMergeArraysOption(MergeArraysOption.fromValue(params));
         return path;
     }
 }

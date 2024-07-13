@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -433,7 +433,7 @@ class FunctionDispatcher {
                 return funcSnakeCase(path, params, CaseUtils.Type.LOWER);
             case "lowercase":
                 return funcLowerCase(path, params);
-            // Structural
+            // Options
             case "let":
                 return funcLet(path, params);
         }
@@ -486,6 +486,9 @@ class FunctionDispatcher {
                 return funcMergeArrays(path, params);
             case "mergeobjects":
                 return funcMergeObjects(path, params);
+            // Options
+            case "mergearraysoption":
+                return funcMergeArraysOption(path, params);
         }
         throw new UnsupportedFunctionException();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,7 +193,7 @@ class CombineOperation {
         if (rightNode.isObject()) {
             if (leftNode.isObject()) {
                 ObjectNode concat = leftNode.deepCopy();
-                mergeObjects(concat, rightNode);
+                mergeObjects(concat, rightNode, JossonCore.mergeArraysOption);
                 return concat;
             }
             return cloneArray((ArrayNode) leftNode).add(leftNode);
@@ -246,7 +246,7 @@ class CombineOperation {
     private static JsonNode symmetricDifference(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isObject() && rightNode.isObject()) {
             final ObjectNode diff = (ObjectNode) subtract(leftNode, rightNode);
-            mergeObjects(diff, subtract(rightNode, leftNode));
+            mergeObjects(diff, subtract(rightNode, leftNode), JossonCore.mergeArraysOption);
             return diff;
         }
         if (leftNode.isArray() && rightNode.isArray()) {

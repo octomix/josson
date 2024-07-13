@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import static com.octomix.josson.commons.StringEscapeUtils.*;
 
 /**
  * To unescape placeholders and escape the fill-in text for different markup language.
- * {@link #NONE}
- * {@link #XML}
- * {@link #HTML}
+ * <br>{@link #NONE}
+ * <br>{@link #XML}
+ * <br>{@link #HTML}
  */
 public enum MarkupLanguage {
 

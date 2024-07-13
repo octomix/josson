@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,10 +182,10 @@ public class Jossons extends JossonsCore {
      * to merge and fill all placeholders in a template.
      * Placeholder is start with "{{" and end with "}}" as the quote marks.</p>
      * <p>An unresolved dataset will trigger {@code dictionaryFinder} callback that shall return either:
-     * (1) a value.
-     * (2) a Jossons query that retrieve data from other datasets.
-     * (3) a database query statement that will further trigger {@code dataFinder} callback.</p>
-     * (4) a join operation query to merge two datasets.
+     * <br>(1) a value.
+     * <br>(2) a Jossons query that retrieve data from other datasets.
+     * <br>(3) a database query statement that will further trigger {@code dataFinder} callback.
+     * <br>(4) a join operation query to merge two datasets.</p>
      * <p>Any unresolvable placeholder will raise {@code NoValuePresentException} with the incomplete merged text
      * content. All unresolvable placeholders are quoted with "**" to replace the original "{{" and "}}".</p>
      *
@@ -216,10 +216,10 @@ public class Jossons extends JossonsCore {
     /**
      * <p>Uses the stored dataset mapping and with the help of on demand callback dataset resolver to retrieve data.</p>
      * <p>An unresolved dataset will trigger {@code dictionaryFinder} callback that shall return either:
-     * (1) a value.
-     * (2) a Jossons query that retrieve data from other datasets.
-     * (3) a database query statement that will further trigger {@code dataFinder} callback.</p>
-     * (4) a join operation query to merge two datasets.
+     * <br>(1) a value.
+     * <br>(2) a Jossons query that retrieve data from other datasets.
+     * <br>(3) a database query statement that will further trigger {@code dataFinder} callback.
+     * <br>(4) a join operation query to merge two datasets.</p>
      *
      * @param query the Jossons query
      * @param dictionaryFinder a callback function to return solution query statement
