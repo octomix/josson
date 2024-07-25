@@ -226,6 +226,12 @@ class Utils {
         });
     }
 
+    static void mergeArrays(final ArrayNode a1, final JsonNode a2, final MergeArraysOption mergeArraysOption) {
+        if (a2 != null && a2.isArray()) {
+            mergeArrays(a1, (ArrayNode) a2, mergeArraysOption);
+        }
+    }
+
     static void mergeArrays(final ArrayNode a1, final ArrayNode a2, final MergeArraysOption mergeArraysOption) {
         if (mergeArraysOption == MergeArraysOption.APPEND) {
             a1.addAll(a2);

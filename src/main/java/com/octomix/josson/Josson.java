@@ -301,7 +301,7 @@ public class Josson {
     }
 
     /**
-     * Define a custom function that accept the current node as parameter and produce a new node.
+     * Define a custom function that accept the current node as parameter and return a new node.
      *
      * @param name custom function name starts with "$" and ends with "()"
      * @param customFunction a {@link Function} with input (Current node) and output an {@link JsonNode}
@@ -320,10 +320,10 @@ public class Josson {
     }
 
     /**
-     * Define a custom function that accept the current array index and node as parameters and produce a new node.
+     * Define a custom function that accept the current node and array index as parameters and return a new node.
      *
      * @param name custom function name starts with "$" and ends with "()"
-     * @param customFunction a {@link BiFunction} with input (Array index, Current node) and output an {@link JsonNode}
+     * @param customFunction a {@link BiFunction} with input (Current node, Array index) and output an {@link JsonNode}
      * @return {@code this}
      * @throws NullPointerException if {@code name} is null
      */

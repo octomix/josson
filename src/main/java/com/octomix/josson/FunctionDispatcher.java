@@ -28,7 +28,7 @@ import static com.octomix.josson.FuncArray.*;
 import static com.octomix.josson.FuncDate.*;
 import static com.octomix.josson.FuncFormat.*;
 import static com.octomix.josson.FuncLogical.*;
-import static com.octomix.josson.FuncOptions.*;
+import static com.octomix.josson.FuncProgrammable.*;
 import static com.octomix.josson.FuncString.*;
 import static com.octomix.josson.FuncStructural.*;
 

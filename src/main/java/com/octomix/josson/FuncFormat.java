@@ -49,50 +49,6 @@ final class FuncFormat {
         return applyTextNode(path, params, dataPath -> encoder.encodeToString(dataPath.asText().getBytes()));
     }
 
-    static PathTrace funcCaseValue(final PathTrace path, final String params, final boolean ignoreCase) {
-        return applyWithParams(path, params, 2, UNLIMITED_AND_NO_PATH, JsonNode::isValueNode,
-            (data, paramList) -> {
-                final PathTrace dataPath = data.getKey();
-                final int last = paramList.size() - 1;
-                int i = 0;
-                for (; i < last; i += 2) {
-                    final JsonNode node = getNodeByExpression(path, data.getValue(), paramList.get(i));
-                    if (node == null || node.isNull()) {
-                        if (!dataPath.isNull()) {
-                            continue;
-                        }
-                    } else if ((node.isNumber() || node.isTextual()) && dataPath.isNumber()) {
-                        if (node.asDouble() != dataPath.asDouble()) {
-                            continue;
-                        }
-                    } else if (ignoreCase
-                            ? !node.asText().equalsIgnoreCase(dataPath.asText())
-                            : !node.asText().equals(dataPath.asText())) {
-                        continue;
-                    }
-                    return getPathByExpression(path, data.getValue(), paramList.get(i + 1));
-                }
-                return i == last ? getPathByExpression(path, data.getValue(), paramList.get(i)) : null;
-            });
-    }
-
-    static PathTrace funcCoalesce(final PathTrace path, final String params) {
-        return applyWithParams(path, params, 1, UNLIMITED_AND_NO_PATH, null,
-            (data, paramList) -> {
-                final PathTrace dataPath = data.getKey();
-                if (nodeHasValue(dataPath)) {
-                    return dataPath;
-                }
-                for (String expression : paramList) {
-                    final PathTrace result = getPathByExpression(path, data.getValue(), expression);
-                    if (nodeIsNotNull(result)) {
-                        return result;
-                    }
-                }
-                return null;
-            });
-    }
-
     static PathTrace funcCsv(final PathTrace path, final String params, final boolean showNull, final boolean forParams) {
         final PathTrace container = getParamArrayOrItselfIsContainer(path, params);
         if (container == null) {
@@ -142,28 +98,6 @@ final class FuncFormat {
         return result;
     }
 
-    static PathTrace funcCycleValue(final PathTrace path, final String params) {
-        return applyWithArrayNode(path, params, Utils::nodeHasValue,
-            (dataPath, paramPath) -> {
-                final int size = paramPath.containerSize();
-                final int index = dataPath.asInt() % size;
-                return path.push(paramPath.get(index < 0 ? index + size : index));
-            });
-    }
-
-    static PathTrace funcDefault(final PathTrace path, final String params) {
-        return applyWithParams(path, params, 0, UNLIMITED_AND_NO_PATH, null,
-            (data, paramList) -> {
-                for (String expression : paramList) {
-                    final PathTrace result = getPathByExpression(path, data.getValue(), expression);
-                    if (nodeIsNotNull(result)) {
-                        return result;
-                    }
-                }
-                return path.push(EMPTY_STRING_NODE);
-            });
-    }
-
     static PathTrace funcFormatDate(final PathTrace path, final String params) {
         return applyWithParams(path, params, 1, 1, JsonNode::isTextual,
             (data, paramList) -> {
@@ -207,27 +141,6 @@ final class FuncFormat {
                     return null;
                 }
                 return path.push(TextNode.valueOf(String.format(format, valueObjects)));
-            });
-    }
-
-    static PathTrace funcIf(final PathTrace path, final String params, final boolean not) {
-        return applyWithParams(path, params, 2, 3, null,
-            (data, paramList) -> {
-                final PathTrace dataPath = data.getKey();
-                final PathTrace paramPath = data.getValue() < 0 ? dataPath : path;
-                final String query =
-                        not ^ asBoolean(getNodeByExpression(paramPath, data.getValue(), paramList.get(0))) ? paramList.get(1)
-                        : paramList.size() > 2 ? paramList.get(2)
-                        : null;
-                return query == null ? null : getPathByExpression(paramPath, data.getValue(), query);
-            });
-    }
-
-    static PathTrace funcIndexedValue(final PathTrace path, final String params) {
-        return applyWithArrayNode(path, params, Utils::nodeHasValue,
-            (dataPath, paramPath) -> {
-                final int index = dataPath.asInt();
-                return index >= 0 && index < paramPath.containerSize() ? path.push(paramPath.get(index)) : null;
             });
     }
 
