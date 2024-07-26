@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,10 @@ import com.octomix.josson.commons.StringUtils;
 
 import java.util.function.Function;
 
-import static com.octomix.josson.FuncExecutor.*;
+import static com.octomix.josson.FunctionExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.MAPPER;
-import static com.octomix.josson.Utils.nodeHasValue;
-import static com.octomix.josson.Utils.quoteText;
+import static com.octomix.josson.Utils.*;
 import static com.octomix.josson.commons.StringUtils.EMPTY;
 
 /**
@@ -97,16 +96,24 @@ final class FuncString {
             });
     }
 
+    static PathTrace funcDefault(final PathTrace path, final String params) {
+        return applyWithParams(path, params, 0, UNLIMITED_AND_NO_PATH, null,
+                (data, paramList) -> {
+                    for (String expression : paramList) {
+                        final PathTrace result = getPathByExpression(path, data.getValue(), expression);
+                        if (nodeIsNotNull(result)) {
+                            return result;
+                        }
+                    }
+                    return path.push(EMPTY_STRING_NODE);
+                });
+    }
+
     static PathTrace funcDoubleQuote(final PathTrace path, final String params) {
         return applyWithoutParam(path, params, Utils::nodeHasValue,
             (data, paramList) -> path.push(TextNode.valueOf(
                     String.format("\"%s\"", data.getKey().asText().replace("\"", "\\\""))))
         );
-    }
-
-    static PathTrace funcEval(final PathTrace path, final String params) {
-        return applyWithoutParam(path, params, JsonNode::isTextual,
-            (data, paramList) -> path.push(getNodeByExpression(path, data.getKey().asText())));
     }
 
     static PathTrace funcKeep(final PathTrace path, final String params,

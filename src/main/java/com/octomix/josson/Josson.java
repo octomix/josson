@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@
 package com.octomix.josson;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,14 +28,16 @@ import com.fasterxml.jackson.databind.node.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static com.octomix.josson.JossonCore.getPathByExpression;
 import static com.octomix.josson.Mapper.MAPPER;
@@ -44,13 +49,14 @@ import static com.octomix.josson.Utils.*;
 public class Josson {
 
     private JsonNode jsonNode;
+    private Map<String, CustomFunction> customFunctions;
 
     private Josson(final JsonNode node) {
         this.jsonNode = node;
     }
 
     /**
-     * Create a Josson object that contains an empty Jackson {@code ObjectNode}.
+     * Create a Josson object that contains an empty Jackson {@link ObjectNode}.
      *
      * @return The new Josson object
      */
@@ -89,6 +95,78 @@ public class Josson {
     public static Josson from(final Object object) {
         Objects.requireNonNull(object, "object must not be null");
         return new Josson(MAPPER.valueToTree(object));
+    }
+
+    /**
+     * Create a Josson object by deserializing JSON content as tree expressed
+     * using set of {@link JsonNode} instances.
+     *<p>
+     * If a low-level I/O problem (missing input, network error) occurs,
+     * a {@link IOException} will be thrown.
+     * If a parsing problem occurs (invalid JSON),
+     * {@link StreamReadException} will be thrown.
+     *
+     * @param in Input stream used to read JSON content for building the JSON tree.
+     * @return a {@link Josson}, if valid JSON content found
+     * @throws StreamReadException if underlying input contains invalid content
+     *    of type {@link JsonParser} supports (JSON for default case)
+     */
+    public static Josson fromTree(final InputStream in) throws IOException {
+        return new Josson(MAPPER.readTree(in));
+    }
+
+    /**
+     * Same as {@link #fromTree(InputStream)} except content accessed through
+     * passed-in {@link Reader}
+     */
+    public static Josson fromTree(final Reader r) throws IOException {
+        return new Josson(MAPPER.readTree(r));
+    }
+
+    /**
+     * Same as {@link #fromTree(InputStream)} except content read from
+     * passed-in {@link String}
+     */
+    public static Josson fromTree(final String content) throws IOException {
+        return new Josson(MAPPER.readTree(content));
+    }
+
+    /**
+     * Same as {@link #fromTree(InputStream)} except content read from
+     * passed-in byte array.
+     */
+    public static Josson fromTree(final byte[] content) throws IOException {
+        return new Josson(MAPPER.readTree(content));
+    }
+
+    /**
+     * Same as {@link #fromTree(InputStream)} except content read from
+     * passed-in byte array.
+     */
+    public static Josson fromTree(final byte[] content, int offset, int len) throws IOException {
+        return new Josson(MAPPER.readTree(content, offset, len));
+    }
+
+    /**
+     * Same as {@link #fromTree(InputStream)} except content read from
+     * passed-in {@link File}.
+     */
+    public static Josson fromTree(final File file) throws IOException {
+        return new Josson(MAPPER.readTree(file));
+    }
+
+    /**
+     * Same as {@link #fromTree(InputStream)} except content read from
+     * passed-in {@link URL}.
+     *<p>
+     * NOTE: handling of {@link java.net.URL} is delegated to
+     * {@link JsonFactory#createParser(java.net.URL)} and usually simply
+     * calls {@link java.net.URL#openStream()}, meaning no special handling
+     * is done. If different HTTP connection options are needed you will need
+     * to create {@link java.io.InputStream} separately.
+     */
+    public static Josson fromTree(final URL source) throws IOException {
+        return new Josson(MAPPER.readTree(source));
     }
 
     /**
@@ -223,6 +301,44 @@ public class Josson {
     }
 
     /**
+     * Define a custom function that accept the current node as parameter and return a new node.
+     *
+     * @param name custom function name starts with "$" and ends with "()"
+     * @param customFunction a {@link Function} with input (Current node) and output an {@link JsonNode}
+     * @return {@code this}
+     * @throws NullPointerException if {@code name} is null
+     */
+    public Josson customFunction(final String name, final Function<JsonNode, JsonNode> customFunction) {
+        final String functionName = JossonCore.getCustomFunctionName(name.trim());
+        if (customFunction != null) {
+            if (customFunctions == null) {
+                customFunctions = new HashMap<>();
+            }
+            customFunctions.put(functionName, CustomFunction.of(customFunction));
+        }
+        return this;
+    }
+
+    /**
+     * Define a custom function that accept the current node and array index as parameters and return a new node.
+     *
+     * @param name custom function name starts with "$" and ends with "()"
+     * @param customFunction a {@link BiFunction} with input (Current node, Array index) and output an {@link JsonNode}
+     * @return {@code this}
+     * @throws NullPointerException if {@code name} is null
+     */
+    public Josson customFunction(final String name, final BiFunction<JsonNode, Integer, JsonNode> customFunction) {
+        final String functionName = JossonCore.getCustomFunctionName(name.trim());
+        if (customFunction != null) {
+            if (customFunctions == null) {
+                customFunctions = new HashMap<>();
+            }
+            customFunctions.put(functionName, CustomFunction.of(customFunction));
+        }
+        return this;
+    }
+
+    /**
      * Simply returns the content.
      *
      * @return The root Jackson JsonNode
@@ -276,7 +392,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final String expression) {
-        return JossonCore.getNodeByExpression(jsonNode, expression, null);
+        return JossonCore.getNodeByExpression(jsonNode, expression, customFunctions, null);
     }
 
     /**
@@ -288,7 +404,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final String expression, final Map<String, JsonNode> variables) {
-        return JossonCore.getNodeByExpression(jsonNode, expression, variables);
+        return JossonCore.getNodeByExpression(jsonNode, expression, customFunctions, variables);
     }
 
     /**
@@ -300,7 +416,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final int index, final String expression) {
-        return JossonCore.getNodeByExpression(jsonNode, index, expression, null);
+        return JossonCore.getNodeByExpression(jsonNode, index, expression, customFunctions, null);
     }
 
     /**
@@ -313,7 +429,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public JsonNode getNode(final int index, final String expression, final Map<String, JsonNode> variables) {
-        return JossonCore.getNodeByExpression(jsonNode, index, expression, variables);
+        return JossonCore.getNodeByExpression(jsonNode, index, expression, customFunctions, variables);
     }
 
     /**
@@ -325,7 +441,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final String expression) {
-        return JossonCore.getNodeByExpression(node, expression, null);
+        return JossonCore.getNodeByExpression(node, expression, null, null);
     }
 
     /**
@@ -338,7 +454,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final String expression, final Map<String, JsonNode> variables) {
-        return JossonCore.getNodeByExpression(node, expression, variables);
+        return JossonCore.getNodeByExpression(node, expression, null, variables);
     }
 
     /**
@@ -351,7 +467,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public static JsonNode getNode(final JsonNode node, final int index, final String expression) {
-        return JossonCore.getNodeByExpression(node, index, expression, null);
+        return JossonCore.getNodeByExpression(node, index, expression, null, null);
     }
 
     /**
@@ -366,7 +482,7 @@ public class Josson {
      */
     public static JsonNode getNode(final JsonNode node, final int index, final String expression,
                                    final Map<String, JsonNode> variables) {
-        return JossonCore.getNodeByExpression(node, index, expression, variables);
+        return JossonCore.getNodeByExpression(node, index, expression, null, variables);
     }
 
     /**
@@ -425,7 +541,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public PathTrace getPathTrace(final String expression) {
-        return getPathByExpression(PathTrace.from(jsonNode), expression);
+        return getPathByExpression(PathTrace.from(jsonNode, customFunctions), expression);
     }
 
     /**
@@ -437,7 +553,7 @@ public class Josson {
      * @throws IllegalArgumentException if the query path is invalid
      */
     public PathTrace getPathTrace(final String expression, final Map<String, JsonNode> variables) {
-        return getPathByExpression(PathTrace.from(jsonNode, variables), expression);
+        return getPathByExpression(PathTrace.from(jsonNode, customFunctions, variables), expression);
     }
 
     /**
@@ -1126,6 +1242,24 @@ public class Josson {
      */
     public static boolean isRetainArrayOrder() {
         return JossonCore.retainArrayOrder;
+    }
+
+    /**
+     * Set the default {@link MergeArraysOption} setting
+     *
+     * @param mergeArraysOption {@link MergeArraysOption}
+     */
+    public static void setMergeArraysOption(final MergeArraysOption mergeArraysOption) {
+        JossonCore.mergeArraysOption = mergeArraysOption;
+    }
+
+    /**
+     * Get the default {@link MergeArraysOption} setting
+     *
+     * @return the default {@link MergeArraysOption} setting
+     */
+    public static MergeArraysOption getMergeArraysOption() {
+        return JossonCore.mergeArraysOption;
     }
 
     /**

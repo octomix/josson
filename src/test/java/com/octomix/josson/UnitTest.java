@@ -2331,6 +2331,56 @@ public class UnitTest {
         evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').*().c.steps()", "4");
         evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.b.calc(c+1).steps()", "4");
         evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.b.c.calc(?+1).steps()", "5");
+
+        // mergeArraysOption()
+        evaluate.accept("json('[[1,2,3,4,5,6],[8,6,4,2]]').mergeArraysOption(Append).mergeArrays()", "[ 1, 2, 3, 4, 5, 6, 8, 6, 4, 2 ]");
+        evaluate.accept("json('[[1,2,3,4,5,6],[8,6,4,2]]').mergeArraysOption(Integrate).mergeArrays()", "[ 1, 2, 3, 4, 5, 6, 8 ]");
+        evaluate.accept("json('[[1,2,3,4,5,6],[8,6,4,2]]').mergeArraysOption(ReplaceWhole).mergeArrays()", "[ 8, 6, 4, 2 ]");
+        evaluate.accept("json('[[1,2,3,4,5,6],[8,6,4,2]]').mergeArraysOption(ReplaceByIndex).mergeArrays()", "[ 8, 6, 4, 2, 5, 6 ]");
+        evaluate.accept("json('[[8,6,4,2],[1,2,3,4,5,6]]').mergeArraysOption(Append).mergeArrays()", "[ 8, 6, 4, 2, 1, 2, 3, 4, 5, 6 ]");
+        evaluate.accept("json('[[8,6,4,2],[1,2,3,4,5,6]]').mergeArraysOption(Integrate).mergeArrays()", "[ 8, 6, 4, 2, 1, 3, 5 ]");
+        evaluate.accept("json('[[8,6,4,2],[1,2,3,4,5,6]]').mergeArraysOption(ReplaceWhole).mergeArrays()", "[ 1, 2, 3, 4, 5, 6 ]");
+        evaluate.accept("json('[[8,6,4,2],[1,2,3,4,5,6]]').mergeArraysOption(ReplaceByIndex).mergeArrays()", "[ 1, 2, 3, 4, 5, 6 ]");
+        evaluate.accept("json('[{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"},{\"a\":[8,6,4,2],\"b\":\"2nd\"}]').mergeArraysOption(Append).mergeObjects()",
+                "{\n" +
+                        "  \"a\" : [ 1, 2, 3, 4, 5, 6, 8, 6, 4, 2 ],\n" +
+                        "  \"b\" : \"2nd\"\n" +
+                        "}");
+        evaluate.accept("json('[{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"},{\"a\":[8,6,4,2],\"b\":\"2nd\"}]').mergeArraysOption(Integrate).mergeObjects()",
+                "{\n" +
+                        "  \"a\" : [ 1, 2, 3, 4, 5, 6, 8 ],\n" +
+                        "  \"b\" : \"2nd\"\n" +
+                        "}");
+        evaluate.accept("json('[{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"},{\"a\":[8,6,4,2],\"b\":\"2nd\"}]').mergeArraysOption(ReplaceWhole).mergeObjects()",
+                "{\n" +
+                        "  \"a\" : [ 8, 6, 4, 2 ],\n" +
+                        "  \"b\" : \"2nd\"\n" +
+                        "}");
+        evaluate.accept("json('[{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"},{\"a\":[8,6,4,2],\"b\":\"2nd\"}]').mergeArraysOption(ReplaceByIndex).mergeObjects()",
+                "{\n" +
+                        "  \"a\" : [ 8, 6, 4, 2, 5, 6 ],\n" +
+                        "  \"b\" : \"2nd\"\n" +
+                        "}");
+        evaluate.accept("json('[{\"a\":[8,6,4,2],\"b\":\"2nd\"},{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"}]').mergeArraysOption(Append).mergeObjects()",
+                "{\n" +
+                        "  \"a\" : [ 8, 6, 4, 2, 1, 2, 3, 4, 5, 6 ],\n" +
+                        "  \"b\" : \"1st\"\n" +
+                        "}");
+        evaluate.accept("json('[{\"a\":[8,6,4,2],\"b\":\"2nd\"},{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"}]').mergeArraysOption(Integrate).mergeObjects()",
+                "{\n" +
+                        "  \"a\" : [ 8, 6, 4, 2, 1, 3, 5 ],\n" +
+                        "  \"b\" : \"1st\"\n" +
+                        "}");
+        evaluate.accept("json('[{\"a\":[8,6,4,2],\"b\":\"2nd\"},{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"}]').mergeArraysOption(ReplaceWhole).mergeObjects()",
+                "{\n" +
+                        "  \"a\" : [ 1, 2, 3, 4, 5, 6 ],\n" +
+                        "  \"b\" : \"1st\"\n" +
+                        "}");
+        evaluate.accept("json('[{\"a\":[8,6,4,2],\"b\":\"2nd\"},{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"}]').mergeArraysOption(ReplaceByIndex).mergeObjects()",
+                "{\n" +
+                        "  \"a\" : [ 1, 2, 3, 4, 5, 6 ],\n" +
+                        "  \"b\" : \"1st\"\n" +
+                        "}");
     }
 
     @Test

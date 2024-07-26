@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UnknownFormatConversionException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -212,17 +213,57 @@ class Utils {
         return objects;
     }
 
-    static void mergeObjects(final ObjectNode o1, final JsonNode o2) {
+    static void mergeObjects(final ObjectNode o1, final JsonNode o2, final MergeArraysOption mergeArraysOption) {
         o2.fields().forEachRemaining(field -> {
             final JsonNode o1value = o1.get(field.getKey());
             if (o1value != null && o1value.isObject() && field.getValue().isObject()) {
-                mergeObjects((ObjectNode) o1value, field.getValue());
+                mergeObjects((ObjectNode) o1value, field.getValue(), mergeArraysOption);
             } else if (o1value != null && o1value.isArray() && field.getValue().isArray()) {
-                ((ArrayNode) o1value).addAll((ArrayNode) field.getValue());
+                mergeArrays((ArrayNode) o1value, (ArrayNode) field.getValue(), mergeArraysOption);
             } else {
                 o1.set(field.getKey(), field.getValue());
             }
         });
+    }
+
+    static void mergeArrays(final ArrayNode a1, final JsonNode a2, final MergeArraysOption mergeArraysOption) {
+        if (a2 != null && a2.isArray()) {
+            mergeArrays(a1, (ArrayNode) a2, mergeArraysOption);
+        }
+    }
+
+    static void mergeArrays(final ArrayNode a1, final ArrayNode a2, final MergeArraysOption mergeArraysOption) {
+        if (mergeArraysOption == MergeArraysOption.APPEND) {
+            a1.addAll(a2);
+            return;
+        }
+        if (mergeArraysOption == MergeArraysOption.INTEGRATE) {
+            for (JsonNode a2Get : a2) {
+                int i = a1.size();
+                for (; i >= 0; i--) {
+                    if (Operator.EQ.compare(a1.get(i), a2Get)) {
+                        break;
+                    }
+                }
+                if (i < 0) {
+                    a1.add(a2Get);
+                }
+            }
+            return;
+        }
+        int minSize = Math.min(a1.size(), a2.size());
+        for (int i = minSize - 1; i >= 0; i--) {
+            a1.set(i, a2.get(i));
+        }
+        if (mergeArraysOption == MergeArraysOption.REPLACE_WHOLE && a1.size() > a2.size()) {
+            for (int i = a1.size() - 1; i >= minSize; i--) {
+                a1.remove(i);
+            }
+            return;
+        }
+        for (int i = minSize; i < a2.size(); i++) {
+            a1.add(a2.get(i));
+        }
     }
 
     static void addArrayElements(final ArrayNode array, final JsonNode[] nodes) {
@@ -335,7 +376,7 @@ class Utils {
         try {
             executorService.invokeAll(tasks);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new CancellationException(e.getMessage());
         } finally {
             executorService.shutdown();
         }

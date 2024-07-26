@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.octomix.josson;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.octomix.josson.commons.StringUtils;
@@ -25,8 +24,7 @@ import com.octomix.josson.exception.SyntaxErrorException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.octomix.josson.FuncExecutor.*;
-import static com.octomix.josson.Josson.readJsonNode;
+import static com.octomix.josson.FunctionExecutor.*;
 import static com.octomix.josson.JossonCore.*;
 import static com.octomix.josson.Mapper.*;
 import static com.octomix.josson.Utils.*;
@@ -226,10 +224,6 @@ final class FuncStructural {
         }
     }
 
-    static PathTrace funcGet(final PathTrace path, final String params) {
-        return getParamPath(path, params);
-    }
-
     static PathTrace funcGroup(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 1, 2);
         final PathTrace dataPath = pathAndParams.getKey();
@@ -269,17 +263,6 @@ final class FuncStructural {
         return path.push(array);
     }
 
-    static PathTrace funcJson(final PathTrace path, final String params) {
-        return applyWithoutParam(path, params, JsonNode::isTextual,
-            (data, paramList) -> {
-                try {
-                    return path.push(readJsonNode(data.getKey().asText()));
-                } catch (JsonProcessingException e) {
-                    throw new IllegalArgumentException(e.getMessage());
-                }
-            });
-    }
-
     static PathTrace funcKeys(final PathTrace path, final String params) {
         final Pair<PathTrace, List<String>> pathAndParams = getParamPathAndStrings(path, params, 0, 1);
         final PathTrace dataPath = pathAndParams.getKey();
@@ -299,17 +282,6 @@ final class FuncStructural {
                 funcKeys(array, field.getValue(), levels - 1);
             }
         });
-    }
-
-    static PathTrace funcLet(final PathTrace path, final String params) {
-        final List<String[]> nameAndPaths = getParamNamePath(new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH));
-        for (String[] nameAndPath : nameAndPaths) {
-            final String[] evalNameAndPath = evaluateNameAndPath(nameAndPath, path, NON_ARRAY_INDEX);
-            final JsonNode result = getNodeByExpression(
-                path, NON_ARRAY_INDEX, evalNameAndPath[1], evalNameAndPath[2] != null);
-            path.setVariable(evalNameAndPath[0], result);
-        }
-        return path;
     }
 
     static PathTrace funcMap(final PathTrace path, final String params) {
@@ -346,20 +318,33 @@ final class FuncStructural {
     }
 
     static PathTrace funcMergeArrays(final PathTrace path, final String params) {
-        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH);
+        final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(0, UNLIMITED_WITH_PATH);
         final ArrayNode array = MAPPER.createArrayNode();
-        for (String param : paramList) {
-            if (path.isArray()) {
-                for (int i = 0; i < path.containerSize(); i++) {
-                    final JsonNode result = getNodeByExpression(path, i, param);
-                    if (result != null && result.isArray()) {
-                        array.addAll((ArrayNode) result);
+        if (paramList.isEmpty()) {
+            if (!path.isArray()) {
+                return null;
+            }
+            final int size = path.containerSize();
+            for (int i = 0; i < size; i++) {
+                mergeArrays(array, path.get(i), path.getMergeArraysOption());
+            }
+        } else {
+            for (String param : paramList) {
+                if (path.isArray()) {
+                    final int size = path.containerSize();
+                    final JsonNode[] orderedNodes = new JsonNode[size];
+                    if (size < minArraySizeToUseMultiThread || threadPoolSize == 1) {
+                        for (int i = 0; i < size; i++) {
+                            orderedNodes[i] = getNodeByExpression(path, i, param);
+                        }
+                    } else {
+                        submitTasks(size, (i) -> orderedNodes[i] = getNodeByExpression(path, i, param));
                     }
-                }
-            } else {
-                final JsonNode result = getNodeByExpression(path, param);
-                if (result != null && result.isArray()) {
-                    array.addAll((ArrayNode) result);
+                    for (int i = 0; i < size; i++) {
+                        mergeArrays(array, orderedNodes[i], path.getMergeArraysOption());
+                    }
+                } else {
+                    mergeArrays(array, getNodeByExpression(path, param), path.getMergeArraysOption());
                 }
             }
         }
@@ -377,15 +362,11 @@ final class FuncStructural {
                 if (result == null) {
                     result = elem.deepCopy();
                 } else {
-                    mergeObjects(result, elem);
+                    mergeObjects(result, elem, path.getMergeArraysOption());
                 }
             }
         }
         return path.push(result);
-    }
-
-    static PathTrace funcSteps(final PathTrace path, final String params) {
-        return applyWithoutParam(path, params, dataPath -> path.push(IntNode.valueOf(dataPath.steps())));
     }
 
     static PathTrace funcToArray(final PathTrace path, final String params) {

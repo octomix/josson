@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Octomix Software Technology Limited
+ * Copyright 2020-2024 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,6 @@ final class JossonCore {
 
     static final char PATH_DELIMITER = '.';
 
-    static final char VARIABLE_PREFIX_SYMBOL = '$';
-
     static final char QUOTE_SYMBOL = '\'';
 
     static final String ENTRY_KEY_NAME = "key";
@@ -69,6 +67,8 @@ final class JossonCore {
     private static final char COLLECT_BRANCHES_SYMBOL = '@';
 
     private static final char INDEX_PREFIX_SYMBOL = '#';
+
+    private static final char VARIABLE_PREFIX_SYMBOL = '$';
 
     private static final String ROOT_NODE = "$";
 
@@ -97,6 +97,8 @@ final class JossonCore {
     static int threadPoolSize = 4;
 
     static boolean retainArrayOrder = true;
+
+    static MergeArraysOption mergeArraysOption = MergeArraysOption.APPEND;
 
     static final String WILDCARD_COLLECT_ALL = String.valueOf(WILDCARD_SYMBOL) + FILTRATE_COLLECT_ALL.getSymbol();
 
@@ -128,6 +130,27 @@ final class JossonCore {
         return zoneId;
     }
 
+    static String getCustomFunctionName(final String name) {
+        Objects.requireNonNull(name, "Function name must not be null");
+        final String[] funcAndArgs = new SyntaxDecomposer(name).deFunctionAndArgument(false);
+        if (funcAndArgs == null || !funcAndArgs[1].isEmpty()) {
+            throw new SyntaxErrorException(name, "Invalid custom function declaration");
+        }
+        if (funcAndArgs[0].charAt(0) != VARIABLE_PREFIX_SYMBOL) {
+            throw new SyntaxErrorException(funcAndArgs[0], "Custom function name must start with '$'");
+        }
+        return funcAndArgs[0];
+    }
+
+    static void checkVariableName(final String name) {
+        if (name == null || name.length() < 2 || name.charAt(0) != VARIABLE_PREFIX_SYMBOL) {
+            throw new SyntaxErrorException(name, "Variable name must start with '$' and has at least 1 character after");
+        }
+        if (new SyntaxDecomposer(name).deFunctionAndArgument(false) != null) {
+            throw new SyntaxErrorException(name, "Variable name cannot define as a function");
+        }
+    }
+
     static String getNodeAsText(final PathTrace path, final String expression) {
         return getNodeAsText(path, NON_ARRAY_INDEX, expression);
     }
@@ -157,13 +180,15 @@ final class JossonCore {
     }
 
     static JsonNode getNodeByExpression(final JsonNode node, final String expression,
+                                        final Map<String, CustomFunction> customFunctions,
                                         final Map<String, JsonNode> variables) {
-        return getNodeByExpression(node, NON_ARRAY_INDEX, expression, variables);
+        return getNodeByExpression(node, NON_ARRAY_INDEX, expression, customFunctions, variables);
     }
 
     static JsonNode getNodeByExpression(final JsonNode node, final int index, final String expression,
+                                        final Map<String, CustomFunction> customFunctions,
                                         final Map<String, JsonNode> variables) {
-        return getPathNode(getPathByExpression(PathTrace.from(node, variables), index, expression));
+        return getPathNode(getPathByExpression(PathTrace.from(node, customFunctions, variables), index, expression));
     }
 
     static JsonNode getNodeByExpression(final PathTrace path, final String expression) {
@@ -207,8 +232,23 @@ final class JossonCore {
                 return getPathBySteps(path.pop(step.length()), steps);
             case VARIABLE_PREFIX_SYMBOL:
                 steps.remove(0);
-                final JsonNode value = path.getVariable(step);
-                return getPathBySteps(PathTrace.from(value == null ? NullNode.getInstance() : value, path.getVariables()), steps);
+                final String[] funcAndArgs = new SyntaxDecomposer(step).deFunctionAndArgument(false);
+                final JsonNode value;
+                if (funcAndArgs == null) {
+                    value = path.getVariable(step);
+                } else {
+                    try {
+                        final CustomFunction customFunction = path.getCustomFunction(funcAndArgs[0]);
+                        if (customFunction == null) {
+                            throw new IllegalArgumentException("Undefined");
+                        }
+                        new SyntaxDecomposer(funcAndArgs[1]).deFunctionParameters(0, 1);
+                        value = customFunction.apply(getNodeByExpression(path, index, funcAndArgs[1]), index);
+                    } catch (IllegalArgumentException e) {
+                        throw new SyntaxErrorException(e.getMessage(), "Custom function " + step);
+                    }
+                }
+                return getPathBySteps(new PathTrace(value == null ? NullNode.getInstance() : value, path), steps);
             case INDEX_PREFIX_SYMBOL:
                 steps.remove(0);
                 switch (step) {
@@ -344,7 +384,7 @@ final class JossonCore {
             if (FILTRATE_DIVERT_ALL.equals(step.charAt(step.length() - 1))) {
                 steps.add(0, "[]" + FILTRATE_DIVERT_ALL.getSymbol());
             }
-            return getPathBySteps(new FuncDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(path), steps, nextSteps);
+            return getPathBySteps(new FunctionDispatcher(funcAndArgs[0], funcAndArgs[1]).apply(path), steps, nextSteps);
         }
         final ArrayFilter filter = decomposer.deFilterQuery();
         JsonNode node;
