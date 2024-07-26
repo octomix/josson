@@ -86,10 +86,10 @@ class OperationStep {
         }
         final String[] tokens = new SyntaxDecomposer(expression).deDatasetQuery();
         if (tokens == null) {
-            if (isCacheDataset(expression)) {
-                throw new UnresolvedDatasetException(expression);
+            if (isFuncParameter(expression)) {
+                return null;
             }
-            return null;
+            throw new UnresolvedDatasetException(expression);
         }
         final Josson josson;
         if (datasets.containsKey(tokens[0])) {
@@ -100,10 +100,10 @@ class OperationStep {
         } else {
             implicitVariable = getImplicitVariable(tokens[0]);
             if (implicitVariable == null) {
-                if (isCacheDataset(tokens[0])) {
-                    throw new UnresolvedDatasetException(tokens[0]);
+                if (isFuncParameter(tokens[0])) {
+                    return null;
                 }
-                return null;
+                throw new UnresolvedDatasetException(tokens[0]);
             }
             josson = Josson.create(implicitVariable);
         }
@@ -115,7 +115,7 @@ class OperationStep {
     }
 
     private static JsonNode getImplicitVariable(final String name) {
-        if (name.charAt(0) == '$') {
+        if (!isCacheDataset(name)) {
             switch (StringUtils.stripStart(name.substring(1), null).toLowerCase()) {
                 case EMPTY:
                     return BooleanNode.TRUE;
@@ -130,5 +130,9 @@ class OperationStep {
             }
         }
         return null;
+    }
+
+    private static boolean isFuncParameter(final String name) {
+        return !isCacheDataset(name) && StringUtils.isNumeric(name.substring(1));
     }
 }
