@@ -4967,7 +4967,7 @@ There are 2 types of custom function:
 __Example__
 
 - $randomUuid() - return a random UUID
-- $$addIndex() - add the array index value to the `base` integer value
+- $addIndex() - add the array index value to the `base` integer value
 
 
     Josson josson = Josson.fromJsonString(
