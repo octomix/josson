@@ -88,4 +88,50 @@ class Mapper extends ObjectMapper {
         });
         return copy;
     }
+
+    static JsonNode struCopy(final JsonNode node, final JsonNode structure, final boolean remove) {
+        if (node.isObject()) {
+            return struCopy((ObjectNode) node, structure, remove);
+        }
+        if (node.isArray()) {
+            return struCopy((ArrayNode) node, structure, remove);
+        }
+        return node;
+    }
+
+    static ObjectNode struCopy(final ObjectNode object, final JsonNode structure, final boolean remove) {
+        final ObjectNode copy = MAPPER.createObjectNode();
+        object.fields().forEachRemaining(entry -> {
+            final JsonNode struNode = structure != null && structure.isObject() ? structure.get(entry.getKey()) : null;
+            if (skipStruCopy(struNode, remove)) {
+                return;
+            }
+            copy.set(entry.getKey(), struCopy(entry.getValue(), struNode, remove));
+        });
+        return copy;
+    }
+
+    static ArrayNode struCopy(final ArrayNode array, final JsonNode structure, final boolean remove) {
+        final ArrayNode copy = MAPPER.createArrayNode();
+        for (int i = 0; i < array.size(); i++) {
+            JsonNode struNode = null;
+            if (structure != null && structure.isArray()) {
+                for (JsonNode node : structure) {
+                    if (node.get("i").asInt() == i) {
+                        struNode = node.get("v");
+                        break;
+                    }
+                }
+            }
+            if (skipStruCopy(struNode, remove)) {
+                continue;
+            }
+            copy.add(struCopy(array.get(i), struNode, remove));
+        }
+        return copy;
+    }
+
+    static boolean skipStruCopy(final JsonNode struNode, final boolean remove) {
+        return struNode == null ? !remove : struNode.asBoolean() && remove;
+    }
 }

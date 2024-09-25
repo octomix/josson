@@ -54,6 +54,10 @@ final class FunctionExecutor {
         return paramList.isEmpty() ? path : getPathByExpression(path, paramList.get(0));
     }
 
+    static List<String[]> getParamPath(final List<String> paramList) {
+        return paramList.stream().map(param -> new SyntaxDecomposer(param).dePath()).collect(Collectors.toList());
+    }
+
     static Pair<PathTrace, List<String>> getParamPathAndStrings(final PathTrace path, final String params,
                                                                 final int min, final int max) {
         final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(min, max + 1);

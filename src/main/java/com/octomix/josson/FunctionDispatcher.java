@@ -613,6 +613,11 @@ class FunctionDispatcher {
                 return funcReplace(path, params, true);
             case "rightpad":
                 return funcPadding(path, params, 1);
+            // Structural
+            case "remove":
+                return funcRemoveRetain(path, params, true);
+            case "retain":
+                return funcRemoveRetain(path, params, false);
         }
         throw new UnsupportedFunctionException();
     }

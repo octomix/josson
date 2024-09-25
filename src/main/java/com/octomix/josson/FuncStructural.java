@@ -369,6 +369,32 @@ final class FuncStructural {
         return path.push(result);
     }
 
+    static PathTrace funcRemoveRetain(final PathTrace path, final String params, final boolean remove) {
+        final List<String[]> paramPaths = getParamPath(new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH));
+        if (path.isValueNode()) {
+            return null;
+        }
+        JsonNode structure = null;
+        for (String[] pathAndFlag : paramPaths) {
+            if (pathAndFlag[0] == null) {
+                pathAndFlag[0] = pathAndFlag[1];
+            } else if (!pathAndFlag[1].isEmpty()) {
+                final JsonNode result = getNodeByExpression(path, StringUtils.removeStart(pathAndFlag[1], UNRESOLVABLE_AS_NULL));
+                if (result != null && !result.asBoolean()) {
+                    continue;
+                }
+            }
+            final String flatten = pathAndFlag[0].startsWith(EVALUATE_KEY_NAME)
+                ? getNodeAsText(path, pathAndFlag[0].substring(1))
+                : pathAndFlag[0];
+            final String[] steps = StringUtils.split(flatten, ".[]");
+            if (steps.length > 0) {
+                structure = funcUnflatten(structure, steps, 0, BooleanNode.TRUE);
+            }
+        }
+        return path.push(Mapper.struCopy(path.node(), structure, remove));
+    }
+
     static PathTrace funcToArray(final PathTrace path, final String params) {
         final PathTrace container = getParamArrayOrItselfIsContainer(path, params);
         if (container == null) {
@@ -436,25 +462,24 @@ final class FuncStructural {
         }
         final boolean notEnd = pos < steps.length - 1;
         if (index == null) {
-            ((ObjectNode) parent).set(step, notEnd ? funcUnflatten(parent.get(step), steps, pos + 1, value) : value);
-        } else {
-            JsonNode v = null;
-            if (notEnd) {
-                for (int i = parent.size() - 1; i >= 0; i--) {
-                    final JsonNode elem = parent.get(i);
-                    if (elem.get("i").asInt() == index) {
-                        v = elem.get("v");
-                        break;
-                    }
+            return ((ObjectNode) parent).set(step, notEnd ? funcUnflatten(parent.get(step), steps, pos + 1, value) : value);
+        }
+        JsonNode v = null;
+        if (notEnd) {
+            for (int i = parent.size() - 1; i >= 0; i--) {
+                final JsonNode elem = parent.get(i);
+                if (elem.get("i").asInt() == index) {
+                    v = elem.get("v");
+                    break;
                 }
-                value = funcUnflatten(v, steps, pos + 1, value);
             }
-            if (v == null) {
-                final ObjectNode elem = MAPPER.createObjectNode();
-                elem.set("i", IntNode.valueOf(index));
-                elem.set("v", value);
-                ((ArrayNode) parent).add(elem);
-            }
+            value = funcUnflatten(v, steps, pos + 1, value);
+        }
+        if (v == null) {
+            final ObjectNode elem = MAPPER.createObjectNode();
+            elem.set("i", IntNode.valueOf(index));
+            elem.set("v", value);
+            ((ArrayNode) parent).add(elem);
         }
         return parent;
     }

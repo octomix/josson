@@ -76,6 +76,10 @@ class SyntaxMatcher {
         this.last = this.length - 1;
     }
 
+    protected static int eatSpaces(final String input, int beg) {
+        return eatSpaces(input, beg, input.length() - 1);
+    }
+
     protected static int eatSpaces(final String input, int beg, final int last) {
         for (; beg <= last; beg++) {
             if (!Character.isWhitespace(input.charAt(beg))) {
