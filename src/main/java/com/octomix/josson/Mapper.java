@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.text.DateFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Extends Jackson object mapper.
@@ -89,49 +91,39 @@ class Mapper extends ObjectMapper {
         return copy;
     }
 
-    static JsonNode struCopy(final JsonNode node, final JsonNode structure, final boolean remove) {
-        if (node.isObject()) {
-            return struCopy((ObjectNode) node, structure, remove);
+    static JsonNode struCopy(final JsonNode node, JsonNode structure, boolean remove) {
+        if (!remove && structure != null && structure.asBoolean()) {
+            structure = null;
+            remove = true;
         }
-        if (node.isArray()) {
-            return struCopy((ArrayNode) node, structure, remove);
-        }
-        return node;
+        return node.isObject() ? struCopy((ObjectNode) node, structure, remove) : struCopy((ArrayNode) node, structure, remove);
     }
 
     static ObjectNode struCopy(final ObjectNode object, final JsonNode structure, final boolean remove) {
         final ObjectNode copy = MAPPER.createObjectNode();
         object.fields().forEachRemaining(entry -> {
             final JsonNode struNode = structure != null && structure.isObject() ? structure.get(entry.getKey()) : null;
-            if (skipStruCopy(struNode, remove)) {
-                return;
+            if (struNode == null ? remove : !remove || !struNode.asBoolean()) {
+                final JsonNode value = entry.getValue();
+                copy.set(entry.getKey(), value.isValueNode() ? value : struCopy(value, struNode, remove));
             }
-            copy.set(entry.getKey(), struCopy(entry.getValue(), struNode, remove));
         });
         return copy;
     }
 
     static ArrayNode struCopy(final ArrayNode array, final JsonNode structure, final boolean remove) {
+        final Map<Integer, JsonNode> find = new HashMap<>();
+        if (structure != null && structure.isArray()) {
+            structure.forEach(struNode -> find.put(struNode.get("i").asInt(), struNode.get("v")));
+        }
         final ArrayNode copy = MAPPER.createArrayNode();
         for (int i = 0; i < array.size(); i++) {
-            JsonNode struNode = null;
-            if (structure != null && structure.isArray()) {
-                for (JsonNode node : structure) {
-                    if (node.get("i").asInt() == i) {
-                        struNode = node.get("v");
-                        break;
-                    }
-                }
+            final JsonNode struNode = find.remove(i);
+            if (struNode == null ? remove : !remove || !struNode.asBoolean()) {
+                final JsonNode value = array.get(i);
+                copy.add(value.isValueNode() ? value : struCopy(value, struNode, remove));
             }
-            if (skipStruCopy(struNode, remove)) {
-                continue;
-            }
-            copy.add(struCopy(array.get(i), struNode, remove));
         }
         return copy;
-    }
-
-    static boolean skipStruCopy(final JsonNode struNode, final boolean remove) {
-        return struNode == null ? !remove : struNode.asBoolean() && remove;
     }
 }
