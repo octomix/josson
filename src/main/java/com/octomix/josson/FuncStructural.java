@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ final class FuncStructural {
         final ArrayNode array = MAPPER.createArrayNode();
         if (path.isObject()) {
             paramList.forEach(each -> array.add(MAPPER.createObjectNode()));
-            path.node().fields().forEachRemaining(field -> {
+            path.node().properties().forEach(field -> {
                 final ObjectNode entry = MAPPER.createObjectNode().set(field.getKey(), field.getValue());
                 for (int i = 0; i < paramList.size(); i++) {
                     if (!nodeIsNull(getNodeByExpression(path.push(entry), paramList.get(i)))) {
@@ -143,11 +143,11 @@ final class FuncStructural {
         }
         final ArrayNode array = MAPPER.createArrayNode();
         if (paramPath.isArray()) {
-            paramPath.node().forEach(elem -> elem.fields()
-                .forEachRemaining(field ->
+            paramPath.node().forEach(elem -> elem.properties()
+                .forEach(field ->
                     array.add(Josson.createObjectNode().put(ENTRY_KEY_NAME, field.getKey()).set(ENTRY_VALUE_NAME, field.getValue()))));
         } else {
-            paramPath.node().fields().forEachRemaining(field ->
+            paramPath.node().properties().forEach(field ->
                 array.add(Josson.createObjectNode().put(ENTRY_KEY_NAME, field.getKey()).set(ENTRY_VALUE_NAME, field.getValue())));
         }
         return path.push(array);
@@ -209,7 +209,7 @@ final class FuncStructural {
             object.set(name, node);
         } else if (node.isObject()) {
             final String prefix = name == null || separator == null ? EMPTY : name + separator;
-            node.fields().forEachRemaining(elem ->
+            node.properties().forEach(elem ->
                     funcFlatten(object, prefix + elem.getKey(), elem.getValue(), separator, indexFormat));
         } else if (indexFormat == null) {
             final String prefix = name == null ? EMPTY : separator == null ? name : name + separator;
@@ -276,7 +276,7 @@ final class FuncStructural {
     }
 
     private static void funcKeys(final ArrayNode array, final JsonNode node, final int levels) {
-        node.fields().forEachRemaining(field -> {
+        node.properties().forEach(field -> {
             array.add(field.getKey());
             if (levels != 1 && field.getValue().isObject()) {
                 funcKeys(array, field.getValue(), levels - 1);
@@ -307,7 +307,7 @@ final class FuncStructural {
                     base.remove(evalNameAndPath[0]);
                 } else if (evalNameAndPath[0].equals(WILDCARD_COLLECT_ALL)) {
                     if (result.isObject()) {
-                        result.fields().forEachRemaining(field -> base.set(field.getKey(), field.getValue()));
+                        result.properties().forEach(field -> base.set(field.getKey(), field.getValue()));
                     }
                 } else {
                     base.set(evalNameAndPath[0], result);
@@ -379,8 +379,7 @@ final class FuncStructural {
             if (pathAndFlag[0] == null) {
                 pathAndFlag[0] = pathAndFlag[1];
             } else if (!pathAndFlag[1].isEmpty()) {
-                final JsonNode result = getNodeByExpression(path, StringUtils.removeStart(pathAndFlag[1], UNRESOLVABLE_AS_NULL));
-                if (result != null && !result.asBoolean()) {
+                if (!asBoolean(getNodeByExpression(path, StringUtils.removeStart(pathAndFlag[1], UNRESOLVABLE_AS_NULL)))) {
                     continue;
                 }
             }
@@ -438,9 +437,7 @@ final class FuncStructural {
             return null;
         }
         JsonNode root = null;
-        final Iterator<Map.Entry<String, JsonNode>> iterator = dataPath.node().fields();
-        while (iterator.hasNext()) {
-            final Map.Entry<String, JsonNode> entry = iterator.next();
+        for (Map.Entry<String, JsonNode> entry : dataPath.node().properties()) {
             final String[] steps = StringUtils.split(entry.getKey(), separator);
             if (steps.length > 0) {
                 root = funcUnflatten(root, steps, 0, entry.getValue());
@@ -532,7 +529,7 @@ final class FuncStructural {
         array.elements().forEachRemaining(
             elem -> {
                 final ObjectNode object = MAPPER.createObjectNode();
-                path.node().fields().forEachRemaining(field -> {
+                path.node().properties().forEach(field -> {
                     if (!field.getKey().equals(nameAndPath[1])) {
                         object.set(field.getKey(), field.getValue());
                     }

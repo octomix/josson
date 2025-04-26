@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ class Utils {
     }
 
     static void mergeObjects(final ObjectNode o1, final JsonNode o2, final MergeArraysOption mergeArraysOption) {
-        o2.fields().forEachRemaining(field -> {
+        o2.properties().forEach(field -> {
             final JsonNode o1value = o1.get(field.getKey());
             if (o1value != null && o1value.isObject() && field.getValue().isObject()) {
                 mergeObjects((ObjectNode) o1value, field.getValue(), mergeArraysOption);

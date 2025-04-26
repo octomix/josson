@@ -20,58 +20,58 @@ public class UnitTest {
         Josson.setZoneId(ZoneId.of("Asia/Hong_Kong"));
         Josson.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         Josson josson = Josson.fromJsonString("{\n" +
-                "    \"salesOrderId\": \"SO0001\",\n" +
-                "    \"salesDate\": \"2022-01-01T10:01:23\",\n" +
-                "    \"salesPerson\": \"Raymond\",\n" +
-                "    \"customer\": {\n" +
-                "        \"customerId\": \"CU0001\",\n" +
-                "        \"name\": \"Peggy\",\n" +
-                "        \"phone\": \"+852 62000610\"\n" +
-                "    },\n" +
-                "    \"items\": [\n" +
-                "        {\n" +
-                "            \"itemCode\": \"B00001\",\n" +
-                "            \"name\": \"WinWin TShirt Series A - 2022\",\n" +
-                "            \"brand\": \"WinWin\",\n" +
-                "            \"property\": {\n" +
-                "                \"size\": \"M\",\n" +
-                "                \"colors\": [\"WHITE\",\"RED\"]\n" +
-                "            },\n" +
-                "            \"qty\": 2,\n" +
-                "            \"unit\": \"Pcs\",\n" +
-                "            \"unitPrice\": 15.0,\n" +
-                "            \"tags\": [\"SHIRT\",\"WOMEN\"]\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"itemCode\": \"A00308\",\n" +
-                "            \"name\": \"OctoPlus Tennis Racket - Star\",\n" +
-                "            \"brand\": \"OctoPlus\",\n" +
-                "            \"property\": {\n" +
-                "                \"colors\": [\"BLACK\"]\n" +
-                "            },\n" +
-                "            \"qty\": 1,\n" +
-                "            \"unit\": \"Pcs\",\n" +
-                "            \"unitPrice\": 150.0,\n" +
-                "            \"unitDiscount\": 10.0,\n" +
-                "            \"tags\": [\"TENNIS\",\"SPORT\",\"RACKET\"]\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"itemCode\": \"A00201\",\n" +
-                "            \"name\": \"WinWin Sport Shoe - Super\",\n" +
-                "            \"brand\": \"WinWin\",\n" +
-                "            \"property\": {\n" +
-                "                \"size\": \"35\",\n" +
-                "                \"colors\": [\"RED\"]\n" +
-                "            },\n" +
-                "            \"qty\": 1,\n" +
-                "            \"unit\": \"Pair\",\n" +
-                "            \"unitPrice\": 110.0,\n" +
-                "            \"unitDiscount\": 10.0,\n" +
-                "            \"tags\": [\"SHOE\",\"SPORT\",\"WOMEN\"]\n" +
-                "        }\n" +
-                "    ],\n" +
-                "    \"totalAmount\": 270.0\n" +
-                "}");
+            "    \"salesOrderId\": \"SO0001\",\n" +
+            "    \"salesDate\": \"2022-01-01T10:01:23\",\n" +
+            "    \"salesPerson\": \"Raymond\",\n" +
+            "    \"customer\": {\n" +
+            "        \"customerId\": \"CU0001\",\n" +
+            "        \"name\": \"Peggy\",\n" +
+            "        \"phone\": \"+852 62000610\"\n" +
+            "    },\n" +
+            "    \"items\": [\n" +
+            "        {\n" +
+            "            \"itemCode\": \"B00001\",\n" +
+            "            \"name\": \"WinWin TShirt Series A - 2022\",\n" +
+            "            \"brand\": \"WinWin\",\n" +
+            "            \"property\": {\n" +
+            "                \"size\": \"M\",\n" +
+            "                \"colors\": [\"WHITE\",\"RED\"]\n" +
+            "            },\n" +
+            "            \"qty\": 2,\n" +
+            "            \"unit\": \"Pcs\",\n" +
+            "            \"unitPrice\": 15.0,\n" +
+            "            \"tags\": [\"SHIRT\",\"WOMEN\"]\n" +
+            "        },\n" +
+            "        {\n" +
+            "            \"itemCode\": \"A00308\",\n" +
+            "            \"name\": \"OctoPlus Tennis Racket - Star\",\n" +
+            "            \"brand\": \"OctoPlus\",\n" +
+            "            \"property\": {\n" +
+            "                \"colors\": [\"BLACK\"]\n" +
+            "            },\n" +
+            "            \"qty\": 1,\n" +
+            "            \"unit\": \"Pcs\",\n" +
+            "            \"unitPrice\": 150.0,\n" +
+            "            \"unitDiscount\": 10.0,\n" +
+            "            \"tags\": [\"TENNIS\",\"SPORT\",\"RACKET\"]\n" +
+            "        },\n" +
+            "        {\n" +
+            "            \"itemCode\": \"A00201\",\n" +
+            "            \"name\": \"WinWin Sport Shoe - Super\",\n" +
+            "            \"brand\": \"WinWin\",\n" +
+            "            \"property\": {\n" +
+            "                \"size\": \"35\",\n" +
+            "                \"colors\": [\"RED\"]\n" +
+            "            },\n" +
+            "            \"qty\": 1,\n" +
+            "            \"unit\": \"Pair\",\n" +
+            "            \"unitPrice\": 110.0,\n" +
+            "            \"unitDiscount\": 10.0,\n" +
+            "            \"tags\": [\"SHOE\",\"SPORT\",\"WOMEN\"]\n" +
+            "        }\n" +
+            "    ],\n" +
+            "    \"totalAmount\": 270.0\n" +
+            "}");
         AtomicInteger count = new AtomicInteger(0);
         BiConsumer<String, String> evaluate = (path, expected) -> {
             JsonNode node = josson.getNode(path);
@@ -93,185 +93,185 @@ public class UnitTest {
         // To query a value node.
         //
         evaluate.accept("salesPerson",
-                "Raymond");
+            "Raymond");
 
         // Node name is case-sensitive.  Josson returns null value if the path is unresolvable.
         evaluate.accept("salesperson",
-                "!unresolvable!");
+            "!unresolvable!");
 
         // To query an object node.
         //
         evaluate.accept("customer",
-                "{\n" +
-                        "  \"customerId\" : \"CU0001\",\n" +
-                        "  \"name\" : \"Peggy\",\n" +
-                        "  \"phone\" : \"+852 62000610\"\n" +
-                        "}");
+            "{\n" +
+                "  \"customerId\" : \"CU0001\",\n" +
+                "  \"name\" : \"Peggy\",\n" +
+                "  \"phone\" : \"+852 62000610\"\n" +
+                "}");
 
         // Parent node and child node are connected by a ".".
         //
         evaluate.accept("customer.name",
-                "Peggy");
+            "Peggy");
 
         // Function is constructed by a function name followed by parentheses with optional comma-separated arguments.
         // A function manipulate the current node and produce an output along the path.
         //
         evaluate.accept("customer.name.upperCase()",
-                "PEGGY");
+            "PEGGY");
 
         // Function name is case-insensitive.
         // Function parameter can refer to a child node of the step.
         //
         evaluate.accept("customer.UPPERCase(name)",
-                "PEGGY");
+            "PEGGY");
 
         // If the function is the first path step, it works on the root node.
         //
         evaluate.accept("upperCase(customer.name)",
-                "PEGGY");
+            "PEGGY");
 
         // Functions can be nested and the parameters can refer to those child nodes of the same step.
         //
         evaluate.accept("customer.concat(upperCase(name), ' / ', phone)",
-                "PEGGY / +852 62000610");
+            "PEGGY / +852 62000610");
 
         // A path start with numbers override the data and produces an integer node.
         //
         evaluate.accept("123",
-                "123");
+            "123");
 
         // A path start with numbers and has "." produces a double node.
         //
         evaluate.accept("123.40",
-                "123.4");
+            "123.4");
 
         // A path start and end with single quote "'" override the data and produces a text string node.
         // If the string literal contains a single quote, it is replaced by two single quotes.
         //
         evaluate.accept("'She said, ''Go ahead''.'",
-                "She said, 'Go ahead'.");
+            "She said, 'Go ahead'.");
 
         // A path start with true or false override the data and produces a boolean node.
         //
         evaluate.accept("true.not()",
-                "false");
+            "false");
 
         // To query an array node.
         //
         evaluate.accept("items",
-                "[ {\n" +
-                        "  \"itemCode\" : \"B00001\",\n" +
-                        "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
-                        "  \"brand\" : \"WinWin\",\n" +
-                        "  \"property\" : {\n" +
-                        "    \"size\" : \"M\",\n" +
-                        "    \"colors\" : [ \"WHITE\", \"RED\" ]\n" +
-                        "  },\n" +
-                        "  \"qty\" : 2,\n" +
-                        "  \"unit\" : \"Pcs\",\n" +
-                        "  \"unitPrice\" : 15.0,\n" +
-                        "  \"tags\" : [ \"SHIRT\", \"WOMEN\" ]\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00308\",\n" +
-                        "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
-                        "  \"brand\" : \"OctoPlus\",\n" +
-                        "  \"property\" : {\n" +
-                        "    \"colors\" : [ \"BLACK\" ]\n" +
-                        "  },\n" +
-                        "  \"qty\" : 1,\n" +
-                        "  \"unit\" : \"Pcs\",\n" +
-                        "  \"unitPrice\" : 150.0,\n" +
-                        "  \"unitDiscount\" : 10.0,\n" +
-                        "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ]\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00201\",\n" +
-                        "  \"name\" : \"WinWin Sport Shoe - Super\",\n" +
-                        "  \"brand\" : \"WinWin\",\n" +
-                        "  \"property\" : {\n" +
-                        "    \"size\" : \"35\",\n" +
-                        "    \"colors\" : [ \"RED\" ]\n" +
-                        "  },\n" +
-                        "  \"qty\" : 1,\n" +
-                        "  \"unit\" : \"Pair\",\n" +
-                        "  \"unitPrice\" : 110.0,\n" +
-                        "  \"unitDiscount\" : 10.0,\n" +
-                        "  \"tags\" : [ \"SHOE\", \"SPORT\", \"WOMEN\" ]\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"itemCode\" : \"B00001\",\n" +
+                "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                "  \"brand\" : \"WinWin\",\n" +
+                "  \"property\" : {\n" +
+                "    \"size\" : \"M\",\n" +
+                "    \"colors\" : [ \"WHITE\", \"RED\" ]\n" +
+                "  },\n" +
+                "  \"qty\" : 2,\n" +
+                "  \"unit\" : \"Pcs\",\n" +
+                "  \"unitPrice\" : 15.0,\n" +
+                "  \"tags\" : [ \"SHIRT\", \"WOMEN\" ]\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00308\",\n" +
+                "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                "  \"brand\" : \"OctoPlus\",\n" +
+                "  \"property\" : {\n" +
+                "    \"colors\" : [ \"BLACK\" ]\n" +
+                "  },\n" +
+                "  \"qty\" : 1,\n" +
+                "  \"unit\" : \"Pcs\",\n" +
+                "  \"unitPrice\" : 150.0,\n" +
+                "  \"unitDiscount\" : 10.0,\n" +
+                "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ]\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00201\",\n" +
+                "  \"name\" : \"WinWin Sport Shoe - Super\",\n" +
+                "  \"brand\" : \"WinWin\",\n" +
+                "  \"property\" : {\n" +
+                "    \"size\" : \"35\",\n" +
+                "    \"colors\" : [ \"RED\" ]\n" +
+                "  },\n" +
+                "  \"qty\" : 1,\n" +
+                "  \"unit\" : \"Pair\",\n" +
+                "  \"unitPrice\" : 110.0,\n" +
+                "  \"unitDiscount\" : 10.0,\n" +
+                "  \"tags\" : [ \"SHOE\", \"SPORT\", \"WOMEN\" ]\n" +
+                "} ]");
 
         // An array filter is enclosed by square brackets.
         // Directly query an array element by zero-based index value.
         //
         evaluate.accept("items[0]",
-                "{\n" +
-                        "  \"itemCode\" : \"B00001\",\n" +
-                        "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
-                        "  \"brand\" : \"WinWin\",\n" +
-                        "  \"property\" : {\n" +
-                        "    \"size\" : \"M\",\n" +
-                        "    \"colors\" : [ \"WHITE\", \"RED\" ]\n" +
-                        "  },\n" +
-                        "  \"qty\" : 2,\n" +
-                        "  \"unit\" : \"Pcs\",\n" +
-                        "  \"unitPrice\" : 15.0,\n" +
-                        "  \"tags\" : [ \"SHIRT\", \"WOMEN\" ]\n" +
-                        "}");
+            "{\n" +
+                "  \"itemCode\" : \"B00001\",\n" +
+                "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                "  \"brand\" : \"WinWin\",\n" +
+                "  \"property\" : {\n" +
+                "    \"size\" : \"M\",\n" +
+                "    \"colors\" : [ \"WHITE\", \"RED\" ]\n" +
+                "  },\n" +
+                "  \"qty\" : 2,\n" +
+                "  \"unit\" : \"Pcs\",\n" +
+                "  \"unitPrice\" : 15.0,\n" +
+                "  \"tags\" : [ \"SHIRT\", \"WOMEN\" ]\n" +
+                "}");
 
         // To query a child value node in an array element.
         //
         evaluate.accept("items[1].name",
-                "OctoPlus Tennis Racket - Star");
+            "OctoPlus Tennis Racket - Star");
 
         // To query a child object node in an array element.
         //
         evaluate.accept("items[2].property",
-                "{\n" +
-                        "  \"size\" : \"35\",\n" +
-                        "  \"colors\" : [ \"RED\" ]\n" +
-                        "}");
+            "{\n" +
+                "  \"size\" : \"35\",\n" +
+                "  \"colors\" : [ \"RED\" ]\n" +
+                "}");
 
         // To query all the elements of an array node and output them inside an array node.
         //
         evaluate.accept("items.qty",
-                "[ 2, 1, 1 ]");
+            "[ 2, 1, 1 ]");
 
         // A function that manipulates each array element and output all results inside an array node.
         //
         evaluate.accept("items.concat('Qty=',qty)",
-                "[ \"Qty=2\", \"Qty=1\", \"Qty=1\" ]");
+            "[ \"Qty=2\", \"Qty=1\", \"Qty=1\" ]");
 
         // If a step is working on an object or value node, "?" represents that node.
         //
         evaluate.accept("items.qty.concat('Qty=',?)",
-                "[ \"Qty=2\", \"Qty=1\", \"Qty=1\" ]");
+            "[ \"Qty=2\", \"Qty=1\", \"Qty=1\" ]");
 
         // A function that manipulates an array node and produce a value node.
         //
         evaluate.accept("items.qty.sum()",
-                "4.0");
+            "4.0");
 
         // Uses Java standard formatting pattern.
         //
         evaluate.accept("items.sum(qty).formatNumber('#,##0')",
-                "4");
+            "4");
 
         // Find the first matching element by array filter.
         //
         evaluate.accept("items.itemCode[!startsWith('A')]",
-                "B00001");
+            "B00001");
 
         // Filter using relational operators "=", "!=", ">", ">=", "<" and "<=".
         //
         evaluate.accept("items[unitDiscount > 0].name",
-                "OctoPlus Tennis Racket - Star");
+            "OctoPlus Tennis Racket - Star");
 
         // Returns null value if nothing matches the array filter.
         evaluate.accept("items[unitDiscount > 100].name",
-                "!unresolvable!");
+            "!unresolvable!");
 
         // To query all matching elements, add a modifier "*" after the array filter.
         //
         evaluate.accept("items[unitDiscount > 0]*.name",
-                "[ \"OctoPlus Tennis Racket - Star\", \"WinWin Sport Shoe - Super\" ]");
+            "[ \"OctoPlus Tennis Racket - Star\", \"WinWin Sport Shoe - Super\" ]");
 
         // If a step is working on an array node, "#" denotes the zero-based index of an array element.
         //
@@ -280,224 +280,224 @@ public class UnitTest {
         // A succession of two path steps that produced a nested array will be flattened automatically.
         //
         evaluate.accept("items[true]*.tags[true]*",
-                "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+            "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
         // Path step "array." is the same as "array[true]*.".
         //
         evaluate.accept("items.tags",
-                "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+            "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
         // To simulate cancellation of the automatic flatten mechanism, add a divert-branch modifier "@" to the end of the first array name.
         evaluate.accept("items@.tags",
-                "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
+            "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
 
         // Modifier "@" after a path step separator "." merges all branch results into a single array before manipulation.
         //
         evaluate.accept("items@.@tags",
-                "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+            "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
         // If a step is working on an array node, "?" represents an array element.
         // "=~" matches a regular expression.
         //
         evaluate.accept("items.tags[? =~ '^S.*O.+']*",
-                "[ \"SPORT\", \"SHOE\", \"SPORT\" ]");
+            "[ \"SPORT\", \"SHOE\", \"SPORT\" ]");
 
         // The matching criteria supports logical operators and parentheses.
         // "!" = not, "&" = and, "|" = or
         //
         evaluate.accept("items[(unitDiscount=null | unitDiscount=0) & !(qty<=1)]*.name",
-                "[ \"WinWin TShirt Series A - 2022\" ]");
+            "[ \"WinWin TShirt Series A - 2022\" ]");
 
         // Example of a find-all filter operation with flattened array result.
         //
         evaluate.accept("items[tags.contains('SPORT')]*.tags",
-                "[ \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+            "[ \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
         // An array filter modifier "@" divert each element to separate branch for upcoming manipulation.
         // The final output merges branches into an array.
         //
         evaluate.accept("items[tags.containsIgnoreCase('Women')]@.tags",
-                "[ [ \"SHIRT\", \"WOMEN\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
+            "[ [ \"SHIRT\", \"WOMEN\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
 
         // Aggregate functions work on an array node and produce a value node.
         //
         evaluate.accept("items.tags.join('+')",
-                "SHIRT+WOMEN+TENNIS+SPORT+RACKET+SHOE+SPORT+WOMEN");
+            "SHIRT+WOMEN+TENNIS+SPORT+RACKET+SHOE+SPORT+WOMEN");
 
         // An array node can apply the modifier "@" that divert each element to separate branch.
         //
         evaluate.accept("items@.tags.join('+')",
-                "[ \"SHIRT+WOMEN\", \"TENNIS+SPORT+RACKET\", \"SHOE+SPORT+WOMEN\" ]");
+            "[ \"SHIRT+WOMEN\", \"TENNIS+SPORT+RACKET\", \"SHOE+SPORT+WOMEN\" ]");
 
         // Syntax "[]@" diverts each element of the current array node.
         //
         evaluate.accept("items.join([]@.tags.join('+'),' / ')",
-                "SHIRT+WOMEN / TENNIS+SPORT+RACKET / SHOE+SPORT+WOMEN");
+            "SHIRT+WOMEN / TENNIS+SPORT+RACKET / SHOE+SPORT+WOMEN");
 
         // Modifier "@" before a function name merges all branch results into a single array before manipulation.
         //
         evaluate.accept("items@.tags.join('+').@join(' / ')",
-                "SHIRT+WOMEN / TENNIS+SPORT+RACKET / SHOE+SPORT+WOMEN");
+            "SHIRT+WOMEN / TENNIS+SPORT+RACKET / SHOE+SPORT+WOMEN");
 
         // Modifier "@" after a function diverts the function output array elements to separate branches.
         // It has the same effect of a path step ".[]@" after a function.
         //
         evaluate.accept("'1+2 | 3+4 | 5+6'.split('|')@.split('+').calc(?*2).round(0).join('+').concat('(',?,')/2').@join(' | ')",
-                "(2+4)/2 | (6+8)/2 | (10+12)/2");
+            "(2+4)/2 | (6+8)/2 | (10+12)/2");
 
         // All function parameters can refer to a child node of the step.
         //
         evaluate.accept("items@.repeat(concat('[',brand,'] ',name,'\n'), qty).@join()",
+            "[WinWin] WinWin TShirt Series A - 2022\n" +
                 "[WinWin] WinWin TShirt Series A - 2022\n" +
-                        "[WinWin] WinWin TShirt Series A - 2022\n" +
-                        "[OctoPlus] OctoPlus Tennis Racket - Star\n" +
-                        "[WinWin] WinWin Sport Shoe - Super\n");
+                "[OctoPlus] OctoPlus Tennis Racket - Star\n" +
+                "[WinWin] WinWin Sport Shoe - Super\n");
 
         // Scalar functions work on array and produce an array, such as "concat()", manipulate on each element.
         //
         evaluate.accept("items.concat('Item ',#,': [',itemCode,'] ',qty,unit,' x ',name,' <',property.colors.join(','),'>').join('\n')",
-                "Item 0: [B00001] 2Pcs x WinWin TShirt Series A - 2022 <WHITE,RED>\n" +
-                        "Item 1: [A00308] 1Pcs x OctoPlus Tennis Racket - Star <BLACK>\n" +
-                        "Item 2: [A00201] 1Pair x WinWin Sport Shoe - Super <RED>");
+            "Item 0: [B00001] 2Pcs x WinWin TShirt Series A - 2022 <WHITE,RED>\n" +
+                "Item 1: [A00308] 1Pcs x OctoPlus Tennis Racket - Star <BLACK>\n" +
+                "Item 2: [A00201] 1Pair x WinWin Sport Shoe - Super <RED>");
 
         // If a step is working on an array node, "@" represents that array node.
         // "##" denotes the one-based index of an array element.
         //
         evaluate.accept("items.sort(itemCode).concat('Item ',##,'/',@.size(),': [',itemCode,'] ',qty,unit,' x ',name,' <',property.colors.join(','),'>').join('\n')",
-                "Item 1/3: [A00201] 1Pair x WinWin Sport Shoe - Super <RED>\n" +
-                        "Item 2/3: [A00308] 1Pcs x OctoPlus Tennis Racket - Star <BLACK>\n" +
-                        "Item 3/3: [B00001] 2Pcs x WinWin TShirt Series A - 2022 <WHITE,RED>");
+            "Item 1/3: [A00201] 1Pair x WinWin Sport Shoe - Super <RED>\n" +
+                "Item 2/3: [A00308] 1Pcs x OctoPlus Tennis Racket - Star <BLACK>\n" +
+                "Item 3/3: [B00001] 2Pcs x WinWin TShirt Series A - 2022 <WHITE,RED>");
 
         // An object node with a validation filter.
         //
         evaluate.accept("customer[name='Peggy']",
-                "{\n" +
-                        "  \"customerId\" : \"CU0001\",\n" +
-                        "  \"name\" : \"Peggy\",\n" +
-                        "  \"phone\" : \"+852 62000610\"\n" +
-                        "}");
+            "{\n" +
+                "  \"customerId\" : \"CU0001\",\n" +
+                "  \"name\" : \"Peggy\",\n" +
+                "  \"phone\" : \"+852 62000610\"\n" +
+                "}");
         evaluate.accept("customer[name='Raymond']", "!unresolvable!");
 
         // In filter expression and function argument, a path starts with symbol "$" restart from the root node.
         //
         evaluate.accept("items.concat($.customer.customerId, '-', itemCode)",
-                "[ \"CU0001-B00001\", \"CU0001-A00308\", \"CU0001-A00201\" ]");
+            "[ \"CU0001-B00001\", \"CU0001-A00308\", \"CU0001-A00201\" ]");
 
         // In filter expression and function argument, a path starts with symbol ".." go back to the previous step's node.
         // Each additional dot go back one more step.
         //
         evaluate.accept("items.property.concat(...customer.name, ' colors=', colors.join(','))",
-                "[ \"Peggy colors=WHITE,RED\", \"Peggy colors=BLACK\", \"Peggy colors=RED\" ]");
+            "[ \"Peggy colors=WHITE,RED\", \"Peggy colors=BLACK\", \"Peggy colors=RED\" ]");
         evaluate.accept("items@.property.concat(....customer.name, ' ', ..itemCode, ' colors=', colors.join(','))",
-                "[ \"Peggy B00001 colors=WHITE,RED\", \"Peggy A00308 colors=BLACK\", \"Peggy A00201 colors=RED\" ]");
+            "[ \"Peggy B00001 colors=WHITE,RED\", \"Peggy A00308 colors=BLACK\", \"Peggy A00201 colors=RED\" ]");
 
         // Function "json" parse a JSON string.
         //
         evaluate.accept("json('[1,2,\"3\"]')",
-                "[ 1, 2, \"3\" ]");
+            "[ 1, 2, \"3\" ]");
 
         // Relational operator "=" and "!=" support object comparison.
         //
         evaluate.accept("[customer = json('{\"name\":\"Peggy\",\"phone\":\"+852 62000610\",\"customerId\":\"CU0001\"}')].isNotNull()",
-                "true");
+            "true");
 
         // Relational operator "=" and "!=" support root level array values comparison where the position ordering is allowed to be different.
         //
         evaluate.accept("[items[0].property.colors = json('[\"RED\",\"WHITE\"]')].isNotNull()",
-                "true");
+            "true");
 
         // Function "calc" uses MathParser.org-mXparser library <http://mathparser.org/> to perform calculation.
         //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).concat(##,'=',?)",
-                "[ null, \"2=140.0\", \"3=100.0\" ]");
+            "[ null, \"2=140.0\", \"3=100.0\" ]");
 
         // Non-array manipulate functions preserve null element.
         //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).[##<=2]*.concat(##,'=',?)",
-                "[ null, \"2=140.0\" ]");
+            "[ null, \"2=140.0\" ]");
 
         // An array-to-value transformation function throws away null nodes automatically.
         //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).concat(##,'=',?).join(' / ')",
-                "2=140.0 / 3=100.0");
+            "2=140.0 / 3=100.0");
 
         // Array filter can filter out null nodes.
         //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).[isNotNull()]*.concat(##,'=',?)",
-                "[ \"1=140.0\", \"2=100.0\" ]");
+            "[ \"1=140.0\", \"2=100.0\" ]");
 
         // An argument "#A" denotes the uppercase alphabetic array index.
         //
         evaluate.accept("items.calc(qty * (unitPrice-unitDiscount)).[?!=null]*.concat(#A,'=',?).join(' / ')",
-                "A=140.0 / B=100.0");
+            "A=140.0 / B=100.0");
 
         // Merge Diverted branches throws away null nodes automatically.
         // An argument "#a" denotes the lowercase alphabetic array index.
         //
         evaluate.accept("items@.calc(qty * (unitPrice-unitDiscount)).@concat(#a,'=',?)",
-                "[ \"a=140.0\", \"b=100.0\" ]");
+            "[ \"a=140.0\", \"b=100.0\" ]");
 
         // mXparser expression accepts single-level path only.
         // To apply multi-level path, function or filter, append arguments with syntax "newVariable:path".
         //
         evaluate.accept("items.calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)).formatNumber('US$#,##0.00')",
-                "[ \"US$30.00\", \"US$140.00\", \"US$100.00\" ]");
+            "[ \"US$30.00\", \"US$140.00\", \"US$100.00\" ]");
 
         // An argument "#r" and "#R" denotes the lowercase and uppercase roman numerals array index.
         //
         evaluate.accept("items.unitPrice.calc(? * 2).concat(#r,'=',?)",
-                "[ \"i=30.0\", \"ii=300.0\", \"iii=220.0\" ]");
+            "[ \"i=30.0\", \"ii=300.0\", \"iii=220.0\" ]");
 
         // Function "entries" returns an array of an object's string-keyed property [key, value] pairs.
         //
         evaluate.accept("items[0].entries()",
-                "[ {\n" +
-                        "  \"key\" : \"itemCode\",\n" +
-                        "  \"value\" : \"B00001\"\n" +
-                        "}, {\n" +
-                        "  \"key\" : \"name\",\n" +
-                        "  \"value\" : \"WinWin TShirt Series A - 2022\"\n" +
-                        "}, {\n" +
-                        "  \"key\" : \"brand\",\n" +
-                        "  \"value\" : \"WinWin\"\n" +
-                        "}, {\n" +
-                        "  \"key\" : \"property\",\n" +
-                        "  \"value\" : {\n" +
-                        "    \"size\" : \"M\",\n" +
-                        "    \"colors\" : [ \"WHITE\", \"RED\" ]\n" +
-                        "  }\n" +
-                        "}, {\n" +
-                        "  \"key\" : \"qty\",\n" +
-                        "  \"value\" : 2\n" +
-                        "}, {\n" +
-                        "  \"key\" : \"unit\",\n" +
-                        "  \"value\" : \"Pcs\"\n" +
-                        "}, {\n" +
-                        "  \"key\" : \"unitPrice\",\n" +
-                        "  \"value\" : 15.0\n" +
-                        "}, {\n" +
-                        "  \"key\" : \"tags\",\n" +
-                        "  \"value\" : [ \"SHIRT\", \"WOMEN\" ]\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"key\" : \"itemCode\",\n" +
+                "  \"value\" : \"B00001\"\n" +
+                "}, {\n" +
+                "  \"key\" : \"name\",\n" +
+                "  \"value\" : \"WinWin TShirt Series A - 2022\"\n" +
+                "}, {\n" +
+                "  \"key\" : \"brand\",\n" +
+                "  \"value\" : \"WinWin\"\n" +
+                "}, {\n" +
+                "  \"key\" : \"property\",\n" +
+                "  \"value\" : {\n" +
+                "    \"size\" : \"M\",\n" +
+                "    \"colors\" : [ \"WHITE\", \"RED\" ]\n" +
+                "  }\n" +
+                "}, {\n" +
+                "  \"key\" : \"qty\",\n" +
+                "  \"value\" : 2\n" +
+                "}, {\n" +
+                "  \"key\" : \"unit\",\n" +
+                "  \"value\" : \"Pcs\"\n" +
+                "}, {\n" +
+                "  \"key\" : \"unitPrice\",\n" +
+                "  \"value\" : 15.0\n" +
+                "}, {\n" +
+                "  \"key\" : \"tags\",\n" +
+                "  \"value\" : [ \"SHIRT\", \"WOMEN\" ]\n" +
+                "} ]");
 
         // Function "keys" lists an object's key names.
         //
         evaluate.accept("keys()",
-                "[ \"salesOrderId\", \"salesDate\", \"salesPerson\", \"customer\", \"items\", \"totalAmount\" ]");
+            "[ \"salesOrderId\", \"salesDate\", \"salesPerson\", \"customer\", \"items\", \"totalAmount\" ]");
 
         // "keys()" can retrieve nested child object keys for a given levels.
         //
         evaluate.accept("keys(2)",
-                "[ \"salesOrderId\", \"salesDate\", \"salesPerson\", \"customer\", \"customerId\", \"name\", \"phone\", \"items\", \"totalAmount\" ]");
+            "[ \"salesOrderId\", \"salesDate\", \"salesPerson\", \"customer\", \"customerId\", \"name\", \"phone\", \"items\", \"totalAmount\" ]");
 
         // Function "collect()" puts all argument values into an array.
         //
         evaluate.accept("collect(salesDate, customer, items.itemCode)",
-                "[ \"2022-01-01T10:01:23\", {\n" +
-                        "  \"customerId\" : \"CU0001\",\n" +
-                        "  \"name\" : \"Peggy\",\n" +
-                        "  \"phone\" : \"+852 62000610\"\n" +
-                        "}, [ \"B00001\", \"A00308\", \"A00201\" ] ]");
+            "[ \"2022-01-01T10:01:23\", {\n" +
+                "  \"customerId\" : \"CU0001\",\n" +
+                "  \"name\" : \"Peggy\",\n" +
+                "  \"phone\" : \"+852 62000610\"\n" +
+                "}, [ \"B00001\", \"A00308\", \"A00201\" ] ]");
 
         // Function "cumulateCollect()" require 2 arguments.
         // The 1st parameter is a query to evaluate a result that will be collected into an array.
@@ -505,234 +505,234 @@ public class UnitTest {
         // The operation loop will be stopped when the next dataset is null.
         //
         evaluate.accept("json('{\"id\":1,\"val\":11,\"item\":{\"id\":2,\"val\":22,\"item\":{\"id\":3,\"val\":33,\"item\":{\"id\":4,\"val\":44}}}}')" +
-                        ".cumulateCollect(map(id,val.calc(?*2)), item)",
-                "[ {\n" +
-                        "  \"id\" : 1,\n" +
-                        "  \"val\" : 22.0\n" +
-                        "}, {\n" +
-                        "  \"id\" : 2,\n" +
-                        "  \"val\" : 44.0\n" +
-                        "}, {\n" +
-                        "  \"id\" : 3,\n" +
-                        "  \"val\" : 66.0\n" +
-                        "}, {\n" +
-                        "  \"id\" : 4,\n" +
-                        "  \"val\" : 88.0\n" +
-                        "} ]");
+                ".cumulateCollect(map(id,val.calc(?*2)), item)",
+            "[ {\n" +
+                "  \"id\" : 1,\n" +
+                "  \"val\" : 22.0\n" +
+                "}, {\n" +
+                "  \"id\" : 2,\n" +
+                "  \"val\" : 44.0\n" +
+                "}, {\n" +
+                "  \"id\" : 3,\n" +
+                "  \"val\" : 66.0\n" +
+                "}, {\n" +
+                "  \"id\" : 4,\n" +
+                "  \"val\" : 88.0\n" +
+                "} ]");
 
         // Function "toArray" puts an object's values into an array.
         //
         evaluate.accept("customer.toArray()",
-                "[ \"CU0001\", \"Peggy\", \"+852 62000610\" ]");
+            "[ \"CU0001\", \"Peggy\", \"+852 62000610\" ]");
 
         // Furthermore, function "toArray" puts all arguments (values, object's values, array elements) into a single array.
         //
         evaluate.accept("toArray('Hello',customer,items.itemCode.sort())",
-                "[ \"Hello\", \"CU0001\", \"Peggy\", \"+852 62000610\", \"A00201\", \"A00308\", \"B00001\" ]");
+            "[ \"Hello\", \"CU0001\", \"Peggy\", \"+852 62000610\", \"A00201\", \"A00308\", \"B00001\" ]");
 
         // Function "map" constructs a new object node.
         // For multi-level path, the last element name will become the new element name.
         // To rename an element, use syntax "newFieldName:path".
         //
         evaluate.accept("map(customer.name,date:salesDate,sales:map(items.concat(name,' x ',qty,unit), totalQty:items.sum(qty), totalAmount))",
-                "{\n" +
-                        "  \"name\" : \"Peggy\",\n" +
-                        "  \"date\" : \"2022-01-01T10:01:23\",\n" +
-                        "  \"sales\" : {\n" +
-                        "    \"items\" : [ \"WinWin TShirt Series A - 2022 x 2Pcs\", \"OctoPlus Tennis Racket - Star x 1Pcs\", \"WinWin Sport Shoe - Super x 1Pair\" ],\n" +
-                        "    \"totalQty\" : 4.0,\n" +
-                        "    \"totalAmount\" : 270.0\n" +
-                        "  }\n" +
-                        "}");
+            "{\n" +
+                "  \"name\" : \"Peggy\",\n" +
+                "  \"date\" : \"2022-01-01T10:01:23\",\n" +
+                "  \"sales\" : {\n" +
+                "    \"items\" : [ \"WinWin TShirt Series A - 2022 x 2Pcs\", \"OctoPlus Tennis Racket - Star x 1Pcs\", \"WinWin Sport Shoe - Super x 1Pair\" ],\n" +
+                "    \"totalQty\" : 4.0,\n" +
+                "    \"totalAmount\" : 270.0\n" +
+                "  }\n" +
+                "}");
 
         // Function "field" adds, removes and renames field on the current object node.
         // To remove an element, use syntax "fieldName:".
         //
         evaluate.accept("items[0].field(subtotal:calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)),brand:,property:,tags:)",
-                "{\n" +
-                        "  \"itemCode\" : \"B00001\",\n" +
-                        "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
-                        "  \"qty\" : 2,\n" +
-                        "  \"unit\" : \"Pcs\",\n" +
-                        "  \"unitPrice\" : 15.0,\n" +
-                        "  \"subtotal\" : 30.0\n" +
-                        "}");
+            "{\n" +
+                "  \"itemCode\" : \"B00001\",\n" +
+                "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                "  \"qty\" : 2,\n" +
+                "  \"unit\" : \"Pcs\",\n" +
+                "  \"unitPrice\" : 15.0,\n" +
+                "  \"subtotal\" : 30.0\n" +
+                "}");
 
         // Function "map" and "field" works on array.
         //
         evaluate.accept("items.field(subtotal:calc(qty * (unitPrice-x), x:coalesce(unitDiscount,0)),brand:,property:,tags:)",
-                "[ {\n" +
-                        "  \"itemCode\" : \"B00001\",\n" +
-                        "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
-                        "  \"qty\" : 2,\n" +
-                        "  \"unit\" : \"Pcs\",\n" +
-                        "  \"unitPrice\" : 15.0,\n" +
-                        "  \"subtotal\" : 30.0\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00308\",\n" +
-                        "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
-                        "  \"qty\" : 1,\n" +
-                        "  \"unit\" : \"Pcs\",\n" +
-                        "  \"unitPrice\" : 150.0,\n" +
-                        "  \"unitDiscount\" : 10.0,\n" +
-                        "  \"subtotal\" : 140.0\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00201\",\n" +
-                        "  \"name\" : \"WinWin Sport Shoe - Super\",\n" +
-                        "  \"qty\" : 1,\n" +
-                        "  \"unit\" : \"Pair\",\n" +
-                        "  \"unitPrice\" : 110.0,\n" +
-                        "  \"unitDiscount\" : 10.0,\n" +
-                        "  \"subtotal\" : 100.0\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"itemCode\" : \"B00001\",\n" +
+                "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                "  \"qty\" : 2,\n" +
+                "  \"unit\" : \"Pcs\",\n" +
+                "  \"unitPrice\" : 15.0,\n" +
+                "  \"subtotal\" : 30.0\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00308\",\n" +
+                "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                "  \"qty\" : 1,\n" +
+                "  \"unit\" : \"Pcs\",\n" +
+                "  \"unitPrice\" : 150.0,\n" +
+                "  \"unitDiscount\" : 10.0,\n" +
+                "  \"subtotal\" : 140.0\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00201\",\n" +
+                "  \"name\" : \"WinWin Sport Shoe - Super\",\n" +
+                "  \"qty\" : 1,\n" +
+                "  \"unit\" : \"Pair\",\n" +
+                "  \"unitPrice\" : 110.0,\n" +
+                "  \"unitDiscount\" : 10.0,\n" +
+                "  \"subtotal\" : 100.0\n" +
+                "} ]");
 
         // Syntax "path:+" present an unresolvable path as a NullNode.
         //
         evaluate.accept("items.map(itemCode, unitDiscount)",
-                "[ {\n" +
-                        "  \"itemCode\" : \"B00001\"\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00308\",\n" +
-                        "  \"unitDiscount\" : 10.0\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00201\",\n" +
-                        "  \"unitDiscount\" : 10.0\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"itemCode\" : \"B00001\"\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00308\",\n" +
+                "  \"unitDiscount\" : 10.0\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00201\",\n" +
+                "  \"unitDiscount\" : 10.0\n" +
+                "} ]");
         evaluate.accept("items.map(itemCode, unitDiscount:+)",
-                "[ {\n" +
-                        "  \"itemCode\" : \"B00001\",\n" +
-                        "  \"unitDiscount\" : null\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00308\",\n" +
-                        "  \"unitDiscount\" : 10.0\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00201\",\n" +
-                        "  \"unitDiscount\" : 10.0\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"itemCode\" : \"B00001\",\n" +
+                "  \"unitDiscount\" : null\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00308\",\n" +
+                "  \"unitDiscount\" : 10.0\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00201\",\n" +
+                "  \"unitDiscount\" : 10.0\n" +
+                "} ]");
         evaluate.accept("items.map(itemCode, unitDiscount:if([unitDiscount=null],null,unitDiscount))",
-                "[ {\n" +
-                        "  \"itemCode\" : \"B00001\",\n" +
-                        "  \"unitDiscount\" : null\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00308\",\n" +
-                        "  \"unitDiscount\" : 10.0\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00201\",\n" +
-                        "  \"unitDiscount\" : 10.0\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"itemCode\" : \"B00001\",\n" +
+                "  \"unitDiscount\" : null\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00308\",\n" +
+                "  \"unitDiscount\" : 10.0\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00201\",\n" +
+                "  \"unitDiscount\" : 10.0\n" +
+                "} ]");
 
         // Syntax "newFieldName:+path" present an unresolvable path as a NullNode with a new field name.
         //
         evaluate.accept("items.map(itemCode, discount:+unitDiscount)",
-                "[ {\n" +
-                        "  \"itemCode\" : \"B00001\",\n" +
-                        "  \"discount\" : null\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00308\",\n" +
-                        "  \"discount\" : 10.0\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00201\",\n" +
-                        "  \"discount\" : 10.0\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"itemCode\" : \"B00001\",\n" +
+                "  \"discount\" : null\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00308\",\n" +
+                "  \"discount\" : 10.0\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00201\",\n" +
+                "  \"discount\" : 10.0\n" +
+                "} ]");
 
-        // Syntax `**:object` extracts all the fields within a given object.
+        // Syntax "**:object" extracts all the fields within a given object.
         //
         evaluate.accept("items.slice(0,2).field(**:property, property:)",
-                "[ {\n" +
-                        "  \"itemCode\" : \"B00001\",\n" +
-                        "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
-                        "  \"brand\" : \"WinWin\",\n" +
-                        "  \"qty\" : 2,\n" +
-                        "  \"unit\" : \"Pcs\",\n" +
-                        "  \"unitPrice\" : 15.0,\n" +
-                        "  \"tags\" : [ \"SHIRT\", \"WOMEN\" ],\n" +
-                        "  \"size\" : \"M\",\n" +
-                        "  \"colors\" : [ \"WHITE\", \"RED\" ]\n" +
-                        "}, {\n" +
-                        "  \"itemCode\" : \"A00308\",\n" +
-                        "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
-                        "  \"brand\" : \"OctoPlus\",\n" +
-                        "  \"qty\" : 1,\n" +
-                        "  \"unit\" : \"Pcs\",\n" +
-                        "  \"unitPrice\" : 150.0,\n" +
-                        "  \"unitDiscount\" : 10.0,\n" +
-                        "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ],\n" +
-                        "  \"colors\" : [ \"BLACK\" ]\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"itemCode\" : \"B00001\",\n" +
+                "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                "  \"brand\" : \"WinWin\",\n" +
+                "  \"qty\" : 2,\n" +
+                "  \"unit\" : \"Pcs\",\n" +
+                "  \"unitPrice\" : 15.0,\n" +
+                "  \"tags\" : [ \"SHIRT\", \"WOMEN\" ],\n" +
+                "  \"size\" : \"M\",\n" +
+                "  \"colors\" : [ \"WHITE\", \"RED\" ]\n" +
+                "}, {\n" +
+                "  \"itemCode\" : \"A00308\",\n" +
+                "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                "  \"brand\" : \"OctoPlus\",\n" +
+                "  \"qty\" : 1,\n" +
+                "  \"unit\" : \"Pcs\",\n" +
+                "  \"unitPrice\" : 150.0,\n" +
+                "  \"unitDiscount\" : 10.0,\n" +
+                "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ],\n" +
+                "  \"colors\" : [ \"BLACK\" ]\n" +
+                "} ]");
 
         // Function "group" works like SQL "group by".
         //
         evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))",
-                "[ {\n" +
-                        "  \"brand\" : \"WinWin\",\n" +
-                        "  \"elements\" : [ {\n" +
-                        "    \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
-                        "    \"qty\" : 2,\n" +
-                        "    \"netPrice\" : 15.0\n" +
-                        "  }, {\n" +
-                        "    \"name\" : \"WinWin Sport Shoe - Super\",\n" +
-                        "    \"qty\" : 1,\n" +
-                        "    \"netPrice\" : 100.0\n" +
-                        "  } ]\n" +
-                        "}, {\n" +
-                        "  \"brand\" : \"OctoPlus\",\n" +
-                        "  \"elements\" : [ {\n" +
-                        "    \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
-                        "    \"qty\" : 1,\n" +
-                        "    \"netPrice\" : 140.0\n" +
-                        "  } ]\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"brand\" : \"WinWin\",\n" +
+                "  \"elements\" : [ {\n" +
+                "    \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                "    \"qty\" : 2,\n" +
+                "    \"netPrice\" : 15.0\n" +
+                "  }, {\n" +
+                "    \"name\" : \"WinWin Sport Shoe - Super\",\n" +
+                "    \"qty\" : 1,\n" +
+                "    \"netPrice\" : 100.0\n" +
+                "  } ]\n" +
+                "}, {\n" +
+                "  \"brand\" : \"OctoPlus\",\n" +
+                "  \"elements\" : [ {\n" +
+                "    \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                "    \"qty\" : 1,\n" +
+                "    \"netPrice\" : 140.0\n" +
+                "  } ]\n" +
+                "} ]");
 
         evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0))))@" +
-                        ".concat('Brand : ',brand,'\n',elements.concat('- ',name,' : Qty=',qty,' Amt=',calc(qty*netPrice),'\n').join()," +
-                        "'> Sub-total : Qty=',elements.sum(qty),' Amt=',elements.sum(calc(qty*netPrice))).@join('\n\n')",
-                "Brand : WinWin\n" +
-                        "- WinWin TShirt Series A - 2022 : Qty=2 Amt=30.0\n" +
-                        "- WinWin Sport Shoe - Super : Qty=1 Amt=100.0\n" +
-                        "> Sub-total : Qty=3.0 Amt=130.0\n" +
-                        "\n" +
-                        "Brand : OctoPlus\n" +
-                        "- OctoPlus Tennis Racket - Star : Qty=1 Amt=140.0\n" +
-                        "> Sub-total : Qty=1.0 Amt=140.0");
+                ".concat('Brand : ',brand,'\n',elements.concat('- ',name,' : Qty=',qty,' Amt=',calc(qty*netPrice),'\n').join()," +
+                "'> Sub-total : Qty=',elements.sum(qty),' Amt=',elements.sum(calc(qty*netPrice))).@join('\n\n')",
+            "Brand : WinWin\n" +
+                "- WinWin TShirt Series A - 2022 : Qty=2 Amt=30.0\n" +
+                "- WinWin Sport Shoe - Super : Qty=1 Amt=100.0\n" +
+                "> Sub-total : Qty=3.0 Amt=130.0\n" +
+                "\n" +
+                "Brand : OctoPlus\n" +
+                "- OctoPlus Tennis Racket - Star : Qty=1 Amt=140.0\n" +
+                "> Sub-total : Qty=1.0 Amt=140.0");
 
         // Function "unwind" works like MongoDB "$unwind" operation.
         //
         evaluate.accept("items.group(brand,map(name,qty,netPrice:calc(unitPrice-x,x:coalesce(unitDiscount,0)))).unwind(elements)",
-                "[ {\n" +
-                        "  \"brand\" : \"WinWin\",\n" +
-                        "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
-                        "  \"qty\" : 2,\n" +
-                        "  \"netPrice\" : 15.0\n" +
-                        "}, {\n" +
-                        "  \"brand\" : \"WinWin\",\n" +
-                        "  \"name\" : \"WinWin Sport Shoe - Super\",\n" +
-                        "  \"qty\" : 1,\n" +
-                        "  \"netPrice\" : 100.0\n" +
-                        "}, {\n" +
-                        "  \"brand\" : \"OctoPlus\",\n" +
-                        "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
-                        "  \"qty\" : 1,\n" +
-                        "  \"netPrice\" : 140.0\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"brand\" : \"WinWin\",\n" +
+                "  \"name\" : \"WinWin TShirt Series A - 2022\",\n" +
+                "  \"qty\" : 2,\n" +
+                "  \"netPrice\" : 15.0\n" +
+                "}, {\n" +
+                "  \"brand\" : \"WinWin\",\n" +
+                "  \"name\" : \"WinWin Sport Shoe - Super\",\n" +
+                "  \"qty\" : 1,\n" +
+                "  \"netPrice\" : 100.0\n" +
+                "}, {\n" +
+                "  \"brand\" : \"OctoPlus\",\n" +
+                "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                "  \"qty\" : 1,\n" +
+                "  \"netPrice\" : 140.0\n" +
+                "} ]");
 
         // Function "flatten" flatten an array for a given number of times.
         //
         evaluate.accept("items@.tags",
-                "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
+            "[ [ \"SHIRT\", \"WOMEN\" ], [ \"TENNIS\", \"SPORT\", \"RACKET\" ], [ \"SHOE\", \"SPORT\", \"WOMEN\" ] ]");
         evaluate.accept("flatten(items@.tags, 1, null)",
-                "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+            "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
         // Function "flatten" flatten an array same as the default path step behavior. But more readable.
         //
         evaluate.accept("items@.tags.@.[true]*",
-                "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+            "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
         evaluate.accept("items@.tags.@.flatten(1)",
-                "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
+            "[ \"SHIRT\", \"WOMEN\", \"TENNIS\", \"SPORT\", \"RACKET\", \"SHOE\", \"SPORT\", \"WOMEN\" ]");
 
         // If the parameter value of "flatten" is textual, it will act as a key name separator to build a flattened object.
         //
         evaluate.accept("flatten('_')",
-                "{\n" +
+            "{\n" +
                 "  \"salesOrderId\" : \"SO0001\",\n" +
                 "  \"salesDate\" : \"2022-01-01T10:01:23\",\n" +
                 "  \"salesPerson\" : \"Raymond\",\n" +
@@ -779,58 +779,124 @@ public class UnitTest {
         // Function "unflatten" reverse the operation of "flatten".
         //
         evaluate.accept("items[1].flatten('_').unflatten('_')",
-                "{\n" +
-                        "  \"itemCode\" : \"A00308\",\n" +
-                        "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
-                        "  \"brand\" : \"OctoPlus\",\n" +
-                        "  \"property\" : {\n" +
-                        "    \"colors\" : [ \"BLACK\" ]\n" +
-                        "  },\n" +
-                        "  \"qty\" : 1,\n" +
-                        "  \"unit\" : \"Pcs\",\n" +
-                        "  \"unitPrice\" : 150.0,\n" +
-                        "  \"unitDiscount\" : 10.0,\n" +
-                        "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ]\n" +
-                        "}");
+            "{\n" +
+                "  \"itemCode\" : \"A00308\",\n" +
+                "  \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                "  \"brand\" : \"OctoPlus\",\n" +
+                "  \"property\" : {\n" +
+                "    \"colors\" : [ \"BLACK\" ]\n" +
+                "  },\n" +
+                "  \"qty\" : 1,\n" +
+                "  \"unit\" : \"Pcs\",\n" +
+                "  \"unitPrice\" : 150.0,\n" +
+                "  \"unitDiscount\" : 10.0,\n" +
+                "  \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ]\n" +
+                "}");
 
-        // Functions map(),field(),group(),unwind() - key name support evaluation using syntax "keyQuery::valueQuery"
+        // Function remove() removes nodes that present in full path.
+        //
+        evaluate.accept("remove(salesPerson,customer.name,customer.phone,items[0],items[1],items[2].tags[1])",
+            "{\n" +
+                "  \"salesOrderId\" : \"SO0001\",\n" +
+                "  \"salesDate\" : \"2022-01-01T10:01:23\",\n" +
+                "  \"customer\" : {\n" +
+                "    \"customerId\" : \"CU0001\"\n" +
+                "  },\n" +
+                "  \"items\" : [ {\n" +
+                "    \"itemCode\" : \"A00201\",\n" +
+                "    \"name\" : \"WinWin Sport Shoe - Super\",\n" +
+                "    \"brand\" : \"WinWin\",\n" +
+                "    \"property\" : {\n" +
+                "      \"size\" : \"35\",\n" +
+                "      \"colors\" : [ \"RED\" ]\n" +
+                "    },\n" +
+                "    \"qty\" : 1,\n" +
+                "    \"unit\" : \"Pair\",\n" +
+                "    \"unitPrice\" : 110.0,\n" +
+                "    \"unitDiscount\" : 10.0,\n" +
+                "    \"tags\" : [ \"SHOE\", \"WOMEN\" ]\n" +
+                "  } ],\n" +
+                "  \"totalAmount\" : 270.0\n" +
+                "}");
+
+        // Function retain() retains nodes that present in full path.  All other not mentioned nodes will be removed.
+        //
+        evaluate.accept("retain(salesOrderId,customer.customerId,items[2].itemCode,items[2].property,items[2].tags[0],items[2].tags[2])",
+            "{\n" +
+                "  \"salesOrderId\" : \"SO0001\",\n" +
+                "  \"customer\" : {\n" +
+                "    \"customerId\" : \"CU0001\"\n" +
+                "  },\n" +
+                "  \"items\" : [ {\n" +
+                "    \"itemCode\" : \"A00201\",\n" +
+                "    \"property\" : {\n" +
+                "      \"size\" : \"35\",\n" +
+                "      \"colors\" : [ \"RED\" ]\n" +
+                "    },\n" +
+                "    \"tags\" : [ \"SHOE\", \"WOMEN\" ]\n" +
+                "  } ]\n" +
+                "}");
+
+        // Functions remove() and retain() - syntax "path:condition" where a false condition can disable it.
+        //
+        evaluate.accept("retain(salesOrderId:true,salesDate:false,items[0].name:items[0].brand.equals('WinWin'),items[1]:[items[1].qty<2])",
+            "{\n" +
+                "  \"salesOrderId\" : \"SO0001\",\n" +
+                "  \"items\" : [ {\n" +
+                "    \"name\" : \"WinWin TShirt Series A - 2022\"\n" +
+                "  }, {\n" +
+                "    \"itemCode\" : \"A00308\",\n" +
+                "    \"name\" : \"OctoPlus Tennis Racket - Star\",\n" +
+                "    \"brand\" : \"OctoPlus\",\n" +
+                "    \"property\" : {\n" +
+                "      \"colors\" : [ \"BLACK\" ]\n" +
+                "    },\n" +
+                "    \"qty\" : 1,\n" +
+                "    \"unit\" : \"Pcs\",\n" +
+                "    \"unitPrice\" : 150.0,\n" +
+                "    \"unitDiscount\" : 10.0,\n" +
+                "    \"tags\" : [ \"TENNIS\", \"SPORT\", \"RACKET\" ]\n" +
+                "  } ]\n" +
+                "}");
+
+        // Functions map(),field(),group(),unwind(),remove(),retain() - key name support evaluation using syntax "keyQuery::valueQuery"
         //
         evaluate.accept("items.map(itemCode::qty)",
-                "[ {\n" +
-                        "  \"B00001\" : 2\n" +
-                        "}, {\n" +
-                        "  \"A00308\" : 1\n" +
-                        "}, {\n" +
-                        "  \"A00201\" : 1\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"B00001\" : 2\n" +
+                "}, {\n" +
+                "  \"A00308\" : 1\n" +
+                "}, {\n" +
+                "  \"A00201\" : 1\n" +
+                "} ]");
 
         // Syntax "keyQuery::+valueQuery" present an unresolvable path as a NullNode.
         evaluate.accept("items.map(itemCode::unitDiscount)",
-                "[ { }, {\n" +
-                        "  \"A00308\" : 10.0\n" +
-                        "}, {\n" +
-                        "  \"A00201\" : 10.0\n" +
-                        "} ]");
+            "[ { }, {\n" +
+                "  \"A00308\" : 10.0\n" +
+                "}, {\n" +
+                "  \"A00201\" : 10.0\n" +
+                "} ]");
         evaluate.accept("items.map(itemCode::+unitDiscount)",
-                "[ {\n" +
-                        "  \"B00001\" : null\n" +
-                        "}, {\n" +
-                        "  \"A00308\" : 10.0\n" +
-                        "}, {\n" +
-                        "  \"A00201\" : 10.0\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"B00001\" : null\n" +
+                "}, {\n" +
+                "  \"A00308\" : 10.0\n" +
+                "}, {\n" +
+                "  \"A00201\" : 10.0\n" +
+                "} ]");
 
         // Function "mergeObjects" merge all objects in an array into one object.
         //
         evaluate.accept("mergeObjects(customer, items.map(itemCode::qty))",
-                "{\n" +
-                        "  \"customerId\" : \"CU0001\",\n" +
-                        "  \"name\" : \"Peggy\",\n" +
-                        "  \"phone\" : \"+852 62000610\",\n" +
-                        "  \"B00001\" : 2,\n" +
-                        "  \"A00308\" : 1,\n" +
-                        "  \"A00201\" : 1\n" +
-                        "}");
+            "{\n" +
+                "  \"customerId\" : \"CU0001\",\n" +
+                "  \"name\" : \"Peggy\",\n" +
+                "  \"phone\" : \"+852 62000610\",\n" +
+                "  \"B00001\" : 2,\n" +
+                "  \"A00308\" : 1,\n" +
+                "  \"A00201\" : 1\n" +
+                "}");
 
         // Function "assort" separates an object's entries according to different path conditions in sequence,
         // and put them into the corresponding array if the evaluated result is not null.
@@ -839,164 +905,164 @@ public class UnitTest {
         // If no argument is provided, each entry will be added to the result array separately.
         //
         evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
-                        ".assort(*.[isEven()], ~'xy.*', ~'ab.*', *)",
-                "[ {\n" +
-                        "  \"xy2\" : 2,\n" +
-                        "  \"ab2\" : 4,\n" +
-                        "  \"zz1\" : 6\n" +
-                        "}, {\n" +
-                        "  \"xy1\" : 1,\n" +
-                        "  \"xy3\" : 7\n" +
-                        "}, {\n" +
-                        "  \"ab1\" : 3,\n" +
-                        "  \"ab3\" : 5\n" +
-                        "}, {\n" +
-                        "  \"zz2\" : 9,\n" +
-                        "  \"zz3\" : {\n" +
-                        "    \"k\" : 10\n" +
-                        "  }\n" +
-                        "} ]");
+                ".assort(*.[isEven()], ~'xy.*', ~'ab.*', *)",
+            "[ {\n" +
+                "  \"xy2\" : 2,\n" +
+                "  \"ab2\" : 4,\n" +
+                "  \"zz1\" : 6\n" +
+                "}, {\n" +
+                "  \"xy1\" : 1,\n" +
+                "  \"xy3\" : 7\n" +
+                "}, {\n" +
+                "  \"ab1\" : 3,\n" +
+                "  \"ab3\" : 5\n" +
+                "}, {\n" +
+                "  \"zz2\" : 9,\n" +
+                "  \"zz3\" : {\n" +
+                "    \"k\" : 10\n" +
+                "  }\n" +
+                "} ]");
         evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}')" +
-                        ".assort(*.[isEven()], ~'xy.*', ~'ab.*')",
-                "[ {\n" +
-                        "  \"xy2\" : 2,\n" +
-                        "  \"ab2\" : 4,\n" +
-                        "  \"zz1\" : 6\n" +
-                        "}, {\n" +
-                        "  \"xy1\" : 1,\n" +
-                        "  \"xy3\" : 7\n" +
-                        "}, {\n" +
-                        "  \"ab1\" : 3,\n" +
-                        "  \"ab3\" : 5\n" +
-                        "} ]");
+                ".assort(*.[isEven()], ~'xy.*', ~'ab.*')",
+            "[ {\n" +
+                "  \"xy2\" : 2,\n" +
+                "  \"ab2\" : 4,\n" +
+                "  \"zz1\" : 6\n" +
+                "}, {\n" +
+                "  \"xy1\" : 1,\n" +
+                "  \"xy3\" : 7\n" +
+                "}, {\n" +
+                "  \"ab1\" : 3,\n" +
+                "  \"ab3\" : 5\n" +
+                "} ]");
         evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
-                        ".assort(*.[isEven()], ~'xy.*', ~'ab.*', ??)",
-                "[ {\n" +
-                        "  \"xy2\" : 2,\n" +
-                        "  \"ab2\" : 4,\n" +
-                        "  \"zz1\" : 6\n" +
-                        "}, {\n" +
-                        "  \"xy1\" : 1,\n" +
-                        "  \"xy3\" : 7\n" +
-                        "}, {\n" +
-                        "  \"ab1\" : 3,\n" +
-                        "  \"ab3\" : 5\n" +
-                        "}, {\n" +
-                        "  \"zz2\" : 9\n" +
-                        "}, {\n" +
-                        "  \"zz3\" : {\n" +
-                        "    \"k\" : 10\n" +
-                        "  }\n" +
-                        "} ]");
+                ".assort(*.[isEven()], ~'xy.*', ~'ab.*', ??)",
+            "[ {\n" +
+                "  \"xy2\" : 2,\n" +
+                "  \"ab2\" : 4,\n" +
+                "  \"zz1\" : 6\n" +
+                "}, {\n" +
+                "  \"xy1\" : 1,\n" +
+                "  \"xy3\" : 7\n" +
+                "}, {\n" +
+                "  \"ab1\" : 3,\n" +
+                "  \"ab3\" : 5\n" +
+                "}, {\n" +
+                "  \"zz2\" : 9\n" +
+                "}, {\n" +
+                "  \"zz3\" : {\n" +
+                "    \"k\" : 10\n" +
+                "  }\n" +
+                "} ]");
         evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}')" +
-                        ".assort()",
-                "[ {\n" +
-                        "  \"xy1\" : 1\n" +
-                        "}, {\n" +
-                        "  \"xy2\" : 2\n" +
-                        "}, {\n" +
-                        "  \"ab1\" : 3\n" +
-                        "}, {\n" +
-                        "  \"ab2\" : 4\n" +
-                        "}, {\n" +
-                        "  \"ab3\" : 5\n" +
-                        "}, {\n" +
-                        "  \"zz1\" : 6\n" +
-                        "}, {\n" +
-                        "  \"xy3\" : 7\n" +
-                        "}, {\n" +
-                        "  \"zz2\" : 9\n" +
-                        "}, {\n" +
-                        "  \"zz3\" : {\n" +
-                        "    \"k\" : 10\n" +
-                        "  }\n" +
-                        "} ]");
+                ".assort()",
+            "[ {\n" +
+                "  \"xy1\" : 1\n" +
+                "}, {\n" +
+                "  \"xy2\" : 2\n" +
+                "}, {\n" +
+                "  \"ab1\" : 3\n" +
+                "}, {\n" +
+                "  \"ab2\" : 4\n" +
+                "}, {\n" +
+                "  \"ab3\" : 5\n" +
+                "}, {\n" +
+                "  \"zz1\" : 6\n" +
+                "}, {\n" +
+                "  \"xy3\" : 7\n" +
+                "}, {\n" +
+                "  \"zz2\" : 9\n" +
+                "}, {\n" +
+                "  \"zz3\" : {\n" +
+                "    \"k\" : 10\n" +
+                "  }\n" +
+                "} ]");
 
         // Function "assort" also works for array. The result is an array of arrays.
         //
         evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)",
-                "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]");
+            "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]");
         evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ??)",
-                "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]");
+            "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]");
 
         // Function "eval" evaluates the value of a text node as a query statement.
         //
         evaluate.accept("json('{\"a\":1,\"b\":2,\"statement\":\"calc(a+b*2)\"}').eval(statement)",
-                "5.0");
+            "5.0");
         evaluate.accept("json('[{\"a\":3,\"s\":\"calc(a*2)\"},{\"a\":4,\"s\":\"calc(a*2)\"}]')@.eval(s)",
-                "[ 6.0, 8.0 ]");
+            "[ 6.0, 8.0 ]");
 
         josson.setJsonString("{\n" +
-                "    \"a\": [\n" +
-                "        {\n" +
-                "            \"b\": [\n" +
-                "                {\n" +
-                "                    \"c\": [\n" +
-                "                        {\n" +
-                "                            \"d\": 1\n" +
-                "                        },\n" +
-                "                        {\n" +
-                "                            \"d\": 3\n" +
-                "                        }\n" +
-                "                    ]\n" +
-                "                },\n" +
-                "                {\n" +
-                "                    \"c\": [\n" +
-                "                        {\n" +
-                "                            \"d\": 5\n" +
-                "                        },\n" +
-                "                        {\n" +
-                "                            \"d\": 7\n" +
-                "                        }\n" +
-                "                    ]\n" +
-                "                }\n" +
-                "            ]\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"b\": [\n" +
-                "                {\n" +
-                "                    \"c\": [\n" +
-                "                        {\n" +
-                "                            \"d\": 13\n" +
-                "                        },\n" +
-                "                        {\n" +
-                "                            \"d\": 15\n" +
-                "                        }\n" +
-                "                    ]\n" +
-                "                },\n" +
-                "                {\n" +
-                "                    \"c\": [\n" +
-                "                        {\n" +
-                "                            \"d\": 17\n" +
-                "                        },\n" +
-                "                        {\n" +
-                "                            \"d\": 19\n" +
-                "                        }\n" +
-                "                    ]\n" +
-                "                }\n" +
-                "            ]\n" +
-                "        }\n" +
-                "    ]\n" +
-                "}");
+            "    \"a\": [\n" +
+            "        {\n" +
+            "            \"b\": [\n" +
+            "                {\n" +
+            "                    \"c\": [\n" +
+            "                        {\n" +
+            "                            \"d\": 1\n" +
+            "                        },\n" +
+            "                        {\n" +
+            "                            \"d\": 3\n" +
+            "                        }\n" +
+            "                    ]\n" +
+            "                },\n" +
+            "                {\n" +
+            "                    \"c\": [\n" +
+            "                        {\n" +
+            "                            \"d\": 5\n" +
+            "                        },\n" +
+            "                        {\n" +
+            "                            \"d\": 7\n" +
+            "                        }\n" +
+            "                    ]\n" +
+            "                }\n" +
+            "            ]\n" +
+            "        },\n" +
+            "        {\n" +
+            "            \"b\": [\n" +
+            "                {\n" +
+            "                    \"c\": [\n" +
+            "                        {\n" +
+            "                            \"d\": 13\n" +
+            "                        },\n" +
+            "                        {\n" +
+            "                            \"d\": 15\n" +
+            "                        }\n" +
+            "                    ]\n" +
+            "                },\n" +
+            "                {\n" +
+            "                    \"c\": [\n" +
+            "                        {\n" +
+            "                            \"d\": 17\n" +
+            "                        },\n" +
+            "                        {\n" +
+            "                            \"d\": 19\n" +
+            "                        }\n" +
+            "                    ]\n" +
+            "                }\n" +
+            "            ]\n" +
+            "        }\n" +
+            "    ]\n" +
+            "}");
 
         // Demonstrate the effect of array flatten and divert.
         //
         evaluate.accept("a.b.c.sum(d)",
-                "80.0");
+            "80.0");
         evaluate.accept("a.b.c@.sum(d)",
-                "[ 1.0, 3.0, 5.0, 7.0, 13.0, 15.0, 17.0, 19.0 ]");
+            "[ 1.0, 3.0, 5.0, 7.0, 13.0, 15.0, 17.0, 19.0 ]");
         evaluate.accept("a.b@.c.sum(d)",
-                "[ 4.0, 12.0, 28.0, 36.0 ]");
+            "[ 4.0, 12.0, 28.0, 36.0 ]");
         evaluate.accept("a@.b.c.sum(d)",
-                "[ 16.0, 64.0 ]");
+            "[ 16.0, 64.0 ]");
         evaluate.accept("a.b@.c@.sum(d)",
-                "[ [ 1.0, 3.0 ], [ 5.0, 7.0 ], [ 13.0, 15.0 ], [ 17.0, 19.0 ] ]");
+            "[ [ 1.0, 3.0 ], [ 5.0, 7.0 ], [ 13.0, 15.0 ], [ 17.0, 19.0 ] ]");
         evaluate.accept("a@.b.c@.sum(d)",
-                "[ [ 1.0, 3.0, 5.0, 7.0 ], [ 13.0, 15.0, 17.0, 19.0 ] ]");
+            "[ [ 1.0, 3.0, 5.0, 7.0 ], [ 13.0, 15.0, 17.0, 19.0 ] ]");
         evaluate.accept("a@.b@.c.sum(d)",
-                "[ [ 4.0, 12.0 ], [ 28.0, 36.0 ] ]");
+            "[ [ 4.0, 12.0 ], [ 28.0, 36.0 ] ]");
         evaluate.accept("a@.b@.c@.sum(d)",
-                "[ [ [ 1.0, 3.0 ], [ 5.0, 7.0 ] ], [ [ 13.0, 15.0 ], [ 17.0, 19.0 ] ] ]");
+            "[ [ [ 1.0, 3.0 ], [ 5.0, 7.0 ] ], [ [ 13.0, 15.0 ], [ 17.0, 19.0 ] ] ]");
 
         // Arithmetic functions
         // abs()
@@ -1084,9 +1150,11 @@ public class UnitTest {
         // concatFree()
         evaluate.accept("'Hello'.concatFree(2022, '... ', ?, ' World!')", "2022... Hello World!");
         evaluate.accept("json('{\"a\":\"Hello\",\"c\":\" World!\"}').concatFree(a,b,c)", "Hello World!");
-        // eval()
-        evaluate.accept("json('{\"a\":1,\"b\":2,\"statement\":\"calc(a+b*2)\"}').eval(statement)", "5.0");
-        evaluate.accept("json('[{\"a\":3,\"s\":\"calc(a*2)\"},{\"a\":4,\"s\":\"calc(a*2)\"}]')@.eval(s)", "[ 6.0, 8.0 ]");
+        // default()
+        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x)", "*empty*");
+        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x,'Hi')", "Hi");
+        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x,null,c,a,b)", "1");
+        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x,null,c,b,a)", "B");
         // keepAfter()
         evaluate.accept("'abcxmnxyz'.keepAfter('x')", "mnxyz");
         evaluate.accept("'abcxmnxyz'.keepAfter(?, 'X')", "*empty*");
@@ -1233,12 +1301,12 @@ public class UnitTest {
         // upperCase()
         evaluate.accept("'Cat'.upperCase()", "CAT");
         evaluate.accept("upperCase('cAt')", "CAT");
-        // singleQuote()
+        // singleQuote() / quote() / q()
         evaluate.accept("'Peggy''s cat'.singleQuote()", "'Peggy''s cat'");
         evaluate.accept("123.singleQuote()", "'123'");
         evaluate.accept("quote('Raymond''s dog')", "'Raymond''s dog'");
         evaluate.accept("q(True)", "'true'");
-        // doubleQuote()
+        // doubleQuote() / qq()
         evaluate.accept("'Peggy\"s cat'.doubleQuote()", "\"Peggy\\\"s cat\"");
         evaluate.accept("12.3.doubleQuote()", "\"12.3\"");
         evaluate.accept("qq('Raymond\"s dog')", "\"Raymond\\\"s dog\"");
@@ -1468,37 +1536,37 @@ public class UnitTest {
         // Format functions
         // b64Encode()
         evaluate.accept("'abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ'.b64Encode()",
-                "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg==");
+            "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg==");
         // b64EncodeNoPadding()
         evaluate.accept("b64EncodeNoPadding('abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ')",
-                "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg");
+            "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg");
         // b64MimeEncode() - Split lines into 76 character wide chunks
         evaluate.accept("'abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ'.b64MimeEncode()",
-                "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9Q\r\nUVJTVFVWV1hZWg==");
+            "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9Q\r\nUVJTVFVWV1hZWg==");
         // b64MimeEncodeNoPadding()
         evaluate.accept("b64MimeEncodeNoPadding('abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ')",
-                "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9Q\r\nUVJTVFVWV1hZWg");
+            "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9Q\r\nUVJTVFVWV1hZWg");
         // b64UrlEncode()
         evaluate.accept("'abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ'.b64UrlEncode()",
-                "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp-IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg==");
+            "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp-IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg==");
         // b64UrlEncodeNoPadding()
         evaluate.accept("b64UrlEncodeNoPadding('abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ')",
-                "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp-IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg");
+            "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp-IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg");
         // b64Decode()
         evaluate.accept("'YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg=='.b64Decode()",
-                "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         evaluate.accept("b64Decode('YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg')",
-                "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         // b64MimeDecode()
         evaluate.accept("'YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9Q\nUVJTVFVWV1hZWg=='.b64MimeDecode()",
-                "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         evaluate.accept("b64MimeDecode('YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp+IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9Q\r\nUVJTVFVWV1hZWg')",
-                "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         // b64UrlDecode()
         evaluate.accept("'YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp-IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg=='.b64UrlDecode()",
-                "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         evaluate.accept("b64UrlDecode('YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp-IUAjJCVeJiooKV8rLT1BQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg')",
-                "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            "abcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+-=ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         // urlEncode()
         evaluate.accept("'www.domain.com?a=1+2&b=3+4'.urlEncode()", "www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4");
         evaluate.accept("urlEncode('www.domain.com?a=1+2&b=3+4')", "www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4");
@@ -1507,55 +1575,16 @@ public class UnitTest {
         evaluate.accept("urlDecode('www.domain.com%3Fa%3D1%2B2%26b%3D3%2B4')", "www.domain.com?a=1+2&b=3+4");
         // escapeHtml()
         evaluate.accept("'~!@#$%^&*()<>[]{}+-= \"''\\|_:;,./?'.escapeHtml()",
-                "~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;'\\|_:;,./?");
+            "~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;'\\|_:;,./?");
         // unescapeHtml()
         evaluate.accept("'~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;''\\|_:;,./?'.unescapeHtml()",
-                "~!@#$%^&*()<>[]{}+-= \"'\\|_:;,./?");
+            "~!@#$%^&*()<>[]{}+-= \"'\\|_:;,./?");
         // escapeXml()
         evaluate.accept("'~!@#$%^&*()<>[]{}+-= \"''\\|_:;,./?'.escapeXml()",
-                "~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;&apos;\\|_:;,./?");
+            "~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;&apos;\\|_:;,./?");
         // unescapeXml()
         evaluate.accept("'~!@#$%^&amp;*()&lt;&gt;[]{}+-= &quot;&apos;\\|_:;,./?'.unescapeXml()",
-                "~!@#$%^&*()<>[]{}+-= \"'\\|_:;,./?");
-        // if()
-        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if(a.isEven(), 'T', 'F')", "F");
-        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1], 'T', 'F')", "T");
-        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1 & b=3], 'T', 'F')", "F");
-        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1 & b=3], 'T')", "!unresolvable!");
-        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=b], 'T', if([c=3], 'C', 'F'))", "C");
-        evaluate.accept("json('[1,2,3,4,5]').if(isOdd(), calc(?*2), ?)", "[ 2.0, 2, 6.0, 4, 10.0 ]");
-        // ifNot()
-        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').ifNot(a.isEven(), 'T', 'F')", "T");
-        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').ifNot([a=1 & b=3], 'T')", "T");
-        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').ifNot([a=b], 'T', if([c=3], 'C', 'F'))", "T");
-        evaluate.accept("json('[1,2,3,4,5]').ifNot(isOdd(), calc(?*2), ?)", "[ 1, 4.0, 3, 8.0, 5 ]");
-        // caseValue()
-        evaluate.accept("'a'.caseValue('A',1,'b',2,'a',3,4)", "3");
-        evaluate.accept("'z'.caseValue('A',1,'b',2,'a',3,4)", "4");
-        evaluate.accept("'z'.caseValue('A',1,'b',2,'a',3)", "!unresolvable!");
-        evaluate.accept("json('[{\"s\":1},{\"s\":null},{\"s\":3}]').s.caseValue(1,'A',null,'B')", "[ \"A\", \"B\", null ]");
-        // caseValueIgnoreCase()
-        evaluate.accept("'a'.caseValueIgnoreCase('A',1,'b',2,'a',3,4)", "1");
-        evaluate.accept("'z'.caseValueIgnoreCase('A',1,'b',2,'a',3,4)", "4");
-        evaluate.accept("'z'.caseValueIgnoreCase('A',1,'b',2,'a',3)", "!unresolvable!");
-        // indexedValue()
-        evaluate.accept("0.indexedValue('a','b','c','d')", "a");
-        evaluate.accept("1.indexedValue(json('[\"a\",\"b\",\"c\",\"d\"]'))", "b");
-        evaluate.accept("'3'.indexedValue('a','b','c','d')", "d");
-        evaluate.accept("4.indexedValue('a','b','c','d')", "!unresolvable!");
-        evaluate.accept("-1.indexedValue('a','b','c','d')", "!unresolvable!");
-        // cycleValue()
-        evaluate.accept("0.cycleValue('a','b','c','d')", "a");
-        evaluate.accept("1.cycleValue(json('[\"a\",\"b\",\"c\",\"d\"]'))", "b");
-        evaluate.accept("'3'.cycleValue('a','b','c','d')", "d");
-        evaluate.accept("4.cycleValue('a','b','c','d')", "a");
-        evaluate.accept("-1.cycleValue('a','b','c','d')", "d");
-        evaluate.accept("-6.cycleValue('a','b','c','d')", "c");
-        // default()
-        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x)", "*empty*");
-        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x,'Hi')", "Hi");
-        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x,null,c,a,b)", "1");
-        evaluate.accept("json('{\"a\":1,\"b\":\"B\",\"c\":null}').default(x,null,c,b,a)", "B");
+            "~!@#$%^&*()<>[]{}+-= \"'\\|_:;,./?");
         // formatDate()
         evaluate.accept("'2022-01-02T03:04:05'.formatDate('dd/MM/yyyy HH:mm:ss')", "02/01/2022 03:04:05");
         evaluate.accept("'2022-01-02T03:04:05'.formatDate(?, 'yyyy-MM-dd')", "2022-01-02");
@@ -1592,6 +1621,21 @@ public class UnitTest {
         evaluate.accept("toText(null)", "null");
         evaluate.accept("toText(json('{\"a\":1}'))", "!unresolvable!");
         evaluate.accept("toText(json('[1,2.0,\"a\",true,null]'))", "[ \"1\", \"2.0\", \"a\", \"true\", \"null\" ]");
+        // csv()
+        evaluate.accept("json('{\"len1\":\"12.3\\\"\",\"len2\":null,\"len3\":\"64.0\\\"\"}').csv()",
+            "\"12.3\"\"\",,\"64.0\"\"\"");
+        evaluate.accept("csv(json('[[[[1,2],[\"3\",\"4\\\"\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
+            "1,2,3,\"4\"\"\",1,2.0,8.888,true,");
+        // csvShowNull()
+        evaluate.accept("json('{\"len1\":\"12.3\\\"\",\"len2\":null,\"len3\":\"64.0\\\"\"}').csvShowNull()",
+            "\"12.3\"\"\",null,\"64.0\"\"\"");
+        evaluate.accept("csvShowNull(json('[[[[1,2],[\"3\",\"4\\\"\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
+            "1,2,3,\"4\"\"\",1,2.0,8.888,true,null");
+        // csvParams()
+        evaluate.accept("json('{\"len1\":\"12.3\",\"len2\":null,\"len3\":\"64.0\\\"\"}').csvParams()",
+            "'12.3',null,'64.0\"'");
+        evaluate.accept("csvParams(json('[[[[1,2],[\"3\",\"4''\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
+            "1,2,'3','4''',1,2.0,8.888,true,null");
 
         // Logical
         // contains()
@@ -1822,10 +1866,10 @@ public class UnitTest {
         evaluate.accept("count(json('[7,1,9,null,5,3]'), 15, 16)", "7");
         // push()
         evaluate.accept("json('[7,1,9,null,5,3]').push(10,'X',json('[-1,-2]'),json('{\"a\":11,\"b\":12}'))",
-                "[ 7, 1, 9, null, 5, 3, 10, \"X\", [ -1, -2 ], {\n" +
-                        "  \"a\" : 11,\n" +
-                        "  \"b\" : 12\n" +
-                        "} ]");
+            "[ 7, 1, 9, null, 5, 3, 10, \"X\", [ -1, -2 ], {\n" +
+                "  \"a\" : 11,\n" +
+                "  \"b\" : 12\n" +
+                "} ]");
         // reverse()
         evaluate.accept("json('[7,1,9,null,5,3]').reverse()", "[ 3, 5, null, 9, 1, 7 ]");
         evaluate.accept("reverse(json('[7,1,9,null,5,3]'))", "[ 3, 5, null, 9, 1, 7 ]");
@@ -1843,495 +1887,560 @@ public class UnitTest {
         evaluate.accept("json('[1,1,3,5,3,7,3,9]').sort()", "[ 1, 1, 3, 3, 3, 5, 7, 9 ]");
         evaluate.accept("json('[1,1,3,5,3,7,3,9]').sort(?,-1)", "[ 9, 7, 5, 3, 3, 3, 1, 1 ]");
         evaluate.accept("json('[{\"seq\":4,\"val\":\"A\"},{\"seq\":1,\"val\":\"B\"},{\"seq\":3,\"val\":\"C\"},{\"seq\":2,\"val\":\"D\"}]').sort(seq)",
-                "[ {\n" +
-                        "  \"seq\" : 1,\n" +
-                        "  \"val\" : \"B\"\n" +
-                        "}, {\n" +
-                        "  \"seq\" : 2,\n" +
-                        "  \"val\" : \"D\"\n" +
-                        "}, {\n" +
-                        "  \"seq\" : 3,\n" +
-                        "  \"val\" : \"C\"\n" +
-                        "}, {\n" +
-                        "  \"seq\" : 4,\n" +
-                        "  \"val\" : \"A\"\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"seq\" : 1,\n" +
+                "  \"val\" : \"B\"\n" +
+                "}, {\n" +
+                "  \"seq\" : 2,\n" +
+                "  \"val\" : \"D\"\n" +
+                "}, {\n" +
+                "  \"seq\" : 3,\n" +
+                "  \"val\" : \"C\"\n" +
+                "}, {\n" +
+                "  \"seq\" : 4,\n" +
+                "  \"val\" : \"A\"\n" +
+                "} ]");
         evaluate.accept("json('[{\"seq\":4,\"val\":\"A\"},{\"seq\":1,\"val\":\"B\"},{\"seq\":3,\"val\":\"C\"},{\"seq\":2,\"val\":\"D\"}]').sort(seq,-1)",
-                "[ {\n" +
-                        "  \"seq\" : 4,\n" +
-                        "  \"val\" : \"A\"\n" +
-                        "}, {\n" +
-                        "  \"seq\" : 3,\n" +
-                        "  \"val\" : \"C\"\n" +
-                        "}, {\n" +
-                        "  \"seq\" : 2,\n" +
-                        "  \"val\" : \"D\"\n" +
-                        "}, {\n" +
-                        "  \"seq\" : 1,\n" +
-                        "  \"val\" : \"B\"\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"seq\" : 4,\n" +
+                "  \"val\" : \"A\"\n" +
+                "}, {\n" +
+                "  \"seq\" : 3,\n" +
+                "  \"val\" : \"C\"\n" +
+                "}, {\n" +
+                "  \"seq\" : 2,\n" +
+                "  \"val\" : \"D\"\n" +
+                "}, {\n" +
+                "  \"seq\" : 1,\n" +
+                "  \"val\" : \"B\"\n" +
+                "} ]");
         // distinct()
         evaluate.accept("json('[1,1,3,5,3,7,3,9]').distinct().sort()", "[ 1.0, 3.0, 5.0, 7.0, 9.0 ]");
         evaluate.accept("distinct(json('[\"A\",\"Z\",\"a\",\"Z\",\"A\",\"z\"]'))", "[ \"A\", \"a\", \"Z\", \"z\" ]");
         evaluate.accept("distinct(json('[\"1\",\"1.0\",1,1.0,1.00,true,\"true\",null,\"null\"]'))",
-                "[ \"1\", \"1.0\", \"null\", \"true\", 1.0, true ]");
+            "[ \"1\", \"1.0\", \"null\", \"true\", 1.0, true ]");
         // join()
         evaluate.accept("json('[\"Hello\", \",\", \"World\", \"!\"]').join()", "Hello,World!");
         evaluate.accept("json('[1,2,3]').join('+')", "1+2+3");
         evaluate.accept("join(json('[\"A\",1,\"B\",\"2.00\",\"C\",3.00,\"D\",true,null]'),'/')", "A/1/B/2.00/C/3.0/D/true");
         // findAndModify()
         evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\",\"price\":8},{\"code\":\"C\",\"price\":3}]').findAndModify([code='C'],field(price:99))",
-                "[ {\n" +
-                        "  \"code\" : \"A\",\n" +
-                        "  \"price\" : 8\n" +
-                        "}, {\n" +
-                        "  \"code\" : \"B\",\n" +
-                        "  \"price\" : 8\n" +
-                        "}, {\n" +
-                        "  \"code\" : \"C\",\n" +
-                        "  \"price\" : 99\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"code\" : \"A\",\n" +
+                "  \"price\" : 8\n" +
+                "}, {\n" +
+                "  \"code\" : \"B\",\n" +
+                "  \"price\" : 8\n" +
+                "}, {\n" +
+                "  \"code\" : \"C\",\n" +
+                "  \"price\" : 99\n" +
+                "} ]");
         evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\",\"price\":8},{\"code\":\"C\",\"price\":3}]').findAndModify([price=8],field(price:99),2)",
-                "[ {\n" +
-                        "  \"code\" : \"A\",\n" +
-                        "  \"price\" : 99\n" +
-                        "}, {\n" +
-                        "  \"code\" : \"B\",\n" +
-                        "  \"price\" : 99\n" +
-                        "}, {\n" +
-                        "  \"code\" : \"C\",\n" +
-                        "  \"price\" : 3\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"code\" : \"A\",\n" +
+                "  \"price\" : 99\n" +
+                "}, {\n" +
+                "  \"code\" : \"B\",\n" +
+                "  \"price\" : 99\n" +
+                "}, {\n" +
+                "  \"code\" : \"C\",\n" +
+                "  \"price\" : 3\n" +
+                "} ]");
         // findByMax()
         evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]').findByMax(price)",
-                "{\n" +
-                        "  \"code\" : \"A\",\n" +
-                        "  \"price\" : 8\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"A\",\n" +
+                "  \"price\" : 8\n" +
+                "}");
         evaluate.accept("findByMax(json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]'), code)",
-                "{\n" +
-                        "  \"code\" : \"E\",\n" +
-                        "  \"price\" : 5\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"E\",\n" +
+                "  \"price\" : 5\n" +
+                "}");
         // findByMin()
         evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]').findByMin(?,price)",
-                "{\n" +
-                        "  \"code\" : \"C\",\n" +
-                        "  \"price\" : 3\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"C\",\n" +
+                "  \"price\" : 3\n" +
+                "}");
         evaluate.accept("findByMin(json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]'), code)",
-                "{\n" +
-                        "  \"code\" : \"A\",\n" +
-                        "  \"price\" : 8\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"A\",\n" +
+                "  \"price\" : 8\n" +
+                "}");
         // findByNullOrMax()
         evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]').findByNullOrMax(price)",
-                "{\n" +
-                        "  \"code\" : \"B\"\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"B\"\n" +
+                "}");
         evaluate.accept("findByNullOrMax(json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]'), code)",
-                "{\n" +
-                        "  \"code\" : \"E\",\n" +
-                        "  \"price\" : 5\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"E\",\n" +
+                "  \"price\" : 5\n" +
+                "}");
         // findByNullOrMin()
         evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]').findByNullOrMin(?,price)",
-                "{\n" +
-                        "  \"code\" : \"B\"\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"B\"\n" +
+                "}");
         evaluate.accept("findByNullOrMin(json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]'), code)",
-                "{\n" +
-                        "  \"code\" : \"A\",\n" +
-                        "  \"price\" : 8\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"A\",\n" +
+                "  \"price\" : 8\n" +
+                "}");
         // findByMaxOrNull()
         evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]').findByMaxOrNull(price)",
-                "{\n" +
-                        "  \"code\" : \"A\",\n" +
-                        "  \"price\" : 8\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"A\",\n" +
+                "  \"price\" : 8\n" +
+                "}");
         evaluate.accept("findByMaxOrNull(json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]'), code)",
-                "{\n" +
-                        "  \"code\" : \"E\",\n" +
-                        "  \"price\" : 5\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"E\",\n" +
+                "  \"price\" : 5\n" +
+                "}");
         // findByMinOrNull()
         evaluate.accept("json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]').findByMinOrNull(?,price)",
-                "{\n" +
-                        "  \"code\" : \"C\",\n" +
-                        "  \"price\" : 3\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"C\",\n" +
+                "  \"price\" : 3\n" +
+                "}");
         evaluate.accept("findByMinOrNull(json('[{\"code\":\"A\",\"price\":8},{\"code\":\"B\"},{\"code\":\"C\",\"price\":3},{\"code\":\"D\",\"price\":8},{\"code\":\"E\",\"price\":5}]'), code)",
-                "{\n" +
-                        "  \"code\" : \"A\",\n" +
-                        "  \"price\" : 8\n" +
-                        "}");
+            "{\n" +
+                "  \"code\" : \"A\",\n" +
+                "  \"price\" : 8\n" +
+                "}");
 
         // Structural
-        // json()
-        evaluate.accept("json('[1,\"2\",{\"a\":1,\"b\":2}]')",
-                "[ 1, \"2\", {\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"b\" : 2\n" +
-                        "} ]");
-        evaluate.accept("'{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}'.json()",
-                "{\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"b\" : [ 2, 3 ],\n" +
-                        "  \"c\" : {\n" +
-                        "    \"d\" : 4,\n" +
-                        "    \"e\" : 5\n" +
-                        "  }\n" +
-                        "}");
-        // let()
-        evaluate.accept("json('{\"a\":1,\"b\":2}').let($x:a, $y:calc(a+b), $z:concat(a,b)).map($x,$y,$z)",
-                "{\n" +
-                        "  \"$x\" : 1,\n" +
-                        "  \"$y\" : 3.0,\n" +
-                        "  \"$z\" : \"12\"\n" +
-                        "}");
-        // get()
-        evaluate.accept("json('{\"decode\":[{\"code\":\"A\",\"color\":\"Red\"},{\"code\":\"B\",\"color\":\"Blue\"}],\"data\":[\"B\",\"A\",\"B\"]}')" +
-                        ".data@.let($code:?).get(...decode[code=$code].color)",
-                "[ \"Blue\", \"Red\", \"Blue\" ]");
+        // remove()
+        evaluate.accept("json('{\"a\":1,\"b\":{\"x\":8,\"y\":9},\"c\":2,\"d\":[3,4,5],\"e\":\"c\"}').remove(b.x,d[1]:true,d[2]:false,e::true)",
+            "{\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b\" : {\n" +
+                "    \"y\" : 9\n" +
+                "  },\n" +
+                "  \"d\" : [ 3, 5 ],\n" +
+                "  \"e\" : \"c\"\n" +
+                "}");
+
+        // retain()
+        evaluate.accept("json('{\"a\":1,\"b\":{\"x\":8,\"y\":9},\"c\":2,\"d\":[3,4,5],\"e\":\"c\"}').retain(b.x,d[1]:true,d[2]:false,e::true)",
+            "{\n" +
+                "  \"b\" : {\n" +
+                "    \"x\" : 8\n" +
+                "  },\n" +
+                "  \"c\" : 2,\n" +
+                "  \"d\" : [ 4 ]\n" +
+                "}");
+
         // entries()
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').entries()",
-                "[ {\n" +
-                        "  \"key\" : \"a\",\n" +
-                        "  \"value\" : 1\n" +
-                        "}, {\n" +
-                        "  \"key\" : \"b\",\n" +
-                        "  \"value\" : [ 2, 3 ]\n" +
-                        "}, {\n" +
-                        "  \"key\" : \"c\",\n" +
-                        "  \"value\" : {\n" +
-                        "    \"d\" : 4,\n" +
-                        "    \"e\" : 5\n" +
-                        "  }\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"key\" : \"a\",\n" +
+                "  \"value\" : 1\n" +
+                "}, {\n" +
+                "  \"key\" : \"b\",\n" +
+                "  \"value\" : [ 2, 3 ]\n" +
+                "}, {\n" +
+                "  \"key\" : \"c\",\n" +
+                "  \"value\" : {\n" +
+                "    \"d\" : 4,\n" +
+                "    \"e\" : 5\n" +
+                "  }\n" +
+                "} ]");
         // keys()
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').keys()",
-                "[ \"a\", \"b\", \"c\" ]");
+            "[ \"a\", \"b\", \"c\" ]");
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').keys(2)",
-                "[ \"a\", \"b\", \"c\", \"d\", \"e\" ]");
+            "[ \"a\", \"b\", \"c\", \"d\", \"e\" ]");
         evaluate.accept("keys(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}'), -1)",
-                "[ \"a\", \"b\", \"c\", \"d\", \"e\" ]");
+            "[ \"a\", \"b\", \"c\", \"d\", \"e\" ]");
         // depthLimit()
         evaluate.accept("json('{\"id\":1,\"array\":[{\"id\":2,\"obj\":{\"id\":3,\"array\":[{\"id\":4.1},{\"id\":4.2}]}}]}').depthLimit(1)",
-                "{\n" +
-                        "  \"id\" : 1\n" +
-                        "}");
+            "{\n" +
+                "  \"id\" : 1\n" +
+                "}");
         evaluate.accept("json('{\"id\":1,\"array\":[{\"id\":2,\"obj\":{\"id\":3,\"array\":[{\"id\":4.1},{\"id\":4.2}]}}]}').depthLimit(2)",
-                "{\n" +
-                        "  \"id\" : 1,\n" +
-                        "  \"array\" : [ {\n" +
-                        "    \"id\" : 2\n" +
-                        "  } ]\n" +
-                        "}");
+            "{\n" +
+                "  \"id\" : 1,\n" +
+                "  \"array\" : [ {\n" +
+                "    \"id\" : 2\n" +
+                "  } ]\n" +
+                "}");
         evaluate.accept("depthLimit(json('{\"id\":1,\"array\":[{\"id\":2,\"obj\":{\"id\":3,\"array\":[{\"id\":4.1},{\"id\":4.2}]}}]}'),3)",
-                "{\n" +
-                        "  \"id\" : 1,\n" +
-                        "  \"array\" : [ {\n" +
-                        "    \"id\" : 2,\n" +
-                        "    \"obj\" : {\n" +
-                        "      \"id\" : 3\n" +
-                        "    }\n" +
-                        "  } ]\n" +
-                        "}");
+            "{\n" +
+                "  \"id\" : 1,\n" +
+                "  \"array\" : [ {\n" +
+                "    \"id\" : 2,\n" +
+                "    \"obj\" : {\n" +
+                "      \"id\" : 3\n" +
+                "    }\n" +
+                "  } ]\n" +
+                "}");
         evaluate.accept("depthLimit(json('{\"id\":1,\"array\":[{\"id\":2,\"obj\":{\"id\":3,\"array\":[{\"id\":4.1},{\"id\":4.2}]}}]}'),4)",
-                "{\n" +
-                        "  \"id\" : 1,\n" +
-                        "  \"array\" : [ {\n" +
-                        "    \"id\" : 2,\n" +
-                        "    \"obj\" : {\n" +
-                        "      \"id\" : 3,\n" +
-                        "      \"array\" : [ {\n" +
-                        "        \"id\" : 4.1\n" +
-                        "      }, {\n" +
-                        "        \"id\" : 4.2\n" +
-                        "      } ]\n" +
-                        "    }\n" +
-                        "  } ]\n" +
-                        "}");
+            "{\n" +
+                "  \"id\" : 1,\n" +
+                "  \"array\" : [ {\n" +
+                "    \"id\" : 2,\n" +
+                "    \"obj\" : {\n" +
+                "      \"id\" : 3,\n" +
+                "      \"array\" : [ {\n" +
+                "        \"id\" : 4.1\n" +
+                "      }, {\n" +
+                "        \"id\" : 4.2\n" +
+                "      } ]\n" +
+                "    }\n" +
+                "  } ]\n" +
+                "}");
         // collect()
         evaluate.accept("'Hi'.collect(1,?,true,json('[{\"a\":1,\"x\":11},{\"b\":2,\"y\":12}]'),json('{\"c\":3,\"x\":13}'))",
-                "[ 1, \"Hi\", true, [ {\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"x\" : 11\n" +
-                        "}, {\n" +
-                        "  \"b\" : 2,\n" +
-                        "  \"y\" : 12\n" +
-                        "} ], {\n" +
-                        "  \"c\" : 3,\n" +
-                        "  \"x\" : 13\n" +
-                        "} ]");
+            "[ 1, \"Hi\", true, [ {\n" +
+                "  \"a\" : 1,\n" +
+                "  \"x\" : 11\n" +
+                "}, {\n" +
+                "  \"b\" : 2,\n" +
+                "  \"y\" : 12\n" +
+                "} ], {\n" +
+                "  \"c\" : 3,\n" +
+                "  \"x\" : 13\n" +
+                "} ]");
         // cumulateCollect()
         evaluate.accept("json('{\"id\":1,\"val\":11,\"item\":{\"id\":2,\"val\":22,\"item\":{\"id\":3,\"val\":33,\"item\":{\"id\":4,\"val\":44}}}}')" +
-                        ".cumulateCollect(map(id,val.calc(?*2)), item)",
-                "[ {\n" +
-                        "  \"id\" : 1,\n" +
-                        "  \"val\" : 22.0\n" +
-                        "}, {\n" +
-                        "  \"id\" : 2,\n" +
-                        "  \"val\" : 44.0\n" +
-                        "}, {\n" +
-                        "  \"id\" : 3,\n" +
-                        "  \"val\" : 66.0\n" +
-                        "}, {\n" +
-                        "  \"id\" : 4,\n" +
-                        "  \"val\" : 88.0\n" +
-                        "} ]");
+                ".cumulateCollect(map(id,val.calc(?*2)), item)",
+            "[ {\n" +
+                "  \"id\" : 1,\n" +
+                "  \"val\" : 22.0\n" +
+                "}, {\n" +
+                "  \"id\" : 2,\n" +
+                "  \"val\" : 44.0\n" +
+                "}, {\n" +
+                "  \"id\" : 3,\n" +
+                "  \"val\" : 66.0\n" +
+                "}, {\n" +
+                "  \"id\" : 4,\n" +
+                "  \"val\" : 88.0\n" +
+                "} ]");
         // wrap()
         evaluate.accept("json('[\"Hi\"]').wrap()", "[ [ \"Hi\" ] ]");
         evaluate.accept("wrap(json('{\"a\":1}'))",
-                "[ {\n" +
-                        "  \"a\" : 1\n" +
-                        "} ]");
+            "[ {\n" +
+                "  \"a\" : 1\n" +
+                "} ]");
         // toArray()
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').toArray()",
-                "[ 1, [ 2, 3 ], {\n" +
-                        "  \"d\" : 4,\n" +
-                        "  \"e\" : 5\n" +
-                        "} ]");
+            "[ 1, [ 2, 3 ], {\n" +
+                "  \"d\" : 4,\n" +
+                "  \"e\" : 5\n" +
+                "} ]");
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').toArray(c)",
-                "[ 4, 5 ]");
+            "[ 4, 5 ]");
         evaluate.accept("toArray(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').toArray())",
-                "[ 1, 2, 3, 4, 5 ]");
+            "[ 1, 2, 3, 4, 5 ]");
         // toObject()
         evaluate.accept("'a'.toObject('text')",
-                "{\n" +
-                        "  \"text\" : \"a\"\n" +
-                        "}");
+            "{\n" +
+                "  \"text\" : \"a\"\n" +
+                "}");
         evaluate.accept("99.toObject('number')",
-                "{\n" +
-                        "  \"number\" : 99\n" +
-                        "}");
+            "{\n" +
+                "  \"number\" : 99\n" +
+                "}");
         evaluate.accept("json('[1,2,3]').toObject('array')",
-                "{\n" +
-                        "  \"array\" : [ 1, 2, 3 ]\n" +
-                        "}");
+            "{\n" +
+                "  \"array\" : [ 1, 2, 3 ]\n" +
+                "}");
         evaluate.accept("json('{\"a\":1,\"b\":2}').toObject('obj')",
-                "{\n" +
-                        "  \"obj\" : {\n" +
-                        "    \"a\" : 1,\n" +
-                        "    \"b\" : 2\n" +
-                        "  }\n" +
-                        "}");
+            "{\n" +
+                "  \"obj\" : {\n" +
+                "    \"a\" : 1,\n" +
+                "    \"b\" : 2\n" +
+                "  }\n" +
+                "}");
         // mergeArrays()
         evaluate.accept("json('[[1,2],[3,4],[5,6]]').mergeArrays(?)", "[ 1, 2, 3, 4, 5, 6 ]");
         evaluate.accept("json('[{\"a\":[1,2]},{\"a\":[3,4]},{\"a\":[5,6]}]').mergeArrays(a)", "[ 1, 2, 3, 4, 5, 6 ]");
         evaluate.accept("json('{\"a\":[1,2],\"b\":[3,4],\"c\":[5,6]}').mergeArrays(a,b,c)", "[ 1, 2, 3, 4, 5, 6 ]");
         // mergeObjects()
         evaluate.accept("json('[{\"a\":1,\"x\":11},{\"b\":2,\"y\":12},{\"c\":3,\"x\":13}]').mergeObjects()",
-                "{\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"x\" : 13,\n" +
-                        "  \"b\" : 2,\n" +
-                        "  \"y\" : 12,\n" +
-                        "  \"c\" : 3\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : 1,\n" +
+                "  \"x\" : 13,\n" +
+                "  \"b\" : 2,\n" +
+                "  \"y\" : 12,\n" +
+                "  \"c\" : 3\n" +
+                "}");
         evaluate.accept("mergeObjects(json('[{\"a\":1,\"x\":11},{\"b\":2,\"y\":12}]'), json('{\"c\":3,\"x\":13}'))",
-                "{\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"x\" : 13,\n" +
-                        "  \"b\" : 2,\n" +
-                        "  \"y\" : 12,\n" +
-                        "  \"c\" : 3\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : 1,\n" +
+                "  \"x\" : 13,\n" +
+                "  \"b\" : 2,\n" +
+                "  \"y\" : 12,\n" +
+                "  \"c\" : 3\n" +
+                "}");
         // flatten()
         evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten(1)",
-                "[ [ [ 1, 2 ], [ 3, 4 ] ], [ [ 5, 6 ], [ 7, 8 ] ], [ [ 9, 10 ], [ 11, 12 ] ], [ [ 13, 14 ], [ 15, 16 ] ] ]");
+            "[ [ [ 1, 2 ], [ 3, 4 ] ], [ [ 5, 6 ], [ 7, 8 ] ], [ [ 9, 10 ], [ 11, 12 ] ], [ [ 13, 14 ], [ 15, 16 ] ] ]");
         evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten(2)",
-                "[ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ], [ 7, 8 ], [ 9, 10 ], [ 11, 12 ], [ 13, 14 ], [ 15, 16 ] ]");
+            "[ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ], [ 7, 8 ], [ 9, 10 ], [ 11, 12 ], [ 13, 14 ], [ 15, 16 ] ]");
         evaluate.accept("json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]').flatten()",
-                "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
+            "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
         evaluate.accept("flatten(json('[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]'), 3, null)",
-                "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
+            "[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]");
         evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'), '_', null)",
-                "{\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"b_0\" : 2,\n" +
-                        "  \"b_1\" : 3,\n" +
-                        "  \"c_d\" : 4,\n" +
-                        "  \"c_e_f\" : 5\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b_0\" : 2,\n" +
+                "  \"b_1\" : 3,\n" +
+                "  \"c_d\" : 4,\n" +
+                "  \"c_e_f\" : 5\n" +
+                "}");
         evaluate.accept("json('[0,1,[2,3,[4,{\"a\":5},6,[7]],8],9]').flatten('_')",
-                "{\n" +
-                        "  \"0\" : 0,\n" +
-                        "  \"1\" : 1,\n" +
-                        "  \"2_0\" : 2,\n" +
-                        "  \"2_1\" : 3,\n" +
-                        "  \"2_2_0\" : 4,\n" +
-                        "  \"2_2_1_a\" : 5,\n" +
-                        "  \"2_2_2\" : 6,\n" +
-                        "  \"2_2_3_0\" : 7,\n" +
-                        "  \"2_3\" : 8,\n" +
-                        "  \"3\" : 9\n" +
-                        "}");
+            "{\n" +
+                "  \"0\" : 0,\n" +
+                "  \"1\" : 1,\n" +
+                "  \"2_0\" : 2,\n" +
+                "  \"2_1\" : 3,\n" +
+                "  \"2_2_0\" : 4,\n" +
+                "  \"2_2_1_a\" : 5,\n" +
+                "  \"2_2_2\" : 6,\n" +
+                "  \"2_2_3_0\" : 7,\n" +
+                "  \"2_3\" : 8,\n" +
+                "  \"3\" : 9\n" +
+                "}");
         evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'), '.', '[%d]')",
-                "{\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"b[0]\" : 2,\n" +
-                        "  \"b[1]\" : 3,\n" +
-                        "  \"c.d\" : 4,\n" +
-                        "  \"c.e.f\" : 5\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b[0]\" : 2,\n" +
+                "  \"b[1]\" : 3,\n" +
+                "  \"c.d\" : 4,\n" +
+                "  \"c.e.f\" : 5\n" +
+                "}");
         evaluate.accept("json('[0,1,[2,3,[4,{\"a\":5},6,[7]],8],9]').flatten('.', '[%d]')",
-                "{\n" +
-                        "  \"[0]\" : 0,\n" +
-                        "  \"[1]\" : 1,\n" +
-                        "  \"[2][0]\" : 2,\n" +
-                        "  \"[2][1]\" : 3,\n" +
-                        "  \"[2][2][0]\" : 4,\n" +
-                        "  \"[2][2][1].a\" : 5,\n" +
-                        "  \"[2][2][2]\" : 6,\n" +
-                        "  \"[2][2][3][0]\" : 7,\n" +
-                        "  \"[2][3]\" : 8,\n" +
-                        "  \"[3]\" : 9\n" +
-                        "}");
+            "{\n" +
+                "  \"[0]\" : 0,\n" +
+                "  \"[1]\" : 1,\n" +
+                "  \"[2][0]\" : 2,\n" +
+                "  \"[2][1]\" : 3,\n" +
+                "  \"[2][2][0]\" : 4,\n" +
+                "  \"[2][2][1].a\" : 5,\n" +
+                "  \"[2][2][2]\" : 6,\n" +
+                "  \"[2][2][3][0]\" : 7,\n" +
+                "  \"[2][3]\" : 8,\n" +
+                "  \"[3]\" : 9\n" +
+                "}");
         // unflatten()
         evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'),'_',null).unflatten('_')",
-                "{\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"b\" : [ 2, 3 ],\n" +
-                        "  \"c\" : {\n" +
-                        "    \"d\" : 4,\n" +
-                        "    \"e\" : {\n" +
-                        "      \"f\" : 5\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b\" : [ 2, 3 ],\n" +
+                "  \"c\" : {\n" +
+                "    \"d\" : 4,\n" +
+                "    \"e\" : {\n" +
+                "      \"f\" : 5\n" +
+                "    }\n" +
+                "  }\n" +
+                "}");
         evaluate.accept("json('[0,1,[2,3,[4,{\"a\":5},6,[7]],8],9]').flatten('_').unflatten('_')",
-                "[ 0, 1, [ 2, 3, [ 4, {\n" +
-                        "  \"a\" : 5\n" +
-                        "}, 6, [ 7 ] ], 8 ], 9 ]");
+            "[ 0, 1, [ 2, 3, [ 4, {\n" +
+                "  \"a\" : 5\n" +
+                "}, 6, [ 7 ] ], 8 ], 9 ]");
         evaluate.accept("flatten(json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":{\"f\":5}}}'),'.','[%d]').unflatten('.[]')",
-                "{\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"b\" : [ 2, 3 ],\n" +
-                        "  \"c\" : {\n" +
-                        "    \"d\" : 4,\n" +
-                        "    \"e\" : {\n" +
-                        "      \"f\" : 5\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b\" : [ 2, 3 ],\n" +
+                "  \"c\" : {\n" +
+                "    \"d\" : 4,\n" +
+                "    \"e\" : {\n" +
+                "      \"f\" : 5\n" +
+                "    }\n" +
+                "  }\n" +
+                "}");
         evaluate.accept("json('[0,1,[2,3,[4,{\"a\":5},6,[7]],8],9]').flatten('.','[%d]').unflatten('.[]')",
-                "[ 0, 1, [ 2, 3, [ 4, {\n" +
-                        "  \"a\" : 5\n" +
-                        "}, 6, [ 7 ] ], 8 ], 9 ]");
+            "[ 0, 1, [ 2, 3, [ 4, {\n" +
+                "  \"a\" : 5\n" +
+                "}, 6, [ 7 ] ], 8 ], 9 ]");
         // map()
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').map(c.e,c.d,b,a)",
-                "{\n" +
-                        "  \"e\" : 5,\n" +
-                        "  \"d\" : 4,\n" +
-                        "  \"b\" : [ 2, 3 ],\n" +
-                        "  \"a\" : 1\n" +
-                        "}");
+            "{\n" +
+                "  \"e\" : 5,\n" +
+                "  \"d\" : 4,\n" +
+                "  \"b\" : [ 2, 3 ],\n" +
+                "  \"a\" : 1\n" +
+                "}");
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').map(cc:c.map(dd:d,ee:e),xx:map(aa:a,bb:b))",
-                "{\n" +
-                        "  \"cc\" : {\n" +
-                        "    \"dd\" : 4,\n" +
-                        "    \"ee\" : 5\n" +
-                        "  },\n" +
-                        "  \"xx\" : {\n" +
-                        "    \"aa\" : 1,\n" +
-                        "    \"bb\" : [ 2, 3 ]\n" +
-                        "  }\n" +
-                        "}");
+            "{\n" +
+                "  \"cc\" : {\n" +
+                "    \"dd\" : 4,\n" +
+                "    \"ee\" : 5\n" +
+                "  },\n" +
+                "  \"xx\" : {\n" +
+                "    \"aa\" : 1,\n" +
+                "    \"bb\" : [ 2, 3 ]\n" +
+                "  }\n" +
+                "}");
         // field()
         evaluate.accept("json('{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}').field(f:6,c:)",
-                "{\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"b\" : [ 2, 3 ],\n" +
-                        "  \"f\" : 6\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b\" : [ 2, 3 ],\n" +
+                "  \"f\" : 6\n" +
+                "}");
         evaluate.accept("json('{\"id\":\"1782-734828-A\",\"name\":\"Cyron\"}').field(id.split('-')@.repeat('X',length()).@join('-'))",
-                "{\n" +
-                        "  \"id\" : \"XXXX-XXXXXX-X\",\n" +
-                        "  \"name\" : \"Cyron\"\n" +
-                        "}");
+            "{\n" +
+                "  \"id\" : \"XXXX-XXXXXX-X\",\n" +
+                "  \"name\" : \"Cyron\"\n" +
+                "}");
+        // group()
+        evaluate.accept("json('[{\"a\":1,\"b\":\"A\"},{\"a\":2,\"b\":\"B\"},{\"a\":3,\"b\":\"C\"},{\"a\":2,\"b\":\"D\"},{\"a\":1,\"b\":\"E\"}]').group(a)",
+            "[ {\n" +
+                "  \"a\" : 1,\n" +
+                "  \"elements\" : [ {\n" +
+                "    \"a\" : 1,\n" +
+                "    \"b\" : \"A\"\n" +
+                "  }, {\n" +
+                "    \"a\" : 1,\n" +
+                "    \"b\" : \"E\"\n" +
+                "  } ]\n" +
+                "}, {\n" +
+                "  \"a\" : 2,\n" +
+                "  \"elements\" : [ {\n" +
+                "    \"a\" : 2,\n" +
+                "    \"b\" : \"B\"\n" +
+                "  }, {\n" +
+                "    \"a\" : 2,\n" +
+                "    \"b\" : \"D\"\n" +
+                "  } ]\n" +
+                "}, {\n" +
+                "  \"a\" : 3,\n" +
+                "  \"elements\" : [ {\n" +
+                "    \"a\" : 3,\n" +
+                "    \"b\" : \"C\"\n" +
+                "  } ]\n" +
+                "} ]");
+        evaluate.accept("json('[{\"a\":1,\"b\":\"A\"},{\"a\":2,\"b\":\"B\"},{\"a\":3,\"b\":\"C\"},{\"a\":2,\"b\":\"D\"},{\"a\":1,\"b\":\"E\"}]').group(a,bs:b)",
+            "[ {\n" +
+                "  \"a\" : 1,\n" +
+                "  \"bs\" : [ \"A\", \"E\" ]\n" +
+                "}, {\n" +
+                "  \"a\" : 2,\n" +
+                "  \"bs\" : [ \"B\", \"D\" ]\n" +
+                "}, {\n" +
+                "  \"a\" : 3,\n" +
+                "  \"bs\" : [ \"C\" ]\n" +
+                "} ]");
+        // unwind()
+        evaluate.accept("json('[{\"a\":1,\"bs\":[\"A\",\"E\"]},{\"a\":2,\"bs\":[\"B\",\"D\"]},{\"a\":3,\"bs\":[\"C\"]}]').unwind(b:bs)",
+            "[ {\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b\" : \"A\"\n" +
+                "}, {\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b\" : \"E\"\n" +
+                "}, {\n" +
+                "  \"a\" : 2,\n" +
+                "  \"b\" : \"B\"\n" +
+                "}, {\n" +
+                "  \"a\" : 2,\n" +
+                "  \"b\" : \"D\"\n" +
+                "}, {\n" +
+                "  \"a\" : 3,\n" +
+                "  \"b\" : \"C\"\n" +
+                "} ]");
+        // assort()
+        evaluate.accept("json('{\"xy1\": 1,\"xy2\": 2,\"ab1\": 3,\"ab2\": 4,\"ab3\": 5,\"zz1\": 6,\"xy3\": 7,\"zz2\": 9,\"zz3\": {\"k\":10}}}').assort(*.[isEven()], ~'xy.*', ~'ab.*', ??)",
+            "[ {\n" +
+                "  \"xy2\" : 2,\n" +
+                "  \"ab2\" : 4,\n" +
+                "  \"zz1\" : 6\n" +
+                "}, {\n" +
+                "  \"xy1\" : 1,\n" +
+                "  \"xy3\" : 7\n" +
+                "}, {\n" +
+                "  \"ab1\" : 3,\n" +
+                "  \"ab3\" : 5\n" +
+                "}, {\n" +
+                "  \"zz2\" : 9\n" +
+                "}, {\n" +
+                "  \"zz3\" : {\n" +
+                "    \"k\" : 10\n" +
+                "  }\n" +
+                "} ]");
+        evaluate.accept("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)",
+            "[ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9, 11 ] ]");
+
+        // Programmable Functions
+        // eval()
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"statement\":\"calc(a+b*2)\"}').eval(statement)", "5.0");
+        evaluate.accept("json('[{\"a\":3,\"s\":\"calc(a*2)\"},{\"a\":4,\"s\":\"calc(a*2)\"}]')@.eval(s)", "[ 6.0, 8.0 ]");
+        // json()
+        evaluate.accept("json('[1,\"2\",{\"a\":1,\"b\":2}]')",
+            "[ 1, \"2\", {\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b\" : 2\n" +
+                "} ]");
+        evaluate.accept("'{\"a\":1,\"b\":[2,3],\"c\":{\"d\":4,\"e\":5}}'.json()",
+            "{\n" +
+                "  \"a\" : 1,\n" +
+                "  \"b\" : [ 2, 3 ],\n" +
+                "  \"c\" : {\n" +
+                "    \"d\" : 4,\n" +
+                "    \"e\" : 5\n" +
+                "  }\n" +
+                "}");
+        // if()
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if(a.isEven(), 'T', 'F')", "F");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1], 'T', 'F')", "T");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1 & b=3], 'T', 'F')", "F");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=1 & b=3], 'T')", "!unresolvable!");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').if([a=b], 'T', if([c=3], 'C', 'F'))", "C");
+        evaluate.accept("json('[1,2,3,4,5]').if(isOdd(), calc(?*2), ?)", "[ 2.0, 2, 6.0, 4, 10.0 ]");
+        // ifNot()
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').ifNot(a.isEven(), 'T', 'F')", "T");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').ifNot([a=1 & b=3], 'T')", "T");
+        evaluate.accept("json('{\"a\":1,\"b\":2,\"c\":3}').ifNot([a=b], 'T', if([c=3], 'C', 'F'))", "T");
+        evaluate.accept("json('[1,2,3,4,5]').ifNot(isOdd(), calc(?*2), ?)", "[ 1, 4.0, 3, 8.0, 5 ]");
         // coalesce()
         evaluate.accept("json('[\"abc\",\"\",123,false,null]').coalesce('xyz')", "[ \"abc\", \"\", 123, false, \"xyz\" ]");
         evaluate.accept("json('{\"a\":null,\"c\":\"abc\"}').coalesce(a,b,c,'xyz')", "abc");
-        // csv()
-        evaluate.accept("json('{\"len1\":\"12.3\\\"\",\"len2\":null,\"len3\":\"64.0\\\"\"}').csv()",
-                "\"12.3\"\"\",,\"64.0\"\"\"");
-        evaluate.accept("csv(json('[[[[1,2],[\"3\",\"4\\\"\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
-                "1,2,3,\"4\"\"\",1,2.0,8.888,true,");
-        // csvShowNull()
-        evaluate.accept("json('{\"len1\":\"12.3\\\"\",\"len2\":null,\"len3\":\"64.0\\\"\"}').csvShowNull()",
-                "\"12.3\"\"\",null,\"64.0\"\"\"");
-        evaluate.accept("csvShowNull(json('[[[[1,2],[\"3\",\"4\\\"\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
-                "1,2,3,\"4\"\"\",1,2.0,8.888,true,null");
-        // csvParams()
-        evaluate.accept("json('{\"len1\":\"12.3\",\"len2\":null,\"len3\":\"64.0\\\"\"}').csvParams()",
-                "'12.3',null,'64.0\"'");
-        evaluate.accept("csvParams(json('[[[[1,2],[\"3\",\"4''\"]]],{\"a\":1,\"b\":[2.0,8.888],\"c\":{\"d\":true,\"e\":null}}]'))",
-                "1,2,'3','4''',1,2.0,8.888,true,null");
-        // group()
-        evaluate.accept("json('[{\"a\":1,\"b\":\"A\"},{\"a\":2,\"b\":\"B\"},{\"a\":3,\"b\":\"C\"},{\"a\":2,\"b\":\"D\"},{\"a\":1,\"b\":\"E\"}]').group(a)",
-                "[ {\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"elements\" : [ {\n" +
-                        "    \"a\" : 1,\n" +
-                        "    \"b\" : \"A\"\n" +
-                        "  }, {\n" +
-                        "    \"a\" : 1,\n" +
-                        "    \"b\" : \"E\"\n" +
-                        "  } ]\n" +
-                        "}, {\n" +
-                        "  \"a\" : 2,\n" +
-                        "  \"elements\" : [ {\n" +
-                        "    \"a\" : 2,\n" +
-                        "    \"b\" : \"B\"\n" +
-                        "  }, {\n" +
-                        "    \"a\" : 2,\n" +
-                        "    \"b\" : \"D\"\n" +
-                        "  } ]\n" +
-                        "}, {\n" +
-                        "  \"a\" : 3,\n" +
-                        "  \"elements\" : [ {\n" +
-                        "    \"a\" : 3,\n" +
-                        "    \"b\" : \"C\"\n" +
-                        "  } ]\n" +
-                        "} ]");
-        evaluate.accept("json('[{\"a\":1,\"b\":\"A\"},{\"a\":2,\"b\":\"B\"},{\"a\":3,\"b\":\"C\"},{\"a\":2,\"b\":\"D\"},{\"a\":1,\"b\":\"E\"}]').group(a,bs:b)",
-                "[ {\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"bs\" : [ \"A\", \"E\" ]\n" +
-                        "}, {\n" +
-                        "  \"a\" : 2,\n" +
-                        "  \"bs\" : [ \"B\", \"D\" ]\n" +
-                        "}, {\n" +
-                        "  \"a\" : 3,\n" +
-                        "  \"bs\" : [ \"C\" ]\n" +
-                        "} ]");
-        // unwind()
-        evaluate.accept("json('[{\"a\":1,\"bs\":[\"A\",\"E\"]},{\"a\":2,\"bs\":[\"B\",\"D\"]},{\"a\":3,\"bs\":[\"C\"]}]').unwind(b:bs)",
-                "[ {\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"b\" : \"A\"\n" +
-                        "}, {\n" +
-                        "  \"a\" : 1,\n" +
-                        "  \"b\" : \"E\"\n" +
-                        "}, {\n" +
-                        "  \"a\" : 2,\n" +
-                        "  \"b\" : \"B\"\n" +
-                        "}, {\n" +
-                        "  \"a\" : 2,\n" +
-                        "  \"b\" : \"D\"\n" +
-                        "}, {\n" +
-                        "  \"a\" : 3,\n" +
-                        "  \"b\" : \"C\"\n" +
-                        "} ]");
+        // caseValue()
+        evaluate.accept("'a'.caseValue('A',1,'b',2,'a',3,4)", "3");
+        evaluate.accept("'z'.caseValue('A',1,'b',2,'a',3,4)", "4");
+        evaluate.accept("'z'.caseValue('A',1,'b',2,'a',3)", "!unresolvable!");
+        evaluate.accept("json('[{\"s\":1},{\"s\":null},{\"s\":3}]').s.caseValue(1,'A',null,'B')", "[ \"A\", \"B\", null ]");
+        // caseValueIgnoreCase()
+        evaluate.accept("'a'.caseValueIgnoreCase('A',1,'b',2,'a',3,4)", "1");
+        evaluate.accept("'z'.caseValueIgnoreCase('A',1,'b',2,'a',3,4)", "4");
+        evaluate.accept("'z'.caseValueIgnoreCase('A',1,'b',2,'a',3)", "!unresolvable!");
+        // indexedValue()
+        evaluate.accept("0.indexedValue('a','b','c','d')", "a");
+        evaluate.accept("1.indexedValue(json('[\"a\",\"b\",\"c\",\"d\"]'))", "b");
+        evaluate.accept("'3'.indexedValue('a','b','c','d')", "d");
+        evaluate.accept("4.indexedValue('a','b','c','d')", "!unresolvable!");
+        evaluate.accept("-1.indexedValue('a','b','c','d')", "!unresolvable!");
+        // cycleValue()
+        evaluate.accept("0.cycleValue('a','b','c','d')", "a");
+        evaluate.accept("1.cycleValue(json('[\"a\",\"b\",\"c\",\"d\"]'))", "b");
+        evaluate.accept("'3'.cycleValue('a','b','c','d')", "d");
+        evaluate.accept("4.cycleValue('a','b','c','d')", "a");
+        evaluate.accept("-1.cycleValue('a','b','c','d')", "d");
+        evaluate.accept("-6.cycleValue('a','b','c','d')", "c");
         // steps()
         evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.steps()", "2");
         evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.b.steps()", "3");
         evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').*().c.steps()", "4");
         evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.b.calc(c+1).steps()", "4");
         evaluate.accept("json('{\"a\":{\"b\":{\"c\":1}}}').a.b.c.calc(?+1).steps()", "5");
-
+        // get()
+        evaluate.accept("json('{\"decode\":[{\"code\":\"A\",\"color\":\"Red\"},{\"code\":\"B\",\"color\":\"Blue\"}],\"data\":[\"B\",\"A\",\"B\"]}')" +
+                ".data@.let($code:?).get(...decode[code=$code].color)",
+            "[ \"Blue\", \"Red\", \"Blue\" ]");
+        // let()
+        evaluate.accept("json('{\"a\":1,\"b\":2}').let($x:a, $y:calc(a+b), $z:concat(a,b)).map($x,$y,$z)",
+            "{\n" +
+                "  \"$x\" : 1,\n" +
+                "  \"$y\" : 3.0,\n" +
+                "  \"$z\" : \"12\"\n" +
+                "}");
         // mergeArraysOption()
         evaluate.accept("json('[[1,2,3,4,5,6],[8,6,4,2]]').mergeArraysOption(Append).mergeArrays()", "[ 1, 2, 3, 4, 5, 6, 8, 6, 4, 2 ]");
         evaluate.accept("json('[[1,2,3,4,5,6],[8,6,4,2]]').mergeArraysOption(Integrate).mergeArrays()", "[ 1, 2, 3, 4, 5, 6, 8 ]");
@@ -2342,45 +2451,45 @@ public class UnitTest {
         evaluate.accept("json('[[8,6,4,2],[1,2,3,4,5,6]]').mergeArraysOption(ReplaceWhole).mergeArrays()", "[ 1, 2, 3, 4, 5, 6 ]");
         evaluate.accept("json('[[8,6,4,2],[1,2,3,4,5,6]]').mergeArraysOption(ReplaceByIndex).mergeArrays()", "[ 1, 2, 3, 4, 5, 6 ]");
         evaluate.accept("json('[{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"},{\"a\":[8,6,4,2],\"b\":\"2nd\"}]').mergeArraysOption(Append).mergeObjects()",
-                "{\n" +
-                        "  \"a\" : [ 1, 2, 3, 4, 5, 6, 8, 6, 4, 2 ],\n" +
-                        "  \"b\" : \"2nd\"\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : [ 1, 2, 3, 4, 5, 6, 8, 6, 4, 2 ],\n" +
+                "  \"b\" : \"2nd\"\n" +
+                "}");
         evaluate.accept("json('[{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"},{\"a\":[8,6,4,2],\"b\":\"2nd\"}]').mergeArraysOption(Integrate).mergeObjects()",
-                "{\n" +
-                        "  \"a\" : [ 1, 2, 3, 4, 5, 6, 8 ],\n" +
-                        "  \"b\" : \"2nd\"\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : [ 1, 2, 3, 4, 5, 6, 8 ],\n" +
+                "  \"b\" : \"2nd\"\n" +
+                "}");
         evaluate.accept("json('[{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"},{\"a\":[8,6,4,2],\"b\":\"2nd\"}]').mergeArraysOption(ReplaceWhole).mergeObjects()",
-                "{\n" +
-                        "  \"a\" : [ 8, 6, 4, 2 ],\n" +
-                        "  \"b\" : \"2nd\"\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : [ 8, 6, 4, 2 ],\n" +
+                "  \"b\" : \"2nd\"\n" +
+                "}");
         evaluate.accept("json('[{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"},{\"a\":[8,6,4,2],\"b\":\"2nd\"}]').mergeArraysOption(ReplaceByIndex).mergeObjects()",
-                "{\n" +
-                        "  \"a\" : [ 8, 6, 4, 2, 5, 6 ],\n" +
-                        "  \"b\" : \"2nd\"\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : [ 8, 6, 4, 2, 5, 6 ],\n" +
+                "  \"b\" : \"2nd\"\n" +
+                "}");
         evaluate.accept("json('[{\"a\":[8,6,4,2],\"b\":\"2nd\"},{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"}]').mergeArraysOption(Append).mergeObjects()",
-                "{\n" +
-                        "  \"a\" : [ 8, 6, 4, 2, 1, 2, 3, 4, 5, 6 ],\n" +
-                        "  \"b\" : \"1st\"\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : [ 8, 6, 4, 2, 1, 2, 3, 4, 5, 6 ],\n" +
+                "  \"b\" : \"1st\"\n" +
+                "}");
         evaluate.accept("json('[{\"a\":[8,6,4,2],\"b\":\"2nd\"},{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"}]').mergeArraysOption(Integrate).mergeObjects()",
-                "{\n" +
-                        "  \"a\" : [ 8, 6, 4, 2, 1, 3, 5 ],\n" +
-                        "  \"b\" : \"1st\"\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : [ 8, 6, 4, 2, 1, 3, 5 ],\n" +
+                "  \"b\" : \"1st\"\n" +
+                "}");
         evaluate.accept("json('[{\"a\":[8,6,4,2],\"b\":\"2nd\"},{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"}]').mergeArraysOption(ReplaceWhole).mergeObjects()",
-                "{\n" +
-                        "  \"a\" : [ 1, 2, 3, 4, 5, 6 ],\n" +
-                        "  \"b\" : \"1st\"\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : [ 1, 2, 3, 4, 5, 6 ],\n" +
+                "  \"b\" : \"1st\"\n" +
+                "}");
         evaluate.accept("json('[{\"a\":[8,6,4,2],\"b\":\"2nd\"},{\"a\":[1,2,3,4,5,6],\"b\":\"1st\"}]').mergeArraysOption(ReplaceByIndex).mergeObjects()",
-                "{\n" +
-                        "  \"a\" : [ 1, 2, 3, 4, 5, 6 ],\n" +
-                        "  \"b\" : \"1st\"\n" +
-                        "}");
+            "{\n" +
+                "  \"a\" : [ 1, 2, 3, 4, 5, 6 ],\n" +
+                "  \"b\" : \"1st\"\n" +
+                "}");
     }
 
     @Test
@@ -2389,140 +2498,140 @@ public class UnitTest {
         Josson.setZoneId(ZoneId.of("Asia/Hong_Kong"));
         Josson.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         Jossons jossons = Jossons.fromJsonString("{\n" +
-                "    \"order\": {\n" +
-                "        \"salesOrderId\": \"SO0001\",\n" +
-                "        \"salesDate\": \"2022-01-01T10:01:23\",\n" +
-                "        \"salesPerson\": \"Raymond\",\n" +
-                "        \"customer\": {\n" +
-                "            \"customerId\": \"CU0001\",\n" +
-                "            \"name\": \"Peggy\",\n" +
-                "            \"phone\": \"+852 62000610\"\n" +
-                "        },\n" +
-                "        \"items\": [\n" +
-                "            {\n" +
-                "                \"itemCode\": \"B00001\",\n" +
-                "                \"name\": \"WinWin TShirt Series A - 2022\",\n" +
-                "                \"brand\": \"WinWin\",\n" +
-                "                \"property\": {\n" +
-                "                    \"size\": \"M\",\n" +
-                "                    \"colors\": [\n" +
-                "                        \"WHITE\",\n" +
-                "                        \"RED\"\n" +
-                "                    ]\n" +
-                "                },\n" +
-                "                \"qty\": 2,\n" +
-                "                \"unit\": \"Pcs\",\n" +
-                "                \"unitPrice\": 15.0,\n" +
-                "                \"tags\": [\n" +
-                "                    \"SHIRT\",\n" +
-                "                    \"WOMEN\"\n" +
-                "                ]\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"itemCode\": \"A00308\",\n" +
-                "                \"name\": \"OctoPlus Tennis Racket - Star\",\n" +
-                "                \"brand\": \"OctoPlus\",\n" +
-                "                \"property\": {\n" +
-                "                    \"colors\": [\n" +
-                "                        \"BLACK\"\n" +
-                "                    ]\n" +
-                "                },\n" +
-                "                \"qty\": 1,\n" +
-                "                \"unit\": \"Pcs\",\n" +
-                "                \"unitPrice\": 150.0,\n" +
-                "                \"unitDiscount\": 10.0,\n" +
-                "                \"tags\": [\n" +
-                "                    \"TENNIS\",\n" +
-                "                    \"SPORT\",\n" +
-                "                    \"RACKET\"\n" +
-                "                ]\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"itemCode\": \"A00201\",\n" +
-                "                \"name\": \"WinWin Sport Shoe - Super\",\n" +
-                "                \"brand\": \"WinWin\",\n" +
-                "                \"property\": {\n" +
-                "                    \"size\": \"35\",\n" +
-                "                    \"colors\": [\n" +
-                "                        \"RED\"\n" +
-                "                    ]\n" +
-                "                },\n" +
-                "                \"qty\": 1,\n" +
-                "                \"unit\": \"Pair\",\n" +
-                "                \"unitPrice\": 110.0,\n" +
-                "                \"unitDiscount\": 10.0,\n" +
-                "                \"tags\": [\n" +
-                "                    \"SHOE\",\n" +
-                "                    \"SPORT\",\n" +
-                "                    \"WOMEN\"\n" +
-                "                ]\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"totalAmount\": 270.0,\n" +
-                "        \"discountPct\": 5.0,\n" +
-                "        \"netAmount\": 256.5,\n" +
-                "        \"delivery\": {\n" +
-                "            \"handlingFee\": 5.0,\n" +
-                "            \"address\": \"Wo Mun Street,\\nFanling, N.T.,\\nHong Kong\",\n" +
-                "            \"contactPerson\": \"Cyron\",\n" +
-                "            \"phone\": \"+852 26004198\"\n" +
-                "        }\n" +
-                "    },\n" +
-                "    \"company\": {\n" +
-                "        \"name\": \"Octomix Limited\",\n" +
-                "        \"phone\": \"+852 12345678\",\n" +
-                "        \"website\": \"www.octomix.com\",\n" +
-                "        \"address\": [\n" +
-                "            \"888 Queen's Road East\",\n" +
-                "            \"Hong Kong\"\n" +
-                "        ]\n" +
-                "    }\n" +
-                "}");
+            "    \"order\": {\n" +
+            "        \"salesOrderId\": \"SO0001\",\n" +
+            "        \"salesDate\": \"2022-01-01T10:01:23\",\n" +
+            "        \"salesPerson\": \"Raymond\",\n" +
+            "        \"customer\": {\n" +
+            "            \"customerId\": \"CU0001\",\n" +
+            "            \"name\": \"Peggy\",\n" +
+            "            \"phone\": \"+852 62000610\"\n" +
+            "        },\n" +
+            "        \"items\": [\n" +
+            "            {\n" +
+            "                \"itemCode\": \"B00001\",\n" +
+            "                \"name\": \"WinWin TShirt Series A - 2022\",\n" +
+            "                \"brand\": \"WinWin\",\n" +
+            "                \"property\": {\n" +
+            "                    \"size\": \"M\",\n" +
+            "                    \"colors\": [\n" +
+            "                        \"WHITE\",\n" +
+            "                        \"RED\"\n" +
+            "                    ]\n" +
+            "                },\n" +
+            "                \"qty\": 2,\n" +
+            "                \"unit\": \"Pcs\",\n" +
+            "                \"unitPrice\": 15.0,\n" +
+            "                \"tags\": [\n" +
+            "                    \"SHIRT\",\n" +
+            "                    \"WOMEN\"\n" +
+            "                ]\n" +
+            "            },\n" +
+            "            {\n" +
+            "                \"itemCode\": \"A00308\",\n" +
+            "                \"name\": \"OctoPlus Tennis Racket - Star\",\n" +
+            "                \"brand\": \"OctoPlus\",\n" +
+            "                \"property\": {\n" +
+            "                    \"colors\": [\n" +
+            "                        \"BLACK\"\n" +
+            "                    ]\n" +
+            "                },\n" +
+            "                \"qty\": 1,\n" +
+            "                \"unit\": \"Pcs\",\n" +
+            "                \"unitPrice\": 150.0,\n" +
+            "                \"unitDiscount\": 10.0,\n" +
+            "                \"tags\": [\n" +
+            "                    \"TENNIS\",\n" +
+            "                    \"SPORT\",\n" +
+            "                    \"RACKET\"\n" +
+            "                ]\n" +
+            "            },\n" +
+            "            {\n" +
+            "                \"itemCode\": \"A00201\",\n" +
+            "                \"name\": \"WinWin Sport Shoe - Super\",\n" +
+            "                \"brand\": \"WinWin\",\n" +
+            "                \"property\": {\n" +
+            "                    \"size\": \"35\",\n" +
+            "                    \"colors\": [\n" +
+            "                        \"RED\"\n" +
+            "                    ]\n" +
+            "                },\n" +
+            "                \"qty\": 1,\n" +
+            "                \"unit\": \"Pair\",\n" +
+            "                \"unitPrice\": 110.0,\n" +
+            "                \"unitDiscount\": 10.0,\n" +
+            "                \"tags\": [\n" +
+            "                    \"SHOE\",\n" +
+            "                    \"SPORT\",\n" +
+            "                    \"WOMEN\"\n" +
+            "                ]\n" +
+            "            }\n" +
+            "        ],\n" +
+            "        \"totalAmount\": 270.0,\n" +
+            "        \"discountPct\": 5.0,\n" +
+            "        \"netAmount\": 256.5,\n" +
+            "        \"delivery\": {\n" +
+            "            \"handlingFee\": 5.0,\n" +
+            "            \"address\": \"Wo Mun Street,\\nFanling, N.T.,\\nHong Kong\",\n" +
+            "            \"contactPerson\": \"Cyron\",\n" +
+            "            \"phone\": \"+852 26004198\"\n" +
+            "        }\n" +
+            "    },\n" +
+            "    \"company\": {\n" +
+            "        \"name\": \"Octomix Limited\",\n" +
+            "        \"phone\": \"+852 12345678\",\n" +
+            "        \"website\": \"www.octomix.com\",\n" +
+            "        \"address\": [\n" +
+            "            \"888 Queen's Road East\",\n" +
+            "            \"Hong Kong\"\n" +
+            "        ]\n" +
+            "    }\n" +
+            "}");
         System.out.println(jossons.fillInPlaceholder(
-                "{{company->name.rightPad(65)}}INVOICE\n\n" +
-                        "{{company->address[0].rightPad(56) ?: $->repeat(' ',56)}}Issue Date: {{order->salesDate.formatDate('dd/MM/yyyy')}}\n" +
-                        "{{company->address[1].rightPad(58) ?: $->repeat(' ',58)}}Invoice#: {{order->salesOrderId.center(10)}}\n" +
-                        "Phone: {{company->phone.rightPad(48)}}Customer ID: {{order->customer.customerId.center(10)}}\n" +
-                        "Website: {{company->website.rightPad(49)}}Due Date: {{order->salesDate.plusMonths(1).formatDate('dd/MM/yyyy')}}\n\n" +
-                        "BILL TO                        {{order->delivery!=null ? 'SHIP TO'}}\n" +
-                        "{{order->customer.name.rightPad(30)}} {{order->delivery!=null ? order->coalesce(delivery.contactPerson,customer.name)}}\n" +
-                        "{{order->customer.coalesce(phone,'N/A').concat('Phone: ',?).rightPad(30)}} " +
-                        "{{order->delivery!=null ? order->coalesce(delivery.phone,customer.phone,'N/A').concat('Phone: ',?)}}\n" +
-                        "{{order->delivery.address!=null ? order->delivery.address.split('\n').concat(repeat(' ',31),?).join('\n').concat(?,'\n')}}\n" +
-                        "Item# Description                         Quantity Unit Price Discount    Total\n" +
-                        "----- ----------------------------------- -------- ---------- -------- --------\n" +
-                        "{{order->items.concat(\n" +
-                        "    ##.center(5),' ',\n" +
-                        "    name.rightPad(35),' ',\n" +
-                        "    concat(qty,' ',unit).center(8),' ',\n" +
-                        "    unitPrice.formatNumber('#,##0.0').leftPad(9),' ',\n" +
-                        "    coalesce(unitDiscount,0).formatNumber('#,##0.0').leftPad(8),' ',\n" +
-                        "    calc(qty * (unitPrice-d), d:coalesce(unitDiscount,0)).formatNumber('#,##0.0').leftPad(9),\n" +
-                        "    '\n      ',itemCode,' ',\n" +
-                        "    property.entries().concat(key,':',value.toString()).join(' ')\n" +
-                        "  ).join('\n')\n" +
-                        "}}\n" +
-                        "----- ----------------------------------- -------- ---------- -------- --------\n" +
-                        "{{order->totalAmount.formatNumber('US$#,##0.0').leftPad(12).concat('Subtotal:',?,'\n').leftPad(80)}}" +
-                        "{{order->discountPct > 0 ? order->discountPct.formatNumber('0.0').leftPad(11).concat('Discount:',?,'%\n').leftPad(80)}}" +
-                        "{{order->delivery.handlingFee!=null ? order->delivery.handlingFee.formatNumber('US$#,##0.0').leftPad(12).concat('Shipping and handling:',?,'\n').leftPad(80)}}" +
-                        "{{order->calc(netAmount+fee, fee:coalesce(delivery.handlingFee,0)).formatNumber('US$#,##0.0').leftPad(12).concat('Total:',?,'\n').leftPad(80)}}"
+            "{{company->name.rightPad(65)}}INVOICE\n\n" +
+                "{{company->address[0].rightPad(56) ?: $->repeat(' ',56)}}Issue Date: {{order->salesDate.formatDate('dd/MM/yyyy')}}\n" +
+                "{{company->address[1].rightPad(58) ?: $->repeat(' ',58)}}Invoice#: {{order->salesOrderId.center(10)}}\n" +
+                "Phone: {{company->phone.rightPad(48)}}Customer ID: {{order->customer.customerId.center(10)}}\n" +
+                "Website: {{company->website.rightPad(49)}}Due Date: {{order->salesDate.plusMonths(1).formatDate('dd/MM/yyyy')}}\n\n" +
+                "BILL TO                        {{order->delivery!=null ? 'SHIP TO'}}\n" +
+                "{{order->customer.name.rightPad(30)}} {{order->delivery!=null ? order->coalesce(delivery.contactPerson,customer.name)}}\n" +
+                "{{order->customer.coalesce(phone,'N/A').concat('Phone: ',?).rightPad(30)}} " +
+                "{{order->delivery!=null ? order->coalesce(delivery.phone,customer.phone,'N/A').concat('Phone: ',?)}}\n" +
+                "{{order->delivery.address!=null ? order->delivery.address.split('\n').concat(repeat(' ',31),?).join('\n').concat(?,'\n')}}\n" +
+                "Item# Description                         Quantity Unit Price Discount    Total\n" +
+                "----- ----------------------------------- -------- ---------- -------- --------\n" +
+                "{{order->items.concat(\n" +
+                "    ##.center(5),' ',\n" +
+                "    name.rightPad(35),' ',\n" +
+                "    concat(qty,' ',unit).center(8),' ',\n" +
+                "    unitPrice.formatNumber('#,##0.0').leftPad(9),' ',\n" +
+                "    coalesce(unitDiscount,0).formatNumber('#,##0.0').leftPad(8),' ',\n" +
+                "    calc(qty * (unitPrice-d), d:coalesce(unitDiscount,0)).formatNumber('#,##0.0').leftPad(9),\n" +
+                "    '\n      ',itemCode,' ',\n" +
+                "    property.entries().concat(key,':',value.toString()).join(' ')\n" +
+                "  ).join('\n')\n" +
+                "}}\n" +
+                "----- ----------------------------------- -------- ---------- -------- --------\n" +
+                "{{order->totalAmount.formatNumber('US$#,##0.0').leftPad(12).concat('Subtotal:',?,'\n').leftPad(80)}}" +
+                "{{order->discountPct > 0 ? order->discountPct.formatNumber('0.0').leftPad(11).concat('Discount:',?,'%\n').leftPad(80)}}" +
+                "{{order->delivery.handlingFee!=null ? order->delivery.handlingFee.formatNumber('US$#,##0.0').leftPad(12).concat('Shipping and handling:',?,'\n').leftPad(80)}}" +
+                "{{order->calc(netAmount+fee, fee:coalesce(delivery.handlingFee,0)).formatNumber('US$#,##0.0').leftPad(12).concat('Total:',?,'\n').leftPad(80)}}"
         ));
 
         // Test join datasets
         Map<String, String> dictionaryFinder = new HashMap<>();
         dictionaryFinder.put("stocks", "[]?{ignoredQuery}");
         dictionaryFinder.put("withStock",
-                "order->items.map(itemCode,qty){itemCode} <=< stocks{itemCode}");
+            "order->items.map(itemCode,qty){itemCode} <=< stocks{itemCode}");
         BiFunction<String, String, Josson> dataFinder = (collectionName, ignoredQuery) -> {
             try {
                 if (collectionName.equals("stocks[]")) {
                     return Josson.fromJsonString("[" +
-                            "{\"itemCode\":\"A00201\",\"onhandQty\":18}," +
-                            "{\"itemCode\":\"A00308\",\"onhandQty\":76}," +
-                            "{\"itemCode\":\"A00543\",\"onhandQty\":5}," +
-                            "{\"itemCode\":\"B00001\",\"onhandQty\":231}," +
-                            "{\"itemCode\":\"B00002\",\"onhandQty\":0}]");
+                        "{\"itemCode\":\"A00201\",\"onhandQty\":18}," +
+                        "{\"itemCode\":\"A00308\",\"onhandQty\":76}," +
+                        "{\"itemCode\":\"A00543\",\"onhandQty\":5}," +
+                        "{\"itemCode\":\"B00001\",\"onhandQty\":231}," +
+                        "{\"itemCode\":\"B00002\",\"onhandQty\":0}]");
                 }
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
@@ -2532,9 +2641,9 @@ public class UnitTest {
         ResolverProgress progress = new ResolverProgress();
         try {
             System.out.println(jossons.fillInPlaceholderWithResolver(
-                    "Order ID : {{order->salesOrderId}}\n" +
-                            "{{withStock->concat(itemCode.rightPad(10), 'Qty: ', qty, '   Onhand: ', onhandQty).join('\n')}}",
-                    dictionaryFinder::get, dataFinder, progress));
+                "Order ID : {{order->salesOrderId}}\n" +
+                    "{{withStock->concat(itemCode.rightPad(10), 'Qty: ', qty, '   Onhand: ', onhandQty).join('\n')}}",
+                dictionaryFinder::get, dataFinder, progress));
         } catch (NoValuePresentException e) {
             System.out.println(e.getPlaceholders());
             System.out.println(e.getContent());
@@ -2553,14 +2662,14 @@ public class UnitTest {
         progress = new ResolverProgress();
         try {
             System.out.println(jossons.fillInPlaceholderWithResolver("\n" +
-                            "\ndouble(3) ==> {{double(3)}}\n"+
-                            "\nsum2num(4,5) ==> {{sum2num(4,5)}}\n"+
-                            "\nsum2numThenDouble(1,2) ==> {{sum2numThenDouble(1,2)}}\n"+
-                            "\nprojectName() ==> {{projectName()}}\n"+
-                            "\nprojectName('CHI') ==> {{projectName('CHI')}}\n"+
-                            "\nprojectName('ENG') ==> {{projectName('ENG')}}\n"+
-                            "\ntitledList('List Title','Item A','Item B','Item C')\n==>\n{{titledList('List Title','Item A','Item B','Item C')}}",
-                    dictionaryFinder::get, null, progress));
+                    "\ndouble(3) ==> {{double(3)}}\n"+
+                    "\nsum2num(4,5) ==> {{sum2num(4,5)}}\n"+
+                    "\nsum2numThenDouble(1,2) ==> {{sum2numThenDouble(1,2)}}\n"+
+                    "\nprojectName() ==> {{projectName()}}\n"+
+                    "\nprojectName('CHI') ==> {{projectName('CHI')}}\n"+
+                    "\nprojectName('ENG') ==> {{projectName('ENG')}}\n"+
+                    "\ntitledList('List Title','Item A','Item B','Item C')\n==>\n{{titledList('List Title','Item A','Item B','Item C')}}",
+                dictionaryFinder::get, null, progress));
         } catch (NoValuePresentException e) {
             System.out.println(e.getPlaceholders());
             System.out.println(e.getContent());

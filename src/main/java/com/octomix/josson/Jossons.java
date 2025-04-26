@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class Jossons extends JossonsCore {
         }
         final Jossons jossons = new Jossons();
         if (datasets != null) {
-            datasets.fields().forEachRemaining(entry ->
+            datasets.properties().forEach(entry ->
                     jossons.datasets.put(entry.getKey(), Josson.create(entry.getValue())));
         }
         return jossons;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ class Mapper extends ObjectMapper {
 
     static ObjectNode deepCopy(final ObjectNode object, final int depth) {
         final ObjectNode copy = MAPPER.createObjectNode();
-        object.fields().forEachRemaining(entry -> {
+        object.properties().forEach(entry -> {
             final JsonNode value;
             if (entry.getValue().isValueNode()) {
                 value = entry.getValue();
@@ -101,7 +101,7 @@ class Mapper extends ObjectMapper {
 
     static ObjectNode struCopy(final ObjectNode object, final JsonNode structure, final boolean remove) {
         final ObjectNode copy = MAPPER.createObjectNode();
-        object.fields().forEachRemaining(entry -> {
+        object.properties().forEach(entry -> {
             final JsonNode struNode = structure != null && structure.isObject() ? structure.get(entry.getKey()) : null;
             if (struNode == null ? remove : !remove || !struNode.asBoolean()) {
                 final JsonNode value = entry.getValue();
