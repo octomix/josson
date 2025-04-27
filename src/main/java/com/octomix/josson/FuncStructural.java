@@ -378,10 +378,11 @@ final class FuncStructural {
         for (String[] pathAndFlag : paramPaths) {
             if (pathAndFlag[0] == null) {
                 pathAndFlag[0] = pathAndFlag[1];
-            } else if (!pathAndFlag[1].isEmpty()) {
-                if (!asBoolean(getNodeByExpression(path, StringUtils.removeStart(pathAndFlag[1], UNRESOLVABLE_AS_NULL)))) {
-                    continue;
-                }
+            } else if (
+                !pathAndFlag[1].isEmpty() &&
+                !asBoolean(getNodeByExpression(path, StringUtils.removeStart(pathAndFlag[1], UNRESOLVABLE_AS_NULL)))
+            ) {
+                continue;
             }
             final String flatten = pathAndFlag[0].startsWith(EVALUATE_KEY_NAME)
                 ? getNodeAsText(path, pathAndFlag[0].substring(1))
@@ -391,7 +392,7 @@ final class FuncStructural {
                 structure = funcUnflatten(structure, steps, 0, BooleanNode.TRUE);
             }
         }
-        return path.push(Mapper.struCopy(path.node(), structure, remove));
+        return path.push(struCopy(path.node(), structure, remove));
     }
 
     static PathTrace funcToArray(final PathTrace path, final String params) {
