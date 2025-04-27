@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.octomix.josson.commons.StringUtils;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -207,9 +206,7 @@ class CombineOperation {
     private static JsonNode subtract(final JsonNode leftNode, final JsonNode rightNode) {
         if (leftNode.isObject() && rightNode.isObject()) {
             final ObjectNode node = MAPPER.createObjectNode();
-            final Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
-            while (iterator.hasNext()) {
-                final Map.Entry<String, JsonNode> entry = iterator.next();
+            for (Map.Entry<String, JsonNode> entry : leftNode.properties()) {
                 if (rightNode.has(entry.getKey())) {
                     if (entry.getValue().isObject() && rightNode.get(entry.getKey()).isObject()
                         || entry.getValue().isArray() && rightNode.get(entry.getKey()).isArray()) {

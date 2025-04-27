@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -220,10 +219,8 @@ enum Operator {
                 rightArray.remove(j);
             }
         } else {
-            final Iterator<Map.Entry<String, JsonNode>> iterator = leftNode.fields();
-            while (iterator.hasNext()) {
-                final Map.Entry<String, JsonNode> leftElem = iterator.next();
-                if (!EQ.compare(leftElem.getValue(), rightNode.get(leftElem.getKey()))) {
+            for (Map.Entry<String, JsonNode> leftElem : leftNode.properties()) {
+                if (NE.compare(leftElem.getValue(), rightNode.get(leftElem.getKey()))) {
                     return this == NE;
                 }
             }

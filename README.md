@@ -32,7 +32,7 @@ https://mvnrepository.com/artifact/com.octomix.josson/josson
 ### Josson
 
 - Query a JSON dataset.
-- There are 246 internal functions to manipulate and format data.
+- There are 248 internal functions to manipulate and format data.
 - Restructure JSON data and capable of grouping and unwind data.
 - Multithreading capability for array elements manipulation.
 - Support custom function to manipulate node.
@@ -1595,7 +1595,76 @@ Below is the JSON for this tutorial.
           "tags" : [ "TENNIS", "SPORT", "RACKET" ]
         }
 
-78. Functions `map()`,`field()`,`group()`,`unwind()` - key name support evaluation using syntax `keyQuery::valueQuery`.
+78. Function `remove()` removes nodes that present in full path.
+
+        josson.getNode("remove(salesPerson,customer.name,customer.phone,items[0],items[1],items[2].tags[1])")
+        ==>
+        {
+          "salesOrderId" : "SO0001",
+          "salesDate" : "2022-01-01T10:01:23",
+          "customer" : {
+            "customerId" : "CU0001"
+          },
+          "items" : [ {
+            "itemCode" : "A00201",
+            "name" : "WinWin Sport Shoe - Super",
+            "brand" : "WinWin",
+            "property" : {
+              "size" : "35",
+              "colors" : [ "RED" ]
+            },
+            "qty" : 1,
+            "unit" : "Pair",
+            "unitPrice" : 110.0,
+            "unitDiscount" : 10.0,
+            "tags" : [ "SHOE", "WOMEN" ]
+          } ],
+          "totalAmount" : 270.0
+        }
+
+79. Function `retain()` retains nodes that present in full path.  All other not mentioned nodes will be removed.
+
+        josson.getNode("retain(salesOrderId,customer.customerId,items[2].itemCode,items[2].property,items[2].tags[0],items[2].tags[2])")
+        ==>
+        {
+          "salesOrderId" : "SO0001",
+          "customer" : {
+            "customerId" : "CU0001"
+          },
+          "items" : [ {
+            "itemCode" : "A00201",
+            "property" : {
+              "size" : "35",
+              "colors" : [ "RED" ]
+            },
+            "tags" : [ "SHOE", "WOMEN" ]
+          } ]
+        }
+
+80. Functions `remove()` and `retain()` - accept syntax "path:condition" where a false condition can disable it.
+
+        josson.getNode("retain(salesOrderId:true,salesDate:false,items[0].name:items[0].brand.equals('WinWin'),items[1]:[items[1].qty<2])")
+        ==>
+        {
+          "salesOrderId" : "SO0001",
+          "items" : [ {
+            "name" : "WinWin TShirt Series A - 2022"
+          }, {
+            "itemCode" : "A00308",
+            "name" : "OctoPlus Tennis Racket - Star",
+            "brand" : "OctoPlus",
+            "property" : {
+              "colors" : [ "BLACK" ]
+            },
+            "qty" : 1,
+            "unit" : "Pcs",
+            "unitPrice" : 150.0,
+            "unitDiscount" : 10.0,
+            "tags" : [ "TENNIS", "SPORT", "RACKET" ]
+          } ]
+        }
+
+81. Functions `map()`,`field()`,`group()`,`unwind()`,`remove()`,`retain()` - key name support evaluation using syntax `keyQuery::valueQuery`.
 
         josson.getNode("items.map(itemCode::qty)")
         ==>
@@ -1611,7 +1680,7 @@ Below is the JSON for this tutorial.
 
         {} → items[] → [{}] → [map(%) ⇒ {}] ⇒ [{}]
 
-79. Syntax `keyQuery::+valueQuery` present an unresolvable path as a NullNode.
+82. Syntax `keyQuery::+valueQuery` present an unresolvable path as a NullNode.
 
         josson.getNode("items.map(itemCode::unitDiscount)")
         ==>
@@ -1631,7 +1700,7 @@ Below is the JSON for this tutorial.
           "A00201" : 10.0
         } ]
 
-80. Function `mergeObjects()` merge all objects in an array into one object.
+83. Function `mergeObjects()` merge all objects in an array into one object.
 
         josson.getNode("mergeObjects(customer, items.map(itemCode::qty))")
         ==>
@@ -1648,7 +1717,7 @@ Below is the JSON for this tutorial.
 
         {} → mergeObjects(%) ⇒ {}
 
-81. Function `assort()` separates an object's entries according to different path conditions in sequence,
+84. Function `assort()` separates an object's entries according to different path conditions in sequence,
     and put them into the corresponding array if the evaluated result is not null.
     Entries will be removed if no condition can be matched.
     If the last argument is `??`, each of the remaining entry will be added to the end of result array separately.
@@ -1735,7 +1804,7 @@ Below is the JSON for this tutorial.
           }
         } ]
 
-82. Function `assort()` also works for array. The result is an array of arrays.
+85. Function `assort()` also works for array. The result is an array of arrays.
 
         josson.getNode("json('[1,2,3,4,5,6,7,8,9,10,11,12]').assort([?<5], [isEven()], [?<9], ?)")
         ==>
@@ -1745,7 +1814,7 @@ Below is the JSON for this tutorial.
         ==>
         [ [ 1, 2, 3, 4 ], [ 6, 8, 10, 12 ], [ 5, 7 ], [ 9 ], [ 11 ] ]
 
-83. Function `eval()` evaluates the value of a text node as a query statement.
+86. Function `eval()` evaluates the value of a text node as a query statement.
 
         josson.getNode("json('{\"a\":1,\"b\":2,\"statement\":\"calc(a+b*2)\"}').eval(statement)")
         ==>
@@ -1757,7 +1826,7 @@ Below is the JSON for this tutorial.
 
 ## Josson Functions
 
-There are 246 functions. They are classified into 8 categories:
+There are 248 functions. They are classified into 8 categories:
 
 Arithmetic Functions
 
@@ -1995,39 +2064,41 @@ Array Functions
 
 Structural Functions
 
-217. [entries()](#217-entries)
-218. [keys()](#218-keys)
-219. [depthLimit()](#219-depthlimit)
-220. [collect()](#220-collect)
-221. [cumulateCollect()](#221-cumulatecollect)
-222. [wrap()](#222-wrap)
-223. [toArray()](#223-toarray)
-224. [toObject()](#224-toobject)
-225. [mergeArrays()](#225-mergearrays)
-226. [mergeObjects()](#226-mergeobjects)
-227. [flatten()](#227-flatten)
-228. [unflatten()](#228-unflatten)
-229. [map()](#229-map)
-230. [field()](#230-field)
-231. [group()](#231-group)
-232. [unwind()](#232-unwind)
-233. [assort()](#233-assort)
+217. [remove()](#217-remove)
+218. [retain()](#218-retain)
+219. [entries()](#219-entries)
+220. [keys()](#220-keys)
+221. [depthLimit()](#221-depthlimit)
+222. [collect()](#222-collect)
+223. [cumulateCollect()](#223-cumulatecollect)
+224. [wrap()](#224-wrap)
+225. [toArray()](#225-toarray)
+226. [toObject()](#226-toobject)
+227. [mergeArrays()](#227-mergearrays)
+228. [mergeObjects()](#228-mergeobjects)
+229. [flatten()](#229-flatten)
+230. [unflatten()](#230-unflatten)
+231. [map()](#231-map)
+232. [field()](#232-field)
+233. [group()](#233-group)
+234. [unwind()](#234-unwind)
+235. [assort()](#235-assort)
 
 Programmable Functions
 
-234. [eval()](#234-eval)
-235. [json()](#235-json)
-236. [if()](#236-if)
-237. [ifNot()](#237-ifnot)
-238. [coalesce()](#238-coalesce)
-239. [caseValue()](#239-casevalue)
-240. [caseValueIgnoreCase()](#240-casevalueignorecase)
-241. [indexedValue()](#241-indexedvalue)
-242. [cycleValue()](#242-cyclevalue)
-243. [steps()](#243-steps)
-244. [get()](#244-get)
-245. [let()](#245-let)
-246. [mergeArraysOption()](#246-mergearraysoption)
+236. [eval()](#236-eval)
+237. [json()](#237-json)
+238. [if()](#238-if)
+239. [ifNot()](#239-ifnot)
+240. [coalesce()](#240-coalesce)
+241. [caseValue()](#241-casevalue)
+242. [caseValueIgnoreCase()](#242-casevalueignorecase)
+243. [indexedValue()](#243-indexedvalue)
+244. [cycleValue()](#244-cyclevalue)
+245. [steps()](#245-steps)
+246. [get()](#246-get)
+247. [let()](#247-let)
+248. [mergeArraysOption()](#248-mergearraysoption)
 
 Following are description of each function.
 
@@ -4254,7 +4325,36 @@ Finds the element with the minimum value for a field.  If only null field value 
 
 ### Structural Functions
 
-#### 217. entries()
+#### 217. remove()
+
+Removes nodes that present in full path.
+
+    json('{"a":1,"b":{"x":8,"y":9},"c":2,"d":[3,4,5],"e":"c"}').remove(b.x,d[1]:true,d[2]:false,e::true)
+    ==>
+    {
+      "a" : 1,
+      "b" : {
+        "y" : 9
+      },
+      "d" : [ 3, 5 ],
+      "e" : "c"
+    }
+
+#### 218. retain()
+
+Retains nodes that present in full path.  All other not mentioned nodes will be removed.
+
+    json('{"a":1,"b":{"x":8,"y":9},"c":2,"d":[3,4,5],"e":"c"}').retain(b.x,d[1]:true,d[2]:false,e::true)
+    ==>
+    {
+      "b" : {
+        "x" : 8
+      },
+      "c" : 2,
+      "d" : [ 4 ]
+    }
+
+#### 219. entries()
 
 Returns an array of key-value entries for an object.
 
@@ -4274,7 +4374,7 @@ Returns an array of key-value entries for an object.
       }
     } ]
 
-#### 218. keys()
+#### 220. keys()
 
 Returns an array of keys for an object.
 
@@ -4284,7 +4384,7 @@ Returns an array of keys for an object.
 
     keys(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}'), -1) ==> [ "a", "b", "c", "d", "e" ]
 
-#### 219. depthLimit()
+#### 221. depthLimit()
 
 Limits the depth for objects in results.
 
@@ -4332,7 +4432,7 @@ Limits the depth for objects in results.
       } ]
     }
 
-#### 220. collect()
+#### 222. collect()
 
 Collects values into a single array.
 
@@ -4349,7 +4449,7 @@ Collects values into a single array.
       "x" : 13
     } ]
 
-#### 221. cumulateCollect()
+#### 223. cumulateCollect()
 
 Collects values across nested structures.
 The 1st parameter is a query to evaluate a result that will be collected into an array.
@@ -4373,7 +4473,7 @@ The operation loop will be stopped when the next dataset is null.
       "val" : 88.0
     } ]
 
-#### 222. wrap()
+#### 224. wrap()
 
 Wraps a value into an array.
 
@@ -4385,7 +4485,7 @@ Wraps a value into an array.
       "a" : 1
     } ]
 
-#### 223. toArray()
+#### 225. toArray()
 
 Converts values to a flat array.
 
@@ -4400,7 +4500,7 @@ Converts values to a flat array.
 
     toArray(json('{"a":1,"b":[2,3],"c":{"d":4,"e":5}}').toArray()) ==> [ 1, 2, 3, 4, 5 ]
 
-#### 224. toObject()
+#### 226. toObject()
 
 Converts values to an object with named properties.
 
@@ -4431,7 +4531,7 @@ Converts values to an object with named properties.
       }
     }
 
-#### 225. mergeArrays()
+#### 227. mergeArrays()
 
 Merges nested arrays into a single array.
 
@@ -4441,7 +4541,7 @@ Merges nested arrays into a single array.
 
     json('{"a":[1,2],"b":[3,4],"c":[5,6]}').mergeArrays(a,b,c) ==> [ 1, 2, 3, 4, 5, 6 ]
 
-#### 226. mergeObjects()
+#### 228. mergeObjects()
 
 Merges objects by replacing common keys.
 
@@ -4465,7 +4565,7 @@ Merges objects by replacing common keys.
       "c" : 3
     }
 
-#### 227. flatten()
+#### 229. flatten()
 
 Flattens nested objects/arrays into a flat structure.
 
@@ -4535,7 +4635,7 @@ Flattens nested objects/arrays into a flat structure.
       "[3]" : 9
     }
 
-#### 228. unflatten()
+#### 230. unflatten()
 
 Reverses a flatten operation on objects/arrays.
 
@@ -4573,7 +4673,7 @@ Reverses a flatten operation on objects/arrays.
     ==>
     [ 0, 1, [ 2, 3, [ 4, {"a":5}, 6, [ 7 ] ], 8 ], 9 ]
 
-#### 229. map()
+#### 231. map()
 
 Projects each element into a new object.
 
@@ -4599,7 +4699,7 @@ Projects each element into a new object.
       }
     }
 
-#### 230. field()
+#### 232. field()
 
 Add, modify or delete element in an object.
 
@@ -4618,7 +4718,7 @@ Add, modify or delete element in an object.
       "name" : "Cyron"
     }
 
-#### 231. group()
+#### 233. group()
 
 Groups elements into an object by a field.
 
@@ -4663,7 +4763,7 @@ Groups elements into an object by a field.
       "bs" : [ "C" ]
     } ]
 
-#### 232. unwind()
+#### 234. unwind()
 
 Unwinds grouped elements back into an array.
 
@@ -4686,7 +4786,7 @@ Unwinds grouped elements back into an array.
       "b" : "C"
     } ]
 
-#### 233. assort()
+#### 235. assort()
 
 Separates elements based on conditional assorting.
 
@@ -4716,7 +4816,7 @@ Separates elements based on conditional assorting.
 
 ### Programmable Functions
 
-#### 234. eval()
+#### 236. eval()
 
 Evaluate a string value of a field as a Josson expression.
 
@@ -4724,7 +4824,7 @@ Evaluate a string value of a field as a Josson expression.
 
     json('[{"a":3,"s":"calc(a*2)"},{"a":4,"s":"calc(a*2)"}]')@.eval(s) ==> [ 6.0, 8.0 ]
 
-#### 235. json()
+#### 237. json()
 
 Parses a string as JSON.
 
@@ -4747,7 +4847,7 @@ Parses a string as JSON.
     }
 
 
-#### 236. if()
+#### 238. if()
 
 Conditionally returns one value if expression is true, otherwise another value.
 
@@ -4763,7 +4863,7 @@ Conditionally returns one value if expression is true, otherwise another value.
 
     json('[1,2,3,4,5]').if(isOdd(), calc(?*2), ?) ==> [ 2.0, 2, 6.0, 4, 10.0 ]
 
-#### 237. ifNot()
+#### 239. ifNot()
 
 Reverse of if(), returns value if expression is false.
 
@@ -4775,7 +4875,7 @@ Reverse of if(), returns value if expression is false.
 
     json('[1,2,3,4,5]').ifNot(isOdd(), calc(?*2), ?) ==> [ 1, 4.0, 3, 8.0, 5 ]
 
-#### 238. coalesce()
+#### 240. coalesce()
 
 Returns first non-null value from a list of values.
 
@@ -4783,7 +4883,7 @@ Returns first non-null value from a list of values.
 
     json('{"a":null,"c":"abc"}').coalesce(a,b,c,'xyz') ==> "abc"
 
-#### 239. caseValue()
+#### 241. caseValue()
 
 Returns value matching case, else default value.
 
@@ -4795,7 +4895,7 @@ Returns value matching case, else default value.
 
     json('[{"s":1},{"s":null},{"s":3}]').s.caseValue(1,'A',null,'B') ==> [ "A", "B", null ]
 
-#### 240. caseValueIgnoreCase()
+#### 242. caseValueIgnoreCase()
 
 Same as above but ignores case sensitivity.
 
@@ -4805,7 +4905,7 @@ Same as above but ignores case sensitivity.
 
     'z'.caseValue('A',1,'b',2,'a',3) ==> !unresolvable!
 
-#### 241. indexedValue()
+#### 243. indexedValue()
 
 Returns value at an index from an array or list of parameters.
 
@@ -4819,7 +4919,7 @@ Returns value at an index from an array or list of parameters.
 
     -1.indexedValue('a','b','c','d') ==> !unresolvable!
 
-#### 242. cycleValue()
+#### 244. cycleValue()
 
 Returns value cycling through an array or list of parameters circularly.
 
@@ -4835,7 +4935,7 @@ Returns value cycling through an array or list of parameters circularly.
 
     -6.cycleValue('a','b','c','d') ==> "c"
 
-#### 243. steps()
+#### 245. steps()
 
 Returns the number of path steps processed.
 
@@ -4849,7 +4949,7 @@ Returns the number of path steps processed.
 
     json('{"a":{"b":{"c":1}}}').a.b.c.calc(?+1).steps() ==> 5
 
-#### 244. get()
+#### 246. get()
 
 Returns the evaluated value of a path based on the current node.
 
@@ -4858,7 +4958,7 @@ Returns the evaluated value of a path based on the current node.
     ==>
     [ "Blue", "Red", "Blue" ]
 
-#### 245. let()
+#### 247. let()
 
 Defines variables for the forthcoming path steps.
 This function does not count as a step.
@@ -4871,7 +4971,7 @@ This function does not count as a step.
       "$z" : "12"
     }
 
-#### 246. mergeArraysOption()
+#### 248. mergeArraysOption()
 
 Set the merge arrays method. Available options are the following, case insensitive:
 - Append - appends 2nd array elements to the end of the 1st array.

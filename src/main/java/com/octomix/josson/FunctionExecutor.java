@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,10 @@ final class FunctionExecutor {
     static PathTrace getParamPath(final PathTrace path, final String params) {
         final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(0, 1);
         return paramList.isEmpty() ? path : getPathByExpression(path, paramList.get(0));
+    }
+
+    static List<String[]> getParamPath(final List<String> paramList) {
+        return paramList.stream().map(param -> new SyntaxDecomposer(param).dePath()).collect(Collectors.toList());
     }
 
     static Pair<PathTrace, List<String>> getParamPathAndStrings(final PathTrace path, final String params,

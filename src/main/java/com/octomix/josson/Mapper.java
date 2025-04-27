@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.text.DateFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Extends Jackson object mapper.
@@ -59,7 +61,7 @@ class Mapper extends ObjectMapper {
 
     static ObjectNode deepCopy(final ObjectNode object, final int depth) {
         final ObjectNode copy = MAPPER.createObjectNode();
-        object.fields().forEachRemaining(entry -> {
+        object.properties().forEach(entry -> {
             final JsonNode value;
             if (entry.getValue().isValueNode()) {
                 value = entry.getValue();
@@ -86,6 +88,42 @@ class Mapper extends ObjectMapper {
                 copy.add(deepCopy((ArrayNode) elem, depth - 1));
             }
         });
+        return copy;
+    }
+
+    static JsonNode struCopy(final JsonNode node, JsonNode structure, boolean remove) {
+        if (!remove && structure != null && structure.asBoolean()) {
+            structure = null;
+            remove = true;
+        }
+        return node.isObject() ? struCopy((ObjectNode) node, structure, remove) : struCopy((ArrayNode) node, structure, remove);
+    }
+
+    static ObjectNode struCopy(final ObjectNode object, final JsonNode structure, final boolean remove) {
+        final ObjectNode copy = MAPPER.createObjectNode();
+        object.properties().forEach(entry -> {
+            final JsonNode struNode = structure != null && structure.isObject() ? structure.get(entry.getKey()) : null;
+            if (struNode == null ? remove : !remove || !struNode.asBoolean()) {
+                final JsonNode value = entry.getValue();
+                copy.set(entry.getKey(), value.isValueNode() ? value : struCopy(value, struNode, remove));
+            }
+        });
+        return copy;
+    }
+
+    static ArrayNode struCopy(final ArrayNode array, final JsonNode structure, final boolean remove) {
+        final Map<Integer, JsonNode> find = new HashMap<>();
+        if (structure != null && structure.isArray()) {
+            structure.forEach(struNode -> find.put(struNode.get("i").asInt(), struNode.get("v")));
+        }
+        final ArrayNode copy = MAPPER.createArrayNode();
+        for (int i = 0; i < array.size(); i++) {
+            final JsonNode struNode = find.remove(i);
+            if (struNode == null ? remove : !remove || !struNode.asBoolean()) {
+                final JsonNode value = array.get(i);
+                copy.add(value.isValueNode() ? value : struCopy(value, struNode, remove));
+            }
+        }
         return copy;
     }
 }

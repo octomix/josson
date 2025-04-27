@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -352,7 +352,7 @@ final class SyntaxDecomposer extends SyntaxMatcher {
         return steps;
     }
 
-    String[] deNameAndPath(final Function<String, String> getUnknownName) {
+    String[] dePath() {
         String name = null;
         String path = input;
         for (int pos = 0; pos < length; pos++) {
@@ -365,7 +365,7 @@ final class SyntaxDecomposer extends SyntaxMatcher {
                 path = trimOf(pos + 1, length);
                 if (path.startsWith(EVALUATE_KEY_NAME)) {
                     name = EVALUATE_KEY_NAME + name;
-                    path = path.substring(eatSpaces(path, EVALUATE_KEY_NAME.length(), path.length() - 1));
+                    path = path.substring(eatSpaces(path, EVALUATE_KEY_NAME.length()));
                     if (path.isEmpty()) {
                         throw new SyntaxErrorException(input, "Missing field value");
                     }
@@ -374,22 +374,31 @@ final class SyntaxDecomposer extends SyntaxMatcher {
             }
             pos = skipEnclosure(pos, Enclosure.ALL_KINDS);
         }
-        final boolean unresolvableAsNull = path.startsWith(UNRESOLVABLE_AS_NULL);
+        return new String[]{name, path, null};
+    }
+
+    String[] deNameAndPath(final Function<String, String> getUnknownName) {
+        String[] nameAndPath = dePath();
+        final boolean unresolvableAsNull = nameAndPath[1].startsWith(UNRESOLVABLE_AS_NULL);
         if (unresolvableAsNull) {
-            path = path.substring(eatSpaces(path, UNRESOLVABLE_AS_NULL.length(), path.length() - 1));
+            nameAndPath[1] = nameAndPath[1].substring(eatSpaces(nameAndPath[1], UNRESOLVABLE_AS_NULL.length()));
+            nameAndPath[2] = UNRESOLVABLE_AS_NULL;
         }
-        if (name == null) {
+        if (nameAndPath[0] == null) {
             try {
-                name = getLastElementName(input);
+                nameAndPath[0] = getLastElementName(input);
             } catch (UnknownFormatConversionException e) {
-                name = getUnknownName == null ? e.getConversion() : getUnknownName.apply(e.getConversion());
+                nameAndPath[0] = getUnknownName == null ? e.getConversion() : getUnknownName.apply(e.getConversion());
             }
-        } else if (unresolvableAsNull && path.isEmpty()) {
-            if (name.startsWith(EVALUATE_KEY_NAME)) {
+        } else if (unresolvableAsNull && nameAndPath[1].isEmpty()) {
+            if (nameAndPath[0].startsWith(EVALUATE_KEY_NAME)) {
                 throw new SyntaxErrorException(input, "Missing field value");
             }
-            path = name;
+            nameAndPath[1] = nameAndPath[0];
         }
-        return new String[]{name, path.isEmpty() ? null : path, unresolvableAsNull ? UNRESOLVABLE_AS_NULL : null};
+        if (nameAndPath[1].isEmpty()) {
+            nameAndPath[1] = null;
+        }
+        return nameAndPath;
     }
 }

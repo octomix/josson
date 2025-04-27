@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,10 @@ class SyntaxMatcher {
         this.input = input;
         this.length = input.length();
         this.last = this.length - 1;
+    }
+
+    protected static int eatSpaces(final String input, int beg) {
+        return eatSpaces(input, beg, input.length() - 1);
     }
 
     protected static int eatSpaces(final String input, int beg, final int last) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Choi Wai Man Raymond
+ * Copyright 2020-2025 Choi Wai Man Raymond
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -613,6 +613,11 @@ class FunctionDispatcher {
                 return funcReplace(path, params, true);
             case "rightpad":
                 return funcPadding(path, params, 1);
+            // Structural
+            case "remove":
+                return funcRemoveRetain(path, params, true);
+            case "retain":
+                return funcRemoveRetain(path, params, false);
         }
         throw new UnsupportedFunctionException();
     }
