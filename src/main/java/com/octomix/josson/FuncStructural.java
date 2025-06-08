@@ -231,9 +231,9 @@ final class FuncStructural {
             return null;
         }
         final List<String> paramList = pathAndParams.getValue();
-        final String[] nameAndPath = new SyntaxDecomposer(paramList.get(0)).deNameAndPath((ifFuncName) -> ENTRY_KEY_NAME);
+        final String[] nameAndPath = new SyntaxDecomposer(paramList.get(0)).deNameAndPath(ifFuncName -> ENTRY_KEY_NAME);
         final String[] grouping = paramList.size() > 1
-                ? new SyntaxDecomposer(paramList.get(1)).deNameAndPath((ifFuncName) -> GROUP_VALUE_NAME)
+                ? new SyntaxDecomposer(paramList.get(1)).deNameAndPath(ifFuncName -> GROUP_VALUE_NAME)
                 : new String[]{GROUP_VALUE_NAME, null, null};
         final ArrayNode array = MAPPER.createArrayNode();
         for (int i = 0; i < dataPath.containerSize(); i++) {
@@ -395,6 +395,85 @@ final class FuncStructural {
         return path.push(struCopy(path.node(), structure, remove));
     }
 
+    static PathTrace funcSet(final PathTrace path, final String params) {
+        final List<String[]> paramPaths = getParamPath(new SyntaxDecomposer(params).deFunctionParameters(1, UNLIMITED_WITH_PATH));
+        if (!path.isContainer()) {
+            return null;
+        }
+        JsonNode toMerge = null;
+        for (String[] pathAndFlag : paramPaths) {
+            final JsonNode value;
+            if (pathAndFlag[0] == null) {
+                pathAndFlag[0] = pathAndFlag[1];
+                value = NullNode.getInstance();
+            } else if (pathAndFlag[1].isEmpty()) {
+                value = NullNode.getInstance();
+            } else {
+                value = getNodeByExpression(path, StringUtils.removeStart(pathAndFlag[1], UNRESOLVABLE_AS_NULL));
+            }
+            final String flatten = pathAndFlag[0].startsWith(EVALUATE_KEY_NAME)
+                ? getNodeAsText(path, pathAndFlag[0].substring(1))
+                : pathAndFlag[0];
+            final String[] steps = StringUtils.split(flatten, ".[]");
+            if (steps.length > 0) {
+                toMerge = funcUnflatten(toMerge, steps, 0, value);
+            }
+        }
+        if (toMerge != null) {
+            if (path.node().isObject()) {
+                if (toMerge.isObject()) {
+                    final ObjectNode copy = path.node().deepCopy();
+                    funcSetMerge(copy, toMerge);
+                    return path.push(copy);
+                }
+            } else {
+                if (toMerge.isArray()) {
+                    final ArrayNode copy = path.node().deepCopy();
+                    funcSetMerge(copy, toMerge);
+                    return path.push(copy);
+                }
+            }
+        }
+        return path.push(path.node());
+    }
+
+    private static void funcSetMerge(final ObjectNode o1, final JsonNode o2) {
+        o2.properties().forEach(entry -> {
+            final JsonNode o1value = o1.get(entry.getKey());
+            final JsonNode o2value = entry.getValue();
+            if (o1value != null && o1value.isObject() && o2value.isObject()) {
+                funcSetMerge((ObjectNode) o1value, o2value);
+            } else if (o1value != null && o1value.isArray() && o2value.isArray()) {
+                funcSetMerge((ArrayNode) o1value, o2value);
+            } else {
+                o1.set(entry.getKey(), funcUnflattenSort(o2value));
+            }
+        });
+    }
+
+    private static void funcSetMerge(final ArrayNode a1, final JsonNode a2) {
+        final Iterator<JsonNode> it = a2.iterator();
+        while (it.hasNext()) {
+            final JsonNode node = it.next();
+            final int index = node.get(UNFLATTEN_ARRAY_ELEM_INDEX).asInt();
+            if (index < a1.size()) {
+                final JsonNode a1value = a1.get(index);
+                final JsonNode a2value = node.get(UNFLATTEN_ARRAY_ELEM_VALUE);
+                if (a1value.isObject() && a2value.isObject()) {
+                    funcSetMerge((ObjectNode) a1value, a2value);
+                } else if (a1value.isArray() && a2value.isArray()) {
+                    funcSetMerge((ArrayNode) a1value, a2value);
+                } else {
+                    a1.set(index, funcUnflattenSort(a2value));
+                }
+                it.remove();
+            }
+        }
+        if (!a2.isEmpty()) {
+            a1.addAll((ArrayNode) funcUnflattenSort(a2));
+        }
+    }
+
     static PathTrace funcToArray(final PathTrace path, final String params) {
         final PathTrace container = getParamArrayOrItselfIsContainer(path, params);
         if (container == null) {
@@ -444,10 +523,10 @@ final class FuncStructural {
                 root = funcUnflatten(root, steps, 0, entry.getValue());
             }
         }
-        if (root != null) {
-            funcUnflattenSort(root);
+        if (root == null) {
+            return null;
         }
-        return path.push(root);
+        return path.push(funcUnflattenSort(root));
     }
 
     private static JsonNode funcUnflatten(JsonNode parent, final String[] steps, final int pos, JsonNode value) {
@@ -466,8 +545,8 @@ final class FuncStructural {
         if (notEnd) {
             for (int i = parent.size() - 1; i >= 0; i--) {
                 final JsonNode elem = parent.get(i);
-                if (elem.get("i").asInt() == index) {
-                    v = elem.get("v");
+                if (elem.get(UNFLATTEN_ARRAY_ELEM_INDEX).asInt() == index) {
+                    v = elem.get(UNFLATTEN_ARRAY_ELEM_VALUE);
                     break;
                 }
             }
@@ -475,25 +554,28 @@ final class FuncStructural {
         }
         if (v == null) {
             final ObjectNode elem = MAPPER.createObjectNode();
-            elem.set("i", IntNode.valueOf(index));
-            elem.set("v", value);
+            elem.set(UNFLATTEN_ARRAY_ELEM_INDEX, IntNode.valueOf(index));
+            elem.set(UNFLATTEN_ARRAY_ELEM_VALUE, value);
             ((ArrayNode) parent).add(elem);
         }
         return parent;
     }
 
-    private static void funcUnflattenSort(final JsonNode node) {
+    private static JsonNode funcUnflattenSort(final JsonNode node) {
         if (!node.isContainerNode()) {
-            return;
+            return node;
         }
         if (node.isArray()) {
             final List<Pair<Integer, JsonNode>> list = new ArrayList<>();
-            node.elements().forEachRemaining(elem -> list.add(Pair.of(elem.get("i").asInt(), elem.get("v"))));
+            node.elements().forEachRemaining(elem ->
+                list.add(Pair.of(elem.get(UNFLATTEN_ARRAY_ELEM_INDEX).asInt(), elem.get(UNFLATTEN_ARRAY_ELEM_VALUE)))
+            );
             list.sort(Comparator.comparingInt(Pair::getKey));
             ((ArrayNode) node).removeAll();
             ((ArrayNode) node).addAll(list.stream().map(Pair::getValue).collect(Collectors.toList()));
         }
         node.elements().forEachRemaining(FuncStructural::funcUnflattenSort);
+        return node;
     }
 
     static PathTrace funcUnwind(final PathTrace path, final String params) {

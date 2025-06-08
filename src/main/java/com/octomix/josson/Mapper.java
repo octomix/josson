@@ -33,6 +33,10 @@ class Mapper extends ObjectMapper {
 
     static final Mapper MAPPER = new Mapper();
 
+    static final String UNFLATTEN_ARRAY_ELEM_INDEX = "i";
+
+    static final String UNFLATTEN_ARRAY_ELEM_VALUE = "v";
+
     Mapper() {
         this.registerModule(new JavaTimeModule());
         this.setDateFormat(DateFormat.getInstance());
@@ -114,7 +118,9 @@ class Mapper extends ObjectMapper {
     static ArrayNode struCopy(final ArrayNode array, final JsonNode structure, final boolean remove) {
         final Map<Integer, JsonNode> find = new HashMap<>();
         if (structure != null && structure.isArray()) {
-            structure.forEach(struNode -> find.put(struNode.get("i").asInt(), struNode.get("v")));
+            structure.forEach(struNode ->
+                find.put(struNode.get(UNFLATTEN_ARRAY_ELEM_INDEX).asInt(), struNode.get(UNFLATTEN_ARRAY_ELEM_VALUE))
+            );
         }
         final ArrayNode copy = MAPPER.createArrayNode();
         for (int i = 0; i < array.size(); i++) {

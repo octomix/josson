@@ -479,16 +479,16 @@ final class JossonCore {
         final int size = path.containerSize();
         if (size < minArraySizeToUseMultiThread || threadPoolSize == 1) {
             for (JsonNode each : path.node()) {
-                divertEachElement(path, elem, steps, nextNextSteps, each, (node) -> addArrayElement(array, node));
+                divertEachElement(path, elem, steps, nextNextSteps, each, node -> addArrayElement(array, node));
             }
         } else if (retainArrayOrder) {
             final JsonNode[] orderedNodes = new JsonNode[size];
-            submitTasks(size, (i) ->
-                divertEachElement(path, elem, steps, nextNextSteps, path.node().get(i), (node) -> orderedNodes[i] = node));
+            submitTasks(size, i ->
+                divertEachElement(path, elem, steps, nextNextSteps, path.node().get(i), node -> orderedNodes[i] = node));
             addArrayElements(array, orderedNodes);
         } else {
-            submitTasks(size, (i) ->
-                divertEachElement(path, elem, steps, nextNextSteps, path.node().get(i), (node) -> addArrayElement(array, node)));
+            submitTasks(size, i ->
+                divertEachElement(path, elem, steps, nextNextSteps, path.node().get(i), node -> addArrayElement(array, node)));
         }
         steps.clear();
         if (nextSteps.isEmpty()) {

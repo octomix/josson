@@ -669,6 +669,8 @@ class FunctionDispatcher {
             case "substr":
                 return funcSubstr(path, params);
             // Structural
+            case "set":
+                return funcSet(path, params);
             case "steps":
                 return funcSteps(path, params);
         }

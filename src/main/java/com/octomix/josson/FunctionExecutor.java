@@ -68,17 +68,14 @@ final class FunctionExecutor {
     static List<String[]> getParamNamePath(final List<String> paramList) {
         final AtomicInteger noNameCount = new AtomicInteger();
         return paramList.stream()
-            .map(param -> new SyntaxDecomposer(param).deNameAndPath((ifFuncName) -> ifFuncName + noNameCount.incrementAndGet()))
+            .map(param -> new SyntaxDecomposer(param).deNameAndPath(ifFuncName -> ifFuncName + noNameCount.incrementAndGet()))
             .collect(Collectors.toList());
     }
 
     static PathTrace getParamArrayOrItselfIsContainer(final PathTrace path, final String params) {
         final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
-            if (path.isContainer()) {
-                return path;
-            }
-            return null;
+            return path.isContainer() ? path : null;
         }
         return getParamArray(path, paramList);
     }
@@ -86,10 +83,7 @@ final class FunctionExecutor {
     static PathTrace getParamArrayOrItself(final PathTrace path, final String params) {
         final List<String> paramList = new SyntaxDecomposer(params).deFunctionParameters(0, UNLIMITED_WITH_PATH);
         if (paramList.isEmpty()) {
-            if (path.isArray()) {
-                return path;
-            }
-            return null;
+            return path.isArray() ? path : null;
         }
         return getParamArray(path, paramList);
     }
@@ -105,10 +99,10 @@ final class FunctionExecutor {
                     }
                 } else if (retainArrayOrder) {
                     final JsonNode[] orderedNodes = new JsonNode[size];
-                    submitTasks(size, (i) -> orderedNodes[i] = getNodeByExpression(path, i, param));
+                    submitTasks(size, i -> orderedNodes[i] = getNodeByExpression(path, i, param));
                     addArrayElements(array, orderedNodes);
                 } else {
-                    submitTasks(size, (i) -> addArrayElement(array, getNodeByExpression(path, i, param)));
+                    submitTasks(size, i -> addArrayElement(array, getNodeByExpression(path, i, param)));
                 }
             } else {
                 final JsonNode result = getNodeByExpression(path, param);
@@ -205,8 +199,7 @@ final class FunctionExecutor {
                 }
             } else {
                 final JsonNode[] orderedNodes = new JsonNode[size];
-                submitTasks(size, (i) ->
-                        orderedNodes[i] = getPathNode(applyAction(path.push(target.get(i)), i, isValid, action, paramList)));
+                submitTasks(size, i -> orderedNodes[i] = getPathNode(applyAction(path.push(target.get(i)), i, isValid, action, paramList)));
                 for (JsonNode node : orderedNodes) {
                     array.add(node);
                 }
@@ -235,8 +228,7 @@ final class FunctionExecutor {
                 path.node().forEach(elem -> array.add(getPathNode(applyAction(path.push(elem), isValid, action, paramArray))));
             } else {
                 final JsonNode[] orderedNodes = new JsonNode[size];
-                submitTasks(size, (i) ->
-                        orderedNodes[i] = getPathNode(applyAction(path.push(path.node().get(i)), isValid, action, paramArray)));
+                submitTasks(size, i -> orderedNodes[i] = getPathNode(applyAction(path.push(path.node().get(i)), isValid, action, paramArray)));
                 for (JsonNode node : orderedNodes) {
                     array.add(node);
                 }
